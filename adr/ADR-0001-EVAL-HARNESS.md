@@ -1,7 +1,8 @@
 # ADR-0001 — Provider-Neutral Eval Harness Core
 
-**Status:** Proposed  
+**Status:** Accepted  
 **Date:** 2026-08-31  
+**Accepted:** 2026-08-31  
 **Risk:** L3 — Framework architecture/runtime contract
 
 ## Context
@@ -12,7 +13,7 @@ The framework is explicitly portable across coding-agent runtimes. Making Prompt
 
 At the same time, writing a large proprietary evaluation platform would violate the Constitution's simplicity and dependency rules.
 
-## Decision proposed
+## Decision
 
 Adopt a **small provider-neutral EREI Eval Harness Core**.
 
@@ -140,8 +141,6 @@ Rejected because durable project/framework state must survive vendor/account/run
 ### Build a full proprietary eval platform
 Rejected as overengineering. V1 deliberately implements only the minimum stable abstraction.
 
-## Approval gate
+## Decision record
 
-Because this ADR establishes a Framework tooling runtime and canonical machine-readable eval protocol, promotion to `main` requires explicit approval under the L3 architecture gate.
-
-Prototype implementation may exist on a candidate branch to provide evidence before approval.
+ADR-0001 was explicitly approved under the L3 architecture gate on 2026-08-31. Eval Harness V1 may be promoted to the stable Framework baseline, subject to normal release verification and metadata promotion.
