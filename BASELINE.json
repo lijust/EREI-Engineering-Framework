@@ -1,0 +1,20 @@
+{
+  "framework": "EREI Engineering Framework",
+  "baseline": "research-architecture-v0.1",
+  "date": "2026-08-31",
+  "artifacts": [
+    "README.md",
+    "architecture/EREI_ARCHITECTURE_V1.md",
+    "research/ANTI_PATTERNS.md",
+    "research/BENCHMARK_MATRIX.md",
+    "research/LANDSCAPE.md",
+    "research/PATTERN_CATALOG.md",
+    "research/RESEARCH_LEDGER.md"
+  ],
+  "status": "draft",
+  "next_phase": [
+    "engineering_constitution",
+    "agent_skill_workflow_contracts",
+    "chief_engineer_role_and_router"
+  ]
+}
