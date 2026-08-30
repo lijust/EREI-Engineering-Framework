@@ -1,0 +1,33 @@
+{
+  "schema_version": "1.0",
+  "suite_id": "harness-smoke",
+  "artifact": "evals/runner.py",
+  "cases": [
+    {
+      "id": "SMOKE-001",
+      "tags": ["smoke", "deterministic"],
+      "input": {
+        "prompt": "Run deterministic harness self-test."
+      },
+      "expectations": [
+        {
+          "type": "output_contains_all",
+          "values": ["frontend", "backend"]
+        },
+        {
+          "type": "metadata_equals",
+          "key": "risk",
+          "value": "L2"
+        },
+        {
+          "type": "trace_tool_called",
+          "tool": "impact-analysis"
+        },
+        {
+          "type": "max_trace_steps",
+          "value": 3
+        }
+      ]
+    }
+  ]
+}

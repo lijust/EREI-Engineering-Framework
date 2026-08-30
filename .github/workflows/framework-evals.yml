@@ -1,0 +1,44 @@
+name: Framework Evals
+
+on:
+  pull_request:
+    paths:
+      - "evals/**"
+      - "skills/**/evals/**"
+      - "workflows/**/evals/**"
+      - "overlays/**/evals/**"
+      - "adr/ADR-0001-EVAL-HARNESS.md"
+      - ".github/workflows/framework-evals.yml"
+  push:
+    branches: [main]
+    paths:
+      - "evals/**"
+      - "skills/**/evals/**"
+      - "workflows/**/evals/**"
+      - "overlays/**/evals/**"
+      - ".github/workflows/framework-evals.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  harness-self-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile runner
+        run: python -m py_compile evals/runner.py evals/fixtures/mock_adapter.py evals/tests/test_runner.py
+
+      - name: Run harness unit smoke tests
+        run: python -m unittest discover -s evals/tests -v
+
+      - name: Validate all machine-readable eval suites
+        run: python evals/runner.py validate evals/cases

@@ -1,8 +1,8 @@
 {
   "framework": "EREI Engineering Framework",
-  "baseline": "delivery-workflows-v1",
+  "baseline": "eval-harness-v1-candidate",
   "date": "2026-08-31",
-  "status": "stable",
+  "status": "candidate",
   "artifacts": [
     "README.md",
     "architecture/EREI_ARCHITECTURE_V1.md",
@@ -73,7 +73,17 @@
     "research/BENCHMARK_MATRIX.md",
     "research/LANDSCAPE.md",
     "research/PATTERN_CATALOG.md",
-    "research/RESEARCH_LEDGER.md"
+    "research/RESEARCH_LEDGER.md",
+    "research/EVAL_HARNESS_BENCHMARK.md",
+    "adr/ADR-0001-EVAL-HARNESS.md",
+    "evals/README.md",
+    "evals/schema/eval-case.schema.json",
+    "evals/adapters/PROTOCOL.md",
+    "evals/runner.py",
+    "evals/tests/test_runner.py",
+    "evals/fixtures/mock_adapter.py",
+    "evals/cases/harness-smoke.eval.json",
+    "evals/cases/impact-analysis.eval.json"
   ],
   "completed_phase": [
     "landscape_research",
@@ -103,10 +113,11 @@
     "systematic_debugging_skill_v1_with_evals",
     "regression_analysis_skill_v1_with_evals",
     "bug_fix_workflow_v1_with_evals",
-    "feature_development_workflow_v1_with_evals"
+    "feature_development_workflow_v1_with_evals",
+    "eval_harness_v1_candidate_with_prototype_and_smoke_evidence"
   ],
   "next_phase": [
-    "automated_eval_harness",
+    "approve_or_revise_adr_0001_eval_harness",
     "project_integration_bootstrap",
     "erei_app_google_project_overlay",
     "remaining_specialist_skills_as_evidence_requires"
