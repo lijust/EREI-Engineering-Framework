@@ -1,0 +1,33 @@
+# ADR-XXXX — <Decision Title>
+
+**Status:** Proposed  
+**Date:** YYYY-MM-DD  
+**Risk:** L0-L4
+
+## Context
+Describe the problem, constraints, evidence, and why a durable decision is required.
+
+## Decision
+State the chosen architecture/design decision precisely.
+
+## Alternatives Considered
+For each meaningful alternative record why it was rejected or deferred.
+
+## Consequences
+### Benefits
+- 
+
+### Costs / Risks
+- 
+
+## Security / Data / Performance Impact
+Record applicable impacts explicitly. Use `Not applicable` only when justified.
+
+## Migration / Rollback
+Describe compatibility, transition, and rollback where applicable.
+
+## Evidence
+Record code/docs/tests/runtime/user-confirmed evidence supporting the decision.
+
+## Approval
+Record required approval according to Framework risk level and the resulting decision state.
