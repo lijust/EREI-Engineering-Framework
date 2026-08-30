@@ -1,8 +1,8 @@
 {
   "framework": "EREI Engineering Framework",
-  "baseline": "foundation-v1-candidate",
+  "baseline": "foundation-v1",
   "date": "2026-08-31",
-  "status": "candidate",
+  "status": "stable",
   "artifacts": [
     "README.md",
     "architecture/EREI_ARCHITECTURE_V1.md",
@@ -25,12 +25,12 @@
   ],
   "completed_phase": [
     "landscape_research",
-    "architecture_v1_draft",
-    "engineering_constitution_v1_draft",
+    "architecture_v1_baseline",
+    "engineering_constitution_v1",
     "agent_skill_workflow_evidence_risk_contracts",
-    "chief_engineer_role_v1_draft",
-    "workflow_router_v1_draft",
-    "impact_analysis_skill_v1_draft_with_evals"
+    "chief_engineer_role_v1",
+    "workflow_router_v1",
+    "impact_analysis_skill_v1_with_evals"
   ],
   "next_phase": [
     "project_discovery_skill",
