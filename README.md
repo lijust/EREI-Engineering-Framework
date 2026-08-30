@@ -1,6 +1,6 @@
 # EREI Engineering Framework
 
-**Status:** Specialist Roles V1 Candidate  
+**Status:** Specialist Roles V1 Stable  
 **Date:** 2026-08-31
 
 EREI Engineering Framework is a reusable, cross-project engineering operating system for AI-assisted software development.
@@ -19,7 +19,7 @@ The framework separates:
 
 ## Current state
 
-Foundation V1, Phase 2 Core, and Google Apps Script / Google Sheets Overlay V1 are stable. Specialist Roles V1 is the current candidate.
+Foundation V1, Phase 2 Core, Google Apps Script / Google Sheets Overlay V1, and Specialist Roles V1 are stable.
 
 ## Engineering roles
 
@@ -46,6 +46,7 @@ Roles own perspective, accountability, authority, escalation and evidence obliga
 - Requirement compliance / engineering quality / verification baseline
 - Threat modeling, security review and security-critical workflow
 - Google Apps Script / Google Sheets technology overlay
+- Full specialist engineering role set
 
 ## Google Apps Script / Google Sheets overlay
 
