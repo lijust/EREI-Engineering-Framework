@@ -1,6 +1,6 @@
 # EREI Engineering Framework
 
-**Status:** Research-to-Architecture Baseline V0.1  
+**Status:** Phase 2 Core Candidate  
 **Date:** 2026-08-31
 
 EREI Engineering Framework is a reusable, cross-project engineering operating system for AI-assisted software development.
@@ -17,14 +17,39 @@ The framework separates:
 6. **Durable Artifacts / Evidence**
 7. **Runtime Adapters / Distribution**
 
-## Current phase
+## Current state
 
-The framework is currently in the **Research → Architecture** phase.
+Foundation V1 is stable. Phase 2 adds the first project-bootstrap, brownfield, review/verification, and security-core capabilities.
 
-The first formal research artifacts are under `/research`, and the initial target architecture is under `/architecture`.
+### Stable foundation
 
-## Current artifacts
+- `constitution/ENGINEERING_CONSTITUTION.md`
+- Agent / Skill / Workflow / Evidence / Risk contracts
+- `agents/chief-engineer/AGENT.md`
+- `workflows/router/WORKFLOW.md`
+- `skills/impact-analysis/`
 
+### Phase 2 core
+
+Project understanding:
+- `skills/project-discovery/`
+- `skills/project-standard-discovery/`
+- `workflows/new-project/`
+- `workflows/brownfield-onboarding/`
+
+Review and verification:
+- `skills/requirement-compliance-review/`
+- `skills/engineering-quality-review/`
+- `skills/verification-before-completion/`
+- `workflows/review-and-verification/`
+
+Security core:
+- `agents/security-engineer/`
+- `skills/threat-model/`
+- `skills/security-review/`
+- `workflows/security-critical-change/`
+
+Research and architecture:
 - `research/LANDSCAPE.md`
 - `research/BENCHMARK_MATRIX.md`
 - `research/PATTERN_CATALOG.md`
@@ -32,19 +57,36 @@ The first formal research artifacts are under `/research`, and the initial targe
 - `research/RESEARCH_LEDGER.md`
 - `architecture/EREI_ARCHITECTURE_V1.md`
 
-## Foundation decisions already approved
+## Operating principles
 
-- Hybrid autonomy: safe changes may execute automatically; architecture/security/data migrations require approval.
+Key approved principles include:
+
+- Hybrid autonomy: safe changes may execute automatically; new architecture/security/data structural decisions require approval.
 - Enterprise-grade SaaS security mindset.
-- One tenant/company per user in the current EREI APP Google project.
 - Frontend is never trusted for authorization.
+- Tenant boundaries are hard boundaries.
+- Durable project state beats conversational memory.
+- Evidence beats claims.
+- Deterministic verification precedes probabilistic judgment.
 - Refactor only when measurable benefit exceeds migration risk.
 - DEV → Candidate → QA → Stable release flow with rollback.
-- Performance budgets:
-  - UI feedback < 100 ms
-  - Simple search < 1 s
-  - Normal search < 2 s
-  - Heavy operation < 5 s
-- Current EREI APP Google stack remains Vanilla JS + HTML + CSS + Apps Script unless migration/build tooling is technically justified.
 - Dependencies should be minimized and security-reviewed.
-- Framework is reusable across future EREI projects.
+- Framework Core stays technology-neutral; technology expertise lives in overlays.
+
+## Performance baseline
+
+- UI feedback < 100 ms
+- Simple search < 1 s
+- Normal search < 2 s
+- Heavy operation < 5 s
+- Prefer P95 behavior over best-case latency.
+
+## Next implementation targets
+
+1. Google Apps Script / Google Sheets overlay.
+2. Remaining specialist engineering roles.
+3. Feature-development and bug-fix workflows.
+4. Automated eval harness.
+5. Project integration/bootstrap adapters.
+
+`BASELINE.json` is the machine-readable checkpoint for the current framework state.
