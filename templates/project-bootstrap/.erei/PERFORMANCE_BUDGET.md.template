@@ -1,0 +1,35 @@
+# Performance Budget
+
+## User-Visible Budgets
+Define measurable budgets for material operations.
+
+| Operation | Target | Measurement |
+|---|---:|---|
+| UI feedback | | |
+| Simple interaction/search | | |
+| Normal operation | | |
+| Heavy operation | | |
+
+Prefer percentile behavior such as P95 where practical.
+
+## Capacity Assumptions
+- Expected users:
+- Expected concurrent users:
+- Request/operation rate:
+- Data volume:
+- Growth assumptions:
+
+## Platform Limits
+Record quotas, execution limits, connection limits, payload limits, or other platform constraints with source/currentness where material.
+
+## Measurement Points
+List client, server, persistence, external-service, queue, cache, and end-to-end instrumentation points.
+
+## Performance Invariants
+Examples: no N+1 access, bounded retries, batch remote calls, tenant-safe cache keys, no unbounded client fan-out.
+
+## Baseline Evidence
+Record actual measurements rather than assumptions when available.
+
+## Known Bottlenecks / Unknowns
+Do not optimize unknown bottlenecks before measurement.
