@@ -1,0 +1,38 @@
+# Project Profile
+
+## Identity
+- Project: {{PROJECT_NAME}}
+- Repository: {{PROJECT_REPOSITORY}}
+- Lifecycle: {{PROJECT_LIFECYCLE}}
+
+## Product / Mission
+Describe what the system exists to do and the primary outcomes it must produce.
+
+## Users / Actors
+List real user or system actor types. Distinguish authenticated identity from application role/authorization.
+
+## Stack
+- Frontend:
+- Backend:
+- Data store:
+- Runtime / hosting:
+- External services:
+
+## Tenancy / Ownership
+- Tenant model:
+- Record ownership model:
+- Isolation expectations:
+
+## Deployment
+- Environments:
+- Release path:
+- Rollback mechanism:
+
+## Constraints
+Document business, platform, regulatory, cost, compatibility, operational, or migration constraints.
+
+## Current priorities
+List current product/engineering priorities without turning temporary tasks into permanent architecture.
+
+## Evidence / Unknowns
+Facts should identify evidence where material. Unknowns remain explicit until resolved.
