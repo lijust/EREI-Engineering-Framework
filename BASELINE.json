@@ -1,8 +1,8 @@
 {
   "framework": "EREI Engineering Framework",
-  "baseline": "phase2-core-candidate",
+  "baseline": "phase2-core",
   "date": "2026-08-31",
-  "status": "candidate",
+  "status": "stable",
   "artifacts": [
     "README.md",
     "architecture/EREI_ARCHITECTURE_V1.md",
