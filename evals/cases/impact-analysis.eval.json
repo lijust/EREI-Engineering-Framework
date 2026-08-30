@@ -1,0 +1,128 @@
+{
+  "schema_version": "1.0",
+  "suite_id": "impact-analysis-v1",
+  "artifact": "skills/impact-analysis",
+  "cases": [
+    {
+      "id": "T-001-AUTH-TENANT",
+      "tags": ["trigger", "security", "tenant", "L3"],
+      "input": {
+        "prompt": "Change login so users can sign in with Google and access only their company data."
+      },
+      "expectations": [
+        {
+          "type": "trace_tool_called",
+          "tool": "impact-analysis"
+        },
+        {
+          "type": "output_contains_all",
+          "values": ["authentication", "authorization", "tenant", "frontend", "backend", "security"]
+        },
+        {
+          "type": "metadata_equals",
+          "key": "risk",
+          "value": "L3"
+        }
+      ]
+    },
+    {
+      "id": "T-002-CROSS-LAYER-CACHE",
+      "tags": ["trigger", "cache", "cross-layer"],
+      "input": {
+        "prompt": "Make search instant by caching results in the browser and backend."
+      },
+      "expectations": [
+        {
+          "type": "trace_tool_called",
+          "tool": "impact-analysis"
+        },
+        {
+          "type": "output_contains_all",
+          "values": ["frontend", "backend", "cache", "stale", "authorization", "performance"]
+        },
+        {
+          "type": "output_contains_none",
+          "values": ["shared cache is safe across tenants"]
+        }
+      ]
+    },
+    {
+      "id": "T-004-REQUEST-SEQUENCE",
+      "tags": ["trigger", "concurrency", "regression"],
+      "input": {
+        "prompt": "Replace the request sequence counter with Date.now() so stale searches stop failing after refresh."
+      },
+      "expectations": [
+        {
+          "type": "trace_tool_called",
+          "tool": "impact-analysis"
+        },
+        {
+          "type": "output_contains_all",
+          "values": ["frontend", "backend", "ordering", "stale", "test"]
+        },
+        {
+          "type": "output_contains_none",
+          "values": ["diff is small so there is no impact"]
+        }
+      ]
+    },
+    {
+      "id": "N-001-COSMETIC-COPY",
+      "tags": ["non-trigger", "L0", "proportionality"],
+      "input": {
+        "prompt": "Change the button text from Search to Find Projects."
+      },
+      "expectations": [
+        {
+          "type": "trace_tool_not_called",
+          "tool": "security-review"
+        },
+        {
+          "type": "metadata_equals",
+          "key": "risk",
+          "value": "L0"
+        },
+        {
+          "type": "max_trace_steps",
+          "value": 3
+        }
+      ]
+    },
+    {
+      "id": "B-002-TENANT-CACHE",
+      "tags": ["behavior", "security", "tenant", "L3"],
+      "input": {
+        "prompt": "A shared backend cache key is based only on search parameters, not tenant or user scope. Analyze the impact."
+      },
+      "expectations": [
+        {
+          "type": "output_contains_all",
+          "values": ["tenant", "leak", "security"]
+        },
+        {
+          "type": "metadata_equals",
+          "key": "risk",
+          "value": "L3"
+        }
+      ]
+    },
+    {
+      "id": "B-004-UNKNOWN-BROWNFIELD",
+      "tags": ["behavior", "brownfield", "unknown"],
+      "input": {
+        "prompt": "Modify an existing payment calculation. Current persistence and rounding behavior have not been inspected."
+      },
+      "expectations": [
+        {
+          "type": "output_contains_all",
+          "values": ["unknown", "inspect"]
+        },
+        {
+          "type": "output_contains_none",
+          "values": ["current rounding rule is definitely"]
+        }
+      ]
+    }
+  ]
+}
