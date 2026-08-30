@@ -88,6 +88,7 @@
     "evals/fixtures/mock_adapter.py",
     "evals/cases/harness-smoke.eval.json",
     "evals/cases/impact-analysis.eval.json",
+    "evals/cases/project-integration-bootstrap.eval.json",
     "templates/project-bootstrap/README.md",
     "templates/project-bootstrap/AGENTS.md.template",
     "templates/project-bootstrap/.erei/framework.json.template",
@@ -100,6 +101,7 @@
     "templates/project-bootstrap/adr/ADR_TEMPLATE.md.template",
     "tools/bootstrap_project.py",
     "tools/tests/test_bootstrap_project.py",
+    "evidence/PROJECT_INTEGRATION_BOOTSTRAP_V1.md",
     ".github/workflows/framework-evals.yml",
     ".github/workflows/project-bootstrap-tests.yml"
   ],
@@ -133,7 +135,8 @@
     "bug_fix_workflow_v1_with_evals",
     "feature_development_workflow_v1_with_evals",
     "eval_harness_v1_stable",
-    "project_integration_bootstrap_v1_candidate_with_schema_templates_tool_tests_workflow"
+    "project_integration_bootstrap_v1_candidate_with_schema_templates_tool_tests_workflow",
+    "project_integration_bootstrap_v1_independent_verification_passed_with_ci_infrastructure_gap"
   ],
   "next_phase": [
     "approve_or_revise_adr_0002_project_integration_contract",
