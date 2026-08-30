@@ -1,8 +1,8 @@
 {
   "framework": "EREI Engineering Framework",
-  "baseline": "eval-harness-v1-candidate",
+  "baseline": "eval-harness-v1",
   "date": "2026-08-31",
-  "status": "candidate",
+  "status": "stable",
   "artifacts": [
     "README.md",
     "architecture/EREI_ARCHITECTURE_V1.md",
@@ -83,7 +83,8 @@
     "evals/tests/test_runner.py",
     "evals/fixtures/mock_adapter.py",
     "evals/cases/harness-smoke.eval.json",
-    "evals/cases/impact-analysis.eval.json"
+    "evals/cases/impact-analysis.eval.json",
+    ".github/workflows/framework-evals.yml"
   ],
   "completed_phase": [
     "landscape_research",
@@ -114,12 +115,12 @@
     "regression_analysis_skill_v1_with_evals",
     "bug_fix_workflow_v1_with_evals",
     "feature_development_workflow_v1_with_evals",
-    "eval_harness_v1_candidate_with_prototype_and_smoke_evidence"
+    "eval_harness_v1_stable"
   ],
   "next_phase": [
-    "approve_or_revise_adr_0001_eval_harness",
     "project_integration_bootstrap",
     "erei_app_google_project_overlay",
+    "runtime_adapters",
     "remaining_specialist_skills_as_evidence_requires"
   ]
 }
