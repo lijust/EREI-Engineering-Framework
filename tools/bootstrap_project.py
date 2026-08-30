@@ -132,16 +132,20 @@ def plan(target: Path, values: dict[str, str]) -> list[tuple[Path, str, bool]]:
 
 def execute(planned: list[tuple[Path, str, bool]], *, dry_run: bool, force: bool) -> int:
     conflicts = [path for path, _, exists in planned if exists]
-    if conflicts and not force:
-        print("CONFLICT: existing files would be replaced; no files were written.", file=sys.stderr)
-        for path in conflicts:
-            print(f"  - {path}", file=sys.stderr)
-        print("Use --dry-run to inspect or --force for explicit replacement.", file=sys.stderr)
-        return 3
 
     for path, _, exists in planned:
         action = "REPLACE" if exists else "CREATE"
-        print(f"{action}: {path}")
+        prefix = "DRY-RUN " if dry_run else ""
+        print(f"{prefix}{action}: {path}")
+
+    if conflicts and not force:
+        label = "DRY-RUN CONFLICT" if dry_run else "CONFLICT"
+        print(f"{label}: existing files would be replaced; no files were written.", file=sys.stderr)
+        for path in conflicts:
+            print(f"  - {path}", file=sys.stderr)
+        if not dry_run:
+            print("Use --dry-run to inspect or --force for explicit replacement.", file=sys.stderr)
+        return 3
 
     if dry_run:
         return 0
