@@ -1,6 +1,6 @@
 # EREI Engineering Framework
 
-**Status:** Phase 2 Core Stable  
+**Status:** Google Apps Script Overlay V1 Candidate  
 **Date:** 2026-08-31
 
 EREI Engineering Framework is a reusable, cross-project engineering operating system for AI-assisted software development.
@@ -19,37 +19,33 @@ The framework separates:
 
 ## Current state
 
-Foundation V1 and Phase 2 Core are stable. The framework now has project-bootstrap, brownfield, review/verification, and security-core capabilities.
+Foundation V1 and Phase 2 Core are stable. The first technology overlay—Google Apps Script / Google Sheets—is now implemented as a candidate.
 
-### Stable foundation
+### Stable foundation and core
 
 - `constitution/ENGINEERING_CONSTITUTION.md`
 - Agent / Skill / Workflow / Evidence / Risk contracts
-- `agents/chief-engineer/AGENT.md`
-- `workflows/router/WORKFLOW.md`
-- `skills/impact-analysis/`
+- Chief Engineer + Workflow Router
+- Project discovery and brownfield onboarding
+- Requirement compliance / engineering quality / verification baseline
+- Security Engineer + threat model + security review + security-critical workflow
 
-### Phase 2 core
+### Google Apps Script / Google Sheets overlay
 
-Project understanding:
-- `skills/project-discovery/`
-- `skills/project-standard-discovery/`
-- `workflows/new-project/`
-- `workflows/brownfield-onboarding/`
+- `overlays/google-apps-script/OVERLAY.md`
+- `overlays/google-apps-script/SOURCES.md`
+- Quotas/runtime
+- Concurrency/LockService
+- HTML client/server and `google.script.run`
+- CacheService/PropertiesService scopes
+- Google Sheets data access/batching
+- Web app deployment/execute-as identity
+- Apps Script-specific eval cases
 
-Review and verification:
-- `skills/requirement-compliance-review/`
-- `skills/engineering-quality-review/`
-- `skills/verification-before-completion/`
-- `workflows/review-and-verification/`
+The overlay uses progressive, tag-based loading so a CSS/UI task does not automatically load quota, lock, database, and deployment guidance.
 
-Security core:
-- `agents/security-engineer/`
-- `skills/threat-model/`
-- `skills/security-review/`
-- `workflows/security-critical-change/`
+### Research and architecture
 
-Research and architecture:
 - `research/LANDSCAPE.md`
 - `research/BENCHMARK_MATRIX.md`
 - `research/PATTERN_CATALOG.md`
@@ -83,10 +79,10 @@ Key approved principles include:
 
 ## Next implementation targets
 
-1. Google Apps Script / Google Sheets overlay.
-2. Remaining specialist engineering roles.
-3. Feature-development and bug-fix workflows.
-4. Automated eval harness.
-5. Project integration/bootstrap adapters.
+1. Remaining specialist engineering roles.
+2. Feature-development and bug-fix workflows.
+3. Automated eval harness.
+4. Project integration/bootstrap adapters.
+5. EREI APP Google project-specific overlay/context.
 
 `BASELINE.json` is the machine-readable checkpoint for the current framework state.
