@@ -1,6 +1,6 @@
 # EREI Engineering Framework
 
-**Status:** Delivery Workflows V1 Stable  
+**Status:** Eval Harness V1 Candidate  
 **Date:** 2026-08-31
 
 EREI Engineering Framework is a reusable, cross-project engineering operating system for AI-assisted software development.
@@ -20,6 +20,8 @@ The framework separates:
 ## Current state
 
 Foundation V1, Phase 2 Core, Google Apps Script / Google Sheets Overlay V1, Specialist Roles V1, and Delivery Workflows V1 are stable.
+
+**Eval Harness V1 is a candidate architectural addition governed by `adr/ADR-0001-EVAL-HARNESS.md`.** It is not stable until the L3 architecture gate is approved.
 
 ## Engineering roles
 
@@ -48,11 +50,26 @@ Outcome/acceptance → impact/risk → structural gates → technical plan → i
 
 Precise defect → baseline/reproduction → systematic debugging/root cause → impact/risk → smallest safe fix → regression guard → regression analysis → reviews → fresh verification → convergence → release.
 
-### Supporting skills
-- `skills/systematic-debugging/`
-- `skills/regression-analysis/`
+## Eval Harness V1 candidate
 
-Both include specifications and eval cases.
+The candidate introduces a provider-neutral automated evaluation layer:
+
+- `research/EVAL_HARNESS_BENCHMARK.md`
+- `adr/ADR-0001-EVAL-HARNESS.md`
+- `evals/README.md`
+- `evals/schema/eval-case.schema.json`
+- `evals/adapters/PROTOCOL.md`
+- `evals/runner.py`
+- `evals/tests/test_runner.py`
+- deterministic mock/self-test fixtures
+- `evals/cases/harness-smoke.eval.json`
+- `evals/cases/impact-analysis.eval.json`
+
+Core design:
+
+`*.eval.json → EREI runner → CLI adapter → target agent/runtime → normalized result → deterministic scorers`
+
+The runner uses Python standard library only. External systems such as Inspect AI, DeepEval, Promptfoo, Braintrust, or provider-native eval APIs remain optional adapters rather than Framework Core dependencies.
 
 ## Stable core capabilities
 
@@ -91,7 +108,7 @@ Key approved principles include:
 
 ## Next architecture targets
 
-1. Automated eval harness.
+1. Approve/reject ADR-0001 and promote or revise Eval Harness V1.
 2. Project integration/bootstrap adapters.
 3. EREI APP Google project-specific overlay/context.
 4. Add specialist skills only when evidence shows a distinct reusable procedure is needed.
