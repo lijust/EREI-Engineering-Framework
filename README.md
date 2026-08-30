@@ -1,6 +1,6 @@
 # EREI Engineering Framework
 
-**Status:** Phase 2 Core Candidate  
+**Status:** Phase 2 Core Stable  
 **Date:** 2026-08-31
 
 EREI Engineering Framework is a reusable, cross-project engineering operating system for AI-assisted software development.
@@ -19,7 +19,7 @@ The framework separates:
 
 ## Current state
 
-Foundation V1 is stable. Phase 2 adds the first project-bootstrap, brownfield, review/verification, and security-core capabilities.
+Foundation V1 and Phase 2 Core are stable. The framework now has project-bootstrap, brownfield, review/verification, and security-core capabilities.
 
 ### Stable foundation
 
