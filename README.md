@@ -1,6 +1,6 @@
 # EREI Engineering Framework
 
-**Status:** Project Integration Bootstrap V1 Candidate  
+**Status:** Project Integration Bootstrap V1 Stable  
 **Date:** 2026-08-31
 
 EREI Engineering Framework is a reusable, cross-project engineering operating system for AI-assisted software development.
@@ -19,9 +19,9 @@ The framework separates:
 
 ## Current state
 
-Foundation V1, Phase 2 Core, Google Apps Script / Google Sheets Overlay V1, Specialist Roles V1, Delivery Workflows V1, and **Eval Harness V1** are stable.
+Foundation V1, Phase 2 Core, Google Apps Script / Google Sheets Overlay V1, Specialist Roles V1, Delivery Workflows V1, **Eval Harness V1**, and **Project Integration Bootstrap V1** are stable.
 
-**Project Integration Bootstrap V1 is the current architecture candidate**, governed by `adr/ADR-0002-PROJECT-INTEGRATION-CONTRACT.md`.
+`adr/ADR-0001-EVAL-HARNESS.md` and `adr/ADR-0002-PROJECT-INTEGRATION-CONTRACT.md` are accepted.
 
 ## Engineering roles
 
@@ -48,11 +48,11 @@ Roles own perspective, accountability, authority, escalation and evidence obliga
 - Engineering-quality review
 - Verification-before-completion
 - Security-critical workflow
-- Provider-neutral Eval Harness V1 (`ADR-0001` Accepted)
+- Provider-neutral Eval Harness V1
 
-## Project Integration Bootstrap V1 candidate
+## Project Integration Bootstrap V1
 
-The candidate establishes a provider-neutral, project-local integration contract:
+The stable project-integration contract standardizes:
 
 ```text
 AGENTS.md
@@ -68,7 +68,7 @@ adr/
 └── ADR_TEMPLATE.md
 ```
 
-### Proposed pin model
+### Pin model
 
 `.erei/framework.json` declares:
 - Framework repository,
@@ -89,10 +89,6 @@ Candidate/Stable project state should pin the Framework using an immutable commi
 - explicit `--force` required for replacement,
 - no execution of target project code,
 - no third-party package dependency.
-
-Candidate self-tests live in `tools/tests/test_bootstrap_project.py` and CI in `.github/workflows/project-bootstrap-tests.yml`.
-
-### Project-truth rule
 
 Generated files are scaffolding, not completed facts. Greenfield projects compose integration with project discovery/new-project workflow; brownfield projects compose it with brownfield onboarding and project-standard discovery before project context is treated as confirmed.
 
@@ -129,8 +125,8 @@ Key approved principles include:
 
 ## Next architecture targets
 
-1. Approve/revise ADR-0002 and Project Integration Bootstrap V1.
-2. EREI APP Google project-specific integration/context.
+1. Apply Project Integration Bootstrap V1 to a real brownfield project.
+2. Build the EREI APP Google project-specific context/overlay only from confirmed repository evidence.
 3. Runtime adapters for supported agent environments.
 4. Framework upgrade workflow.
 5. Add specialist skills only when evidence shows a distinct reusable procedure is needed.

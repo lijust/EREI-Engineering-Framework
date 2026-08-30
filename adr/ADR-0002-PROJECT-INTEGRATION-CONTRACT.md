@@ -1,6 +1,6 @@
 # ADR-0002 — Project Integration and Framework Pin Contract
 
-**Status:** Proposed  
+**Status:** Accepted  
 **Date:** 2026-08-31  
 **Risk:** L3 — Cross-project integration contract
 
@@ -18,7 +18,7 @@ Relying on chat memory, custom instructions, a branch name such as `main`, or du
 
 The integration mechanism must remain readable by humans, coding agents, CI, and future adapters without adding a package-manager dependency.
 
-## Decision proposed
+## Decision
 
 Adopt a small project-local integration contract centered on:
 
@@ -94,14 +94,14 @@ Runtimes/adapters may obtain the pinned Framework content through their availabl
 
 Vendoring or submodules may be supported later for environments that require offline/local operation, but they are not the canonical V1 model.
 
-## Proposed manifest example
+## Manifest example
 
 ```json
 {
   "schema_version": 1,
   "framework": {
     "repository": "lijust/EREI-Engineering-Framework",
-    "baseline": "eval-harness-v1",
+    "baseline": "project-integration-bootstrap-v1",
     "ref_type": "commit",
     "ref": "<immutable-commit-sha>"
   },
@@ -154,8 +154,6 @@ Rejected for Candidate/Stable project baselines because a mutable branch does no
 ### Build a package manager first
 Rejected as overengineering. A manifest + adapters are sufficient for V1.
 
-## Approval gate
+## Approval record
 
-This ADR establishes a durable cross-project consumption and pinning contract. Promotion to Framework Stable requires explicit L3 architecture approval.
-
-A prototype bootstrap, schema, templates, and tests may exist on the candidate branch as evidence before approval.
+ADR-0002 was explicitly approved on 2026-08-31. Project Integration Bootstrap V1 may be promoted to Framework Stable through the normal release flow.
