@@ -1,8 +1,8 @@
 {
   "framework": "EREI Engineering Framework",
-  "baseline": "delivery-workflows-v1-candidate",
+  "baseline": "delivery-workflows-v1",
   "date": "2026-08-31",
-  "status": "candidate",
+  "status": "stable",
   "artifacts": [
     "README.md",
     "architecture/EREI_ARCHITECTURE_V1.md",

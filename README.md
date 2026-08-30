@@ -1,6 +1,6 @@
 # EREI Engineering Framework
 
-**Status:** Delivery Workflows V1 Candidate  
+**Status:** Delivery Workflows V1 Stable  
 **Date:** 2026-08-31
 
 EREI Engineering Framework is a reusable, cross-project engineering operating system for AI-assisted software development.
@@ -19,7 +19,7 @@ The framework separates:
 
 ## Current state
 
-Foundation V1, Phase 2 Core, Google Apps Script / Google Sheets Overlay V1, and Specialist Roles V1 are stable. Delivery Workflows V1 is the current candidate.
+Foundation V1, Phase 2 Core, Google Apps Script / Google Sheets Overlay V1, Specialist Roles V1, and Delivery Workflows V1 are stable.
 
 ## Engineering roles
 
@@ -39,7 +39,7 @@ Roles own perspective, accountability, authority, escalation and evidence obliga
 ## Delivery workflows
 
 ### Feature development
-`workflows/feature-development/` implements a proportional lifecycle:
+`workflows/feature-development/` implements:
 
 Outcome/acceptance → impact/risk → structural gates → technical plan → implementation slices → regression analysis → compliance review → engineering review → specialist gates → fresh verification → convergence → release.
 
@@ -64,6 +64,7 @@ Both include specifications and eval cases.
 - Threat modeling, security review and security-critical workflow
 - Google Apps Script / Google Sheets technology overlay
 - Full specialist engineering role set
+- Feature and bug delivery workflows
 
 ## Operating principles
 
