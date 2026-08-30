@@ -1,8 +1,8 @@
 {
   "framework": "EREI Engineering Framework",
-  "baseline": "eval-harness-v1",
+  "baseline": "project-integration-bootstrap-v1-candidate",
   "date": "2026-08-31",
-  "status": "stable",
+  "status": "candidate",
   "artifacts": [
     "README.md",
     "architecture/EREI_ARCHITECTURE_V1.md",
@@ -12,6 +12,7 @@
     "schemas/WORKFLOW_CONTRACT.md",
     "schemas/EVIDENCE_CONTRACT.md",
     "schemas/RISK_CONTRACT.md",
+    "schemas/project-framework.schema.json",
     "agents/chief-engineer/AGENT.md",
     "agents/system-architect/AGENT.md",
     "agents/frontend-engineer/AGENT.md",
@@ -30,6 +31,8 @@
     "workflows/bug-fix/evals/CASES.md",
     "workflows/review-and-verification/WORKFLOW.md",
     "workflows/security-critical-change/WORKFLOW.md",
+    "workflows/project-integration-bootstrap/WORKFLOW.md",
+    "workflows/project-integration-bootstrap/evals/CASES.md",
     "skills/impact-analysis/SKILL.md",
     "skills/impact-analysis/SPEC.md",
     "skills/impact-analysis/evals/CASES.md",
@@ -76,6 +79,7 @@
     "research/RESEARCH_LEDGER.md",
     "research/EVAL_HARNESS_BENCHMARK.md",
     "adr/ADR-0001-EVAL-HARNESS.md",
+    "adr/ADR-0002-PROJECT-INTEGRATION-CONTRACT.md",
     "evals/README.md",
     "evals/schema/eval-case.schema.json",
     "evals/adapters/PROTOCOL.md",
@@ -84,7 +88,20 @@
     "evals/fixtures/mock_adapter.py",
     "evals/cases/harness-smoke.eval.json",
     "evals/cases/impact-analysis.eval.json",
-    ".github/workflows/framework-evals.yml"
+    "templates/project-bootstrap/README.md",
+    "templates/project-bootstrap/AGENTS.md.template",
+    "templates/project-bootstrap/.erei/framework.json.template",
+    "templates/project-bootstrap/.erei/PROJECT_PROFILE.md.template",
+    "templates/project-bootstrap/.erei/ARCHITECTURE.md.template",
+    "templates/project-bootstrap/.erei/SECURITY_MODEL.md.template",
+    "templates/project-bootstrap/.erei/DATA_MODEL.md.template",
+    "templates/project-bootstrap/.erei/PERFORMANCE_BUDGET.md.template",
+    "templates/project-bootstrap/.erei/PROJECT_RULES.md.template",
+    "templates/project-bootstrap/adr/ADR_TEMPLATE.md.template",
+    "tools/bootstrap_project.py",
+    "tools/tests/test_bootstrap_project.py",
+    ".github/workflows/framework-evals.yml",
+    ".github/workflows/project-bootstrap-tests.yml"
   ],
   "completed_phase": [
     "landscape_research",
@@ -115,12 +132,14 @@
     "regression_analysis_skill_v1_with_evals",
     "bug_fix_workflow_v1_with_evals",
     "feature_development_workflow_v1_with_evals",
-    "eval_harness_v1_stable"
+    "eval_harness_v1_stable",
+    "project_integration_bootstrap_v1_candidate_with_schema_templates_tool_tests_workflow"
   ],
   "next_phase": [
-    "project_integration_bootstrap",
+    "approve_or_revise_adr_0002_project_integration_contract",
     "erei_app_google_project_overlay",
     "runtime_adapters",
+    "framework_upgrade_workflow",
     "remaining_specialist_skills_as_evidence_requires"
   ]
 }
