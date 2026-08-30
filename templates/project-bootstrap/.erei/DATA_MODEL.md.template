@@ -1,0 +1,30 @@
+# Data Model
+
+## Sources of Truth
+List authoritative stores and which entities/fields each owns.
+
+## Core Entities
+For each entity document:
+- stable identifier,
+- owner/tenant relationship,
+- lifecycle,
+- required invariants,
+- important relationships.
+
+## Persistence Boundaries
+Document repositories/adapters, external stores, caches, queues, files, spreadsheets, or APIs that persist/derive data.
+
+## Data Integrity Rules
+List uniqueness, referential, calculation, ordering, idempotency, and non-overwrite requirements.
+
+## Migrations
+Document compatibility, backup, rollback, validation, and dual-read/write requirements where applicable.
+
+## Retention / Deletion
+Record retention, deletion, archival, and recovery rules.
+
+## Exports / Imports
+Document format/contracts and any security/tenant scoping requirements.
+
+## Known Gaps / Unknowns
+Unverified legacy behavior stays explicit until inspected.

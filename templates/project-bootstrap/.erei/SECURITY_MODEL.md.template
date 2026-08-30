@@ -1,0 +1,40 @@
+# Security Model
+
+## Assets
+List sensitive data, privileged operations, secrets, financial/business invariants, and availability-critical capabilities.
+
+## Identities
+- Identity providers:
+- Session model:
+- Service identities:
+
+## Authorization
+Define application roles, permissions, resource ownership, and backend enforcement points.
+
+Authentication does not imply authorization.
+
+## Tenant Isolation
+- Tenant definition:
+- Tenant resolution source:
+- Cross-tenant denial rules:
+- Shared-cache/storage rules:
+
+Frontend/client-supplied tenant or role claims are untrusted unless independently validated server-side.
+
+## Trust Boundaries
+Document browser/client, backend, storage, admin, third-party APIs, integrations, and deployment identities.
+
+## Sensitive Operations
+List operations requiring elevated validation, audit, approval, or idempotency.
+
+## Threats / Abuse Cases
+Record known or plausible attack/abuse paths and their controls.
+
+## Secrets / Configuration
+Document where secrets/configuration live and how they are prevented from entering source control.
+
+## Audit / Observability
+Define security-relevant events that require durable logs.
+
+## Known Risks / Unknowns
+Do not convert assumptions into confirmed security properties.

@@ -1,0 +1,18 @@
+# {{PROJECT_NAME}} — Engineering Agent Bootloader
+
+This project uses **EREI Engineering Framework**.
+
+Before architectural, implementation, debugging, security, data, performance, QA, or release work:
+
+1. Read `.erei/framework.json` and resolve the pinned Framework revision.
+2. Load the pinned Engineering Constitution and applicable Framework contracts.
+3. Read `.erei/PROJECT_PROFILE.md` and only the project context relevant to the current task.
+4. Respect `.erei/ARCHITECTURE.md`, `.erei/SECURITY_MODEL.md`, `.erei/DATA_MODEL.md`, `.erei/PERFORMANCE_BUDGET.md`, and `.erei/PROJECT_RULES.md` as project-local truth.
+5. For brownfield work, inspect actual code/runtime/tests/deployment before assuming existing behavior.
+6. Route material changes through the Framework Chief Engineer and applicable workflow.
+7. Persist durable architectural decisions in `adr/` rather than leaving them only in chat/session context.
+8. Never treat frontend/UI controls as authorization or client-supplied tenant/user identity as trusted.
+9. Do not silently overwrite project data or existing project rules.
+10. Completion requires evidence appropriate to risk; a claim of success is not evidence.
+
+Project-local instructions may specialize the Framework but may not silently weaken the pinned Constitution. Any conflict must be surfaced explicitly.

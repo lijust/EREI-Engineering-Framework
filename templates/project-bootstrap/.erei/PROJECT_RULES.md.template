@@ -1,0 +1,28 @@
+# Project Rules
+
+## Purpose
+This file contains durable project-specific engineering rules that specialize the pinned EREI Engineering Framework without weakening its Constitution.
+
+## Allowed Technology / Dependency Rules
+Record project-specific language, framework, dependency, build, or runtime constraints.
+
+## Coding / Structure Rules
+Record conventions that materially affect maintainability, architecture, or integration.
+
+## Data Rules
+Record project-specific write, overwrite, evidence, migration, import/export, or source-of-truth constraints.
+
+## Security Rules
+Record project-specific authorization, tenant, identity, secrets, integration, or audit constraints.
+
+## Release Rules
+Record environment, deployment, QA, rollback, versioning, or Stable immutability rules.
+
+## Operational Rules
+Record observability, incident, recovery, quota, manual-step, or support constraints.
+
+## Temporary Rules
+Temporary constraints must include an owner/reason and removal condition so they do not silently become permanent architecture.
+
+## Conflict Rule
+If a project rule conflicts with the pinned Framework Constitution, surface the conflict and require an explicit architecture decision. Do not silently choose the weaker rule.

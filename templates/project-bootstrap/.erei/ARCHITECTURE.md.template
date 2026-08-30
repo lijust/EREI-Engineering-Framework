@@ -1,0 +1,31 @@
+# Project Architecture
+
+## System Context
+Describe the system boundary, external actors/services, and major responsibilities.
+
+## Major Components
+For each component record:
+- responsibility,
+- trusted/untrusted boundary,
+- inputs/outputs,
+- dependencies,
+- persistence interactions.
+
+## Request / Data Flows
+Document material end-to-end flows such as:
+`UI → State → API/Service → Domain → Repository → Data Store → External Systems`
+
+## Trust Boundaries
+Identify browser/client, backend, tenant, admin, third-party, and infrastructure boundaries.
+
+## Architecture Rules
+List project-specific structural rules that are already accepted.
+
+## Migration / Replaceability
+Identify technology-specific adapters and boundaries intended to support future replacement without broad rewrite.
+
+## Known Constraints / Debt
+Record only observed or accepted constraints. Do not invent future architecture to fill unknowns.
+
+## Related ADRs
+Link durable decisions from `adr/`.

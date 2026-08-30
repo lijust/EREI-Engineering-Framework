@@ -1,6 +1,6 @@
 # EREI Engineering Framework
 
-**Status:** Eval Harness V1 Stable  
+**Status:** Project Integration Bootstrap V1 Candidate  
 **Date:** 2026-08-31
 
 EREI Engineering Framework is a reusable, cross-project engineering operating system for AI-assisted software development.
@@ -21,7 +21,7 @@ The framework separates:
 
 Foundation V1, Phase 2 Core, Google Apps Script / Google Sheets Overlay V1, Specialist Roles V1, Delivery Workflows V1, and **Eval Harness V1** are stable.
 
-`adr/ADR-0001-EVAL-HARNESS.md` is accepted and defines the provider-neutral automated evaluation architecture.
+**Project Integration Bootstrap V1 is the current architecture candidate**, governed by `adr/ADR-0002-PROJECT-INTEGRATION-CONTRACT.md`.
 
 ## Engineering roles
 
@@ -38,52 +38,71 @@ The framework defines distinct accountability roles for:
 
 Roles own perspective, accountability, authority, escalation and evidence obligations. Reusable procedures remain in Skills and cross-role execution remains in Workflows.
 
-## Delivery workflows
+## Stable delivery and evaluation
 
-### Feature development
-`workflows/feature-development/` implements:
+- Feature-development workflow
+- Bug-fix workflow
+- Systematic debugging
+- Regression analysis
+- Requirement compliance review
+- Engineering-quality review
+- Verification-before-completion
+- Security-critical workflow
+- Provider-neutral Eval Harness V1 (`ADR-0001` Accepted)
 
-Outcome/acceptance → impact/risk → structural gates → technical plan → implementation slices → regression analysis → compliance review → engineering review → specialist gates → fresh verification → convergence → release.
+## Project Integration Bootstrap V1 candidate
 
-### Bug fixing
-`workflows/bug-fix/` implements:
+The candidate establishes a provider-neutral, project-local integration contract:
 
-Precise defect → baseline/reproduction → systematic debugging/root cause → impact/risk → smallest safe fix → regression guard → regression analysis → reviews → fresh verification → convergence → release.
+```text
+AGENTS.md
+.erei/
+├── framework.json
+├── PROJECT_PROFILE.md
+├── ARCHITECTURE.md
+├── SECURITY_MODEL.md
+├── DATA_MODEL.md
+├── PERFORMANCE_BUDGET.md
+└── PROJECT_RULES.md
+adr/
+└── ADR_TEMPLATE.md
+```
+
+### Proposed pin model
+
+`.erei/framework.json` declares:
+- Framework repository,
+- Framework baseline,
+- exact Framework ref,
+- project context paths,
+- enabled overlays,
+- runtime adapter preferences.
+
+Candidate/Stable project state should pin the Framework using an immutable commit SHA or immutable tag rather than relying only on a mutable branch such as `main`.
+
+### Bootstrap tooling
+
+`tools/bootstrap_project.py` is a Python-standard-library-only, fail-closed generator:
+- dry-run supported,
+- no overwrite by default,
+- explicit conflict reporting,
+- explicit `--force` required for replacement,
+- no execution of target project code,
+- no third-party package dependency.
+
+Candidate self-tests live in `tools/tests/test_bootstrap_project.py` and CI in `.github/workflows/project-bootstrap-tests.yml`.
+
+### Project-truth rule
+
+Generated files are scaffolding, not completed facts. Greenfield projects compose integration with project discovery/new-project workflow; brownfield projects compose it with brownfield onboarding and project-standard discovery before project context is treated as confirmed.
 
 ## Eval Harness V1
 
-The framework now includes a provider-neutral automated evaluation layer:
-
-- `research/EVAL_HARNESS_BENCHMARK.md`
-- `adr/ADR-0001-EVAL-HARNESS.md`
-- `evals/README.md`
-- `evals/schema/eval-case.schema.json`
-- `evals/adapters/PROTOCOL.md`
-- `evals/runner.py`
-- `evals/tests/test_runner.py`
-- deterministic mock/self-test fixtures
-- `evals/cases/harness-smoke.eval.json`
-- `evals/cases/impact-analysis.eval.json`
-- `.github/workflows/framework-evals.yml`
-
-Core design:
+The provider-neutral automated evaluation layer is stable:
 
 `*.eval.json → EREI runner → CLI adapter → target agent/runtime → normalized result → deterministic scorers`
 
 The runner uses Python standard library only. External systems such as Inspect AI, DeepEval, Promptfoo, Braintrust, or provider-native eval APIs remain optional adapters rather than Framework Core dependencies.
-
-## Stable core capabilities
-
-- Engineering Constitution
-- Agent / Skill / Workflow / Evidence / Risk contracts
-- Workflow Router and impact analysis
-- New-project discovery and brownfield onboarding
-- Requirement compliance / engineering quality / verification baseline
-- Threat modeling, security review and security-critical workflow
-- Google Apps Script / Google Sheets technology overlay
-- Full specialist engineering role set
-- Feature and bug delivery workflows
-- Provider-neutral automated eval harness
 
 ## Operating principles
 
@@ -110,9 +129,10 @@ Key approved principles include:
 
 ## Next architecture targets
 
-1. Project integration/bootstrap adapters.
-2. EREI APP Google project-specific overlay/context.
+1. Approve/revise ADR-0002 and Project Integration Bootstrap V1.
+2. EREI APP Google project-specific integration/context.
 3. Runtime adapters for supported agent environments.
-4. Add specialist skills only when evidence shows a distinct reusable procedure is needed.
+4. Framework upgrade workflow.
+5. Add specialist skills only when evidence shows a distinct reusable procedure is needed.
 
 `BASELINE.json` is the machine-readable checkpoint for the current framework state.
