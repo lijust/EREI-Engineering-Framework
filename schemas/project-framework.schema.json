@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://erei-framework.local/schemas/project-framework.schema.json",
+  "title": "EREI Project Framework Integration Manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "framework", "project", "overlays", "runtime_adapters"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "framework": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repository", "baseline", "ref_type", "ref"],
+      "properties": {
+        "repository": {"type": "string", "minLength": 3},
+        "baseline": {"type": "string", "minLength": 1},
+        "ref_type": {"enum": ["commit", "tag", "branch"]},
+        "ref": {"type": "string", "minLength": 1}
+      }
+    },
+    "project": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profile", "architecture", "security_model", "data_model", "performance_budget", "rules", "adr_directory"],
+      "properties": {
+        "profile": {"type": "string", "minLength": 1},
+        "architecture": {"type": "string", "minLength": 1},
+        "security_model": {"type": "string", "minLength": 1},
+        "data_model": {"type": "string", "minLength": 1},
+        "performance_budget": {"type": "string", "minLength": 1},
+        "rules": {"type": "string", "minLength": 1},
+        "adr_directory": {"type": "string", "minLength": 1}
+      }
+    },
+    "overlays": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "runtime_adapters": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    }
+  }
+}
