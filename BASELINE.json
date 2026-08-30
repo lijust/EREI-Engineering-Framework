@@ -1,8 +1,8 @@
 {
   "framework": "EREI Engineering Framework",
-  "baseline": "specialist-roles-v1",
+  "baseline": "delivery-workflows-v1-candidate",
   "date": "2026-08-31",
-  "status": "stable",
+  "status": "candidate",
   "artifacts": [
     "README.md",
     "architecture/EREI_ARCHITECTURE_V1.md",
@@ -24,6 +24,10 @@
     "workflows/router/WORKFLOW.md",
     "workflows/new-project/WORKFLOW.md",
     "workflows/brownfield-onboarding/WORKFLOW.md",
+    "workflows/feature-development/WORKFLOW.md",
+    "workflows/feature-development/evals/CASES.md",
+    "workflows/bug-fix/WORKFLOW.md",
+    "workflows/bug-fix/evals/CASES.md",
     "workflows/review-and-verification/WORKFLOW.md",
     "workflows/security-critical-change/WORKFLOW.md",
     "skills/impact-analysis/SKILL.md",
@@ -35,6 +39,12 @@
     "skills/project-standard-discovery/SKILL.md",
     "skills/project-standard-discovery/SPEC.md",
     "skills/project-standard-discovery/evals/CASES.md",
+    "skills/systematic-debugging/SKILL.md",
+    "skills/systematic-debugging/SPEC.md",
+    "skills/systematic-debugging/evals/CASES.md",
+    "skills/regression-analysis/SKILL.md",
+    "skills/regression-analysis/SPEC.md",
+    "skills/regression-analysis/evals/CASES.md",
     "skills/requirement-compliance-review/SKILL.md",
     "skills/requirement-compliance-review/SPEC.md",
     "skills/requirement-compliance-review/evals/CASES.md",
@@ -89,13 +99,16 @@
     "data_engineer_role_v1",
     "performance_engineer_role_v1",
     "qa_engineer_role_v1",
-    "release_engineer_role_v1"
+    "release_engineer_role_v1",
+    "systematic_debugging_skill_v1_with_evals",
+    "regression_analysis_skill_v1_with_evals",
+    "bug_fix_workflow_v1_with_evals",
+    "feature_development_workflow_v1_with_evals"
   ],
   "next_phase": [
-    "feature_and_bug_workflows",
-    "systematic_debugging_and_regression_skills",
     "automated_eval_harness",
     "project_integration_bootstrap",
-    "erei_app_google_project_overlay"
+    "erei_app_google_project_overlay",
+    "remaining_specialist_skills_as_evidence_requires"
   ]
 }

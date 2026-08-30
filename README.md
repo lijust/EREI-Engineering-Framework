@@ -1,6 +1,6 @@
 # EREI Engineering Framework
 
-**Status:** Specialist Roles V1 Stable  
+**Status:** Delivery Workflows V1 Candidate  
 **Date:** 2026-08-31
 
 EREI Engineering Framework is a reusable, cross-project engineering operating system for AI-assisted software development.
@@ -19,12 +19,11 @@ The framework separates:
 
 ## Current state
 
-Foundation V1, Phase 2 Core, Google Apps Script / Google Sheets Overlay V1, and Specialist Roles V1 are stable.
+Foundation V1, Phase 2 Core, Google Apps Script / Google Sheets Overlay V1, and Specialist Roles V1 are stable. Delivery Workflows V1 is the current candidate.
 
 ## Engineering roles
 
-The framework now defines distinct accountability roles for:
-
+The framework defines distinct accountability roles for:
 - Chief Engineer
 - System Architect
 - Frontend Engineer
@@ -37,6 +36,24 @@ The framework now defines distinct accountability roles for:
 
 Roles own perspective, accountability, authority, escalation and evidence obligations. Reusable procedures remain in Skills and cross-role execution remains in Workflows.
 
+## Delivery workflows
+
+### Feature development
+`workflows/feature-development/` implements a proportional lifecycle:
+
+Outcome/acceptance → impact/risk → structural gates → technical plan → implementation slices → regression analysis → compliance review → engineering review → specialist gates → fresh verification → convergence → release.
+
+### Bug fixing
+`workflows/bug-fix/` implements:
+
+Precise defect → baseline/reproduction → systematic debugging/root cause → impact/risk → smallest safe fix → regression guard → regression analysis → reviews → fresh verification → convergence → release.
+
+### Supporting skills
+- `skills/systematic-debugging/`
+- `skills/regression-analysis/`
+
+Both include specifications and eval cases.
+
 ## Stable core capabilities
 
 - Engineering Constitution
@@ -48,21 +65,9 @@ Roles own perspective, accountability, authority, escalation and evidence obliga
 - Google Apps Script / Google Sheets technology overlay
 - Full specialist engineering role set
 
-## Google Apps Script / Google Sheets overlay
-
-The first technology overlay includes routable references for:
-- quotas/runtime,
-- concurrency/LockService,
-- HTML client/server and `google.script.run`,
-- CacheService/PropertiesService scopes,
-- Google Sheets batching/data access,
-- web app deployment/execute-as identity,
-- platform-specific eval cases.
-
 ## Operating principles
 
 Key approved principles include:
-
 - Hybrid autonomy: safe changes may execute automatically; new architecture/security/data structural decisions require approval.
 - Enterprise-grade SaaS security mindset.
 - Frontend is never trusted for authorization.
@@ -83,12 +88,11 @@ Key approved principles include:
 - Heavy operation < 5 s
 - Prefer P95 behavior over best-case latency.
 
-## Next implementation targets
+## Next architecture targets
 
-1. Feature-development and bug-fix workflows.
-2. Systematic debugging and regression skills.
-3. Automated eval harness.
-4. Project integration/bootstrap adapters.
-5. EREI APP Google project-specific overlay/context.
+1. Automated eval harness.
+2. Project integration/bootstrap adapters.
+3. EREI APP Google project-specific overlay/context.
+4. Add specialist skills only when evidence shows a distinct reusable procedure is needed.
 
 `BASELINE.json` is the machine-readable checkpoint for the current framework state.
