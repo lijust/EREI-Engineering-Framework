@@ -1,6 +1,6 @@
 # EREI Engineering Framework
 
-**Status:** Google Apps Script Overlay V1 Stable  
+**Status:** Specialist Roles V1 Candidate  
 **Date:** 2026-08-31
 
 EREI Engineering Framework is a reusable, cross-project engineering operating system for AI-assisted software development.
@@ -19,39 +19,44 @@ The framework separates:
 
 ## Current state
 
-Foundation V1, Phase 2 Core, and the first technology overlay—Google Apps Script / Google Sheets—are stable.
+Foundation V1, Phase 2 Core, and Google Apps Script / Google Sheets Overlay V1 are stable. Specialist Roles V1 is the current candidate.
 
-### Stable foundation and core
+## Engineering roles
 
-- `constitution/ENGINEERING_CONSTITUTION.md`
+The framework now defines distinct accountability roles for:
+
+- Chief Engineer
+- System Architect
+- Frontend Engineer
+- Backend Engineer
+- Security Engineer
+- Data Engineer
+- Performance Engineer
+- QA Engineer
+- Release Engineer
+
+Roles own perspective, accountability, authority, escalation and evidence obligations. Reusable procedures remain in Skills and cross-role execution remains in Workflows.
+
+## Stable core capabilities
+
+- Engineering Constitution
 - Agent / Skill / Workflow / Evidence / Risk contracts
-- Chief Engineer + Workflow Router
-- Project discovery and brownfield onboarding
+- Workflow Router and impact analysis
+- New-project discovery and brownfield onboarding
 - Requirement compliance / engineering quality / verification baseline
-- Security Engineer + threat model + security review + security-critical workflow
+- Threat modeling, security review and security-critical workflow
+- Google Apps Script / Google Sheets technology overlay
 
-### Google Apps Script / Google Sheets overlay
+## Google Apps Script / Google Sheets overlay
 
-- `overlays/google-apps-script/OVERLAY.md`
-- `overlays/google-apps-script/SOURCES.md`
-- Quotas/runtime
-- Concurrency/LockService
-- HTML client/server and `google.script.run`
-- CacheService/PropertiesService scopes
-- Google Sheets data access/batching
-- Web app deployment/execute-as identity
-- Apps Script-specific eval cases
-
-The overlay uses progressive, tag-based loading so a CSS/UI task does not automatically load quota, lock, database, and deployment guidance.
-
-### Research and architecture
-
-- `research/LANDSCAPE.md`
-- `research/BENCHMARK_MATRIX.md`
-- `research/PATTERN_CATALOG.md`
-- `research/ANTI_PATTERNS.md`
-- `research/RESEARCH_LEDGER.md`
-- `architecture/EREI_ARCHITECTURE_V1.md`
+The first technology overlay includes routable references for:
+- quotas/runtime,
+- concurrency/LockService,
+- HTML client/server and `google.script.run`,
+- CacheService/PropertiesService scopes,
+- Google Sheets batching/data access,
+- web app deployment/execute-as identity,
+- platform-specific eval cases.
 
 ## Operating principles
 
@@ -79,8 +84,8 @@ Key approved principles include:
 
 ## Next implementation targets
 
-1. Remaining specialist engineering roles.
-2. Feature-development and bug-fix workflows.
+1. Feature-development and bug-fix workflows.
+2. Systematic debugging and regression skills.
 3. Automated eval harness.
 4. Project integration/bootstrap adapters.
 5. EREI APP Google project-specific overlay/context.
