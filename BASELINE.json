@@ -1,8 +1,8 @@
 {
   "framework": "EREI Engineering Framework",
-  "baseline": "project-integration-bootstrap-v1-candidate",
+  "baseline": "project-integration-bootstrap-v1",
   "date": "2026-08-31",
-  "status": "candidate",
+  "status": "stable",
   "artifacts": [
     "README.md",
     "architecture/EREI_ARCHITECTURE_V1.md",
@@ -135,12 +135,10 @@
     "bug_fix_workflow_v1_with_evals",
     "feature_development_workflow_v1_with_evals",
     "eval_harness_v1_stable",
-    "project_integration_bootstrap_v1_candidate_with_schema_templates_tool_tests_workflow",
-    "project_integration_bootstrap_v1_independent_verification_passed_with_ci_infrastructure_gap"
+    "project_integration_bootstrap_v1_stable"
   ],
   "next_phase": [
-    "approve_or_revise_adr_0002_project_integration_contract",
-    "erei_app_google_project_overlay",
+    "erei_app_google_brownfield_integration",
     "runtime_adapters",
     "framework_upgrade_workflow",
     "remaining_specialist_skills_as_evidence_requires"
