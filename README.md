@@ -1,6 +1,6 @@
 # EREI Engineering Framework
 
-**Status:** Google Apps Script Overlay V1 Candidate  
+**Status:** Google Apps Script Overlay V1 Stable  
 **Date:** 2026-08-31
 
 EREI Engineering Framework is a reusable, cross-project engineering operating system for AI-assisted software development.
@@ -19,7 +19,7 @@ The framework separates:
 
 ## Current state
 
-Foundation V1 and Phase 2 Core are stable. The first technology overlay—Google Apps Script / Google Sheets—is now implemented as a candidate.
+Foundation V1, Phase 2 Core, and the first technology overlay—Google Apps Script / Google Sheets—are stable.
 
 ### Stable foundation and core
 
