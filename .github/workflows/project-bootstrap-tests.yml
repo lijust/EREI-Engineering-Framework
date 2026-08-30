@@ -1,0 +1,42 @@
+name: Project Bootstrap Tests
+
+on:
+  pull_request:
+    paths:
+      - 'tools/bootstrap_project.py'
+      - 'tools/tests/**'
+      - 'templates/project-bootstrap/**'
+      - 'schemas/project-framework.schema.json'
+      - 'workflows/project-integration-bootstrap/**'
+      - 'adr/ADR-0002-PROJECT-INTEGRATION-CONTRACT.md'
+      - '.github/workflows/project-bootstrap-tests.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'tools/bootstrap_project.py'
+      - 'tools/tests/**'
+      - 'templates/project-bootstrap/**'
+      - 'schemas/project-framework.schema.json'
+      - 'workflows/project-integration-bootstrap/**'
+      - 'adr/ADR-0002-PROJECT-INTEGRATION-CONTRACT.md'
+
+permissions:
+  contents: read
+
+jobs:
+  bootstrap-self-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.11', '3.12']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Compile bootstrap tool
+        run: python -m py_compile tools/bootstrap_project.py
+      - name: Parse integration schema
+        run: python -m json.tool schemas/project-framework.schema.json > /dev/null
+      - name: Run bootstrap unit tests
+        run: python -m unittest discover -s tools/tests -p 'test_*.py' -v
