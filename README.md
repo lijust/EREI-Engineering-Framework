@@ -1,6 +1,6 @@
 # EREI Engineering Framework
 
-**Status:** Eval Harness V1 Candidate  
+**Status:** Eval Harness V1 Stable  
 **Date:** 2026-08-31
 
 EREI Engineering Framework is a reusable, cross-project engineering operating system for AI-assisted software development.
@@ -19,9 +19,9 @@ The framework separates:
 
 ## Current state
 
-Foundation V1, Phase 2 Core, Google Apps Script / Google Sheets Overlay V1, Specialist Roles V1, and Delivery Workflows V1 are stable.
+Foundation V1, Phase 2 Core, Google Apps Script / Google Sheets Overlay V1, Specialist Roles V1, Delivery Workflows V1, and **Eval Harness V1** are stable.
 
-**Eval Harness V1 is a candidate architectural addition governed by `adr/ADR-0001-EVAL-HARNESS.md`.** It is not stable until the L3 architecture gate is approved.
+`adr/ADR-0001-EVAL-HARNESS.md` is accepted and defines the provider-neutral automated evaluation architecture.
 
 ## Engineering roles
 
@@ -50,9 +50,9 @@ Outcome/acceptance → impact/risk → structural gates → technical plan → i
 
 Precise defect → baseline/reproduction → systematic debugging/root cause → impact/risk → smallest safe fix → regression guard → regression analysis → reviews → fresh verification → convergence → release.
 
-## Eval Harness V1 candidate
+## Eval Harness V1
 
-The candidate introduces a provider-neutral automated evaluation layer:
+The framework now includes a provider-neutral automated evaluation layer:
 
 - `research/EVAL_HARNESS_BENCHMARK.md`
 - `adr/ADR-0001-EVAL-HARNESS.md`
@@ -64,6 +64,7 @@ The candidate introduces a provider-neutral automated evaluation layer:
 - deterministic mock/self-test fixtures
 - `evals/cases/harness-smoke.eval.json`
 - `evals/cases/impact-analysis.eval.json`
+- `.github/workflows/framework-evals.yml`
 
 Core design:
 
@@ -82,6 +83,7 @@ The runner uses Python standard library only. External systems such as Inspect A
 - Google Apps Script / Google Sheets technology overlay
 - Full specialist engineering role set
 - Feature and bug delivery workflows
+- Provider-neutral automated eval harness
 
 ## Operating principles
 
@@ -108,9 +110,9 @@ Key approved principles include:
 
 ## Next architecture targets
 
-1. Approve/reject ADR-0001 and promote or revise Eval Harness V1.
-2. Project integration/bootstrap adapters.
-3. EREI APP Google project-specific overlay/context.
+1. Project integration/bootstrap adapters.
+2. EREI APP Google project-specific overlay/context.
+3. Runtime adapters for supported agent environments.
 4. Add specialist skills only when evidence shows a distinct reusable procedure is needed.
 
 `BASELINE.json` is the machine-readable checkpoint for the current framework state.
