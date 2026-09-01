@@ -1,7 +1,7 @@
 {
   "framework": "EREI Engineering Framework",
-  "baseline": "runtime-adapter-contract-v1",
-  "date": "2026-09-01",
+  "baseline": "framework-scope-boundary-v1",
+  "date": "2026-09-02",
   "status": "stable",
   "artifacts": [
     "README.md",
@@ -77,7 +77,6 @@
     "overlays/google-apps-script/references/WEBAPP_DEPLOYMENT_IDENTITY.md",
     "overlays/google-apps-script/evals/CASES.md",
     "adapters/README.md",
-    "adapters/tutti/ASSESSMENT.md",
     "research/ANTI_PATTERNS.md",
     "research/BENCHMARK_MATRIX.md",
     "research/LANDSCAPE.md",
@@ -89,6 +88,7 @@
     "adr/ADR-0001-EVAL-HARNESS.md",
     "adr/ADR-0002-PROJECT-INTEGRATION-CONTRACT.md",
     "adr/ADR-0003-RUNTIME-ADAPTER-CONTRACT.md",
+    "adr/ADR-0004-CONCRETE-RUNTIME-IMPLEMENTATIONS-OUT-OF-SCOPE.md",
     "evals/README.md",
     "evals/schema/eval-case.schema.json",
     "evals/adapters/PROTOCOL.md",
@@ -157,16 +157,16 @@
     "project_integration_bootstrap_v1_stable",
     "erei_app_google_brownfield_integration_v1",
     "framework_upgrade_workflow_v1_stable",
-    "runtime_adapter_contract_v1_stable"
+    "runtime_adapter_contract_v1_stable",
+    "concrete_runtime_implementations_out_of_framework_scope_v1"
   ],
   "next_phase": [
-    "tutti_experimental_runtime_adapter",
-    "runtime_adapter_single_agent_conformance",
-    "runtime_mutation_approval_isolation_conformance",
-    "runtime_trace_evidence_normalization",
-    "multi_agent_handoff_after_single_agent_trust_boundary",
-    "knowledge_promotion_workflow",
+    "framework_feedback_capture_v1",
+    "knowledge_promotion_workflow_v1",
+    "cross_project_feedback_deduplication_and_classification",
+    "framework_effectiveness_health_metrics",
     "additional_brownfield_validation",
-    "remaining_specialist_skills_as_evidence_requires"
+    "remaining_specialist_skills_as_evidence_requires",
+    "concrete_runtime_integration_only_if_project_evidence_requires"
   ]
 }
