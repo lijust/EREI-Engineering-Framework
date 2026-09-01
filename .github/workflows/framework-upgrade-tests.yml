@@ -1,0 +1,41 @@
+name: Framework Upgrade Tests
+
+on:
+  pull_request:
+    paths:
+      - "tools/plan_framework_upgrade.py"
+      - "tools/tests/test_plan_framework_upgrade.py"
+      - "workflows/framework-upgrade/**"
+      - ".github/workflows/framework-upgrade-tests.yml"
+  push:
+    branches: [main]
+    paths:
+      - "tools/plan_framework_upgrade.py"
+      - "tools/tests/test_plan_framework_upgrade.py"
+      - "workflows/framework-upgrade/**"
+      - ".github/workflows/framework-upgrade-tests.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  planner-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Compile planner
+        run: python -m py_compile tools/plan_framework_upgrade.py tools/tests/test_plan_framework_upgrade.py
+
+      - name: Run planner unit tests
+        run: python -m unittest tools.tests.test_plan_framework_upgrade -v
