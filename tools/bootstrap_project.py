@@ -26,6 +26,8 @@ TEMPLATE_MAP = {
     ".erei/DATA_MODEL.md.template": ".erei/DATA_MODEL.md",
     ".erei/PERFORMANCE_BUDGET.md.template": ".erei/PERFORMANCE_BUDGET.md",
     ".erei/PROJECT_RULES.md.template": ".erei/PROJECT_RULES.md",
+    ".erei/feedback/README.md.template": ".erei/feedback/README.md",
+    ".erei/feedback/FRAMEWORK_FEEDBACK.md.template": ".erei/feedback/FRAMEWORK_FEEDBACK.md",
     "adr/ADR_TEMPLATE.md.template": "adr/ADR_TEMPLATE.md",
 }
 
