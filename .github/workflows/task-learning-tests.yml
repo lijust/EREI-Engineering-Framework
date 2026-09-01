@@ -4,6 +4,8 @@ on:
   pull_request:
     paths:
       - "schemas/task-learning-event.schema.json"
+      - "schemas/learning-state.schema.json"
+      - "schemas/learning-review.schema.json"
       - "tools/task_learning.py"
       - "tools/tests/test_task_learning.py"
       - "skills/task-learning-capture/**"
@@ -16,6 +18,8 @@ on:
     branches: [main]
     paths:
       - "schemas/task-learning-event.schema.json"
+      - "schemas/learning-state.schema.json"
+      - "schemas/learning-review.schema.json"
       - "tools/task_learning.py"
       - "tools/tests/test_task_learning.py"
       - "skills/task-learning-capture/**"
@@ -46,6 +50,12 @@ jobs:
 
       - name: Compile task learning tooling
         run: python -m py_compile tools/task_learning.py tools/tests/test_task_learning.py
+
+      - name: Validate JSON schemas parse
+        run: |
+          python -m json.tool schemas/task-learning-event.schema.json > /dev/null
+          python -m json.tool schemas/learning-state.schema.json > /dev/null
+          python -m json.tool schemas/learning-review.schema.json > /dev/null
 
       - name: Run task learning unit tests
         run: python -m unittest tools.tests.test_task_learning -v
