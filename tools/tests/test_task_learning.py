@@ -41,6 +41,15 @@ class TaskLearningTests(unittest.TestCase):
         values.update(overrides)
         return argparse.Namespace(**values)
 
+    def review_args(self):
+        return argparse.Namespace(
+            review_id=None,
+            findings="Reviewed current task-learning evidence.",
+            decision="No Framework change yet.",
+            evidence=["docs/evidence/learning-review.md"],
+            action=[],
+        )
+
     def test_twenty_material_tasks_recommend_review(self):
         temp, target = self.make_project()
         try:
@@ -91,23 +100,36 @@ class TaskLearningTests(unittest.TestCase):
         temp, target = self.make_project()
         try:
             task_learning.capture(target, task_learning.build_event(self.event_args()))
-            review_args = argparse.Namespace(
-                review_id=None,
-                findings="Reviewed current task-learning evidence.",
-                decision="No Framework change yet.",
-                evidence=["docs/evidence/learning-review.md"],
-                action=[],
-            )
-            review, state = task_learning.close_review(target, review_args)
+            review, state = task_learning.close_review(target, self.review_args())
             self.assertEqual(review["epoch_id"], "EPOCH-001")
             self.assertEqual(state["epoch_id"], "EPOCH-002")
             self.assertEqual(state["metrics_since_last_review"]["tasks"], 0)
+            validation = task_learning.validate_ledgers(target)
+            self.assertTrue(validation["valid"])
+            self.assertEqual(validation["reviews"], 1)
         finally:
             temp.cleanup()
 
+    def test_empty_epoch_cannot_be_closed(self):
+        temp, target = self.make_project()
+        try:
+            with self.assertRaises(task_learning.LearningError):
+                task_learning.close_review(target, self.review_args())
+        finally:
+            temp.cleanup()
+
+    def test_invalid_feedback_fingerprint_is_rejected(self):
+        with self.assertRaises(task_learning.LearningError):
+            task_learning.build_event(
+                self.event_args(
+                    framework_feedback_created=True,
+                    feedback_fingerprint=["not-a-sha256"],
+                )
+            )
+
     def test_fingerprint_tampering_is_detected(self):
         event = task_learning.build_event(self.event_args())
-        event["rework_cycles"] = 9
+        event["duration_class"] = "long"
         with self.assertRaises(task_learning.LearningError):
             task_learning.validate_event(event)
 
