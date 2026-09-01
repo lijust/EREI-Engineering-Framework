@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://erei-framework.local/schemas/task-learning-event.schema.json",
+  "title": "EREI Task Learning Event V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "task_id", "recorded_at", "project", "framework_ref",
+    "workflow", "risk", "terminal_state", "outcome_class", "material",
+    "rework_cycles", "verification_failures", "verification_escape",
+    "framework_feedback_created", "manual_workaround", "context_gap",
+    "unexpected_scope_growth", "security_or_data_critical_event",
+    "duration_class", "fingerprint"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "task_id": {"type": "string", "pattern": "^ETASK-[0-9]{8}T[0-9]{6}Z-[A-F0-9]{8}$"},
+    "recorded_at": {"type": "string", "format": "date-time"},
+    "project": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repository"],
+      "properties": {
+        "repository": {"type": "string", "minLength": 1},
+        "name": {"type": "string", "minLength": 1}
+      }
+    },
+    "framework_ref": {"type": "string", "minLength": 1},
+    "workflow": {"type": "string", "minLength": 1},
+    "risk": {"enum": ["L0", "L1", "L2", "L3", "L4"]},
+    "terminal_state": {"type": "string", "minLength": 1},
+    "outcome_class": {"enum": ["verified_success", "success_with_deferred", "blocked", "failed", "canceled"]},
+    "material": {"type": "boolean"},
+    "rework_cycles": {"type": "integer", "minimum": 0},
+    "verification_failures": {"type": "integer", "minimum": 0},
+    "verification_escape": {"type": "boolean"},
+    "framework_feedback_created": {"type": "boolean"},
+    "manual_workaround": {"type": "boolean"},
+    "context_gap": {"type": "boolean"},
+    "unexpected_scope_growth": {"type": "boolean"},
+    "security_or_data_critical_event": {"type": "boolean"},
+    "duration_class": {"enum": ["short", "medium", "long", "unknown"]},
+    "feedback_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "feedback_fingerprints": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "tags": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "fingerprint": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+  }
+}

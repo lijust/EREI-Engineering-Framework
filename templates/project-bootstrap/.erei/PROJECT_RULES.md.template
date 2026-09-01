@@ -24,6 +24,9 @@ Record observability, incident, recovery, quota, manual-step, or support constra
 ## Framework Feedback Rules
 Project execution may record evidence-backed Framework observations under `.erei/feedback/`. Feedback capture is append-only project learning: it must not modify Framework Core, silently change `.erei/framework.json`, or treat a suggestion as an accepted Framework decision. Framework changes require the separate Knowledge Promotion and normal release/approval flow.
 
+## Task Learning Rules
+Every routed engineering execution should record one terminal Task Learning Event under `.erei/learning/`, including successful, blocked and failed work. Store structured observable engineering signals and evidence references only; do not persist private chain-of-thought, credentials, tenant/customer payloads, or unrelated conversation content. Deterministic review triggers may request a Learning Review but never authorize Framework Core changes or Framework-pin movement.
+
 ## Temporary Rules
 Temporary constraints must include an owner/reason and removal condition so they do not silently become permanent architecture.
 

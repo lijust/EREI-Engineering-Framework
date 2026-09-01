@@ -1,0 +1,5 @@
+# Task Learning Summary
+
+No Task Learning Events recorded yet.
+
+The first routed engineering execution should create `.erei/learning/TASK_EVENTS.jsonl`, derive `.erei/learning/LEARNING_STATE.json`, and replace this summary with deterministic metrics/review-trigger state.

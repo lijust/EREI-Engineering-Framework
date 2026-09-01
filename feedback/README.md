@@ -10,9 +10,16 @@ Raw observations remain in the project that discovered them:
 <project>/.erei/feedback/FRAMEWORK_FEEDBACK.jsonl
 ```
 
-Project agents must **not** write directly into this Framework repository as part of feedback capture.
+Structured execution experience remains project-local too:
 
-Framework review may later ingest/reference those events here for triage, deduplication, clustering and Knowledge Promotion.
+```text
+<project>/.erei/learning/TASK_EVENTS.jsonl
+<project>/.erei/learning/LEARNING_REVIEWS.jsonl
+```
+
+Project agents must **not** write directly into this Framework repository as part of feedback or task-learning capture.
+
+Framework review may later ingest/reference feedback events here for triage, deduplication, clustering and Knowledge Promotion. Learning Reviews are evidence sources that can reveal or strengthen a Framework Feedback pattern, but Task Learning Events are not automatically Framework Feedback.
 
 ## Review queue
 
@@ -23,19 +30,26 @@ When project feedback is reviewed here, record at minimum:
 - source project,
 - immutable/source project ref where possible,
 - source feedback ID,
+- source Learning Review/epoch when applicable,
 - Framework ref active when observed,
 - type/severity,
 - generalizability/confidence,
 - review state,
 - cluster/candidate link when applicable.
 
-Do not copy secrets, tenant data, credentials, or unnecessary proprietary project details into the Framework repository.
+Do not copy secrets, tenant data, credentials, private reasoning, or unnecessary proprietary project details into the Framework repository.
 
 ## Lifecycle
 
 ```text
-Project observation
+Project execution
       ↓
+Task Learning Event
+      ↓
+Learning Review when enough evidence accumulates
+      ↓
+Framework limitation/reusable lesson?
+      ↓ YES
 Project-local feedback event
       ↓
 Framework review/intake

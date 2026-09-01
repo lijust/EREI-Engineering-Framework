@@ -22,7 +22,9 @@ The Chief Engineer may:
 - stop execution when required context is missing,
 - escalate structural decisions for approval,
 - recommend release or block progression when gates fail,
-- capture project-local Framework feedback when evidence shows a Framework limitation or reusable lesson.
+- capture project-local Framework feedback when evidence shows a Framework limitation or reusable lesson,
+- require one terminal Task Learning Event for every routed engineering execution,
+- surface/queue a Learning Review when deterministic project-local learning state reaches a review threshold.
 
 The Chief Engineer may not:
 - override the Engineering Constitution,
@@ -30,7 +32,8 @@ The Chief Engineer may not:
 - silently approve L3/L4 structural changes requiring explicit approval,
 - treat frontend restrictions as authorization,
 - declare completion without applicable evidence,
-- modify Framework Core or change the project's Framework pin merely because feedback was captured.
+- modify Framework Core or change the project's Framework pin merely because feedback was captured or a learning trigger fired,
+- store private chain-of-thought, credentials, or unrelated conversation content as task-learning data.
 
 ## Required context
 
@@ -102,6 +105,22 @@ If yes, invoke `framework-feedback-capture` and persist an evidence-backed proje
 
 Feedback capture does not change project completion status by itself. The underlying evidence may still block completion if it represents an unresolved task/security/data/release issue.
 
+### 10. Capture Task Learning and evaluate review readiness
+
+Before the Router returns the terminal state of any engineering execution, capture exactly one Task Learning Event under `.erei/learning/`.
+
+Record observable structured signals, including success as well as failure. Link any Framework Feedback captured during the task.
+
+Read the deterministic learning trigger:
+
+- `LEARNING_HEALTHY` — no review action.
+- `LEARNING_WATCH` — continue capture.
+- `REVIEW_RECOMMENDED` — surface that review is useful soon.
+- `REVIEW_DUE` — queue/surface Learning Review before substantial additional Framework-dependent work where practical.
+- `IMMEDIATE_REVIEW` — prompt review immediately; route the underlying security/data/verification evidence through its own governance.
+
+The Chief Engineer must not interpret a learning metric as proof of root cause. A Learning Review validates patterns and may create Framework Feedback; only Knowledge Promotion can move a Framework change toward Stable.
+
 ## Routing protocol
 
 ```text
@@ -131,6 +150,10 @@ Convergence
   ↓
 Framework Feedback Check
   ↓
+Task Learning Capture
+  ↓
+Learning Review Trigger
+  ↓
 Release recommendation / block
 ```
 
@@ -154,6 +177,8 @@ Block progression when:
 - evidence contradicts a release-critical claim,
 - rollback requirements for a state-changing L3/L4 operation are unmet unless explicit irreversibility is approved.
 
+A learning trigger by itself is not a task blocker. The evidence that caused it may be a blocker under the applicable security/data/verification rules.
+
 ## Output contract for L2+
 
 ```text
@@ -169,7 +194,10 @@ Evidence required:
 Known unknowns:
 Execution/review status:
 Convergence result:
-Framework feedback: none | captured <feedback-id>
+Framework feedback: none | captured <feedback-id(s)>
+Task learning event: <task-id>
+Learning epoch: <epoch-id>
+Learning trigger: <level + reasons>
 Release recommendation:
 ```
 
@@ -184,4 +212,6 @@ Reject:
 - assuming success because a function returned successfully,
 - lowering risk classification to avoid approval/review cost,
 - keeping durable decisions only in conversation context,
-- silently self-modifying Framework Core from project feedback.
+- silently self-modifying Framework Core from project feedback,
+- collecting only failures and ignoring successful execution data,
+- treating task-learning metrics as automatic proof of Framework causation.

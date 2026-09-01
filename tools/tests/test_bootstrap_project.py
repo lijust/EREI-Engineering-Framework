@@ -56,6 +56,8 @@ class BootstrapProjectTests(unittest.TestCase):
                 ".erei/PROJECT_RULES.md",
                 ".erei/feedback/README.md",
                 ".erei/feedback/FRAMEWORK_FEEDBACK.md",
+                ".erei/learning/README.md",
+                ".erei/learning/LEARNING_SUMMARY.md",
                 "adr/ADR_TEMPLATE.md",
             ]
             for rel in expected:
@@ -71,6 +73,9 @@ class BootstrapProjectTests(unittest.TestCase):
             feedback_md = (target / ".erei/feedback/FRAMEWORK_FEEDBACK.md").read_text(encoding="utf-8")
             self.assertIn("No feedback events recorded yet", feedback_md)
             self.assertFalse((target / ".erei/feedback/FRAMEWORK_FEEDBACK.jsonl").exists())
+            learning_md = (target / ".erei/learning/LEARNING_SUMMARY.md").read_text(encoding="utf-8")
+            self.assertIn("No Task Learning Events recorded yet", learning_md)
+            self.assertFalse((target / ".erei/learning/TASK_EVENTS.jsonl").exists())
 
     def test_dry_run_writes_nothing(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
