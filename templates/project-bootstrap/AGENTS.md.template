@@ -14,5 +14,6 @@ Before architectural, implementation, debugging, security, data, performance, QA
 8. Never treat frontend/UI controls as authorization or client-supplied tenant/user identity as trusted.
 9. Do not silently overwrite project data or existing project rules.
 10. Completion requires evidence appropriate to risk; a claim of success is not evidence.
+11. Near the end of every material task and after material rework/failure, run a Framework Feedback Check. If evidence reveals a Framework limitation, reusable lesson, missed condition, or material process friction, capture it under `.erei/feedback/` using the pinned `framework-feedback-capture` Skill. Do not modify Framework Core or the project Framework pin as part of feedback capture.
 
 Project-local instructions may specialize the Framework but may not silently weaken the pinned Constitution. Any conflict must be surfaced explicitly.
