@@ -1,0 +1,68 @@
+{
+  "schema_version": "1.0",
+  "suite_id": "framework-upgrade-v1",
+  "artifact": "workflows/framework-upgrade/WORKFLOW.md",
+  "cases": [
+    {
+      "id": "constitution-change-escalates",
+      "input": {
+        "request": "Upgrade the project to a Framework revision that changes ENGINEERING_CONSTITUTION.md."
+      },
+      "tags": ["upgrade", "L3", "governance"],
+      "expectations": [
+        {"type": "output_contains_all", "values": ["ARCHITECTURE_APPROVAL_REQUIRED", "L3", "approval"]}
+      ]
+    },
+    {
+      "id": "mutable-main-blocked",
+      "input": {
+        "request": "Promote the project to Stable while framework.json points to branch main."
+      },
+      "tags": ["upgrade", "pin", "fail-closed"],
+      "expectations": [
+        {"type": "output_contains_all", "values": ["BLOCKED", "immutable"]}
+      ]
+    },
+    {
+      "id": "candidate-target-not-stable",
+      "input": {
+        "request": "Upgrade a Stable project to a Framework target whose BASELINE status is candidate."
+      },
+      "tags": ["upgrade", "release"],
+      "expectations": [
+        {"type": "output_contains_all", "values": ["BLOCKED", "candidate"]}
+      ]
+    },
+    {
+      "id": "unused-overlay-is-not-project-impact",
+      "input": {
+        "request": "Target Framework adds a Kubernetes overlay. Project only enables google-apps-script."
+      },
+      "tags": ["upgrade", "context-routing"],
+      "expectations": [
+        {"type": "output_contains_all", "values": ["project", "relevance"]},
+        {"type": "output_contains_none", "values": ["automatically impacted by every overlay"]}
+      ]
+    },
+    {
+      "id": "repository-identity-change",
+      "input": {
+        "request": "Change project Framework repository from lijust/EREI-Engineering-Framework to another repository during upgrade."
+      },
+      "tags": ["upgrade", "provenance", "L3"],
+      "expectations": [
+        {"type": "output_contains_all", "values": ["ARCHITECTURE_APPROVAL_REQUIRED", "provenance"]}
+      ]
+    },
+    {
+      "id": "verification-failure-rolls-back",
+      "input": {
+        "request": "Manifest validates after a Framework pin update but project regression tests fail."
+      },
+      "tags": ["upgrade", "rollback", "verification"],
+      "expectations": [
+        {"type": "output_contains_all", "values": ["no promotion", "rollback", "prior"]}
+      ]
+    }
+  ]
+}
