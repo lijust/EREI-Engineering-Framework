@@ -46,6 +46,7 @@ Conditional:
 - `project-standard-discovery`
 - `threat-model`
 - `security-review`
+- `framework-feedback-capture`
 - technology overlay references
 
 ## Stage 1 — Normalize outcome and acceptance
@@ -189,7 +190,22 @@ Compare durable outcome/spec/plan against:
 
 No material requirement may disappear simply because implementation moved on.
 
-## Stage 14 — Release/exit
+## Stage 14 — Framework Feedback Check
+
+After convergence, determine whether implementation/review evidence exposed a limitation or reusable lesson in the pinned Framework.
+
+Capture feedback when evidence shows, for example:
+- a workflow/skill/role/context gap,
+- a materially incorrect risk or verification decision,
+- repeated Framework-related process friction,
+- a missing reusable engineering pattern,
+- useful negative learning.
+
+Do not classify normal project design trade-offs as Framework defects without evidence.
+
+When triggered, use `framework-feedback-capture` and persist the event under `.erei/feedback/`. Feedback capture does not alter Framework Core, accepted project architecture, or the project Framework pin.
+
+## Stage 15 — Release/exit
 
 If release is required, hand off verified candidate to Release Engineer.
 
@@ -214,6 +230,7 @@ Engineering verdict:
 Specialist verdicts:
 Fresh verification evidence:
 Deferred/residual items:
+Framework feedback: none | captured <feedback-id>
 Release/terminal state:
 ```
 
@@ -224,7 +241,8 @@ For clear L0/L1 features inside existing architecture:
 2. lightweight impact/risk,
 3. implement,
 4. targeted regression/verification,
-5. truthful completion.
+5. run Framework Feedback Check when material learning occurred,
+6. truthful completion.
 
 Do not manufacture architecture documents or activate all roles for trivial work.
 
@@ -237,7 +255,8 @@ Do not manufacture architecture documents or activate all roles for trivial work
 - "This refactor is cleaner, so include it while implementing the feature."
 - "It's an MVP, so data/security boundaries can be temporary and undocumented."
 - "We can verify on Stable."
+- "Any suggestion generated during the feature should update Framework Core immediately."
 
 ## Definition of Done
 
-The accepted feature outcome is durably represented, impact/risk and structural gates are satisfied, implementation remains within justified scope, regression/compliance/quality/specialist reviews are complete as applicable, fresh evidence verifies the actual candidate, and convergence produces a truthful terminal/release state.
+The accepted feature outcome is durably represented, impact/risk and structural gates are satisfied, implementation remains within justified scope, regression/compliance/quality/specialist reviews are complete as applicable, fresh evidence verifies the actual candidate, convergence is complete, the Framework Feedback Check has been performed for material work, and a truthful terminal/release state is produced.
