@@ -11,6 +11,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import sys
 import time
 from collections import Counter
@@ -22,6 +23,9 @@ from uuid import uuid4
 RISK_LEVELS = {"L0", "L1", "L2", "L3", "L4"}
 OUTCOME_CLASSES = {"verified_success", "success_with_deferred", "blocked", "failed", "canceled"}
 DURATION_CLASSES = {"short", "medium", "long", "unknown"}
+TASK_ID_RE = re.compile(r"^ETASK-[0-9]{8}T[0-9]{6}Z-[A-F0-9]{8}$")
+REVIEW_ID_RE = re.compile(r"^ELR-[0-9]{8}T[0-9]{6}Z-[A-F0-9]{8}$")
+FEEDBACK_FP_RE = re.compile(r"^[a-f0-9]{64}$")
 TRIGGER_LEVELS = {
     "LEARNING_HEALTHY": 0,
     "LEARNING_WATCH": 1,
@@ -60,16 +64,26 @@ def _nonempty(value, label):
 
 def _fingerprint(event):
     semantic = {
-        key: event[key]
-        for key in [
-            "framework_ref", "workflow", "risk", "terminal_state", "outcome_class",
-            "material", "rework_cycles", "verification_failures", "verification_escape",
-            "manual_workaround", "context_gap", "unexpected_scope_growth",
-            "security_or_data_critical_event", "framework_feedback_created",
-        ]
+        "project": event["project"],
+        "framework_ref": event["framework_ref"],
+        "workflow": event["workflow"],
+        "risk": event["risk"],
+        "terminal_state": event["terminal_state"],
+        "outcome_class": event["outcome_class"],
+        "material": event["material"],
+        "rework_cycles": event["rework_cycles"],
+        "verification_failures": event["verification_failures"],
+        "verification_escape": event["verification_escape"],
+        "framework_feedback_created": event["framework_feedback_created"],
+        "manual_workaround": event["manual_workaround"],
+        "context_gap": event["context_gap"],
+        "unexpected_scope_growth": event["unexpected_scope_growth"],
+        "security_or_data_critical_event": event["security_or_data_critical_event"],
+        "duration_class": event["duration_class"],
+        "feedback_ids": event.get("feedback_ids", []),
+        "feedback_fingerprints": event.get("feedback_fingerprints", []),
+        "tags": event.get("tags", []),
     }
-    semantic["project_repository"] = event["project"]["repository"]
-    semantic["feedback_fingerprints"] = event.get("feedback_fingerprints", [])
     canonical = json.dumps(semantic, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
@@ -154,6 +168,8 @@ def validate_event(event):
         raise LearningError("task event missing fields: " + ", ".join(missing))
     if event["schema_version"] != 1:
         raise LearningError("unsupported task event schema_version")
+    if not isinstance(event.get("task_id"), str) or not TASK_ID_RE.fullmatch(event["task_id"]):
+        raise LearningError("invalid task_id")
     if not isinstance(event["project"], dict) or not str(event["project"].get("repository", "")).strip():
         raise LearningError("task event project.repository is required")
     if event["risk"] not in RISK_LEVELS:
@@ -171,8 +187,45 @@ def validate_event(event):
     for key in ["rework_cycles", "verification_failures"]:
         if not isinstance(event[key], int) or event[key] < 0:
             raise LearningError(f"{key} must be a non-negative integer")
+    for fingerprint in event.get("feedback_fingerprints", []):
+        if not isinstance(fingerprint, str) or not FEEDBACK_FP_RE.fullmatch(fingerprint):
+            raise LearningError("invalid feedback fingerprint")
     if event["fingerprint"] != _fingerprint(event):
         raise LearningError(f"task event fingerprint mismatch: {event.get('task_id', 'UNKNOWN')}")
+
+
+def validate_review(review, *, expected_epoch, previous_cutoff, total_events):
+    required = {
+        "schema_version", "review_id", "closed_at", "epoch_id", "through_event_count",
+        "trigger", "metrics", "findings", "decision", "evidence",
+    }
+    missing = sorted(required - set(review))
+    if missing:
+        raise LearningError("learning review missing fields: " + ", ".join(missing))
+    if review["schema_version"] != 1:
+        raise LearningError("unsupported learning review schema_version")
+    if not isinstance(review["review_id"], str) or not REVIEW_ID_RE.fullmatch(review["review_id"]):
+        raise LearningError("invalid learning review_id")
+    if review["epoch_id"] != expected_epoch:
+        raise LearningError("learning review epoch sequence mismatch")
+    cutoff = review["through_event_count"]
+    if not isinstance(cutoff, int) or cutoff < previous_cutoff or cutoff > total_events:
+        raise LearningError("invalid learning review cutoff")
+    if not isinstance(review["trigger"], dict) or review["trigger"].get("level") not in TRIGGER_LEVELS:
+        raise LearningError("invalid learning review trigger")
+    if not isinstance(review["metrics"], dict):
+        raise LearningError("learning review metrics must be an object")
+    if not isinstance(review["findings"], str) or not review["findings"].strip():
+        raise LearningError("learning review findings are required")
+    if not isinstance(review["decision"], str) or not review["decision"].strip():
+        raise LearningError("learning review decision is required")
+    if (
+        not isinstance(review["evidence"], list)
+        or not review["evidence"]
+        or any(not isinstance(item, str) or not item.strip() for item in review["evidence"])
+    ):
+        raise LearningError("learning review evidence is required")
+    return cutoff
 
 
 def _trigger(metrics):
@@ -215,9 +268,14 @@ def _trigger(metrics):
 def derive_state(events, reviews, now=None):
     for event in events:
         validate_event(event)
-    cutoff = 0 if not reviews else reviews[-1].get("through_event_count")
-    if not isinstance(cutoff, int) or cutoff < 0 or cutoff > len(events):
-        raise LearningError("invalid learning review cutoff")
+    cutoff = 0
+    for index, review in enumerate(reviews, start=1):
+        cutoff = validate_review(
+            review,
+            expected_epoch=f"EPOCH-{index:03d}",
+            previous_cutoff=cutoff,
+            total_events=len(events),
+        )
     current = events[cutoff:]
     material = [event for event in current if event["material"]]
     denominator = max(len(material), 1)
@@ -244,8 +302,12 @@ def derive_state(events, reviews, now=None):
         "unexpected_scope_growth_tasks": sum(event["unexpected_scope_growth"] for event in current),
         "security_or_data_critical_events": sum(event["security_or_data_critical_event"] for event in current),
         "max_feedback_fingerprint_occurrences": max(feedback_counts.values(), default=0),
-        "rework_rate": round(sum(event["rework_cycles"] > 0 for event in material) / denominator, 4) if material else 0.0,
-        "verification_failure_rate": round(sum(event["verification_failures"] > 0 for event in material) / denominator, 4) if material else 0.0,
+        "rework_rate": round(
+            sum(event["rework_cycles"] > 0 for event in material) / denominator, 4
+        ) if material else 0.0,
+        "verification_failure_rate": round(
+            sum(event["verification_failures"] > 0 for event in material) / denominator, 4
+        ) if material else 0.0,
     }
     return {
         "schema_version": 1,
@@ -264,7 +326,8 @@ def _render_summary(state):
     metrics = state["metrics_since_last_review"]
     trigger = state["trigger"]
     lines = [
-        "# Task Learning Summary", "",
+        "# Task Learning Summary",
+        "",
         f"- Epoch: `{state['epoch_id']}`",
         f"- Trigger: **{trigger['level']}**",
         f"- Tasks since last review: **{metrics['tasks']}**",
@@ -276,10 +339,16 @@ def _render_summary(state):
         f"- Manual workarounds: **{metrics['manual_workarounds']}**",
         f"- Context gaps: **{metrics['context_gaps']}**",
         f"- Critical security/data events: **{metrics['security_or_data_critical_events']}**",
-        "", "## Review trigger reasons", "",
+        "",
+        "## Review trigger reasons",
+        "",
     ]
     lines += [f"- `{reason}`" for reason in trigger["reasons"]] if trigger["reasons"] else ["- None."]
-    lines += ["", "Derived deterministically from project-local task events. It never authorizes Framework self-modification.", ""]
+    lines += [
+        "",
+        "Derived deterministically from project-local task events. It never authorizes Framework self-modification.",
+        "",
+    ]
     return "\n".join(lines)
 
 
@@ -287,7 +356,10 @@ def _persist(paths, state):
     paths["root"].mkdir(parents=True, exist_ok=True)
     temp_state = paths["state"].with_suffix(".json.tmp")
     temp_summary = paths["summary"].with_suffix(".md.tmp")
-    temp_state.write_text(json.dumps(state, ensure_ascii=False, sort_keys=True, indent=2) + "\n", encoding="utf-8")
+    temp_state.write_text(
+        json.dumps(state, ensure_ascii=False, sort_keys=True, indent=2) + "\n",
+        encoding="utf-8",
+    )
     temp_summary.write_text(_render_summary(state), encoding="utf-8")
     os.replace(temp_state, paths["state"])
     os.replace(temp_summary, paths["summary"])
@@ -361,6 +433,8 @@ def close_review(target, args, now=None):
         reviews = _read_jsonl(paths["reviews"])
         before = derive_state(events, reviews, current)
         evidence = sorted({_nonempty(item, "review evidence") for item in args.evidence})
+        if before["metrics_since_last_review"]["tasks"] == 0:
+            raise LearningError("cannot close an empty learning epoch")
         if not evidence:
             raise LearningError("at least one review evidence reference is required")
         review = {
@@ -375,6 +449,8 @@ def close_review(target, args, now=None):
             "decision": _nonempty(args.decision, "review decision"),
             "evidence": evidence,
         }
+        if not REVIEW_ID_RE.fullmatch(review["review_id"]):
+            raise LearningError("invalid learning review_id")
         actions = sorted({item.strip() for item in args.action if item.strip()})
         if actions:
             review["actions"] = actions
