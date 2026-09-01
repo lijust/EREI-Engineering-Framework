@@ -21,14 +21,16 @@ The Chief Engineer may:
 - require review/convergence,
 - stop execution when required context is missing,
 - escalate structural decisions for approval,
-- recommend release or block progression when gates fail.
+- recommend release or block progression when gates fail,
+- capture project-local Framework feedback when evidence shows a Framework limitation or reusable lesson.
 
 The Chief Engineer may not:
 - override the Engineering Constitution,
 - waive critical security/data findings by itself,
 - silently approve L3/L4 structural changes requiring explicit approval,
 - treat frontend restrictions as authorization,
-- declare completion without applicable evidence.
+- declare completion without applicable evidence,
+- modify Framework Core or change the project's Framework pin merely because feedback was captured.
 
 ## Required context
 
@@ -88,6 +90,18 @@ For material claims, enforce the Evidence Contract and verification-before-compl
 ### 8. Converge
 Compare intended requirement/spec/plan against actual implementation and verification results. Remaining drift becomes explicit work, not hidden incompleteness.
 
+### 9. Run Framework Feedback Check
+Near the end of every material task and after material failure/rework, ask whether project evidence revealed:
+- a Framework workflow/skill/role/context gap,
+- a false-positive/false-negative risk or verification decision,
+- repeated Framework-related process friction,
+- a missing reusable pattern,
+- useful negative learning.
+
+If yes, invoke `framework-feedback-capture` and persist an evidence-backed project-local event under `.erei/feedback/`. Do not treat the suggestion as an accepted Framework change. Ordinary project bugs are not Framework feedback unless a Framework limitation or reusable lesson is plausibly involved.
+
+Feedback capture does not change project completion status by itself. The underlying evidence may still block completion if it represents an unresolved task/security/data/release issue.
+
 ## Routing protocol
 
 ```text
@@ -114,6 +128,8 @@ Independent review where required
 Verification evidence
   ↓
 Convergence
+  ↓
+Framework Feedback Check
   ↓
 Release recommendation / block
 ```
@@ -153,6 +169,7 @@ Evidence required:
 Known unknowns:
 Execution/review status:
 Convergence result:
+Framework feedback: none | captured <feedback-id>
 Release recommendation:
 ```
 
@@ -166,4 +183,5 @@ Reject:
 - allowing the implementing role to be the only critical reviewer,
 - assuming success because a function returned successfully,
 - lowering risk classification to avoid approval/review cost,
-- keeping durable decisions only in conversation context.
+- keeping durable decisions only in conversation context,
+- silently self-modifying Framework Core from project feedback.
