@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "adapter_id": "mock-runtime",
+  "display_name": "Mock Runtime Adapter",
+  "version": "1.0",
+  "status": "candidate",
+  "runtime_kind": "mock",
+  "transport": "cli",
+  "capabilities": [
+    "execute_task",
+    "cancel_task",
+    "read_workspace",
+    "write_workspace",
+    "interactive_approval",
+    "mutation_policy",
+    "trace_export"
+  ],
+  "sources": "eval fixture only",
+  "notes": "Conformance fixture. Not a real runtime adapter."
+}
