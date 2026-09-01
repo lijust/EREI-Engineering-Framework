@@ -5,7 +5,9 @@ on:
     paths:
       - "schemas/framework-feedback.schema.json"
       - "tools/capture_framework_feedback.py"
+      - "tools/validate_framework_feedback.py"
       - "tools/tests/test_capture_framework_feedback.py"
+      - "tools/tests/test_validate_framework_feedback.py"
       - "skills/framework-feedback-capture/**"
       - "workflows/knowledge-promotion/**"
       - "templates/project-bootstrap/.erei/feedback/**"
@@ -15,7 +17,9 @@ on:
     paths:
       - "schemas/framework-feedback.schema.json"
       - "tools/capture_framework_feedback.py"
+      - "tools/validate_framework_feedback.py"
       - "tools/tests/test_capture_framework_feedback.py"
+      - "tools/tests/test_validate_framework_feedback.py"
       - "skills/framework-feedback-capture/**"
       - "workflows/knowledge-promotion/**"
       - "templates/project-bootstrap/.erei/feedback/**"
@@ -41,7 +45,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Compile feedback tooling
-        run: python -m py_compile tools/capture_framework_feedback.py tools/tests/test_capture_framework_feedback.py
+        run: python -m py_compile tools/capture_framework_feedback.py tools/validate_framework_feedback.py tools/tests/test_capture_framework_feedback.py tools/tests/test_validate_framework_feedback.py
 
       - name: Run feedback unit tests
-        run: python -m unittest tools.tests.test_capture_framework_feedback -v
+        run: python -m unittest tools.tests.test_capture_framework_feedback tools.tests.test_validate_framework_feedback -v
