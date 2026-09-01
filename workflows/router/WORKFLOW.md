@@ -173,7 +173,34 @@ Classify every material gap as:
 - deferred explicitly,
 - blocking.
 
-## Stage 12 — Exit
+Run Framework Feedback Check before terminal learning capture when material evidence suggests a Framework limitation or reusable lesson, so any feedback IDs/fingerprints can be linked into the Task Learning Event.
+
+## Stage 12 — Capture Task Learning Event
+
+Before returning any terminal state for a routed engineering execution, invoke `task-learning-capture` exactly once.
+
+Record observable execution signals only:
+- exact project and Framework ref,
+- selected workflow/risk,
+- terminal state/outcome class,
+- materiality,
+- rework/verification signals,
+- Framework Feedback links when present,
+- workaround/context/scope/critical security-data signals.
+
+Do not store chain-of-thought, credentials, or unrelated conversation content.
+
+Read the deterministic learning trigger returned from the project-local `.erei/learning/` state:
+
+- `LEARNING_HEALTHY` — finish normally.
+- `LEARNING_WATCH` — continue normal work while evidence accumulates.
+- `REVIEW_RECOMMENDED` — surface that a Learning Review is useful soon.
+- `REVIEW_DUE` — surface/queue Learning Review before substantial additional Framework-dependent work where practical.
+- `IMMEDIATE_REVIEW` — surface promptly and route underlying security/data/verification evidence through its normal blocking governance.
+
+A learning trigger never authorizes Framework self-modification and does not replace the task terminal state.
+
+## Stage 13 — Exit
 
 Return one of:
 - `COMPLETE_VERIFIED`
@@ -199,6 +226,10 @@ Approval required:
 Key invariants:
 Evidence plan:
 Review plan:
+Framework feedback: none | captured <feedback-id(s)>
+Task learning event: <task-id>
+Learning epoch: <epoch-id>
+Learning trigger: <level + reasons>
 Exit state:
 ```
 
@@ -210,3 +241,5 @@ Exit state:
 - "The deadline is urgent, so the risk level can be lowered."
 - "The refactor is cleaner, so migration risk does not matter."
 - "The same agent wrote it and understands it best, so independent review adds no value."
+- "Only failures are useful learning data, so successful tasks do not need capture."
+- "The learning trigger fired, so we can edit the Framework directly."
