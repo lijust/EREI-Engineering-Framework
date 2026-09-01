@@ -1,18 +1,18 @@
 # ADR-0003 — Provider-Neutral Runtime Adapter Contract
 
-**Status:** Proposed  
+**Status:** Accepted  
 **Date:** 2026-09-01  
 **Risk:** L3 — Runtime execution boundary
 
 ## Context
 
-EREI Engineering Framework now has stable governance, project integration, evaluation and Framework-upgrade mechanisms, but it intentionally does not yet own a runtime for executing work through Codex, Claude Code, OpenCode, Tutti or other agent systems.
+EREI Engineering Framework now has stable governance, project integration, evaluation and Framework-upgrade mechanisms, but it intentionally does not own a runtime for executing work through Codex, Claude Code, OpenCode, Tutti or other agent systems.
 
 Building a full agent host inside Framework Core would duplicate provider/session lifecycle, process management, shared state, recovery and transport concerns already solved by specialist runtimes. It would also create vendor/runtime lock-in and dramatically expand Framework Core's trusted computing base.
 
 Current Tutti repository architecture reinforces this separation: its provider-neutral Agent Host owns canonical session/turn/goal/runtime-operation lifecycle while transport/product surfaces act as adapters. EREI's concern is different: governance, project context, risk, capability requirements, evidence and release acceptance.
 
-## Decision proposed
+## Decision
 
 Adopt `schemas/RUNTIME_ADAPTER_CONTRACT.md` and `schemas/runtime-adapter.schema.json` as the canonical EREI Runtime Adapter V1 boundary.
 
@@ -62,7 +62,9 @@ A runtime such as Tutti may satisfy capabilities such as `shared_context`, `para
 
 Tutti is classified as a strong Runtime Adapter candidate, not Framework Core.
 
-Before implementing a Tutti adapter, verify a supported external integration surface for the capabilities EREI needs. Internal Tutti package APIs demonstrate architecture but are not assumed to be public stable integration contracts.
+Current public evidence confirms a versioned local daemon API described for desktop, CLI and approved local integrations, including bearer-authenticated capability discovery/invocation and workspace-agent session operations such as create, read, send input, exact-turn cancellation and interactive/plan responses.
+
+This makes a Tutti adapter practical to prototype, but it is not Stable merely because the API surface exists. EREI still requires exact capability mapping, mutation/approval-policy conformance, workspace isolation, evidence normalization, failure/unknown-state handling and version compatibility tests before an enableable adapter can be promoted.
 
 No Tutti source code is copied by this ADR.
 
@@ -106,6 +108,17 @@ Rejected because workflows could not reason portably about runtime requirements.
 
 Rejected because it violates evidence/verification separation and permits self-certification.
 
-## Approval gate
+## Approval record
 
-This ADR creates a new runtime/trust boundary and standardized capability semantics. Promotion to Framework Stable requires explicit L3 architecture approval.
+ADR-0003 was explicitly approved on 2026-09-01.
+
+Validated candidate evidence on the approved head included:
+
+- Runtime Adapter Tests — SUCCESS,
+- Framework Evals — SUCCESS,
+- Project Bootstrap Tests — SUCCESS,
+- zero-dependency adapter-manifest validator unit tests,
+- machine-readable Runtime Adapter Contract eval cases,
+- Tutti architecture and external daemon API assessment.
+
+Runtime Adapter Contract V1 may therefore be promoted to Framework Stable through the normal release flow. Concrete runtime adapters retain their own maturity and conformance gates.
