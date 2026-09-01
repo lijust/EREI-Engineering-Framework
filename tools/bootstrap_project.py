@@ -28,6 +28,8 @@ TEMPLATE_MAP = {
     ".erei/PROJECT_RULES.md.template": ".erei/PROJECT_RULES.md",
     ".erei/feedback/README.md.template": ".erei/feedback/README.md",
     ".erei/feedback/FRAMEWORK_FEEDBACK.md.template": ".erei/feedback/FRAMEWORK_FEEDBACK.md",
+    ".erei/learning/README.md.template": ".erei/learning/README.md",
+    ".erei/learning/LEARNING_SUMMARY.md.template": ".erei/learning/LEARNING_SUMMARY.md",
     "adr/ADR_TEMPLATE.md.template": "adr/ADR_TEMPLATE.md",
 }
 
