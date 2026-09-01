@@ -54,6 +54,8 @@ class BootstrapProjectTests(unittest.TestCase):
                 ".erei/DATA_MODEL.md",
                 ".erei/PERFORMANCE_BUDGET.md",
                 ".erei/PROJECT_RULES.md",
+                ".erei/feedback/README.md",
+                ".erei/feedback/FRAMEWORK_FEEDBACK.md",
                 "adr/ADR_TEMPLATE.md",
             ]
             for rel in expected:
@@ -66,6 +68,9 @@ class BootstrapProjectTests(unittest.TestCase):
             self.assertEqual(manifest["framework"]["ref"], PIN)
             self.assertEqual(manifest["overlays"], ["google-apps-script"])
             self.assertEqual(manifest["runtime_adapters"], ["chatgpt-codex"])
+            feedback_md = (target / ".erei/feedback/FRAMEWORK_FEEDBACK.md").read_text(encoding="utf-8")
+            self.assertIn("No feedback events recorded yet", feedback_md)
+            self.assertFalse((target / ".erei/feedback/FRAMEWORK_FEEDBACK.jsonl").exists())
 
     def test_dry_run_writes_nothing(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
