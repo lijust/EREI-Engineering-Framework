@@ -24,6 +24,26 @@ Current public repository evidence shows:
 
 This is materially broader than EREI Framework's intended responsibility.
 
+## External integration surface evidence
+
+Tutti also exposes `services/tuttid/api/openapi/tuttid.v1.yaml` as a versioned local daemon API described for:
+
+- Tutti desktop,
+- CLI,
+- approved local integrations.
+
+Observed characteristics include:
+
+- local daemon server on `127.0.0.1`,
+- bearer authentication,
+- versioned OpenAPI contract,
+- daemon-owned context/authorization,
+- `GET /v1/cli/capabilities` for machine-readable capability discovery,
+- `POST /v1/cli/commands/{commandID}/invoke` for stable command invocation,
+- generated client code derived from the API contract.
+
+This materially improves Tutti's viability as an EREI adapter target because an external/local integration boundary exists. It does **not** yet prove that every EREI-required session/task/approval/mutation operation is available or stable through that boundary.
+
 ## Architectural implication for EREI
 
 EREI should not duplicate:
@@ -62,11 +82,23 @@ Potential useful capabilities include:
 - interactive approval/input states,
 - runtime state visibility.
 
+The versioned local daemon API gives us a plausible adapter transport without requiring EREI to import Tutti internals.
+
 ## Integration caution
 
 EREI should not couple Framework Core to Tutti-specific DTOs, database state, UI concepts or lifecycle internals.
 
-Before implementing a real Tutti adapter, verify a stable external integration surface for the required operations. Internal package APIs are evidence of architecture, not automatically a supported public API contract.
+Before implementing a real Tutti adapter, map the required EREI operations against the supported local daemon API and verify:
+
+- agent session creation/resume/send/cancel,
+- workspace selection/isolation,
+- approval/input pauses,
+- mutation/tool policy enforcement or fail-closed handling,
+- trace/evidence export,
+- terminal/unknown outcome semantics,
+- supported version compatibility.
+
+Internal package APIs remain architecture evidence, not a substitute for the supported integration contract.
 
 ## Licensing
 
@@ -74,9 +106,9 @@ The repository root `LICENSE` is Apache License 2.0. Direct reuse would require 
 
 ## Decision recommendation
 
-**KEEP TUTTI AS A RUNTIME ADAPTER CANDIDATE. DO NOT MAKE IT FRAMEWORK CORE.**
+**KEEP TUTTI AS A HIGH-PRIORITY RUNTIME ADAPTER CANDIDATE. DO NOT MAKE IT FRAMEWORK CORE.**
 
-Build a provider-neutral Runtime Adapter Contract first. Then implement Tutti only if its supported external interface can satisfy that contract without patching or forking Tutti's core lifecycle.
+Build the provider-neutral Runtime Adapter Contract first, then prototype Tutti against its versioned local daemon API rather than forking or embedding Tutti's core lifecycle.
 
 ## EREI differentiation
 
