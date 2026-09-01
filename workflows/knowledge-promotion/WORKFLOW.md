@@ -8,13 +8,24 @@ Convert project-local Framework feedback into reusable Framework improvements wi
 
 At least one evidence-backed project feedback event exists under `.erei/feedback/FRAMEWORK_FEEDBACK.jsonl`, or equivalent evidence has been explicitly submitted for Framework review.
 
+## Framework-side review surface
+
+Raw events stay authoritative in the source project. Framework review is tracked in:
+
+- `feedback/REVIEW_QUEUE.md`
+- candidate/eval/ADR artifacts created by this workflow as needed.
+
+A project agent must not push directly into Framework Core as part of capture. Framework-side intake/review is a separate action.
+
 ## Main flow
 
 1. **Ingest without trusting the suggestion**
    - read the raw feedback event,
    - verify project identity and exact Framework ref,
+   - record source project/ref and feedback ID in `feedback/REVIEW_QUEUE.md`,
    - resolve cited evidence where accessible,
-   - treat the proposed improvement as a hypothesis, not a decision.
+   - treat the proposed improvement as a hypothesis, not a decision,
+   - avoid copying sensitive or unnecessary proprietary project details into Framework review artifacts.
 
 2. **Validate the observation**
    - determine whether the reported behavior actually occurred,
@@ -65,6 +76,7 @@ At least one evidence-backed project feedback event exists under `.erei/feedback
 
 10. **Promote or reject**
     - promote only through normal Candidate → Stable release flow,
+    - update `feedback/REVIEW_QUEUE.md` with final review state/candidate or Stable ref,
     - record promoted Framework version/ref and feedback IDs,
     - if rejected, preserve the reason; do not erase the raw project observation.
 
