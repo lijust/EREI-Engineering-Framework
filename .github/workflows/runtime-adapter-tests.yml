@@ -1,0 +1,52 @@
+name: Runtime Adapter Tests
+
+on:
+  pull_request:
+    paths:
+      - "schemas/RUNTIME_ADAPTER_CONTRACT.md"
+      - "schemas/runtime-adapter.schema.json"
+      - "tools/validate_runtime_adapter.py"
+      - "tools/tests/test_validate_runtime_adapter.py"
+      - "adapters/**"
+      - "evals/cases/runtime-adapter-contract.eval.json"
+      - "evals/fixtures/runtime-adapter-candidate.json"
+      - ".github/workflows/runtime-adapter-tests.yml"
+  push:
+    branches: [main]
+    paths:
+      - "schemas/RUNTIME_ADAPTER_CONTRACT.md"
+      - "schemas/runtime-adapter.schema.json"
+      - "tools/validate_runtime_adapter.py"
+      - "tools/tests/test_validate_runtime_adapter.py"
+      - "adapters/**"
+      - "evals/cases/runtime-adapter-contract.eval.json"
+      - "evals/fixtures/runtime-adapter-candidate.json"
+      - ".github/workflows/runtime-adapter-tests.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  runtime-adapter-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Compile validator
+        run: python -m py_compile tools/validate_runtime_adapter.py tools/tests/test_validate_runtime_adapter.py
+
+      - name: Run validator unit tests
+        run: python -m unittest tools.tests.test_validate_runtime_adapter -v
+
+      - name: Validate candidate fixture
+        run: python tools/validate_runtime_adapter.py evals/fixtures/runtime-adapter-candidate.json
