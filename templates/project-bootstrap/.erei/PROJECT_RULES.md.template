@@ -21,6 +21,9 @@ Record environment, deployment, QA, rollback, versioning, or Stable immutability
 ## Operational Rules
 Record observability, incident, recovery, quota, manual-step, or support constraints.
 
+## Framework Feedback Rules
+Project execution may record evidence-backed Framework observations under `.erei/feedback/`. Feedback capture is append-only project learning: it must not modify Framework Core, silently change `.erei/framework.json`, or treat a suggestion as an accepted Framework decision. Framework changes require the separate Knowledge Promotion and normal release/approval flow.
+
 ## Temporary Rules
 Temporary constraints must include an owner/reason and removal condition so they do not silently become permanent architecture.
 

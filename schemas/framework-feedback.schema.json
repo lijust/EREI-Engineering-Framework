@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://erei-framework.local/schemas/framework-feedback.schema.json",
+  "title": "EREI Framework Feedback Event V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "feedback_id",
+    "recorded_at",
+    "project",
+    "framework_ref",
+    "type",
+    "severity",
+    "observation",
+    "evidence",
+    "suggestion",
+    "generalizability",
+    "confidence",
+    "status",
+    "fingerprint"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "feedback_id": {"type": "string", "pattern": "^EFF-[0-9]{8}T[0-9]{6}Z-[A-F0-9]{8}$"},
+    "recorded_at": {"type": "string", "format": "date-time"},
+    "project": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repository"],
+      "properties": {
+        "repository": {"type": "string", "minLength": 1},
+        "name": {"type": "string", "minLength": 1}
+      }
+    },
+    "framework_ref": {"type": "string", "minLength": 1},
+    "type": {
+      "enum": [
+        "architecture_gap",
+        "workflow_gap",
+        "skill_gap",
+        "role_gap",
+        "security_gap",
+        "data_gap",
+        "verification_gap",
+        "runtime_gap",
+        "performance_gap",
+        "context_gap",
+        "integration_gap",
+        "false_positive",
+        "false_negative",
+        "process_friction",
+        "missing_pattern",
+        "documentation_gap"
+      ]
+    },
+    "severity": {"enum": ["low", "medium", "high", "critical"]},
+    "source_artifact": {"type": "string", "minLength": 1},
+    "observation": {"type": "string", "minLength": 1},
+    "evidence": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "suggestion": {"type": "string", "minLength": 1},
+    "negative_learning": {"type": "string", "minLength": 1},
+    "generalizability": {
+      "enum": ["project_specific", "possible_generic", "likely_generic", "confirmed_multi_project"]
+    },
+    "confidence": {"enum": ["low", "medium", "high"]},
+    "status": {"enum": ["new", "triaged", "candidate", "promoted", "rejected", "archived"]},
+    "tags": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "fingerprint": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+  }
+}

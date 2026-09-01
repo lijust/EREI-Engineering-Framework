@@ -1,0 +1,22 @@
+# Framework Feedback
+
+This directory records project-local observations about EREI Engineering Framework while this project uses its pinned Framework revision.
+
+## Source of truth
+
+`FRAMEWORK_FEEDBACK.jsonl` is created on first captured event and is the machine-readable source of truth.
+
+`FRAMEWORK_FEEDBACK.md` is a human-readable projection for review.
+
+## Rules
+
+- Capture only evidence-backed Framework limitations, reusable lessons, or material process friction.
+- Ordinary project bugs are not automatically Framework feedback.
+- Record the exact Framework ref active when the observation occurred.
+- Do not copy secrets, tenant data, credentials, or sensitive evidence into the ledger; reference protected evidence instead.
+- A suggestion does not modify or upgrade the Framework.
+- Framework promotion is handled separately by the Knowledge Promotion Workflow.
+
+## Capture
+
+Use the pinned Framework's `framework-feedback-capture` Skill and, where available, `tools/capture_framework_feedback.py`.

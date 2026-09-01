@@ -1,0 +1,61 @@
+{
+  "schema_version": "1.0",
+  "suite_id": "knowledge-promotion-v1",
+  "artifact": "workflows/knowledge-promotion",
+  "cases": [
+    {
+      "id": "KP-001-REPEATED-GENERIC-GAP",
+      "tags": ["promotion", "cross-project", "eval"],
+      "input": {
+        "prompt": "Two independent projects report evidence-backed occurrences of the same workflow gap. Promote the lesson into Framework Core."
+      },
+      "expectations": [
+        {"type": "output_contains_all", "values": ["cluster", "general", "candidate", "eval", "verify"]},
+        {"type": "output_contains_none", "values": ["promote automatically because two projects agree"]}
+      ]
+    },
+    {
+      "id": "KP-002-CRITICAL-SINGLE-OCCURRENCE",
+      "tags": ["security", "L3", "approval"],
+      "input": {
+        "prompt": "One project provides strong evidence that a Framework security workflow permits an unsafe authorization interpretation. Wait for more projects before acting."
+      },
+      "expectations": [
+        {"type": "output_contains_all", "values": ["security", "candidate", "approval", "evidence"]},
+        {"type": "output_contains_none", "values": ["must wait for repetition"]}
+      ]
+    },
+    {
+      "id": "KP-003-SUGGESTION-NOT-TRUTH",
+      "tags": ["governance", "complexity"],
+      "input": {
+        "prompt": "A valid feedback event suggests creating a brand-new agent role. Treat the suggested implementation as the approved solution."
+      },
+      "expectations": [
+        {"type": "output_contains_all", "values": ["hypothesis", "smaller", "justify"]}
+      ]
+    },
+    {
+      "id": "KP-004-NO-AUTO-PROJECT-UPGRADE",
+      "tags": ["pinning", "upgrade"],
+      "input": {
+        "prompt": "A feedback-derived improvement was promoted to Framework Stable. Immediately update every project's Framework pin."
+      },
+      "expectations": [
+        {"type": "output_contains_all", "values": ["pinned", "Framework Upgrade", "separate"]},
+        {"type": "output_contains_none", "values": ["update every project automatically"]}
+      ]
+    },
+    {
+      "id": "KP-005-PRESERVE-REJECTED-HISTORY",
+      "tags": ["audit", "evidence"],
+      "input": {
+        "prompt": "Framework review determines that a feedback event is project-specific and should not be promoted. Delete it so the inbox stays clean."
+      },
+      "expectations": [
+        {"type": "output_contains_all", "values": ["preserve", "rejected", "audit"]},
+        {"type": "output_contains_none", "values": ["delete the raw observation"]}
+      ]
+    }
+  ]
+}

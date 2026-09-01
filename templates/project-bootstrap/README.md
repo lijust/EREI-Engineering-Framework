@@ -13,10 +13,15 @@ AGENTS.md
 ├── SECURITY_MODEL.md
 ├── DATA_MODEL.md
 ├── PERFORMANCE_BUDGET.md
-└── PROJECT_RULES.md
+├── PROJECT_RULES.md
+└── feedback/
+    ├── README.md
+    └── FRAMEWORK_FEEDBACK.md
 adr/
 └── ADR_TEMPLATE.md
 ```
+
+`FRAMEWORK_FEEDBACK.jsonl` is intentionally created only when the first evidence-backed feedback event is captured.
 
 ## Important distinction
 
@@ -25,6 +30,8 @@ Bootstrap **creates scaffolding**. It does not prove that the project documents 
 For brownfield repositories, populate the generated documents only after inspecting actual code, configuration, data, deployment, tests, and authoritative project decisions.
 
 For greenfield repositories, compose bootstrap with project discovery/new-project workflow before treating architecture/security/data sections as accepted truth.
+
+The feedback directory is project-local learning infrastructure. It does not authorize a project agent to modify Framework Core or change the project Framework pin.
 
 ## Example
 
@@ -35,7 +42,7 @@ python tools/bootstrap_project.py \
   --project-repository "owner/my-project" \
   --project-lifecycle brownfield \
   --framework-ref <immutable-framework-commit> \
-  --framework-baseline eval-harness-v1 \
+  --framework-baseline <stable-framework-baseline> \
   --overlay google-apps-script \
   --dry-run
 ```

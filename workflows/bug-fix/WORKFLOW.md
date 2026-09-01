@@ -50,6 +50,7 @@ For L2+ also use:
 Conditional:
 - `threat-model`
 - `security-review`
+- `framework-feedback-capture`
 - technology overlay references
 
 ## Stage 1 — Capture defect
@@ -163,7 +164,22 @@ Compare:
 
 Every unresolved item is blocking, accepted/deferred explicitly, or out of scope.
 
-## Stage 12 — Release/exit
+## Stage 12 — Framework Feedback Check
+
+After convergence, determine whether the defect/rework exposed a limitation or reusable lesson in the pinned Framework itself.
+
+Capture project-local feedback when evidence shows, for example:
+- the applicable workflow/skill missed a material condition,
+- verification allowed an escaped defect,
+- risk was materially misclassified,
+- a repeated workaround outside Framework guidance was necessary,
+- useful negative learning should be preserved.
+
+Do not capture an ordinary project defect if Framework behavior was adequate.
+
+When triggered, use `framework-feedback-capture` and store the event under `.erei/feedback/`. Feedback capture does not modify Framework Core or the project pin.
+
+## Stage 13 — Release/exit
 
 Use Router terminal states.
 
@@ -184,6 +200,7 @@ Regression surface/checks:
 Review verdicts:
 Verification evidence:
 Residual/deferred items:
+Framework feedback: none | captured <feedback-id>
 Release/terminal state:
 ```
 
@@ -197,7 +214,8 @@ For a true production hotfix:
 - retain rollback/recovery posture,
 - run the strongest practical targeted verification,
 - document skipped non-critical checks,
-- create follow-up regression/postmortem work if needed.
+- create follow-up regression/postmortem work if needed,
+- run the Framework Feedback Check after containment when the incident exposed a reusable Framework lesson.
 
 ## Rationalizations to reject
 
@@ -208,7 +226,8 @@ For a true production hotfix:
 - "Since the bug is urgent, tenant/data checks can wait."
 - "While we're here, rewrite the module."
 - "The original symptom stopped once, so we're done."
+- "Every project bug must be a Framework bug."
 
 ## Definition of Done
 
-The defect/root cause relationship is evidence-backed, the fix addresses the violated invariant with proportional scope, regression protection exists where practical, reviews/gates are satisfied, and fresh evidence verifies the original defect plus credible regression surface before a truthful terminal state.
+The defect/root cause relationship is evidence-backed, the fix addresses the violated invariant with proportional scope, regression protection exists where practical, reviews/gates are satisfied, fresh evidence verifies the original defect plus credible regression surface, the Framework Feedback Check has been performed for material work, and a truthful terminal state is reached.
