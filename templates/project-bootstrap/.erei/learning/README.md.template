@@ -1,0 +1,20 @@
+# Project Task Learning
+
+This directory stores project-local structured experience data produced by EREI Engineering Framework execution.
+
+Canonical runtime-created files:
+
+```text
+TASK_EVENTS.jsonl       append-only task learning events
+LEARNING_REVIEWS.jsonl  append-only closed learning reviews
+LEARNING_STATE.json     derived current epoch/metrics/trigger
+LEARNING_SUMMARY.md     derived human-readable state
+```
+
+Every routed engineering execution should create one terminal Task Learning Event, including successful, blocked and failed work. Explanation-only conversation that never enters engineering execution is not recorded.
+
+Task learning is not Framework Feedback. Most successful task events will have no Framework Feedback. Feedback is linked only when evidence suggests a Framework limitation or reusable lesson.
+
+Do not store chain-of-thought, credentials, customer payloads or unrelated conversation content here. Store structured engineering signals and durable evidence references.
+
+Review triggers are deterministic and do not authorize Framework self-modification. Framework-changing findings must follow Framework Feedback → Knowledge Promotion → normal Candidate/Stable governance.
