@@ -1,11 +1,11 @@
 # EREI Engineering Framework
 
-**Status:** Runtime Adapter Contract V1 Stable  
-**Date:** 2026-09-01
+**Status:** Framework Scope Boundary V1 Stable  
+**Date:** 2026-09-02
 
 EREI Engineering Framework is a reusable, cross-project engineering operating system for AI-assisted software development.
 
-It is intentionally **not** a project-specific codebase, **not** a flat prompt/skill library, and **not** a mandatory agent runtime.
+It is intentionally **not** a project-specific codebase, **not** a flat prompt/skill library, **not** a mandatory agent runtime, and **not** a repository of provider-specific runtime clients.
 
 The framework separates:
 
@@ -15,7 +15,7 @@ The framework separates:
 4. **Workflows / Orchestration**
 5. **Project Context / Standards**
 6. **Durable Artifacts / Evidence**
-7. **Runtime Adapters / Distribution**
+7. **Optional Integration Contracts**
 
 ## Current state
 
@@ -30,14 +30,16 @@ The following layers are Stable:
 - Project Integration Bootstrap V1
 - Framework Upgrade Workflow V1
 - Runtime Adapter Contract V1
+- Framework Scope Boundary V1
 
-The Framework has also completed its first real brownfield integration with `lijust/EREI-App-Google`.
+The Framework has completed its first real brownfield integration with `lijust/EREI-App-Google`.
 
 Accepted architecture decisions:
 
 - `ADR-0001-EVAL-HARNESS.md`
 - `ADR-0002-PROJECT-INTEGRATION-CONTRACT.md`
 - `ADR-0003-RUNTIME-ADAPTER-CONTRACT.md`
+- `ADR-0004-CONCRETE-RUNTIME-IMPLEMENTATIONS-OUT-OF-SCOPE.md`
 
 ## Engineering roles
 
@@ -85,37 +87,15 @@ adr/
 └── ADR_TEMPLATE.md
 ```
 
-### Pin model
-
-`.erei/framework.json` declares:
-
-- Framework repository,
-- Framework baseline,
-- exact Framework ref,
-- project context paths,
-- enabled overlays,
-- runtime adapter preferences.
+`.erei/framework.json` declares the Framework repository, exact immutable Framework ref, project context paths, enabled overlays and optional runtime adapter preferences.
 
 Candidate/Stable project state should pin the Framework using an immutable commit SHA or immutable tag rather than relying only on a mutable branch such as `main`.
 
-### Bootstrap tooling
-
-`tools/bootstrap_project.py` is a Python-standard-library-only, fail-closed generator:
-
-- dry-run supported,
-- no overwrite by default,
-- explicit conflict reporting,
-- explicit `--force` required for replacement,
-- no execution of target project code,
-- no third-party package dependency.
-
-Generated files are scaffolding, not completed facts. Greenfield projects compose integration with project discovery/new-project workflow; brownfield projects compose it with brownfield onboarding and project-standard discovery before project context is treated as confirmed.
+`tools/bootstrap_project.py` is Python-standard-library-only and fail-closed: dry-run supported, no overwrite by default, explicit conflict reporting, explicit `--force`, no target-project execution and no third-party dependency.
 
 ## Framework Upgrade Workflow V1
 
 A Framework pin is treated as a release dependency, not as a string to replace casually.
-
-The Stable upgrade path requires:
 
 ```text
 current immutable pin
@@ -130,7 +110,7 @@ current immutable pin
 → promote or rollback
 ```
 
-The previous exact pin remains rollback evidence until the upgraded project baseline is accepted.
+Projects can continue working on their current Stable pin while Framework development happens independently. Candidate Framework work is not project truth until it becomes Stable and the project explicitly upgrades.
 
 ## Eval Harness V1
 
@@ -138,58 +118,19 @@ The provider-neutral automated evaluation layer is Stable:
 
 `*.eval.json → EREI runner → CLI adapter → target agent/runtime → normalized result → deterministic scorers`
 
-The runner uses Python standard library only. External systems such as Inspect AI, DeepEval, Promptfoo, Braintrust, or provider-native eval APIs remain optional adapters rather than Framework Core dependencies.
+External eval systems remain optional adapters rather than Framework Core dependencies.
 
-## Runtime Adapter Contract V1
+## Optional Runtime Adapter Contract V1
 
-The Framework now has a Stable semantic boundary for real agent/runtime execution.
+The Framework has a Stable semantic boundary for external execution runtimes, but **projects do not need a Runtime Adapter to use EREI Engineering Framework**.
 
-EREI owns:
+EREI owns governance, risk, workflow/role/skill selection, project context, required capabilities, approval policy, evidence requirements, independent verification and release acceptance.
 
-- Constitution and governance,
-- risk classification,
-- workflow/role/skill selection,
-- project context and Framework pinning,
-- required capabilities,
-- mutation and approval policy,
-- evidence requirements,
-- independent verification,
-- release acceptance.
+An external runtime may own provider/session/process/shared-workspace lifecycle. Runtime capability never authorizes work by itself and runtime success is evidence, not independent completion proof.
 
-Concrete runtimes own their provider/session/process/shared-workspace lifecycle.
+By ADR-0004, concrete runtime/provider implementations are outside Framework Core. Tutti-, Codex-, Claude-, OpenCode- or other provider-specific clients, credentials, lifecycle logic and CI are created only when a real project requirement justifies them and live outside this repository.
 
-Adapters declare standardized capabilities and translate Framework intent into the runtime without weakening governance. Missing required capabilities fail closed.
-
-Runtime success is evidence, not independent completion proof.
-
-### Runtime capability vocabulary
-
-Runtime Adapter V1 covers capabilities including:
-
-- task execution
-- session resume/persistence
-- exact cancellation
-- workspace read/write
-- interactive approval/input
-- mutation/tool policy
-- trace export
-- runtime recovery
-- optional shared context
-- optional parallel agents
-- optional agent handoff
-
-### Tutti
-
-Tutti is a high-priority **experimental adapter candidate**, not a Framework dependency and not yet an enableable Stable adapter.
-
-Research confirmed:
-
-- Apache-2.0 root license,
-- provider-neutral Agent Host architecture,
-- a versioned local daemon API intended for desktop, CLI and approved local integrations,
-- workspace-agent operations for session creation/read, sending input, exact-turn cancellation, interactive responses, plan decisions and related workspace capabilities.
-
-The next step is a narrow Tutti adapter prototype plus conformance testing for policy enforcement, isolation, failure semantics, evidence normalization and version compatibility.
+Runtime-specific research may remain under `research/` as architectural evidence without placing that runtime on the Framework roadmap.
 
 ## Operating principles
 
@@ -206,7 +147,9 @@ Key approved principles include:
 - DEV → Candidate → QA → Stable release flow with rollback.
 - Dependencies should be minimized and security-reviewed.
 - Framework Core stays technology-neutral; technology expertise lives in overlays.
-- Runtime capability never outranks Framework governance.
+- Optional integration capability never outranks Framework governance.
+- Do not build infrastructure before a demonstrated project requirement exists.
+- Project-discovered Framework limitations should become evidence-backed feedback, not silent self-modification.
 
 ## Performance baseline
 
@@ -218,13 +161,12 @@ Key approved principles include:
 
 ## Next architecture / validation targets
 
-1. Build a Tutti experimental runtime adapter against the documented local daemon API.
-2. Run single-agent Runtime Adapter conformance.
-3. Prove mutation/approval and project-workspace isolation fail closed.
-4. Normalize runtime trace/evidence without trusting runtime self-certification.
-5. Add multi-agent handoff/parallel execution only after the single-agent trust boundary passes.
-6. Build the knowledge-promotion workflow from proven project lessons.
-7. Validate the Framework on additional brownfield projects.
-8. Add specialist skills only when evidence shows a distinct reusable procedure is needed.
+1. Build Framework Feedback Capture V1 for project-discovered limitations and friction.
+2. Build Knowledge Promotion Workflow V1 from evidence-backed project observations.
+3. Add cross-project deduplication/classification of Framework feedback.
+4. Add Framework effectiveness/health metrics based on real project evidence.
+5. Validate the Framework on additional brownfield projects.
+6. Add specialist skills only when evidence shows a distinct reusable procedure is needed.
+7. Revisit any concrete runtime integration only when a real project requirement demonstrates the need.
 
 `BASELINE.json` is the machine-readable checkpoint for the current framework state.
