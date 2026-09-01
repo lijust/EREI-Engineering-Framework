@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "adapter_id": "tutti-local",
+  "display_name": "Tutti Local Daemon",
+  "version": "0.1.0-experimental",
+  "status": "experimental",
+  "runtime_kind": "local-multi-agent-workspace",
+  "transport": "desktop-daemon",
+  "capabilities": [
+    "execute_task",
+    "cancel_task",
+    "interactive_approval",
+    "interactive_input",
+    "session_persistence"
+  ],
+  "sources": "adapters/tutti/SOURCES.md",
+  "notes": "Experimental local-daemon adapter. Not approved for Candidate/Stable project workflows. Capabilities not listed here remain fail-closed.",
+  "metadata": {
+    "listener_metadata_version": 1,
+    "daemon_api_version_observed": "0.1.0",
+    "loopback_only": true,
+    "bearer_token_persisted_by_adapter": false,
+    "requires_live_tutti_daemon": true,
+    "multi_agent_capabilities_enabled": false,
+    "mutation_policy_enforcement_claimed": false,
+    "trace_export_claimed": false
+  }
+}
