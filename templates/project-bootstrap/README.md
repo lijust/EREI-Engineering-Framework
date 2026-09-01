@@ -14,14 +14,24 @@ AGENTS.md
 ├── DATA_MODEL.md
 ├── PERFORMANCE_BUDGET.md
 ├── PROJECT_RULES.md
-└── feedback/
+├── feedback/
+│   ├── README.md
+│   └── FRAMEWORK_FEEDBACK.md
+└── learning/
     ├── README.md
-    └── FRAMEWORK_FEEDBACK.md
+    └── LEARNING_SUMMARY.md
 adr/
 └── ADR_TEMPLATE.md
 ```
 
-`FRAMEWORK_FEEDBACK.jsonl` is intentionally created only when the first evidence-backed feedback event is captured.
+Runtime-created project-local ledgers are intentionally absent until first use:
+
+```text
+.erei/feedback/FRAMEWORK_FEEDBACK.jsonl
+.erei/learning/TASK_EVENTS.jsonl
+.erei/learning/LEARNING_REVIEWS.jsonl
+.erei/learning/LEARNING_STATE.json
+```
 
 ## Important distinction
 
@@ -31,7 +41,12 @@ For brownfield repositories, populate the generated documents only after inspect
 
 For greenfield repositories, compose bootstrap with project discovery/new-project workflow before treating architecture/security/data sections as accepted truth.
 
-The feedback directory is project-local learning infrastructure. It does not authorize a project agent to modify Framework Core or change the project Framework pin.
+The feedback and learning directories remain project-local evidence infrastructure:
+
+- **Task Learning** records structured signals from every routed engineering execution, including successful work.
+- **Framework Feedback** records only evidence-backed Framework limitations/reusable lessons.
+- deterministic Learning Review triggers indicate when enough evidence exists to review.
+- neither mechanism authorizes an agent to modify Framework Core or move the project Framework pin.
 
 ## Example
 
