@@ -1,6 +1,6 @@
 # Project Integration Bootstrap Workflow
 
-**Status:** Candidate V1 — governed by ADR-0002
+**Status:** Stable V1 — governed by ADR-0002
 
 ## Mission
 Integrate an existing or new software repository with the pinned EREI Engineering Framework without overwriting project truth, inventing architecture, or coupling the project to one agent runtime.
@@ -97,10 +97,15 @@ AGENTS.md
 ├── SECURITY_MODEL.md
 ├── DATA_MODEL.md
 ├── PERFORMANCE_BUDGET.md
-└── PROJECT_RULES.md
+├── PROJECT_RULES.md
+└── feedback/
+    ├── README.md
+    └── FRAMEWORK_FEEDBACK.md
 adr/
 └── ADR_TEMPLATE.md
 ```
+
+`FRAMEWORK_FEEDBACK.jsonl` is created on first feedback capture rather than as an empty machine ledger.
 
 ### 8. Replace placeholders with evidence
 The generated templates are scaffolding, not completed project truth.
@@ -120,7 +125,8 @@ Confirm:
 - Framework Core is referenced rather than copied by default,
 - project rules do not silently weaken the pinned Constitution,
 - auth/tenant/data boundaries are represented where relevant,
-- performance budgets are project-specific and measurable where possible.
+- performance budgets are project-specific and measurable where possible,
+- project feedback is stored locally and cannot silently mutate Framework Core or the Framework pin.
 
 ### 10. Verify integration
 Minimum deterministic checks:
@@ -130,7 +136,8 @@ Minimum deterministic checks:
 - stable integration does not rely only on mutable branch ref,
 - no unintended pre-existing file was overwritten,
 - `AGENTS.md` points to project and Framework truth rather than duplicating it,
-- enabled overlays match evidenced stack.
+- enabled overlays match evidenced stack,
+- `.erei/feedback/README.md` and `.erei/feedback/FRAMEWORK_FEEDBACK.md` exist for new V1 feedback-aware integrations.
 
 ### 11. Brownfield convergence
 For existing codebases, compare generated context against inspected reality.
@@ -182,6 +189,7 @@ Stop/escalate when:
 - Integration manifest valid.
 - Framework pin reproducible for stable state.
 - Project context files exist and are evidence-backed or explicitly marked unknown.
+- Feedback scaffolding exists for new feedback-aware integrations.
 - Existing project truth preserved.
 - Applicable overlays selected proportionally.
 - Required brownfield/new-project workflow completed or queued.
