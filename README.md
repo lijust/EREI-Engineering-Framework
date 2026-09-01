@@ -1,6 +1,6 @@
 # EREI Engineering Framework
 
-**Status:** Framework Scope Boundary V1 Stable  
+**Status:** Framework Feedback & Knowledge Promotion V1 Stable  
 **Date:** 2026-09-02
 
 EREI Engineering Framework is a reusable, cross-project engineering operating system for AI-assisted software development.
@@ -15,7 +15,8 @@ The framework separates:
 4. **Workflows / Orchestration**
 5. **Project Context / Standards**
 6. **Durable Artifacts / Evidence**
-7. **Optional Integration Contracts**
+7. **Feedback / Knowledge Promotion**
+8. **Optional Integration Contracts**
 
 ## Current state
 
@@ -31,6 +32,8 @@ The following layers are Stable:
 - Framework Upgrade Workflow V1
 - Runtime Adapter Contract V1
 - Framework Scope Boundary V1
+- Framework Feedback Capture V1
+- Knowledge Promotion Workflow V1
 
 The Framework has completed its first real brownfield integration with `lijust/EREI-App-Google`.
 
@@ -82,10 +85,15 @@ AGENTS.md
 ├── SECURITY_MODEL.md
 ├── DATA_MODEL.md
 ├── PERFORMANCE_BUDGET.md
-└── PROJECT_RULES.md
+├── PROJECT_RULES.md
+└── feedback/
+    ├── README.md
+    └── FRAMEWORK_FEEDBACK.md
 adr/
 └── ADR_TEMPLATE.md
 ```
+
+`FRAMEWORK_FEEDBACK.jsonl` is created only when the first evidence-backed feedback event is captured.
 
 `.erei/framework.json` declares the Framework repository, exact immutable Framework ref, project context paths, enabled overlays and optional runtime adapter preferences.
 
@@ -112,6 +120,57 @@ current immutable pin
 
 Projects can continue working on their current Stable pin while Framework development happens independently. Candidate Framework work is not project truth until it becomes Stable and the project explicitly upgrades.
 
+## Framework Feedback Capture V1
+
+Material project work now includes a Framework Feedback Check through the Chief Engineer, feature-development workflow and bug-fix workflow.
+
+Capture is triggered only when evidence reveals a plausible Framework limitation or reusable lesson, such as:
+
+- workflow/skill/role/context gaps,
+- escaped verification conditions,
+- materially incorrect risk classification,
+- repeated Framework-related workaround/friction,
+- missing reusable patterns,
+- useful negative learning.
+
+Ordinary project bugs are not automatically Framework feedback.
+
+Project-local source of truth:
+
+```text
+.erei/feedback/FRAMEWORK_FEEDBACK.jsonl
+```
+
+Each event records the exact pinned Framework ref, project identity, classification, observation, evidence, suggested improvement, generalizability/confidence and semantic fingerprint.
+
+`tools/capture_framework_feedback.py` captures events and refreshes the human-readable Markdown view. `tools/validate_framework_feedback.py` validates ledgers and recomputes fingerprints. Both use Python standard library only.
+
+Feedback capture never modifies Framework Core and never changes the project's Framework pin.
+
+## Knowledge Promotion Workflow V1
+
+Project feedback becomes Framework knowledge only through a separate controlled workflow:
+
+```text
+Project observation
+→ evidence-backed project feedback
+→ Framework review queue
+→ validate root cause
+→ classify / deduplicate / cluster
+→ remove project-specific assumptions
+→ complexity/value gate
+→ Framework candidate + evals/tests
+→ risk / approval
+→ verification
+→ Stable promotion or documented rejection
+```
+
+Raw project feedback remains owned by the source project. Framework-side review is tracked under `feedback/REVIEW_QUEUE.md`.
+
+A feedback suggestion is a hypothesis, not an accepted solution. L3/L4 changes still require explicit approval regardless of recurrence or confidence.
+
+A promoted Framework improvement reaches an existing project only through the Framework Upgrade Workflow; project pins never move automatically.
+
 ## Eval Harness V1
 
 The provider-neutral automated evaluation layer is Stable:
@@ -124,13 +183,7 @@ External eval systems remain optional adapters rather than Framework Core depend
 
 The Framework has a Stable semantic boundary for external execution runtimes, but **projects do not need a Runtime Adapter to use EREI Engineering Framework**.
 
-EREI owns governance, risk, workflow/role/skill selection, project context, required capabilities, approval policy, evidence requirements, independent verification and release acceptance.
-
-An external runtime may own provider/session/process/shared-workspace lifecycle. Runtime capability never authorizes work by itself and runtime success is evidence, not independent completion proof.
-
-By ADR-0004, concrete runtime/provider implementations are outside Framework Core. Tutti-, Codex-, Claude-, OpenCode- or other provider-specific clients, credentials, lifecycle logic and CI are created only when a real project requirement justifies them and live outside this repository.
-
-Runtime-specific research may remain under `research/` as architectural evidence without placing that runtime on the Framework roadmap.
+By ADR-0004, concrete runtime/provider implementations are outside Framework Core. Runtime-specific research may remain under `research/` without placing that runtime on the Framework roadmap.
 
 ## Operating principles
 
@@ -149,7 +202,8 @@ Key approved principles include:
 - Framework Core stays technology-neutral; technology expertise lives in overlays.
 - Optional integration capability never outranks Framework governance.
 - Do not build infrastructure before a demonstrated project requirement exists.
-- Project-discovered Framework limitations should become evidence-backed feedback, not silent self-modification.
+- Project-discovered Framework limitations become evidence-backed feedback, not silent self-modification.
+- Raw feedback does not become Framework truth until Knowledge Promotion verifies and promotes it.
 
 ## Performance baseline
 
@@ -161,12 +215,11 @@ Key approved principles include:
 
 ## Next architecture / validation targets
 
-1. Build Framework Feedback Capture V1 for project-discovered limitations and friction.
-2. Build Knowledge Promotion Workflow V1 from evidence-backed project observations.
-3. Add cross-project deduplication/classification of Framework feedback.
-4. Add Framework effectiveness/health metrics based on real project evidence.
-5. Validate the Framework on additional brownfield projects.
-6. Add specialist skills only when evidence shows a distinct reusable procedure is needed.
-7. Revisit any concrete runtime integration only when a real project requirement demonstrates the need.
+1. Exercise Feedback Capture V1 on real project work after projects upgrade to this Stable Framework revision.
+2. Add cross-project feedback deduplication/classification tooling once real feedback volume justifies it.
+3. Add Framework effectiveness/health metrics from real project evidence.
+4. Validate the Framework on additional brownfield projects.
+5. Add specialist skills only when evidence shows a distinct reusable procedure is needed.
+6. Revisit concrete runtime integration only when a real project requirement demonstrates the need.
 
 `BASELINE.json` is the machine-readable checkpoint for the current framework state.
