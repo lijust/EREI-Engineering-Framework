@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://erei-framework.local/schemas/runtime-adapter.schema.json",
+  "title": "EREI Runtime Adapter Manifest V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "adapter_id", "display_name", "version", "status", "runtime_kind", "transport", "capabilities"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "adapter_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$"},
+    "display_name": {"type": "string", "minLength": 1},
+    "version": {"type": "string", "minLength": 1},
+    "status": {"enum": ["experimental", "candidate", "stable", "deprecated"]},
+    "runtime_kind": {"type": "string", "minLength": 1},
+    "transport": {"enum": ["cli", "http", "rpc", "desktop-daemon", "native", "instructions"]},
+    "capabilities": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "execute_task",
+          "resume_session",
+          "cancel_task",
+          "read_workspace",
+          "write_workspace",
+          "shared_context",
+          "artifact_handoff",
+          "parallel_agents",
+          "agent_handoff",
+          "interactive_approval",
+          "interactive_input",
+          "tool_policy",
+          "mutation_policy",
+          "trace_export",
+          "session_persistence",
+          "runtime_recovery"
+        ]
+      }
+    },
+    "sources": {"type": "string", "minLength": 1},
+    "notes": {"type": "string"},
+    "metadata": {"type": "object"}
+  }
+}
