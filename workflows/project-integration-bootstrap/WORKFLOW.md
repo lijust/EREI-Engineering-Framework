@@ -98,14 +98,22 @@ AGENTS.md
 ├── DATA_MODEL.md
 ├── PERFORMANCE_BUDGET.md
 ├── PROJECT_RULES.md
-└── feedback/
+├── feedback/
+│   ├── README.md
+│   └── FRAMEWORK_FEEDBACK.md
+└── learning/
     ├── README.md
-    └── FRAMEWORK_FEEDBACK.md
+    └── LEARNING_SUMMARY.md
 adr/
 └── ADR_TEMPLATE.md
 ```
 
-`FRAMEWORK_FEEDBACK.jsonl` is created on first feedback capture rather than as an empty machine ledger.
+Machine ledgers are created on first use rather than as empty files:
+
+- `.erei/feedback/FRAMEWORK_FEEDBACK.jsonl`
+- `.erei/learning/TASK_EVENTS.jsonl`
+- `.erei/learning/LEARNING_REVIEWS.jsonl`
+- `.erei/learning/LEARNING_STATE.json`
 
 ### 8. Replace placeholders with evidence
 The generated templates are scaffolding, not completed project truth.
@@ -126,7 +134,8 @@ Confirm:
 - project rules do not silently weaken the pinned Constitution,
 - auth/tenant/data boundaries are represented where relevant,
 - performance budgets are project-specific and measurable where possible,
-- project feedback is stored locally and cannot silently mutate Framework Core or the Framework pin.
+- project feedback is stored locally and cannot silently mutate Framework Core or the Framework pin,
+- task-learning evidence is stored locally, excludes private reasoning/secrets, and cannot silently mutate Framework Core or the Framework pin.
 
 ### 10. Verify integration
 Minimum deterministic checks:
@@ -137,7 +146,8 @@ Minimum deterministic checks:
 - no unintended pre-existing file was overwritten,
 - `AGENTS.md` points to project and Framework truth rather than duplicating it,
 - enabled overlays match evidenced stack,
-- `.erei/feedback/README.md` and `.erei/feedback/FRAMEWORK_FEEDBACK.md` exist for new V1 feedback-aware integrations.
+- `.erei/feedback/README.md` and `.erei/feedback/FRAMEWORK_FEEDBACK.md` exist for feedback-aware integrations,
+- `.erei/learning/README.md` and `.erei/learning/LEARNING_SUMMARY.md` exist for task-learning-aware integrations.
 
 ### 11. Brownfield convergence
 For existing codebases, compare generated context against inspected reality.
@@ -189,7 +199,7 @@ Stop/escalate when:
 - Integration manifest valid.
 - Framework pin reproducible for stable state.
 - Project context files exist and are evidence-backed or explicitly marked unknown.
-- Feedback scaffolding exists for new feedback-aware integrations.
+- Feedback and task-learning scaffolding exists for new learning-aware integrations.
 - Existing project truth preserved.
 - Applicable overlays selected proportionally.
 - Required brownfield/new-project workflow completed or queued.
