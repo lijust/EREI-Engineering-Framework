@@ -1,7 +1,7 @@
 # Runtime Adapter Contract V1
 
-**Status:** Proposed  
-**Architecture gate:** L3
+**Status:** Stable V1  
+**Architecture gate:** ADR-0003 Accepted
 
 ## Purpose
 
