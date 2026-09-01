@@ -1,33 +1,43 @@
-# Runtime Adapters
+# Runtime Adapter Contracts
 
-Runtime adapters connect EREI Engineering Framework governance to concrete agent execution environments.
+EREI Engineering Framework is runtime-neutral. Runtime integration is optional.
 
-They are optional integration layers. Framework Core remains runtime-neutral.
+This area documents the provider-neutral boundary used when an external agent/runtime executes work under EREI governance. Concrete runtime implementations are outside Framework Core by ADR-0004.
+
+## Framework owns
+
+- semantic Runtime Adapter Contract,
+- standardized capability vocabulary,
+- generic manifest/schema validation,
+- generic conformance requirements,
+- evidence/verification rules,
+- project/runtime selection constraints.
+
+## Framework does not own
+
+- Tutti/Codex/Claude/OpenCode-specific clients,
+- provider-specific endpoint discovery or credentials,
+- provider/session/process lifecycle,
+- provider-specific adapter CI,
+- mandatory multi-agent/shared-workspace infrastructure.
+
+A project does not need a Runtime Adapter to use the Framework.
 
 ## Rules
 
-- Do not enable an adapter in Candidate/Stable project state unless the adapter itself is Stable, unless an explicit experimental workflow permits otherwise.
-- An adapter cannot weaken Constitution/risk/approval/security/release rules.
+- Runtime capability never outranks Constitution, risk, approval, security, data or release rules.
+- Missing required capability fails closed.
 - Runtime success is evidence input, not independent verification.
-- Capability declarations must be verified by conformance tests before Stable promotion.
-- Runtime credentials/secrets never belong in adapter manifests, eval fixtures, or project context.
-- Multi-agent/shared-context runtimes require explicit isolation/conflict/handoff tests.
+- Concrete integrations should be created only when a real project requirement justifies them.
+- Concrete integration placement is decided when that requirement exists; no adapter repository is pre-created by default.
+- Runtime-specific research may live under `research/` without making that runtime part of Framework Core or the roadmap.
 
-## Recommended package
+## Canonical artifacts
 
-```text
-adapters/<adapter-id>/
-├── ADAPTER.md
-├── adapter.json
-├── SOURCES.md
-├── evals/
-└── implementation/     optional
-```
-
-Assessment-only candidates may omit `adapter.json` intentionally so projects cannot enable them accidentally.
-
-## Current state
-
-No Runtime Adapter is Stable yet.
-
-`tutti/ASSESSMENT.md` records Tutti as a strong candidate while its supported external integration surface is evaluated.
+- `schemas/RUNTIME_ADAPTER_CONTRACT.md`
+- `schemas/runtime-adapter.schema.json`
+- `tools/validate_runtime_adapter.py`
+- `tools/tests/test_validate_runtime_adapter.py`
+- `evals/cases/runtime-adapter-contract.eval.json`
+- `adr/ADR-0003-RUNTIME-ADAPTER-CONTRACT.md`
+- `adr/ADR-0004-CONCRETE-RUNTIME-IMPLEMENTATIONS-OUT-OF-SCOPE.md`
