@@ -1,6 +1,6 @@
 # EREI Engineering Framework
 
-**Status:** Framework Feedback & Knowledge Promotion V1 Stable  
+**Status:** Task Learning & Learning Review V1 Stable  
 **Date:** 2026-09-02
 
 EREI Engineering Framework is a reusable, cross-project engineering operating system for AI-assisted software development.
@@ -15,8 +15,9 @@ The framework separates:
 4. **Workflows / Orchestration**
 5. **Project Context / Standards**
 6. **Durable Artifacts / Evidence**
-7. **Feedback / Knowledge Promotion**
-8. **Optional Integration Contracts**
+7. **Task Learning / Review Triggers**
+8. **Feedback / Knowledge Promotion**
+9. **Optional Integration Contracts**
 
 ## Current state
 
@@ -34,6 +35,8 @@ The following layers are Stable:
 - Framework Scope Boundary V1
 - Framework Feedback Capture V1
 - Knowledge Promotion Workflow V1
+- Task Learning Capture V1
+- Learning Review / Deterministic Review Trigger V1
 
 The Framework has completed its first real brownfield integration with `lijust/EREI-App-Google`.
 
@@ -43,6 +46,7 @@ Accepted architecture decisions:
 - `ADR-0002-PROJECT-INTEGRATION-CONTRACT.md`
 - `ADR-0003-RUNTIME-ADAPTER-CONTRACT.md`
 - `ADR-0004-CONCRETE-RUNTIME-IMPLEMENTATIONS-OUT-OF-SCOPE.md`
+- `ADR-0005-TASK-LEARNING-AND-REVIEW-TRIGGERS.md`
 
 ## Engineering roles
 
@@ -74,7 +78,7 @@ Roles own perspective, accountability, authority, escalation and evidence obliga
 
 ## Project Integration Bootstrap V1
 
-The stable project-integration contract standardizes:
+The stable project-integration contract now standardizes:
 
 ```text
 AGENTS.md
@@ -86,14 +90,24 @@ AGENTS.md
 ├── DATA_MODEL.md
 ├── PERFORMANCE_BUDGET.md
 ├── PROJECT_RULES.md
-└── feedback/
+├── feedback/
+│   ├── README.md
+│   └── FRAMEWORK_FEEDBACK.md
+└── learning/
     ├── README.md
-    └── FRAMEWORK_FEEDBACK.md
+    └── LEARNING_SUMMARY.md
 adr/
 └── ADR_TEMPLATE.md
 ```
 
-`FRAMEWORK_FEEDBACK.jsonl` is created only when the first evidence-backed feedback event is captured.
+Machine ledgers are created on first use rather than as empty files:
+
+```text
+.erei/feedback/FRAMEWORK_FEEDBACK.jsonl
+.erei/learning/TASK_EVENTS.jsonl
+.erei/learning/LEARNING_REVIEWS.jsonl
+.erei/learning/LEARNING_STATE.json
+```
 
 `.erei/framework.json` declares the Framework repository, exact immutable Framework ref, project context paths, enabled overlays and optional runtime adapter preferences.
 
@@ -122,7 +136,7 @@ Projects can continue working on their current Stable pin while Framework develo
 
 ## Framework Feedback Capture V1
 
-Material project work now includes a Framework Feedback Check through the Chief Engineer, feature-development workflow and bug-fix workflow.
+Material project work includes a Framework Feedback Check through the Chief Engineer and delivery workflows.
 
 Capture is triggered only when evidence reveals a plausible Framework limitation or reusable lesson, such as:
 
@@ -143,17 +157,88 @@ Project-local source of truth:
 
 Each event records the exact pinned Framework ref, project identity, classification, observation, evidence, suggested improvement, generalizability/confidence and semantic fingerprint.
 
-`tools/capture_framework_feedback.py` captures events and refreshes the human-readable Markdown view. `tools/validate_framework_feedback.py` validates ledgers and recomputes fingerprints. Both use Python standard library only.
-
 Feedback capture never modifies Framework Core and never changes the project's Framework pin.
+
+## Task Learning Capture V1
+
+Framework Feedback records exceptional Framework lessons. Task Learning is broader: **every routed engineering execution becomes one structured project-local experience event**, including clean success, blocked work and failed execution.
+
+The Router terminal path is now:
+
+```text
+Execution
+→ review / verification
+→ convergence
+→ Framework Feedback Check when applicable
+→ Task Learning Event
+→ deterministic Learning Review Trigger
+→ terminal state
+```
+
+Task Learning stores observable engineering signals rather than private reasoning:
+
+- exact Framework ref,
+- workflow and risk,
+- terminal/outcome class,
+- task materiality,
+- rework cycles,
+- verification failures / verification escape,
+- Framework-feedback linkage,
+- manual workaround/context-gap/scope-growth signals,
+- critical security/data signal,
+- coarse duration class.
+
+Canonical project-local files:
+
+```text
+.erei/learning/TASK_EVENTS.jsonl
+.erei/learning/LEARNING_REVIEWS.jsonl
+.erei/learning/LEARNING_STATE.json
+.erei/learning/LEARNING_SUMMARY.md
+```
+
+`TASK_EVENTS.jsonl` and `LEARNING_REVIEWS.jsonl` are append-only evidence. State and Markdown summary are deterministic derived views.
+
+`tools/task_learning.py` uses only Python standard library and provides:
+
+- `capture`
+- `status`
+- `validate`
+- `review-close`
+
+Task-event semantic fingerprints and review-cutoff/epoch validation detect malformed or inconsistent ledgers.
+
+## Deterministic Learning Review Trigger V1
+
+Every project Learning Epoch returns one state:
+
+- `LEARNING_HEALTHY`
+- `LEARNING_WATCH`
+- `REVIEW_RECOMMENDED`
+- `REVIEW_DUE`
+- `IMMEDIATE_REVIEW`
+
+Initial transparent thresholds:
+
+- **Immediate:** verification escape or critical security/data event.
+- **Due:** 40 material tasks, same Framework-feedback fingerprint 3 times, or 5 Framework-feedback tasks.
+- **Recommended:** 20 material tasks; or elevated rework/verification-failure rates after minimum sample; or 3 manual workarounds/context gaps.
+- **Watch:** 10 material tasks or 2 Framework-feedback tasks.
+
+These thresholds are an initial calibration to be tested against real projects, not permanent truth.
+
+A Learning Review validates the accumulated evidence, records findings/decision/actions, closes the exact event cutoff and starts the next epoch. A review trigger is not a release state and never authorizes Framework self-modification.
 
 ## Knowledge Promotion Workflow V1
 
 Project feedback becomes Framework knowledge only through a separate controlled workflow:
 
 ```text
-Project observation
-→ evidence-backed project feedback
+Project execution
+→ Task Learning
+→ Learning Review when enough evidence accumulates
+→ Framework limitation/reusable lesson?
+→ evidence-backed Framework Feedback
 → Framework review queue
 → validate root cause
 → classify / deduplicate / cluster
@@ -165,11 +250,11 @@ Project observation
 → Stable promotion or documented rejection
 ```
 
-Raw project feedback remains owned by the source project. Framework-side review is tracked under `feedback/REVIEW_QUEUE.md`.
+Raw project feedback/task-learning evidence remains owned by the source project. Framework-side feedback review is tracked under `feedback/REVIEW_QUEUE.md`.
 
-A feedback suggestion is a hypothesis, not an accepted solution. L3/L4 changes still require explicit approval regardless of recurrence or confidence.
+A promoted Framework improvement reaches an existing project only through Framework Upgrade Workflow; project pins never move automatically.
 
-A promoted Framework improvement reaches an existing project only through the Framework Upgrade Workflow; project pins never move automatically.
+Future Task Learning epochs provide before/after evidence for whether a promoted Framework change actually improved outcomes.
 
 ## Eval Harness V1
 
@@ -203,7 +288,10 @@ Key approved principles include:
 - Optional integration capability never outranks Framework governance.
 - Do not build infrastructure before a demonstrated project requirement exists.
 - Project-discovered Framework limitations become evidence-backed feedback, not silent self-modification.
-- Raw feedback does not become Framework truth until Knowledge Promotion verifies and promotes it.
+- Every routed engineering execution produces structured learning data, including success.
+- Task Learning stores structured observable signals, not private chain-of-thought or secrets.
+- Learning metrics are evidence signals, not automatic proof of causation.
+- Raw learning/feedback does not become Framework truth until controlled review/promotion verifies it.
 
 ## Performance baseline
 
@@ -215,11 +303,13 @@ Key approved principles include:
 
 ## Next architecture / validation targets
 
-1. Exercise Feedback Capture V1 on real project work after projects upgrade to this Stable Framework revision.
-2. Add cross-project feedback deduplication/classification tooling once real feedback volume justifies it.
-3. Add Framework effectiveness/health metrics from real project evidence.
-4. Validate the Framework on additional brownfield projects.
-5. Add specialist skills only when evidence shows a distinct reusable procedure is needed.
-6. Revisit concrete runtime integration only when a real project requirement demonstrates the need.
+1. Upgrade a real project at an appropriate checkpoint and exercise Task Learning V1 across real feature/bug/review work.
+2. Calibrate review thresholds from actual task mix rather than changing them from intuition.
+3. Complete at least one real Learning Review → Framework Feedback → Knowledge Promotion → Framework Upgrade feedback loop.
+4. Add cross-project feedback/learning deduplication and classification only when real multi-project volume justifies it.
+5. Build Framework effectiveness/health metrics from real epoch evidence.
+6. Validate the Framework on additional brownfield projects.
+7. Add specialist skills only when evidence shows a distinct reusable procedure is needed.
+8. Revisit concrete runtime integration only when a real project requirement demonstrates the need.
 
 `BASELINE.json` is the machine-readable checkpoint for the current framework state.
