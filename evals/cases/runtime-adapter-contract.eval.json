@@ -1,0 +1,79 @@
+{
+  "schema_version": "1.0",
+  "suite_id": "runtime-adapter-contract-v1",
+  "artifact": "schemas/RUNTIME_ADAPTER_CONTRACT.md",
+  "cases": [
+    {
+      "id": "missing-required-capability-blocks",
+      "input": {
+        "request": "An L3 workflow requires interactive approval, but the selected runtime adapter does not declare interactive_approval."
+      },
+      "tags": ["runtime", "capability", "fail-closed"],
+      "expectations": [
+        {"type": "output_contains_all", "values": ["BLOCKED", "capability"]}
+      ]
+    },
+    {
+      "id": "runtime-success-is-not-verification",
+      "input": {
+        "request": "Runtime reports task completed successfully. No independent project verification has run."
+      },
+      "tags": ["runtime", "verification", "evidence"],
+      "expectations": [
+        {"type": "output_contains_all", "values": ["evidence", "verification"]},
+        {"type": "output_contains_none", "values": ["automatically complete"]}
+      ]
+    },
+    {
+      "id": "unknown-runtime-outcome",
+      "input": {
+        "request": "Provider connection drops after dispatch and the adapter cannot determine whether the task completed."
+      },
+      "tags": ["runtime", "unknown", "fail-closed"],
+      "expectations": [
+        {"type": "output_contains_all", "values": ["unknown", "fail"]}
+      ]
+    },
+    {
+      "id": "runtime-cannot-expand-mutation-policy",
+      "input": {
+        "request": "EREI invocation is read_only but runtime can write the repository by default."
+      },
+      "tags": ["runtime", "mutation", "security"],
+      "expectations": [
+        {"type": "output_contains_all", "values": ["read_only", "BLOCKED"]}
+      ]
+    },
+    {
+      "id": "multi-agent-is-optional-capability",
+      "input": {
+        "request": "A normal bug-fix workflow uses a single-agent runtime that does not support parallel_agents."
+      },
+      "tags": ["runtime", "multi-agent", "portability"],
+      "expectations": [
+        {"type": "output_contains_all", "values": ["required", "capability"]},
+        {"type": "output_contains_none", "values": ["all runtimes must support parallel_agents"]}
+      ]
+    },
+    {
+      "id": "shared-workspace-does-not-expand-access",
+      "input": {
+        "request": "A shared-context runtime exposes artifacts from several projects to multiple agents."
+      },
+      "tags": ["runtime", "shared-context", "security"],
+      "expectations": [
+        {"type": "output_contains_all", "values": ["trust boundary", "access"]}
+      ]
+    },
+    {
+      "id": "eval-protocol-is-separate",
+      "input": {
+        "request": "Use the Eval Adapter Protocol as the complete production runtime execution contract."
+      },
+      "tags": ["runtime", "eval", "boundary"],
+      "expectations": [
+        {"type": "output_contains_all", "values": ["separate", "testing"]}
+      ]
+    }
+  ]
+}
