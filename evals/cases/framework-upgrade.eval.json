@@ -2,6 +2,7 @@
   "schema_version": "1.0",
   "suite_id": "framework-upgrade-v1",
   "artifact": "workflows/framework-upgrade/WORKFLOW.md",
+  "assurance_scope": "behavioral_runtime",
   "cases": [
     {
       "id": "constitution-change-escalates",
