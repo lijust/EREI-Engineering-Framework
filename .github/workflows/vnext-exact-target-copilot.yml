@@ -11,6 +11,10 @@ on:
         description: Exact 40-character HEAD expected for release_ref
         required: true
         type: string
+      copilot_cli_version:
+        description: Exact @github/copilot npm version to execute (for example 1.0.54)
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -80,18 +84,40 @@ jobs:
           python -m unittest \
             evals.tests.test_assurance_scope \
             evals.tests.test_exact_target_run \
-            evals.tests.test_copilot_cli_exact_target -v
+            evals.tests.test_copilot_cli_exact_target \
+            evals.tests.test_copilot_routing_prompt_boundary \
+            evals.tests.test_vnext_exact_target_workflow -v
 
       - name: Set up Node.js
         uses: actions/setup-node@v7
         with:
           node-version: '24'
 
-      - name: Install current GitHub Copilot CLI
-        run: npm install -g @github/copilot
+      - name: Verify Copilot credential and requested CLI version
+        env:
+          COPILOT_GITHUB_TOKEN: ${{ secrets.EREI_COPILOT_EXACT_TARGET_TOKEN }}
+          COPILOT_CLI_VERSION: ${{ inputs.copilot_cli_version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "$COPILOT_GITHUB_TOKEN" ]]; then
+            echo "EREI_COPILOT_EXACT_TARGET_TOKEN is required for this personal repository" >&2
+            exit 2
+          fi
+          if [[ ! "$COPILOT_CLI_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+([-.][0-9A-Za-z.-]+)?$ ]]; then
+            echo "copilot_cli_version must be an exact npm version, not latest/range/tag" >&2
+            exit 2
+          fi
+
+      - name: Install pinned GitHub Copilot CLI
+        env:
+          COPILOT_CLI_VERSION: ${{ inputs.copilot_cli_version }}
+        run: npm install -g "@github/copilot@${COPILOT_CLI_VERSION}"
 
       - name: Record runtime identity
         id: runtime
+        env:
+          EXPECTED_COPILOT_VERSION: ${{ inputs.copilot_cli_version }}
         shell: bash
         run: |
           set -euo pipefail
@@ -100,12 +126,15 @@ jobs:
             echo "unable to determine Copilot CLI version" >&2
             exit 2
           fi
+          if [[ "$version" != *"$EXPECTED_COPILOT_VERSION"* ]]; then
+            echo "installed Copilot CLI identity mismatch: expected=$EXPECTED_COPILOT_VERSION actual=$version" >&2
+            exit 2
+          fi
           echo "copilot_version=$version" >> "$GITHUB_OUTPUT"
           printf '%s\n' "$version"
 
       - name: Execute 43 behavioral cases against frozen target
         env:
-          GITHUB_TOKEN: ${{ github.token }}
           COPILOT_GITHUB_TOKEN: ${{ secrets.EREI_COPILOT_EXACT_TARGET_TOKEN }}
           TARGET_REF: ${{ steps.target.outputs.target_ref }}
           CARRIER_SHA: ${{ inputs.expected_carrier_sha }}
@@ -157,6 +186,7 @@ jobs:
           TARGET_ID: ${{ steps.target.outputs.target_id }}
           CARRIER_SHA: ${{ inputs.expected_carrier_sha }}
           COPILOT_VERSION: ${{ steps.runtime.outputs.copilot_version }}
+          COPILOT_CLI_VERSION_INPUT: ${{ inputs.copilot_cli_version }}
         shell: bash
         run: |
           set -euo pipefail
@@ -173,6 +203,7 @@ jobs:
               'adapter_revision': os.environ['TARGET_REF'],
               'runtime_id': 'github-copilot-cli',
               'runtime_version': os.environ['COPILOT_VERSION'],
+              'requested_cli_version': os.environ['COPILOT_CLI_VERSION_INPUT'],
               'model': 'gpt-5.4',
               'github_run_id': os.environ['GITHUB_RUN_ID'],
               'github_run_attempt': os.environ['GITHUB_RUN_ATTEMPT'],
@@ -194,6 +225,7 @@ jobs:
         env:
           TARGET_REF: ${{ steps.target.outputs.target_ref }}
           CARRIER_SHA: ${{ inputs.expected_carrier_sha }}
+          COPILOT_CLI_VERSION: ${{ inputs.copilot_cli_version }}
         shell: bash
         run: |
           {
@@ -204,5 +236,6 @@ jobs:
             echo '- Behavioral runtime cases: 43'
             echo '- Harness-only cases sent to Copilot: 0'
             echo '- Model: `gpt-5.4`'
+            echo "- Requested Copilot CLI: \`$COPILOT_CLI_VERSION\`"
             echo '- Repository mutation/commit/promotion: none'
           } >> "$GITHUB_STEP_SUMMARY"
