@@ -10,9 +10,10 @@ import sys
 from pathlib import Path
 
 try:
-    from . import assurance_enforcement
+    from . import assurance_enforcement, exact_target_evidence
 except ImportError:
     import assurance_enforcement
+    import exact_target_evidence
 
 SHA40_RE = re.compile(r"^[a-f0-9]{40}$")
 
@@ -83,6 +84,7 @@ def validate_manifest(manifest: dict, *, repo_root: Path | None = None) -> dict:
         "assurance_contract_version": manifest["assurance_contract_version"],
         "next_stable_gate_applied": False,
         "stable_enforcement_satisfied": None,
+        "exact_target_bindings_validated": 0,
     }
     if manifest["status"] == "stable" and manifest["assurance_contract_version"] >= 2:
         result["next_stable_gate_applied"] = True
@@ -136,6 +138,12 @@ def validate_manifest(manifest: dict, *, repo_root: Path | None = None) -> dict:
                 "behavioral eval evidence is insufficient: "
                 f"missing={len(missing)} nonpass={len(nonpass)} lower_assurance={len(lower)} unexpected={len(extras)}"
             )
+        for key in sorted(expected):
+            try:
+                exact_target_evidence.validate_binding(repo_root, manifest["framework_ref"], observed[key])
+            except exact_target_evidence.ExactTargetEvidenceError as exc:
+                raise ReleaseError(f"exact-target evidence binding failed for {key[0]}/{key[1]}: {exc}") from exc
+        result["exact_target_bindings_validated"] = len(expected)
     elif manifest["status"] == "candidate":
         blockers = manifest.get("stable_blockers")
         if not isinstance(blockers, list) or not blockers or any(not isinstance(item, str) or not item.strip() for item in blockers):

@@ -2,8 +2,9 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
-from tools import release_assurance
+from tools import exact_target_evidence, release_assurance
 
 
 class ReleaseAssuranceTests(unittest.TestCase):
@@ -71,6 +72,46 @@ class ReleaseAssuranceTests(unittest.TestCase):
             "limitations": ["test limitation"],
         }
 
+    def exact_evidence(self):
+        return {
+            "schema_version": 2,
+            "framework_revision": "a" * 40,
+            "produced_at": "2026-09-07T12:00:00Z",
+            "executions": [{
+                "suite_id": "suite",
+                "case_id": "case",
+                "status": "pass",
+                "adapter_id": "external-adapter",
+                "adapter_revision": "d" * 40,
+                "assurance_level": "exact_target_runtime",
+                "independent_runtime": True,
+                "evidence_ref": "exact-target-run:evals/exact-target-runs/run.json#suite/case",
+            }],
+        }
+
+    class FakeRunner:
+        ASSURANCE_LEVELS = {"harness_smoke": 0, "reference_contract": 1, "managed_runtime": 2, "exact_target_runtime": 3}
+
+        @staticmethod
+        def validate_execution_evidence(data):
+            return data
+
+        @staticmethod
+        def _expected_cases(paths):
+            return {("suite", "case")}
+
+        @staticmethod
+        def execution_assurance_level(execution, schema_version):
+            return execution["assurance_level"]
+
+    def write_stable_root(self, root: Path):
+        (root / "security").mkdir(parents=True)
+        (root / "evals").mkdir(parents=True)
+        (root / "security" / "ASSURANCE_ENFORCEMENT.json").write_text(
+            json.dumps(self.enforcement(equivalent=True)), encoding="utf-8"
+        )
+        (root / "evals" / "evidence.json").write_text(json.dumps(self.exact_evidence()), encoding="utf-8")
+
     def test_candidate_requires_explicit_stable_blockers(self):
         value = self.base()
         del value["stable_blockers"]
@@ -82,6 +123,7 @@ class ReleaseAssuranceTests(unittest.TestCase):
         self.assertEqual(result["status"], "candidate")
         self.assertFalse(result["next_stable_gate_applied"])
         self.assertIsNone(result["stable_enforcement_satisfied"])
+        self.assertEqual(result["exact_target_bindings_validated"], 0)
 
     def test_v2_stable_requires_exact_target_runtime_level(self):
         value = self.stable(minimum_eval_assurance_level="reference_contract")
@@ -107,6 +149,28 @@ class ReleaseAssuranceTests(unittest.TestCase):
             )
             with self.assertRaises((FileNotFoundError, release_assurance.ReleaseError)):
                 release_assurance.validate_manifest(self.stable(), repo_root=root)
+
+    def test_v2_stable_requires_bound_exact_target_manifest(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.write_stable_root(root)
+            with mock.patch.object(release_assurance, "_load_runner", return_value=self.FakeRunner), \
+                 mock.patch.object(
+                     release_assurance.exact_target_evidence,
+                     "validate_binding",
+                     side_effect=exact_target_evidence.ExactTargetEvidenceError("bad binding"),
+                 ):
+                with self.assertRaisesRegex(release_assurance.ReleaseError, "exact-target evidence binding failed"):
+                    release_assurance.validate_manifest(self.stable(), repo_root=root)
+
+    def test_v2_stable_counts_validated_exact_target_bindings(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.write_stable_root(root)
+            with mock.patch.object(release_assurance, "_load_runner", return_value=self.FakeRunner), \
+                 mock.patch.object(release_assurance.exact_target_evidence, "validate_binding", return_value={}):
+                result = release_assurance.validate_manifest(self.stable(), repo_root=root)
+            self.assertEqual(result["exact_target_bindings_validated"], 1)
 
 
 if __name__ == "__main__":
