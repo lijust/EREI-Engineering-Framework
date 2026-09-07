@@ -9,18 +9,20 @@ import sys
 from pathlib import Path
 
 try:
-    from .import_exact_target_evidence import ExactTargetImportError, validate_runtime_identity
+    from . import exact_target_package_identity
 except ImportError:
-    from import_exact_target_evidence import ExactTargetImportError, validate_runtime_identity
+    import exact_target_package_identity
 
 
 def _load(path: Path) -> dict:
     try:
         value = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
-        raise ExactTargetImportError(f"unable to load run manifest {path}: {exc}") from exc
+        raise exact_target_package_identity.ExactTargetPackageIdentityError(
+            f"unable to load run manifest {path}: {exc}"
+        ) from exc
     if not isinstance(value, dict):
-        raise ExactTargetImportError("run manifest must be an object")
+        raise exact_target_package_identity.ExactTargetPackageIdentityError("run manifest must be an object")
     return value
 
 
@@ -28,7 +30,9 @@ def _digest(path: Path) -> str:
     try:
         return hashlib.sha256(path.read_bytes()).hexdigest()
     except OSError as exc:
-        raise ExactTargetImportError(f"unable to hash package file {path}: {exc}") from exc
+        raise exact_target_package_identity.ExactTargetPackageIdentityError(
+            f"unable to hash package file {path}: {exc}"
+        ) from exc
 
 
 def build_identity(
@@ -50,6 +54,7 @@ def build_identity(
     github_run_attempt: int,
     run_manifest_path: str,
     execution_evidence_path: str,
+    runtime_identity_path: str,
 ) -> dict:
     package_dir = package_dir.resolve()
     manifest_file = package_dir / "exact-target-run.json"
@@ -74,10 +79,11 @@ def build_identity(
         "run_id": manifest.get("run_id"),
         "run_manifest_path": run_manifest_path,
         "execution_evidence_path": execution_evidence_path,
+        "runtime_identity_path": runtime_identity_path,
         "run_manifest_sha256": _digest(manifest_file),
         "execution_evidence_sha256": _digest(evidence_file),
     }
-    return validate_runtime_identity(payload)
+    return exact_target_package_identity.validate_runtime_identity(payload)
 
 
 def main(argv=None) -> int:
@@ -99,6 +105,7 @@ def main(argv=None) -> int:
     parser.add_argument("--github-run-attempt", required=True, type=int)
     parser.add_argument("--run-manifest-path", required=True)
     parser.add_argument("--execution-evidence-path", required=True)
+    parser.add_argument("--runtime-identity-path", required=True)
     parser.add_argument("--output", default="runtime-identity.json")
     args = parser.parse_args(argv)
     try:
@@ -120,10 +127,11 @@ def main(argv=None) -> int:
             github_run_attempt=args.github_run_attempt,
             run_manifest_path=args.run_manifest_path,
             execution_evidence_path=args.execution_evidence_path,
+            runtime_identity_path=args.runtime_identity_path,
         )
         output = Path(args.output)
         output.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    except (ExactTargetImportError, OSError) as exc:
+    except (exact_target_package_identity.ExactTargetPackageIdentityError, OSError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 2
     print(json.dumps({"status": "written", "output": str(output), "run_id": payload["run_id"]}, sort_keys=True))
