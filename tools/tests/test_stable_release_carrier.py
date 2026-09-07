@@ -65,7 +65,33 @@ class StableReleaseCarrierTests(unittest.TestCase):
             "promotion_authorized": False,
         }
 
-    def _build_v2_carrier(self, *, behavior_drift=False, rewrite_target=False):
+    def _approval(self, approval_type, *, decision="approved", rationale_suffix=""):
+        architecture = approval_type == "architecture"
+        return {
+            "schema_version": 1,
+            "approval_id": "EAPP-20260907T120100Z-A1B2C3D4" if architecture else "EAPP-20260907T120200Z-E5F6A7B8",
+            "approval_type": approval_type,
+            "target_framework_ref": self.target,
+            "target_tree": self.target_tree,
+            "decision": decision,
+            "recorded_at": "2026-09-07T12:01:00Z" if architecture else "2026-09-07T12:02:00Z",
+            "reviewer": {
+                "kind": "framework_role",
+                "id": "system-architect" if architecture else "security-engineer",
+            },
+            "evidence": ["github-actions:123", "release-target:vnext-rc9"],
+            "rationale": f"Reviewed immutable target for {approval_type} Stable promotion{rationale_suffix}.",
+        }
+
+    def _build_v2_carrier(
+        self,
+        *,
+        behavior_drift=False,
+        rewrite_target=False,
+        rewrite_architecture=False,
+        rejected_security=False,
+        wrong_architecture_ref=False,
+    ):
         self._write(mod.TARGET_MANIFEST, self._target_manifest())
         self._commit("freeze target")
         if rewrite_target:
@@ -73,9 +99,18 @@ class StableReleaseCarrierTests(unittest.TestCase):
             target["selected_at"] = "2026-09-07T12:01:00Z"
             self._write(mod.TARGET_MANIFEST, target)
             self._commit("rewrite target")
-        self._write("releases/approvals/architecture.json", {"kind": "architecture", "target": self.target})
+        self._write("releases/approvals/architecture.json", self._approval("architecture"))
         approval_ref = self._commit("architecture approval")
-        self._write("releases/approvals/security.json", {"kind": "security", "target": self.target})
+        if rewrite_architecture:
+            self._write(
+                "releases/approvals/architecture.json",
+                self._approval("architecture", rationale_suffix=" after rewrite"),
+            )
+            self._commit("rewrite architecture approval")
+        self._write(
+            "releases/approvals/security.json",
+            self._approval("security", decision="rejected" if rejected_security else "approved"),
+        )
         security_ref = self._commit("security approval")
         if behavior_drift:
             self._write("tools/forbidden-drift.txt", "drift\n")
@@ -87,10 +122,10 @@ class StableReleaseCarrierTests(unittest.TestCase):
             "baseline": "vnext-assurance-v2",
             "status": "stable",
             "framework_ref": self.target,
-            "released_at": "2026-09-07T12:02:00Z",
+            "released_at": "2026-09-07T12:03:00Z",
             "capabilities": {"assurance": "stable-v2"},
             "notes": "test carrier",
-            "approval_ref": approval_ref,
+            "approval_ref": security_ref if wrong_architecture_ref else approval_ref,
             "security_review_ref": security_ref,
             "minimum_eval_assurance_level": "exact_target_runtime",
             "behavioral_eval_evidence": "evals/EXECUTION_EVIDENCE.vnext-rc9.json",
@@ -124,7 +159,12 @@ class StableReleaseCarrierTests(unittest.TestCase):
 
     def test_valid_v2_structure_reaches_full_release_assurance(self):
         carrier = self._build_v2_carrier()
-        fake_result = {"status": "stable", "framework_ref": self.target, "exact_target_bindings_validated": 44}
+        fake_result = {
+            "status": "stable",
+            "framework_ref": self.target,
+            "exact_target_bindings_validated": 44,
+            "approval_records_validated": 2,
+        }
         with mock.patch.object(mod.release_assurance, "validate_manifest", return_value=fake_result) as validate:
             result = mod.verify_stable_release_carrier(self.repo, self.target, carrier)
         self.assertEqual(result["status"], "verified_stable_release_carrier")
@@ -147,6 +187,27 @@ class StableReleaseCarrierTests(unittest.TestCase):
         carrier = self._build_v2_carrier(rewrite_target=True)
         with mock.patch.object(mod.release_assurance, "validate_manifest") as validate:
             with self.assertRaisesRegex(mod.StableCarrierError, "changed after its first post-freeze write"):
+                mod.verify_stable_release_carrier(self.repo, self.target, carrier)
+        validate.assert_not_called()
+
+    def test_rewritten_approval_record_fails_before_assurance(self):
+        carrier = self._build_v2_carrier(rewrite_architecture=True)
+        with mock.patch.object(mod.release_assurance, "validate_manifest") as validate:
+            with self.assertRaisesRegex(mod.StableCarrierError, "changed after its first post-freeze write"):
+                mod.verify_stable_release_carrier(self.repo, self.target, carrier)
+        validate.assert_not_called()
+
+    def test_rejected_security_approval_fails_before_assurance(self):
+        carrier = self._build_v2_carrier(rejected_security=True)
+        with mock.patch.object(mod.release_assurance, "validate_manifest") as validate:
+            with self.assertRaisesRegex(mod.StableCarrierError, "invalid security approval record"):
+                mod.verify_stable_release_carrier(self.repo, self.target, carrier)
+        validate.assert_not_called()
+
+    def test_sha_shaped_but_non_first_write_approval_ref_fails(self):
+        carrier = self._build_v2_carrier(wrong_architecture_ref=True)
+        with mock.patch.object(mod.release_assurance, "validate_manifest") as validate:
+            with self.assertRaisesRegex(mod.StableCarrierError, "must equal the first commit"):
                 mod.verify_stable_release_carrier(self.repo, self.target, carrier)
         validate.assert_not_called()
 
