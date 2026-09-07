@@ -189,28 +189,24 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python - <<'PY'
-          import json, os
-          from pathlib import Path
-          payload = {
-              'schema_version': 1,
-              'target_id': os.environ['TARGET_ID'],
-              'framework_ref': os.environ['TARGET_REF'],
-              'target_tree': os.environ['TARGET_TREE'],
-              'release_carrier_ref': os.environ['CARRIER_SHA'],
-              'adapter_id': 'github-copilot-cli-exact-target-v1',
-              'adapter_revision': os.environ['TARGET_REF'],
-              'runtime_id': 'github-copilot-cli',
-              'runtime_version': os.environ['COPILOT_VERSION'],
-              'requested_cli_version': os.environ['COPILOT_CLI_VERSION_INPUT'],
-              'model': 'gpt-5.4',
-              'github_run_id': os.environ['GITHUB_RUN_ID'],
-              'github_run_attempt': os.environ['GITHUB_RUN_ATTEMPT'],
-          }
-          Path('evidence-package/runtime-identity.json').write_text(
-              json.dumps(payload, indent=2, sort_keys=True) + '\n', encoding='utf-8'
-          )
-          PY
+          run_slug="copilot-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          python target/tools/build_exact_target_package_identity.py \
+            --package-dir evidence-package \
+            --target-id "$TARGET_ID" \
+            --framework-ref "$TARGET_REF" \
+            --target-tree "$TARGET_TREE" \
+            --release-carrier-ref "$CARRIER_SHA" \
+            --adapter-id "github-copilot-cli-exact-target-v1" \
+            --adapter-revision "$TARGET_REF" \
+            --runtime-id "github-copilot-cli" \
+            --runtime-version "$COPILOT_VERSION" \
+            --requested-cli-version "$COPILOT_CLI_VERSION_INPUT" \
+            --model "gpt-5.4" \
+            --github-run-id "$GITHUB_RUN_ID" \
+            --github-run-attempt "$GITHUB_RUN_ATTEMPT" \
+            --run-manifest-path "evals/exact-target-runs/${run_slug}.json" \
+            --execution-evidence-path "evals/EXECUTION_EVIDENCE.${run_slug}.json" \
+            --output evidence-package/runtime-identity.json
 
       - name: Upload immutable-candidate evidence package
         uses: actions/upload-artifact@v4
@@ -236,5 +232,6 @@ jobs:
             echo '- Harness-only cases sent to Copilot: 0'
             echo '- Model: `gpt-5.4`'
             echo "- Requested Copilot CLI: \`$COPILOT_CLI_VERSION\`"
+            echo '- Evidence package: digest-bound V2 runtime identity + reconstructible run manifest + execution evidence'
             echo '- Repository mutation/commit/promotion: none'
           } >> "$GITHUB_STEP_SUMMARY"
