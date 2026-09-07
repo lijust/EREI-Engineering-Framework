@@ -12,6 +12,7 @@ RUN_ID_RE = re.compile(r"^ETR-[0-9]{8}T[0-9]{6}Z-[A-F0-9]{8}$")
 SEMVER_RE = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+(?:[-.][0-9A-Za-z.-]+)?$")
 SRI_SHA512_RE = re.compile(r"^sha512-[A-Za-z0-9+/]{86}==$")
 REPOSITORY_RE = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
+SKILL_EVENT_TRANSPORT_EVIDENCE = "copilot-skill-event-transport:skill.invoked-v1"
 
 
 class ExactTargetPackageIdentityError(RuntimeError):
@@ -63,6 +64,7 @@ def expected_runtime_evidence(identity: dict[str, Any]) -> set[str]:
         f"release-carrier:{identity['release_carrier_ref']}",
         f"copilot-model:{identity['model']}",
         f"copilot-package-integrity:{identity['requested_cli_integrity']}",
+        SKILL_EVENT_TRANSPORT_EVIDENCE,
     }
 
 
