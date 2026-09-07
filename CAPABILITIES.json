@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "stable_release": {
+    "baseline": "task-learning-review-v1",
+    "framework_ref": "69079018606750312344cb3c648952b9ab72d35b",
+    "manifest": "releases/task-learning-review-v1.json"
+  },
+  "development_line": {
+    "status": "candidate",
+    "capabilities": {
+      "prospective_task_learning": {
+        "status": "candidate",
+        "version": "v2-assurance-hardening",
+        "stable_ref": "69079018606750312344cb3c648952b9ab72d35b",
+        "notes": "Adds occurrence identity, immutable event files, explicit review membership, assessment coverage and idempotent retries."
+      },
+      "framework_feedback_capture": {
+        "status": "candidate",
+        "version": "v2-privacy-hardening",
+        "stable_ref": "69079018606750312344cb3c648952b9ab72d35b",
+        "notes": "Adds local-only export default, sensitivity/redaction state, immutable observation records and secret fail-closed capture."
+      },
+      "retrospective_task_learning": {
+        "status": "candidate",
+        "version": "v2-identity-provenance",
+        "producer_ref": "c76fb80297ac624246e60e178bcf985a2d35ab1d",
+        "notes": "Retrospective tooling is not part of the Stable project pin. V2 adds occurrence identity, frozen source provenance and amendments."
+      },
+      "upgrade_planning": {
+        "status": "candidate",
+        "version": "v2-verified-git-inputs",
+        "stable_ref": "69079018606750312344cb3c648952b9ab72d35b",
+        "notes": "Approval-eligible plans derive baseline metadata and changed paths from resolved Git objects."
+      },
+      "eval_assurance": {
+        "status": "candidate",
+        "version": "v2-fail-closed-evidence",
+        "stable_ref": "69079018606750312344cb3c648952b9ab72d35b",
+        "notes": "Malformed or missing trace/metadata evidence cannot satisfy dependent assertions; execution coverage is reported separately."
+      },
+      "central_feedback_decisions": {
+        "status": "candidate",
+        "version": "v1-structured-decisions",
+        "notes": "Central review decisions are machine-readable and separate from immutable source observations."
+      }
+    }
+  }
+}
