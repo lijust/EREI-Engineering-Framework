@@ -44,6 +44,7 @@ def build_identity(
     runtime_id: str,
     runtime_version: str,
     requested_cli_version: str,
+    requested_cli_integrity: str,
     model: str,
     github_run_id: int,
     github_run_attempt: int,
@@ -66,6 +67,7 @@ def build_identity(
         "runtime_id": runtime_id,
         "runtime_version": runtime_version,
         "requested_cli_version": requested_cli_version,
+        "requested_cli_integrity": requested_cli_integrity,
         "model": model,
         "github_run_id": github_run_id,
         "github_run_attempt": github_run_attempt,
@@ -91,6 +93,7 @@ def main(argv=None) -> int:
     parser.add_argument("--runtime-id", required=True)
     parser.add_argument("--runtime-version", required=True)
     parser.add_argument("--requested-cli-version", required=True)
+    parser.add_argument("--requested-cli-integrity", required=True)
     parser.add_argument("--model", required=True)
     parser.add_argument("--github-run-id", required=True, type=int)
     parser.add_argument("--github-run-attempt", required=True, type=int)
@@ -111,6 +114,7 @@ def main(argv=None) -> int:
             runtime_id=args.runtime_id,
             runtime_version=args.runtime_version,
             requested_cli_version=args.requested_cli_version,
+            requested_cli_integrity=args.requested_cli_integrity,
             model=args.model,
             github_run_id=args.github_run_id,
             github_run_attempt=args.github_run_attempt,
