@@ -13,6 +13,7 @@ ADAPTER_REF = "a" * 40
 CARRIER_REF = "d" * 40
 TARGET_TREE = "e" * 40
 CLI_INTEGRITY = "sha512-AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4vMDEyMzQ1Njc4OTo7PD0+Pw=="
+SKILL_TRANSPORT = exact_target_package_identity.SKILL_EVENT_TRANSPORT_EVIDENCE
 MANIFEST_REL = Path("evals/exact-target-runs/run.json")
 IDENTITY_REL = Path("evals/exact-target-runs/run.identity.json")
 EVIDENCE_REL = Path("evals/EXECUTION_EVIDENCE.run.json")
@@ -39,6 +40,7 @@ class ExactTargetEvidenceTests(unittest.TestCase):
                     f"release-carrier:{CARRIER_REF}",
                     "copilot-model:gpt-5.4",
                     f"copilot-package-integrity:{CLI_INTEGRITY}",
+                    SKILL_TRANSPORT,
                 ],
             },
             "adapter_command_digest": "c" * 64,
@@ -137,6 +139,15 @@ class ExactTargetEvidenceTests(unittest.TestCase):
             self.write_bound_files(root)
             result = exact_target_evidence.validate_binding(root, FRAMEWORK_REF, self.execution())
             self.assertEqual(result["run_id"], "ETR-20260907T120000Z-ABCDEF12")
+
+    def test_binding_requires_skill_event_transport_provenance_marker(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            value = self.manifest()
+            value["runtime"]["identity_evidence"].remove(SKILL_TRANSPORT)
+            self.write_bound_files(root, manifest=value)
+            with self.assertRaisesRegex(exact_target_evidence.ExactTargetEvidenceError, "runtime provenance"):
+                exact_target_evidence.validate_binding(root, FRAMEWORK_REF, self.execution())
 
     def test_manifest_rejects_response_digest_tamper(self):
         value = self.manifest()
