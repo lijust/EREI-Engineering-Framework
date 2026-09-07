@@ -58,14 +58,16 @@ class ExactTargetCopilotWorkflowTests(unittest.TestCase):
         self.assertIn("COPILOT_GITHUB_TOKEN", execute)
         self.assertNotIn("GITHUB_TOKEN:", execute)
 
-    def test_workflow_builds_digest_bound_package_identity_from_frozen_target_tooling(self):
+    def test_workflow_builds_three_file_digest_bound_package(self):
         text = WORKFLOW.read_text(encoding="utf-8")
         self.assertIn("target/tools/build_exact_target_package_identity.py", text)
         self.assertIn('--repository "$GITHUB_REPOSITORY"', text)
         self.assertIn('--release-carrier-ref "$CARRIER_SHA"', text)
         self.assertIn('--run-manifest-path "evals/exact-target-runs/${run_slug}.json"', text)
         self.assertIn('--execution-evidence-path "evals/EXECUTION_EVIDENCE.${run_slug}.json"', text)
+        self.assertIn('--runtime-identity-path "evals/exact-target-runs/${run_slug}.identity.json"', text)
         self.assertIn("evidence-package/runtime-identity.json", text)
+        self.assertIn("retains all three package files immutably", text)
         self.assertIn("Evidence package: digest-bound V2 runtime identity", text)
 
     def test_workflow_contains_no_automatic_repository_mutation_or_broad_copilot_permissions(self):
