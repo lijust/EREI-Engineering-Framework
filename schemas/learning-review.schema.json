@@ -1,25 +1,31 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://erei-framework.local/schemas/learning-review.schema.json",
-  "title": "EREI Learning Review Record V1",
+  "title": "EREI Learning Review Record V2",
   "type": "object",
   "additionalProperties": false,
   "required": [
-    "schema_version", "review_id", "closed_at", "epoch_id", "through_event_count",
-    "trigger", "metrics", "findings", "decision", "evidence"
+    "schema_version", "review_id", "closed_at", "epoch_id", "reviewed_occurrence_ids",
+    "event_digest", "trigger", "metrics", "findings", "decision", "evidence"
   ],
   "properties": {
-    "schema_version": {"const": 1},
+    "schema_version": {"const": 2},
     "review_id": {"type": "string", "pattern": "^ELR-[0-9]{8}T[0-9]{6}Z-[A-F0-9]{8}$"},
     "closed_at": {"type": "string", "format": "date-time"},
     "epoch_id": {"type": "string", "pattern": "^EPOCH-[0-9]{3,}$"},
-    "through_event_count": {"type": "integer", "minimum": 0},
+    "reviewed_occurrence_ids": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "event_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
     "trigger": {
       "type": "object",
       "additionalProperties": false,
       "required": ["level", "reasons"],
       "properties": {
-        "level": {"enum": ["LEARNING_HEALTHY", "LEARNING_WATCH", "REVIEW_RECOMMENDED", "REVIEW_DUE", "IMMEDIATE_REVIEW"]},
+        "level": {"enum": ["INSUFFICIENT_EVIDENCE", "LEARNING_HEALTHY", "LEARNING_WATCH", "REVIEW_RECOMMENDED", "REVIEW_DUE", "IMMEDIATE_REVIEW"]},
         "reasons": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
       }
     },

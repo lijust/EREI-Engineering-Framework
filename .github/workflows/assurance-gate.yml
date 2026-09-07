@@ -1,0 +1,76 @@
+name: Framework Assurance Gate
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - 'hardening/**'
+      - 'release/**'
+
+permissions:
+  contents: read
+
+jobs:
+  assurance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Compile Framework Python
+        run: python -m compileall -q tools evals validation_contract.py validate_framework_feedback.py capture_framework_feedback.py
+
+      - name: Parse all published JSON contracts
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          paths = sorted(Path('schemas').rglob('*.json')) + sorted(Path('evals').rglob('*.schema.json'))
+          for path in paths:
+              json.loads(path.read_text(encoding='utf-8'))
+              print('PASS JSON', path)
+          PY
+
+      - name: Run all Framework tool tests
+        run: python -m unittest discover -s tools/tests -p 'test_*.py' -v
+
+      - name: Run eval harness tests
+        run: python -m unittest discover -s evals/tests -p 'test_*.py' -v
+
+      - name: Validate all machine-readable eval suites
+        run: python evals/runner.py validate evals/cases
+
+      - name: Execute all 44 cases at reference-contract level
+        run: python evals/runner.py run evals/cases --adapter "python evals/fixtures/reference_oracle_adapter.py"
+
+      - name: Report exact-target-runtime evidence coverage honestly
+        run: python evals/runner.py coverage evals/cases --evidence evals/EXECUTION_EVIDENCE.json --minimum-level exact_target_runtime
+
+      - name: Validate structured central feedback decisions
+        run: python tools/feedback_decisions.py validate feedback/DECISIONS.jsonl
+
+      - name: Validate last Stable release manifest
+        run: python tools/release_assurance.py releases/task-learning-review-v1.json --repo-root .
+
+      - name: Validate VNext Candidate manifest
+        run: python tools/release_assurance.py releases/vnext-assurance-candidate.json --repo-root .
+
+      - name: Validate capability registry
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          data = json.loads(Path('CAPABILITIES.json').read_text(encoding='utf-8'))
+          assert data['schema_version'] == 1
+          assert len(data['stable_release']['framework_ref']) == 40
+          assert data['development_line']['status'] == 'candidate'
+          print('PASS capability registry')
+          PY

@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "assurance_contract_version": 2,
+  "release_id": "vnext-assurance-candidate-2026-09-07",
+  "baseline": "vnext-assurance-hardening",
+  "status": "candidate",
+  "framework_ref": "88bfdd4e8fc30fcaf8ef81e051d14c25ad5f599f",
+  "released_at": "2026-09-07T02:27:56Z",
+  "capabilities": {
+    "strict_contract_validation": "candidate-v2",
+    "validate_before_write": "candidate-v2",
+    "prospective_task_learning": "candidate-v2",
+    "framework_upgrade_planning": "candidate-v2",
+    "eval_assurance": "candidate-v2",
+    "feedback_privacy_boundary": "candidate-v2",
+    "retrospective_identity_provenance": "candidate-v2",
+    "learning_metrics_semantics": "candidate-v2",
+    "central_feedback_decisions": "candidate-v1"
+  },
+  "stable_blockers": [
+    "GitHub branch/ruleset enforcement is unavailable for this private repository on the active plan; main remains unprotected even though the aggregate Assurance Gate runs.",
+    "Complete independent exact_target_runtime behavioral evidence is not yet retained for all 44 published eval cases.",
+    "A genuine prospective learning cycle from capture through review, feedback, Framework improvement, project adoption, and measured post-adoption outcome has not yet completed.",
+    "Final V2 Stable architecture/security approval references have not yet been bound to an immutable release candidate commit."
+  ],
+  "notes": "Immutable Candidate manifest for the Astra assurance hardening code snapshot. It does not replace Stable task-learning-review-v1 at 69079018606750312344cb3c648952b9ab72d35b and must not be consumed as Stable."
+}

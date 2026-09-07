@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://erei-framework.local/schemas/framework-capabilities.schema.json",
+  "title": "EREI Framework Capability Registry V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "stable_release", "development_line"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "stable_release": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["baseline", "framework_ref", "manifest"],
+      "properties": {
+        "baseline": {"type": "string", "minLength": 1},
+        "framework_ref": {"type": "string", "pattern": "^[a-f0-9]{40}$"},
+        "manifest": {"type": "string", "minLength": 1}
+      }
+    },
+    "development_line": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "capabilities"],
+      "properties": {
+        "status": {"enum": ["candidate", "experimental"]},
+        "capabilities": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["status", "version"],
+            "properties": {
+              "status": {"enum": ["stable", "candidate", "experimental", "deprecated"]},
+              "version": {"type": "string", "minLength": 1},
+              "stable_ref": {"type": "string", "pattern": "^[a-f0-9]{40}$"},
+              "producer_ref": {"type": "string", "pattern": "^[a-f0-9]{40}$"},
+              "notes": {"type": "string", "minLength": 1}
+            }
+          }
+        }
+      }
+    }
+  }
+}

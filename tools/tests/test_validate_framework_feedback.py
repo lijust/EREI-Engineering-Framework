@@ -7,7 +7,7 @@ import unittest
 from pathlib import Path
 
 from tools.capture_framework_feedback import build_event
-from tools.validate_framework_feedback import ValidationError, validate_event, validate_jsonl
+from tools.validate_framework_feedback import ValidationError, expected_fingerprint, validate_event, validate_jsonl
 
 
 class FeedbackValidationTests(unittest.TestCase):
@@ -16,6 +16,7 @@ class FeedbackValidationTests(unittest.TestCase):
             project_repository="example/project",
             project_name="Example Project",
             framework_ref="a" * 40,
+            feedback_id=None,
             type="verification_gap",
             severity="high",
             source_artifact="skills/verification-before-completion",
@@ -25,6 +26,9 @@ class FeedbackValidationTests(unittest.TestCase):
             negative_learning=None,
             generalizability="likely_generic",
             confidence="high",
+            sensitivity_class=None,
+            redaction_state=None,
+            export_eligibility=None,
             tag=["verification"],
         )
 
@@ -43,6 +47,21 @@ class FeedbackValidationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValidationError, "unknown fields"):
             validate_event(event)
 
+    def test_date_only_recorded_at_fails(self):
+        event = build_event(self.args())
+        event["recorded_at"] = "2026-09-07"
+        event["fingerprint"] = expected_fingerprint(event)
+        with self.assertRaisesRegex(ValidationError, "date-time"):
+            validate_event(event)
+
+    def test_v2_source_observation_cannot_claim_promoted_status(self):
+        event = build_event(self.args())
+        event["status"] = "promoted"
+        event["promotion_reference"] = "a" * 40
+        event["fingerprint"] = expected_fingerprint(event)
+        with self.assertRaisesRegex(ValidationError, "central decisions"):
+            validate_event(event)
+
     def test_jsonl_validates_multiple_events(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "feedback.jsonl"
@@ -56,6 +75,14 @@ class FeedbackValidationTests(unittest.TestCase):
                 encoding="utf-8",
             )
             self.assertEqual(validate_jsonl(path), 2)
+
+    def test_duplicate_feedback_id_fails(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "feedback.jsonl"
+            event = build_event(self.args())
+            path.write_text(json.dumps(event) + "\n" + json.dumps(event) + "\n", encoding="utf-8")
+            with self.assertRaisesRegex(ValidationError, "duplicate feedback_id"):
+                validate_jsonl(path)
 
     def test_corrupt_jsonl_fails_with_line(self):
         with tempfile.TemporaryDirectory() as tmp:

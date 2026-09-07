@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://erei-framework.local/evals/execution-evidence.schema.json",
+  "title": "EREI Behavioral Eval Execution Evidence V1/V2",
+  "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "framework_revision", "executions"],
+      "properties": {
+        "schema_version": {"const": 1},
+        "framework_revision": {"type": "string", "pattern": "^[a-f0-9]{40}$"},
+        "executions": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/executionV1"}
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "framework_revision", "produced_at", "executions"],
+      "properties": {
+        "schema_version": {"const": 2},
+        "framework_revision": {"type": "string", "pattern": "^[a-f0-9]{40}$"},
+        "produced_at": {"type": "string", "format": "date-time"},
+        "executions": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/executionV2"}
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "executionV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["suite_id", "case_id", "status", "adapter_id", "evidence_ref"],
+      "properties": {
+        "suite_id": {"type": "string", "minLength": 1},
+        "case_id": {"type": "string", "minLength": 1},
+        "status": {"enum": ["pass", "fail", "inconclusive"]},
+        "adapter_id": {"type": "string", "minLength": 1},
+        "evidence_ref": {"type": "string", "minLength": 1}
+      }
+    },
+    "executionV2": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "suite_id", "case_id", "status", "adapter_id", "adapter_revision",
+        "assurance_level", "independent_runtime", "evidence_ref"
+      ],
+      "properties": {
+        "suite_id": {"type": "string", "minLength": 1},
+        "case_id": {"type": "string", "minLength": 1},
+        "status": {"enum": ["pass", "fail", "inconclusive"]},
+        "adapter_id": {"type": "string", "minLength": 1},
+        "adapter_revision": {"type": "string", "pattern": "^[a-f0-9]{40}$"},
+        "assurance_level": {
+          "enum": ["harness_smoke", "reference_contract", "managed_runtime", "exact_target_runtime"]
+        },
+        "independent_runtime": {"type": "boolean"},
+        "evidence_ref": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}
