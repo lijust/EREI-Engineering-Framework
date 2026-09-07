@@ -156,7 +156,9 @@ def validate_manifest(manifest: dict, *, repo_root: Path | None = None) -> dict:
         validated = runner.validate_execution_evidence(evidence)
         if validated.get("schema_version") != 2:
             raise ReleaseError("V2 Stable requires V2 execution evidence with explicit assurance levels")
-        expected = runner._expected_cases([str(repo_root / "evals" / "cases")])
+        expected = runner._expected_cases(
+            [str(repo_root / "evals" / "cases")], minimum_level=minimum_level
+        )
         observed = {(item["suite_id"], item["case_id"]): item for item in validated["executions"]}
         missing = expected - set(observed)
         nonpass = {key for key in expected & set(observed) if observed[key]["status"] != "pass"}
