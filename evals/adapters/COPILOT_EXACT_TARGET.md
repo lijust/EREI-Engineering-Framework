@@ -36,7 +36,7 @@ Each case runs in a fresh temporary workspace and fresh Copilot home/cache. Dire
 
 The Copilot child process receives an allowlisted environment containing only basic process/network/certificate variables plus its Copilot PAT. Unrelated runner secrets are not inherited.
 
-Because this repository is personal-account owned, the controlled workflow requires the dedicated `EREI_COPILOT_EXACT_TARGET_TOKEN` secret rather than silently falling back to the normal Actions `GITHUB_TOKEN`. The workflow also requires an exact `@github/copilot` npm version input and records the observed CLI version as runtime identity evidence; `latest` is not accepted for release evidence.
+Because this repository is personal-account owned, the controlled workflow requires the dedicated `EREI_COPILOT_EXACT_TARGET_TOKEN` secret rather than silently falling back to the normal Actions `GITHUB_TOKEN`. The workflow-level `GITHUB_TOKEN` is restricted to `contents: read`; it receives no Copilot, issue, pull-request, status, check, or repository-write permission. The workflow also requires an exact `@github/copilot` npm version input and records the observed CLI version as runtime identity evidence; `latest` is not accepted for release evidence.
 
 ## Evidence production
 
