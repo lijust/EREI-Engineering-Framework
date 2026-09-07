@@ -188,6 +188,15 @@ def _validate_history_binding(repo_root: Path, identity: dict[str, Any]) -> dict
         raise ExactTargetEvidenceError(
             "exact-target evidence commit parent must equal the recorded release_carrier_ref"
         )
+    first_parent_history = {
+        row.strip()
+        for row in _git(repo_root, "rev-list", "--first-parent", "HEAD").splitlines()
+        if row.strip()
+    }
+    if evidence_commit not in first_parent_history:
+        raise ExactTargetEvidenceError(
+            "exact-target evidence commit must be on the release HEAD first-parent history"
+        )
 
     changes: list[tuple[str, str]] = []
     raw = _git(
@@ -206,7 +215,7 @@ def _validate_history_binding(repo_root: Path, identity: dict[str, Any]) -> dict
         if len(parts) != 2:
             raise ExactTargetEvidenceError(f"unexpected evidence commit diff row: {line}")
         changes.append((parts[0], parts[1]))
-    expected_changes = {( "A", path.as_posix()) for path in paths}
+    expected_changes = {("A", path.as_posix()) for path in paths}
     if set(changes) != expected_changes or len(changes) != 3:
         raise ExactTargetEvidenceError(
             "exact-target evidence commit must add exactly the retained manifest, execution evidence, and runtime identity"
