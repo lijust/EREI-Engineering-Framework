@@ -180,7 +180,9 @@ def _evaluate_evidence_file(repo_root: Path, runner, expected: set[tuple[str, st
 
 def eval_gate(repo_root: Path, target_ref: str) -> dict[str, Any]:
     runner = _load_runner(repo_root)
-    expected = runner._expected_cases([str(repo_root / "evals" / "cases")])
+    expected = runner._expected_cases(
+        [str(repo_root / "evals" / "cases")], minimum_level="exact_target_runtime"
+    )
     paths = sorted((repo_root / "evals").glob("EXECUTION_EVIDENCE*.json"))
     if not paths:
         raise StableReadinessError("no execution-evidence files found")
