@@ -192,6 +192,7 @@ jobs:
           run_slug="copilot-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
           python target/tools/build_exact_target_package_identity.py \
             --package-dir evidence-package \
+            --repository "$GITHUB_REPOSITORY" \
             --target-id "$TARGET_ID" \
             --framework-ref "$TARGET_REF" \
             --target-tree "$TARGET_TREE" \
