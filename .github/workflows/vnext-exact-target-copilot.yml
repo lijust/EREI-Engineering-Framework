@@ -1,0 +1,208 @@
+name: VNext Exact Target Copilot Evidence
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_ref:
+        description: Release branch/ref containing the frozen VNEXT_TARGET closure
+        required: true
+        type: string
+      expected_carrier_sha:
+        description: Exact 40-character HEAD expected for release_ref
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  copilot-requests: write
+
+jobs:
+  exact-target-copilot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - name: Checkout controlled release carrier
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.release_ref }}
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Verify exact release carrier and frozen target
+        id: target
+        env:
+          EXPECTED_CARRIER_SHA: ${{ inputs.expected_carrier_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ ! "$EXPECTED_CARRIER_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "expected_carrier_sha must be an exact lowercase 40-character commit" >&2
+            exit 2
+          fi
+          actual_carrier="$(git rev-parse HEAD)"
+          if [[ "$actual_carrier" != "$EXPECTED_CARRIER_SHA" ]]; then
+            echo "release carrier moved: expected=$EXPECTED_CARRIER_SHA actual=$actual_carrier" >&2
+            exit 2
+          fi
+          python tools/release_target.py --repo-root . --validate-closure
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          from pathlib import Path
+          target = json.loads(Path('releases/VNEXT_TARGET.json').read_text(encoding='utf-8'))
+          print(f"target_ref={target['framework_ref']}")
+          print(f"target_tree={target['target_tree']}")
+          print(f"target_id={target['target_id']}")
+          PY
+
+      - name: Checkout exact frozen Framework target
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ steps.target.outputs.target_ref }}
+          fetch-depth: 0
+          path: target
+
+      - name: Verify target identity and adapter boundary tests
+        env:
+          TARGET_REF: ${{ steps.target.outputs.target_ref }}
+          TARGET_TREE: ${{ steps.target.outputs.target_tree }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          actual_ref="$(git -C target rev-parse HEAD)"
+          actual_tree="$(git -C target rev-parse 'HEAD^{tree}')"
+          test "$actual_ref" = "$TARGET_REF"
+          test "$actual_tree" = "$TARGET_TREE"
+          cd target
+          python -m unittest \
+            evals.tests.test_assurance_scope \
+            evals.tests.test_exact_target_run \
+            evals.tests.test_copilot_cli_exact_target -v
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+
+      - name: Install current GitHub Copilot CLI
+        run: npm install -g @github/copilot
+
+      - name: Record runtime identity
+        id: runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="$(copilot version 2>&1 | head -n 1 | tr -d '\r')"
+          if [[ -z "$version" ]]; then
+            echo "unable to determine Copilot CLI version" >&2
+            exit 2
+          fi
+          echo "copilot_version=$version" >> "$GITHUB_OUTPUT"
+          printf '%s\n' "$version"
+
+      - name: Execute 43 behavioral cases against frozen target
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          COPILOT_GITHUB_TOKEN: ${{ secrets.EREI_COPILOT_EXACT_TARGET_TOKEN }}
+          TARGET_REF: ${{ steps.target.outputs.target_ref }}
+          CARRIER_SHA: ${{ inputs.expected_carrier_sha }}
+          COPILOT_VERSION: ${{ steps.runtime.outputs.copilot_version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd target
+          run_slug="copilot-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          manifest="evals/exact-target-runs/${run_slug}.json"
+          evidence="evals/EXECUTION_EVIDENCE.${run_slug}.json"
+          python evals/exact_target_run.py evals/cases \
+            --adapter "python evals/adapters/copilot_cli_exact_target.py --target-root . --model=gpt-5.4 --timeout=240" \
+            --adapter-id "github-copilot-cli-exact-target-v1" \
+            --adapter-revision "$TARGET_REF" \
+            --runtime-id "github-copilot-cli" \
+            --runtime-version "$COPILOT_VERSION" \
+            --runtime-evidence "github-actions:${GITHUB_REPOSITORY}/run/${GITHUB_RUN_ID}/attempt/${GITHUB_RUN_ATTEMPT}" \
+            --runtime-evidence "release-carrier:${CARRIER_SHA}" \
+            --runtime-evidence "copilot-model:gpt-5.4" \
+            --framework-ref "$TARGET_REF" \
+            --manifest "$manifest" \
+            --evidence "$evidence" \
+            --timeout 300
+          python evals/runner.py coverage evals/cases \
+            --evidence "$evidence" \
+            --minimum-level exact_target_runtime \
+            --require-complete
+          python - "$manifest" "$evidence" <<'PY'
+          import subprocess, sys
+          manifest, evidence = sys.argv[1:]
+          changed = subprocess.check_output(
+              ['git', 'status', '--porcelain', '--untracked-files=all'], text=True
+          ).splitlines()
+          paths = {line[3:] for line in changed if len(line) >= 4}
+          expected = {manifest, evidence}
+          if paths != expected:
+              raise SystemExit(f'unexpected target checkout mutation: actual={sorted(paths)} expected={sorted(expected)}')
+          print('PASS: exact-target execution mutated only the two evidence outputs')
+          PY
+          mkdir -p ../evidence-package
+          cp "$manifest" ../evidence-package/exact-target-run.json
+          cp "$evidence" ../evidence-package/execution-evidence.json
+
+      - name: Write evidence package identity
+        env:
+          TARGET_REF: ${{ steps.target.outputs.target_ref }}
+          TARGET_TREE: ${{ steps.target.outputs.target_tree }}
+          TARGET_ID: ${{ steps.target.outputs.target_id }}
+          CARRIER_SHA: ${{ inputs.expected_carrier_sha }}
+          COPILOT_VERSION: ${{ steps.runtime.outputs.copilot_version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          payload = {
+              'schema_version': 1,
+              'target_id': os.environ['TARGET_ID'],
+              'framework_ref': os.environ['TARGET_REF'],
+              'target_tree': os.environ['TARGET_TREE'],
+              'release_carrier_ref': os.environ['CARRIER_SHA'],
+              'adapter_id': 'github-copilot-cli-exact-target-v1',
+              'adapter_revision': os.environ['TARGET_REF'],
+              'runtime_id': 'github-copilot-cli',
+              'runtime_version': os.environ['COPILOT_VERSION'],
+              'model': 'gpt-5.4',
+              'github_run_id': os.environ['GITHUB_RUN_ID'],
+              'github_run_attempt': os.environ['GITHUB_RUN_ATTEMPT'],
+          }
+          Path('evidence-package/runtime-identity.json').write_text(
+              json.dumps(payload, indent=2, sort_keys=True) + '\n', encoding='utf-8'
+          )
+          PY
+
+      - name: Upload immutable-candidate evidence package
+        uses: actions/upload-artifact@v4
+        with:
+          name: vnext-exact-target-${{ steps.target.outputs.target_id }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: evidence-package/
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Summarize evidence boundary
+        env:
+          TARGET_REF: ${{ steps.target.outputs.target_ref }}
+          CARRIER_SHA: ${{ inputs.expected_carrier_sha }}
+        shell: bash
+        run: |
+          {
+            echo '## VNext exact-target evidence'
+            echo
+            echo "- Frozen target: \`$TARGET_REF\`"
+            echo "- Release carrier: \`$CARRIER_SHA\`"
+            echo '- Behavioral runtime cases: 43'
+            echo '- Harness-only cases sent to Copilot: 0'
+            echo '- Model: `gpt-5.4`'
+            echo '- Repository mutation/commit/promotion: none'
+          } >> "$GITHUB_STEP_SUMMARY"
