@@ -189,7 +189,7 @@ jobs:
           expected = {manifest, evidence}
           if paths != expected:
               raise SystemExit(f'unexpected target checkout mutation: actual={sorted(paths)} expected={sorted(expected)}')
-          print('PASS: exact-target execution mutated only the two evidence outputs')
+          print('PASS: exact-target execution mutated only the two target-checkout evidence outputs')
           PY
           mkdir -p ../evidence-package
           cp "$manifest" ../evidence-package/exact-target-run.json
@@ -226,6 +226,7 @@ jobs:
             --github-run-attempt "$GITHUB_RUN_ATTEMPT" \
             --run-manifest-path "evals/exact-target-runs/${run_slug}.json" \
             --execution-evidence-path "evals/EXECUTION_EVIDENCE.${run_slug}.json" \
+            --runtime-identity-path "evals/exact-target-runs/${run_slug}.identity.json" \
             --output evidence-package/runtime-identity.json
 
       - name: Upload immutable-candidate evidence package
@@ -255,5 +256,6 @@ jobs:
             echo "- Requested Copilot CLI: \`$COPILOT_CLI_VERSION\`"
             echo "- Copilot npm integrity: \`$COPILOT_CLI_INTEGRITY\`"
             echo '- Evidence package: digest-bound V2 runtime identity + reconstructible run manifest + execution evidence'
+            echo '- Governed release import retains all three package files immutably'
             echo '- Repository mutation/commit/promotion: none'
           } >> "$GITHUB_STEP_SUMMARY"
