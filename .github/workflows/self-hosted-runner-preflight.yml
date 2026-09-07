@@ -1,0 +1,47 @@
+name: Self-Hosted Runner Preflight
+
+on:
+  push:
+    branches:
+      - ci/self-hosted-default-v1
+    paths:
+      - '.github/workflows/self-hosted-runner-preflight.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  preflight:
+    runs-on: self-hosted
+    timeout-minutes: 10
+    steps:
+      - name: Report runner identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "runner_name=$RUNNER_NAME"
+          echo "runner_os=$RUNNER_OS"
+          echo "runner_arch=$RUNNER_ARCH"
+          uname -a || true
+
+      - name: Verify required local toolchain
+        shell: bash
+        run: |
+          set -euo pipefail
+          git --version
+          python3 --version
+          node --version
+          npm --version
+
+      - name: Verify isolated writable temp boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "${RUNNER_TEMP:-}"
+          probe="$RUNNER_TEMP/erei-self-hosted-preflight-$GITHUB_RUN_ID"
+          mkdir -p "$probe"
+          printf 'ok\n' > "$probe/probe.txt"
+          test "$(cat "$probe/probe.txt")" = "ok"
+          rm -rf "$probe"
+          echo 'PASS: self-hosted runner preflight'
