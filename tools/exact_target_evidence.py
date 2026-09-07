@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate reconstructible exact-target run manifests and bind V2 execution evidence."""
+"""Validate reconstructible exact-target manifests and their durable runtime provenance bindings."""
 from __future__ import annotations
 
 import argparse
@@ -10,6 +10,11 @@ import re
 from datetime import datetime
 from pathlib import Path
 from typing import Any
+
+try:
+    from . import exact_target_package_identity
+except ImportError:
+    import exact_target_package_identity
 
 SHA40_RE = re.compile(r"^[a-f0-9]{40}$")
 SHA256_RE = re.compile(r"^[a-f0-9]{64}$")
@@ -62,6 +67,23 @@ def _sha256(value: Any, label: str) -> str:
 def _canonical_digest(value: Any) -> str:
     payload = json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def _file_digest(path: Path, label: str) -> str:
+    try:
+        return hashlib.sha256(path.read_bytes()).hexdigest()
+    except OSError as exc:
+        raise ExactTargetEvidenceError(f"unable to hash {label} {path}: {exc}") from exc
+
+
+def _load_json(path: Path, label: str) -> dict[str, Any]:
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ExactTargetEvidenceError(f"unable to load {label} {path}: {exc}") from exc
+    if not isinstance(value, dict):
+        raise ExactTargetEvidenceError(f"{label} must be a JSON object")
+    return value
 
 
 def _adapter_error_digest(suite_id: str, case_id: str) -> str:
@@ -183,6 +205,8 @@ def parse_evidence_ref(value: Any) -> tuple[Path, str, str]:
     path = Path(raw_path)
     if path.is_absolute() or ".." in path.parts or not raw_path.startswith("evals/exact-target-runs/") or path.suffix != ".json":
         raise ExactTargetEvidenceError("exact-target evidence_ref path must be a relative JSON path under evals/exact-target-runs/")
+    if path.name.endswith(".identity.json"):
+        raise ExactTargetEvidenceError("exact-target evidence_ref cannot point to a runtime identity file")
     return path, match.group("suite"), match.group("case")
 
 
@@ -208,6 +232,72 @@ def _published_case(repo_root: Path, suite_id: str, case_id: str):
     return runner, matches[0][0], matches[0][1]
 
 
+def _durable_identity_binding(
+    repo_root: Path,
+    framework_revision: str,
+    manifest_path: Path,
+    manifest: dict[str, Any],
+    execution: dict[str, Any],
+) -> dict[str, Any]:
+    try:
+        identity_path = exact_target_package_identity.identity_path_for_manifest(manifest_path)
+    except exact_target_package_identity.ExactTargetPackageIdentityError as exc:
+        raise ExactTargetEvidenceError(str(exc)) from exc
+    identity_file = repo_root / identity_path
+    try:
+        identity = exact_target_package_identity.validate_runtime_identity(
+            _load_json(identity_file, "runtime identity")
+        )
+    except exact_target_package_identity.ExactTargetPackageIdentityError as exc:
+        raise ExactTargetEvidenceError(f"runtime identity invalid: {exc}") from exc
+
+    if Path(identity["run_manifest_path"]) != manifest_path:
+        raise ExactTargetEvidenceError("runtime identity run_manifest_path does not match evidence_ref manifest")
+    if Path(identity["runtime_identity_path"]) != identity_path:
+        raise ExactTargetEvidenceError("runtime identity retained path does not match derived identity path")
+    if identity["framework_ref"] != framework_revision or manifest["framework_revision"] != framework_revision:
+        raise ExactTargetEvidenceError("runtime identity/framework manifest revision mismatch")
+    if identity["adapter_id"] != manifest["adapter"]["id"] or identity["adapter_id"] != execution.get("adapter_id"):
+        raise ExactTargetEvidenceError("runtime identity adapter id mismatch")
+    if identity["adapter_revision"] != manifest["adapter"]["revision"] or identity["adapter_revision"] != execution.get("adapter_revision"):
+        raise ExactTargetEvidenceError("runtime identity adapter revision mismatch")
+    if identity["runtime_id"] != manifest["runtime"]["id"]:
+        raise ExactTargetEvidenceError("runtime identity runtime id mismatch")
+    if identity["runtime_version"] != manifest["runtime"]["version"]:
+        raise ExactTargetEvidenceError("runtime identity runtime version mismatch")
+    if identity["run_id"] != manifest["run_id"]:
+        raise ExactTargetEvidenceError("runtime identity run_id mismatch")
+    if set(manifest["runtime"]["identity_evidence"]) != exact_target_package_identity.expected_runtime_evidence(identity):
+        raise ExactTargetEvidenceError("retained runtime provenance does not match run manifest identity evidence")
+
+    manifest_file = repo_root / manifest_path
+    if _file_digest(manifest_file, "run manifest") != identity["run_manifest_sha256"]:
+        raise ExactTargetEvidenceError("retained run manifest digest does not match runtime identity")
+
+    evidence_path = Path(identity["execution_evidence_path"])
+    evidence_file = repo_root / evidence_path
+    if _file_digest(evidence_file, "execution evidence") != identity["execution_evidence_sha256"]:
+        raise ExactTargetEvidenceError("retained execution evidence digest does not match runtime identity")
+    runner = _load_runner(repo_root)
+    try:
+        evidence = runner.validate_execution_evidence(_load_json(evidence_file, "execution evidence"))
+    except Exception as exc:
+        raise ExactTargetEvidenceError(f"retained execution evidence is invalid: {exc}") from exc
+    if evidence.get("schema_version") != 2:
+        raise ExactTargetEvidenceError("retained exact-target execution evidence must use schema_version 2")
+    if evidence.get("framework_revision") != framework_revision:
+        raise ExactTargetEvidenceError("retained execution evidence framework revision mismatch")
+    matches = [
+        row for row in evidence["executions"]
+        if row.get("suite_id") == execution.get("suite_id") and row.get("case_id") == execution.get("case_id")
+    ]
+    if len(matches) != 1:
+        raise ExactTargetEvidenceError("retained execution evidence must contain the referenced case exactly once")
+    if matches[0] != execution:
+        raise ExactTargetEvidenceError("caller execution row does not match digest-bound retained execution evidence")
+    return identity
+
+
 def validate_binding(repo_root: Path, framework_revision: str, execution: dict[str, Any]) -> dict[str, Any]:
     repo_root = repo_root.resolve()
     if execution.get("assurance_level") != "exact_target_runtime" or execution.get("independent_runtime") is not True:
@@ -215,17 +305,16 @@ def validate_binding(repo_root: Path, framework_revision: str, execution: dict[s
     path, suite_id, case_id = parse_evidence_ref(execution.get("evidence_ref"))
     if suite_id != execution.get("suite_id") or case_id != execution.get("case_id"):
         raise ExactTargetEvidenceError("evidence_ref suite/case does not match execution record")
-    try:
-        manifest = json.loads((repo_root / path).read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
-        raise ExactTargetEvidenceError(f"unable to load exact-target run manifest {path}: {exc}") from exc
-    validate_run_manifest(manifest)
+    manifest = validate_run_manifest(_load_json(repo_root / path, "exact-target run manifest"))
     if manifest["framework_revision"] != framework_revision:
         raise ExactTargetEvidenceError("exact-target run framework_revision mismatch")
     if manifest["adapter"]["id"] != execution.get("adapter_id"):
         raise ExactTargetEvidenceError("exact-target run adapter_id mismatch")
     if manifest["adapter"]["revision"] != execution.get("adapter_revision"):
         raise ExactTargetEvidenceError("exact-target run adapter_revision mismatch")
+
+    _durable_identity_binding(repo_root, framework_revision, path, manifest, execution)
+
     match = next(
         (item for item in manifest["executions"] if item["suite_id"] == suite_id and item["case_id"] == case_id),
         None,
@@ -261,9 +350,8 @@ def main(argv=None) -> int:
     parser.add_argument("manifest")
     args = parser.parse_args(argv)
     try:
-        data = json.loads(Path(args.manifest).read_text(encoding="utf-8"))
-        result = validate_run_manifest(data)
-    except (OSError, json.JSONDecodeError, ExactTargetEvidenceError) as exc:
+        result = validate_run_manifest(_load_json(Path(args.manifest), "run manifest"))
+    except ExactTargetEvidenceError as exc:
         print(f"ERROR: {exc}")
         return 2
     print(json.dumps({"status": "valid", "run_id": result["run_id"], "executions": len(result["executions"])}, sort_keys=True))
