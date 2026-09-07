@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "status": "candidate",
+  "status": "validated",
   "default_runner": "self-hosted",
   "runner_labels": [
     "self-hosted",
@@ -21,6 +21,6 @@
   ],
   "preflight_workflow": "Self-Hosted Runner Preflight",
   "preflight_required": true,
-  "preflight_runtime_verified": false,
+  "preflight_runtime_verified": true,
   "stable_promotion_authorized": false
 }
