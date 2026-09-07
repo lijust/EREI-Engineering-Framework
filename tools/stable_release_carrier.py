@@ -20,8 +20,9 @@ from pathlib import Path, PurePosixPath
 from typing import Any
 
 try:
-    from . import release_assurance, release_target
+    from . import release_approval, release_assurance, release_target
 except ImportError:
+    import release_approval
     import release_assurance
     import release_target
 
@@ -139,7 +140,7 @@ def _blob(repo: Path, revision: str, path: str) -> str:
     return str(_run(repo, "rev-parse", f"{revision}:{path}")).strip()
 
 
-def _assert_first_write_immutable(repo: Path, target_ref: str, carrier_ref: str, path: str) -> None:
+def _first_write_commit(repo: Path, target_ref: str, carrier_ref: str, path: str) -> str:
     commits = [
         item.strip()
         for item in str(_run(repo, "log", "--reverse", "--format=%H", f"{target_ref}..{carrier_ref}", "--", path)).splitlines()
@@ -147,8 +148,13 @@ def _assert_first_write_immutable(repo: Path, target_ref: str, carrier_ref: str,
     ]
     if not commits:
         raise StableCarrierError(f"unable to resolve first post-freeze write for {path}")
+    return _exact_sha(commits[0], f"first write commit for {path}")
+
+
+def _assert_first_write_immutable(repo: Path, target_ref: str, carrier_ref: str, path: str) -> str:
+    first = _first_write_commit(repo, target_ref, carrier_ref, path)
     try:
-        first_blob = _blob(repo, commits[0], path)
+        first_blob = _blob(repo, first, path)
         current_blob = _blob(repo, carrier_ref, path)
     except StableCarrierError as exc:
         raise StableCarrierError(f"closure artifact {path} must exist at its first write and at carrier HEAD") from exc
@@ -156,6 +162,7 @@ def _assert_first_write_immutable(repo: Path, target_ref: str, carrier_ref: str,
         raise StableCarrierError(
             f"closure artifact {path} changed after its first post-freeze write; carrier is not immutable"
         )
+    return first
 
 
 def _validate_v2_closure(repo: Path, target_ref: str, carrier_ref: str) -> list[str]:
@@ -212,12 +219,41 @@ def _validate_legacy(path: str, manifest: dict[str, Any], target_ref: str) -> di
     return result
 
 
-def _validate_approval_ref(repo: Path, target_ref: str, carrier_ref: str, value: Any, label: str) -> str:
+def _validate_approval_ref(
+    repo: Path,
+    target_ref: str,
+    carrier_ref: str,
+    value: Any,
+    label: str,
+    *,
+    approval_type: str,
+    approval_path: str,
+    target_tree: str,
+) -> str:
     ref = _resolve_exact_commit(repo, _exact_sha(value, label), label)
     if ref == target_ref:
         raise StableCarrierError(f"{label} must be a post-target immutable approval commit")
     _assert_ancestor(repo, target_ref, ref, label)
     _assert_ancestor(repo, ref, carrier_ref, label)
+
+    first = _assert_first_write_immutable(repo, target_ref, carrier_ref, approval_path)
+    if ref != first:
+        raise StableCarrierError(
+            f"{label} must equal the first commit that writes {approval_path}; expected {first}, got {ref}"
+        )
+    try:
+        record = _git_json(repo, ref, approval_path)
+        release_approval.validate_record(
+            record,
+            expected_type=approval_type,
+            expected_target=target_ref,
+            expected_tree=target_tree,
+            require_approved=True,
+        )
+    except release_approval.ReleaseApprovalError as exc:
+        raise StableCarrierError(f"invalid {approval_type} approval record at {ref}: {exc}") from exc
+    if _blob(repo, ref, approval_path) != _blob(repo, carrier_ref, approval_path):
+        raise StableCarrierError(f"{approval_type} approval record changed after its bound approval ref")
     return ref
 
 
@@ -240,7 +276,8 @@ def _validate_v2(
         raise StableCarrierError(f"invalid frozen release target: {exc}") from exc
     if target_manifest["framework_ref"] != target_ref:
         raise StableCarrierError("frozen release target framework_ref does not match requested target")
-    if target_manifest["target_tree"] != _tree_for(repo, target_ref):
+    target_tree = _tree_for(repo, target_ref)
+    if target_manifest["target_tree"] != target_tree:
         raise StableCarrierError("frozen release target tree does not match requested target tree")
 
     changed_paths = _validate_v2_closure(repo, target_ref, carrier_ref)
@@ -249,8 +286,26 @@ def _validate_v2(
     if V2_STABLE_MANIFEST not in changed_paths:
         raise StableCarrierError("V2 Stable carrier must include the final Stable manifest")
 
-    _validate_approval_ref(repo, target_ref, carrier_ref, manifest.get("approval_ref"), "approval_ref")
-    _validate_approval_ref(repo, target_ref, carrier_ref, manifest.get("security_review_ref"), "security_review_ref")
+    _validate_approval_ref(
+        repo,
+        target_ref,
+        carrier_ref,
+        manifest.get("approval_ref"),
+        "approval_ref",
+        approval_type="architecture",
+        approval_path=release_approval.APPROVAL_PATHS["architecture"],
+        target_tree=target_tree,
+    )
+    _validate_approval_ref(
+        repo,
+        target_ref,
+        carrier_ref,
+        manifest.get("security_review_ref"),
+        "security_review_ref",
+        approval_type="security",
+        approval_path=release_approval.APPROVAL_PATHS["security"],
+        target_tree=target_tree,
+    )
 
     with tempfile.TemporaryDirectory() as tmp:
         materialized = Path(tmp)
@@ -261,6 +316,8 @@ def _validate_v2(
             raise StableCarrierError(f"V2 Stable release assurance failed: {exc}") from exc
     if result.get("status") != "stable" or result.get("framework_ref") != target_ref:
         raise StableCarrierError("V2 Stable release assurance did not validate the requested target")
+    if result.get("approval_records_validated") != 2:
+        raise StableCarrierError("V2 Stable release assurance did not validate both structured approval records")
     return result, changed_paths
 
 
