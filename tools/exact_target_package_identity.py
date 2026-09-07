@@ -10,7 +10,7 @@ SHA40_RE = re.compile(r"^[a-f0-9]{40}$")
 SHA256_RE = re.compile(r"^[a-f0-9]{64}$")
 RUN_ID_RE = re.compile(r"^ETR-[0-9]{8}T[0-9]{6}Z-[A-F0-9]{8}$")
 SEMVER_RE = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+(?:[-.][0-9A-Za-z.-]+)?$")
-SRI_SHA512_RE = re.compile(r"^sha512-[A-Za-z0-9+/]+={0,2}$")
+SRI_SHA512_RE = re.compile(r"^sha512-[A-Za-z0-9+/]{86}==$")
 REPOSITORY_RE = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
 
 
@@ -37,7 +37,7 @@ def _int(value: Any, label: str) -> int:
     return value
 
 
-def _relative_json_path(value: Any, *, prefix: str, label: str) -> Path:
+def validate_relative_json_path(value: Any, *, prefix: str, label: str) -> Path:
     text = _text(value, label)
     path = Path(text)
     if path.is_absolute() or ".." in path.parts or not text.startswith(prefix) or path.suffix != ".json":
@@ -99,22 +99,22 @@ def validate_runtime_identity(data: Any) -> dict[str, Any]:
         raise ExactTargetPackageIdentityError("runtime_version must contain the requested CLI version")
     _pattern(
         data["requested_cli_integrity"], SRI_SHA512_RE, "requested_cli_integrity",
-        "requested_cli_integrity must be an npm sha512 SRI value",
+        "requested_cli_integrity must be one full npm sha512 SRI digest",
     )
     _text(data["model"], "model")
     _int(data["github_run_id"], "github_run_id")
     _int(data["github_run_attempt"], "github_run_attempt")
     _pattern(data["run_id"], RUN_ID_RE, "run_id", "run_id must match ETR-YYYYMMDDTHHMMSSZ-XXXXXXXX")
 
-    manifest_path = _relative_json_path(
+    manifest_path = validate_relative_json_path(
         data["run_manifest_path"], prefix="evals/exact-target-runs/", label="run_manifest_path"
     )
     if manifest_path.name.endswith(".identity.json"):
         raise ExactTargetPackageIdentityError("run_manifest_path cannot use the reserved .identity.json suffix")
-    evidence_path = _relative_json_path(
+    evidence_path = validate_relative_json_path(
         data["execution_evidence_path"], prefix="evals/EXECUTION_EVIDENCE.", label="execution_evidence_path"
     )
-    identity_path = _relative_json_path(
+    identity_path = validate_relative_json_path(
         data["runtime_identity_path"], prefix="evals/exact-target-runs/", label="runtime_identity_path"
     )
     expected_identity_path = identity_path_for_manifest(manifest_path)
