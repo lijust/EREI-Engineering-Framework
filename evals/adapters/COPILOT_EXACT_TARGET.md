@@ -36,15 +36,24 @@ Each case runs in a fresh temporary workspace and fresh Copilot home/cache. Dire
 
 The Copilot child process receives an allowlisted environment containing only basic process/network/certificate variables plus its Copilot PAT. Unrelated runner secrets are not inherited.
 
-Because this repository is personal-account owned, the controlled workflow requires the dedicated `EREI_COPILOT_EXACT_TARGET_TOKEN` secret rather than silently falling back to the normal Actions `GITHUB_TOKEN`. The workflow-level `GITHUB_TOKEN` is restricted to `contents: read`; it receives no Copilot, issue, pull-request, status, check, or repository-write permission. The workflow also requires an exact `@github/copilot` npm version input and records the observed CLI version as runtime identity evidence; `latest` is not accepted for release evidence.
+Because this repository is personal-account owned, the controlled workflow requires the dedicated `EREI_COPILOT_EXACT_TARGET_TOKEN` secret rather than silently falling back to the normal Actions `GITHUB_TOKEN`. The workflow-level `GITHUB_TOKEN` is restricted to `contents: read`; it receives no Copilot, issue, pull-request, status, check, or repository-write permission.
+
+The runtime supply chain is pinned at two layers:
+
+- every third-party GitHub Action used by the workflow is referenced by an exact 40-character commit, not a mutable major tag;
+- the Copilot CLI requires both an exact `@github/copilot` npm version and its exact npm `dist.integrity` `sha512-...` value. The workflow verifies the registry's integrity for that exact version before installation and before any model call.
+
+The observed CLI version and approved package SRI are retained in runtime provenance. `latest`, version ranges, mutable npm tags, or an unbound version are not acceptable for release evidence.
 
 ## Evidence production
 
-`.github/workflows/vnext-exact-target-copilot.yml` is manual-only and requires an exact frozen release carrier and validated `VNEXT_TARGET.json`. It checks out the exact target revision/tree, runs behavioral exact-target evidence, validates complete coverage, confirms only the two evidence outputs changed in the target checkout, and uploads an Actions artifact.
+`.github/workflows/vnext-exact-target-copilot.yml` is manual-only and requires an exact frozen release carrier and validated `VNEXT_TARGET.json`. It checks out the exact target revision/tree, verifies the runtime supply-chain pins, runs behavioral exact-target evidence, validates complete coverage, confirms only the two evidence outputs changed in the target checkout, and uploads an Actions artifact.
 
 The V2 run manifest retains each normalized adapter response in addition to its response digest and status. Stable/readiness validation must be able to reload the published case, validate the retained response, rerun the authoritative scorers, and reproduce the recorded PASS/FAIL result. Digest-only exact-target manifests are not sufficient for V2 Stable.
 
-The workflow does not commit, push, open a pull request, change approvals, or promote Stable. Evidence must later enter the frozen release closure through the governed immutable-evidence process.
+The artifact package has a strict V2 runtime identity that binds the exact repository, target, carrier, GitHub run/attempt, adapter, model, CLI version, CLI package SRI, governed destination paths, run id, and SHA-256 digests of the evidence files. It must enter a frozen release closure through the governed importer; manual copying is not valid release evidence.
+
+The workflow does not commit, push, open a pull request, change approvals, or promote Stable.
 
 ## Release boundary
 
