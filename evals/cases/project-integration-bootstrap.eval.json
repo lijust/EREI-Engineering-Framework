@@ -2,6 +2,7 @@
   "schema_version": "1.0",
   "suite_id": "project-integration-bootstrap-v1",
   "artifact": "workflows/project-integration-bootstrap",
+  "assurance_scope": "behavioral_runtime",
   "cases": [
     {
       "id": "PI-001-EXISTING-AGENTS",
