@@ -28,25 +28,30 @@ permissions:
 
 jobs:
   runtime-adapter-contract:
-    runs-on: self-hosted
+    runs-on: [self-hosted, Windows, X64]
     timeout-minutes: 5
     strategy:
+      fail-fast: false
       matrix:
         python-version: ["3.11", "3.12"]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
+      - name: Verify local Python
+        shell: pwsh
+        run: |
+          py "-${{ matrix.python-version }}" -c "import sys, encodings, ssl; print(sys.version); print(sys.executable)"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Compile validator
-        run: python -m py_compile tools/validate_runtime_adapter.py tools/tests/test_validate_runtime_adapter.py
+        shell: pwsh
+        run: py "-${{ matrix.python-version }}" -m py_compile tools/validate_runtime_adapter.py tools/tests/test_validate_runtime_adapter.py
 
       - name: Run validator unit tests
-        run: python -m unittest tools.tests.test_validate_runtime_adapter -v
+        shell: pwsh
+        run: py "-${{ matrix.python-version }}" -m unittest tools.tests.test_validate_runtime_adapter -v
 
       - name: Validate candidate fixture
-        run: python tools/validate_runtime_adapter.py evals/fixtures/runtime-adapter-candidate.json
+        shell: pwsh
+        run: py "-${{ matrix.python-version }}" tools/validate_runtime_adapter.py evals/fixtures/runtime-adapter-candidate.json

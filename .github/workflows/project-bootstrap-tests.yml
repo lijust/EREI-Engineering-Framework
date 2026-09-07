@@ -25,18 +25,24 @@ permissions:
 
 jobs:
   bootstrap-self-test:
-    runs-on: self-hosted
+    runs-on: [self-hosted, Windows, X64]
     strategy:
+      fail-fast: false
       matrix:
         python-version: ['3.11', '3.12']
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
+      - name: Verify local Python
+        shell: pwsh
+        run: |
+          py "-${{ matrix.python-version }}" -c "import sys, encodings, ssl; print(sys.version); print(sys.executable)"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Compile bootstrap tool
-        run: python -m py_compile tools/bootstrap_project.py
+        shell: pwsh
+        run: py "-${{ matrix.python-version }}" -m py_compile tools/bootstrap_project.py
       - name: Parse integration schema
-        run: python -m json.tool schemas/project-framework.schema.json > /dev/null
+        shell: pwsh
+        run: py "-${{ matrix.python-version }}" -m json.tool schemas/project-framework.schema.json
       - name: Run bootstrap unit tests
-        run: python -m unittest discover -s tools/tests -p 'test_*.py' -v
+        shell: pwsh
+        run: py "-${{ matrix.python-version }}" -m unittest discover -s tools/tests -p 'test_*.py' -v

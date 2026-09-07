@@ -13,35 +13,44 @@ permissions:
 
 jobs:
   preflight:
-    runs-on: self-hosted
+    runs-on: [self-hosted, Windows, X64]
     timeout-minutes: 10
     steps:
       - name: Report runner identity
-        shell: bash
+        shell: pwsh
         run: |
-          set -euo pipefail
-          echo "runner_name=$RUNNER_NAME"
-          echo "runner_os=$RUNNER_OS"
-          echo "runner_arch=$RUNNER_ARCH"
-          uname -a || true
+          Write-Host "runner_name=$env:RUNNER_NAME"
+          Write-Host "runner_os=$env:RUNNER_OS"
+          Write-Host "runner_arch=$env:RUNNER_ARCH"
+          Write-Host "machine_name=$env:COMPUTERNAME"
+          [System.Environment]::OSVersion.VersionString
 
       - name: Verify required local toolchain
-        shell: bash
+        shell: pwsh
         run: |
-          set -euo pipefail
           git --version
-          python3 --version
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          py "-3.11" -c "import sys, encodings, ssl; print(sys.version); print(sys.executable)"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          py "-3.12" -c "import sys, encodings, ssl; print(sys.version); print(sys.executable)"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           node --version
-          npm --version
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          npm.cmd --version
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Verify isolated writable temp boundary
-        shell: bash
+        shell: pwsh
         run: |
-          set -euo pipefail
-          test -n "${RUNNER_TEMP:-}"
-          probe="$RUNNER_TEMP/erei-self-hosted-preflight-$GITHUB_RUN_ID"
-          mkdir -p "$probe"
-          printf 'ok\n' > "$probe/probe.txt"
-          test "$(cat "$probe/probe.txt")" = "ok"
-          rm -rf "$probe"
-          echo 'PASS: self-hosted runner preflight'
+          if ([string]::IsNullOrWhiteSpace($env:RUNNER_TEMP)) {
+            throw 'RUNNER_TEMP is not set'
+          }
+          $probe = Join-Path $env:RUNNER_TEMP "erei-self-hosted-preflight-$env:GITHUB_RUN_ID"
+          New-Item -ItemType Directory -Path $probe -Force | Out-Null
+          $probeFile = Join-Path $probe 'probe.txt'
+          Set-Content -LiteralPath $probeFile -Value 'ok' -Encoding ascii
+          if ((Get-Content -LiteralPath $probeFile -Raw).Trim() -ne 'ok') {
+            throw 'RUNNER_TEMP probe read-back failed'
+          }
+          Remove-Item -LiteralPath $probe -Recurse -Force
+          Write-Host 'PASS: self-hosted runner preflight'
