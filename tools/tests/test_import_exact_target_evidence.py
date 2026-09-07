@@ -3,6 +3,7 @@ import subprocess
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 from tools import build_exact_target_package_identity, exact_target_evidence, import_exact_target_evidence
 
@@ -211,6 +212,54 @@ class ExactTargetEvidenceImportTests(unittest.TestCase):
         identity_path.write_text(json.dumps(identity), encoding="utf-8")
         with self.assertRaisesRegex(import_exact_target_evidence.ExactTargetImportError, "runtime identity evidence"):
             import_exact_target_evidence.validate_package(self.repo, self.package)
+
+    def test_exclusive_write_pair_rolls_back_first_reservation_if_second_destination_exists(self):
+        scratch = Path(self.tmp.name) / "write-pair-existing"
+        source_one = scratch / "source-one"
+        source_two = scratch / "source-two"
+        destination_one = scratch / "dest" / "one.json"
+        destination_two = scratch / "dest" / "two.json"
+        scratch.mkdir(parents=True)
+        source_one.write_bytes(b"one")
+        source_two.write_bytes(b"two")
+        destination_two.parent.mkdir(parents=True)
+        destination_two.write_bytes(b"existing")
+
+        with self.assertRaisesRegex(import_exact_target_evidence.ExactTargetImportError, "already exists"):
+            import_exact_target_evidence._exclusive_write_pair((
+                (source_one, destination_one),
+                (source_two, destination_two),
+            ))
+
+        self.assertFalse(destination_one.exists())
+        self.assertEqual(destination_two.read_bytes(), b"existing")
+
+    def test_exclusive_write_pair_rolls_back_both_reservations_on_source_failure(self):
+        scratch = Path(self.tmp.name) / "write-pair-failure"
+        source_one = scratch / "source-one"
+        source_two = scratch / "source-two"
+        destination_one = scratch / "dest" / "one.json"
+        destination_two = scratch / "dest" / "two.json"
+        scratch.mkdir(parents=True)
+        source_one.write_bytes(b"one")
+        source_two.write_bytes(b"two")
+
+        original_read_bytes = Path.read_bytes
+
+        def failing_read(path):
+            if path == source_two:
+                raise OSError("simulated second-source failure")
+            return original_read_bytes(path)
+
+        with mock.patch.object(Path, "read_bytes", failing_read):
+            with self.assertRaisesRegex(import_exact_target_evidence.ExactTargetImportError, "rolled back"):
+                import_exact_target_evidence._exclusive_write_pair((
+                    (source_one, destination_one),
+                    (source_two, destination_two),
+                ))
+
+        self.assertFalse(destination_one.exists())
+        self.assertFalse(destination_two.exists())
 
 
 if __name__ == "__main__":
