@@ -7,6 +7,7 @@ import hashlib
 import importlib.util
 import json
 import re
+import subprocess
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -122,6 +123,107 @@ def _load_runner(repo_root: Path):
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
+
+
+def _git(repo_root: Path, *args: str) -> str:
+    process = subprocess.run(
+        ["git", "-C", str(repo_root), *args],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if process.returncode != 0:
+        raise ExactTargetEvidenceError(f"git {' '.join(args)} failed: {process.stderr.strip()}")
+    return process.stdout.strip()
+
+
+def _is_git_checkout(repo_root: Path) -> bool:
+    process = subprocess.run(
+        ["git", "-C", str(repo_root), "rev-parse", "--is-inside-work-tree"],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    return process.returncode == 0 and process.stdout.strip() == "true"
+
+
+def _first_add_commit(repo_root: Path, path: Path) -> str:
+    commits = [
+        row.strip()
+        for row in _git(
+            repo_root,
+            "log",
+            "--diff-filter=A",
+            "--reverse",
+            "--format=%H",
+            "HEAD",
+            "--",
+            path.as_posix(),
+        ).splitlines()
+        if row.strip()
+    ]
+    if len(commits) != 1:
+        raise ExactTargetEvidenceError(
+            f"retained evidence path must have exactly one first-add commit in current history: {path}"
+        )
+    return _sha40(commits[0], f"first-add commit for {path}")
+
+
+def _validate_history_binding(repo_root: Path, identity: dict[str, Any]) -> dict[str, Any]:
+    manifest_path = Path(identity["run_manifest_path"])
+    evidence_path = Path(identity["execution_evidence_path"])
+    identity_path = Path(identity["runtime_identity_path"])
+    paths = (manifest_path, evidence_path, identity_path)
+    first_adds = {_first_add_commit(repo_root, path) for path in paths}
+    if len(first_adds) != 1:
+        raise ExactTargetEvidenceError(
+            "retained exact-target manifest, execution evidence, and runtime identity must be added by one commit"
+        )
+    evidence_commit = next(iter(first_adds))
+    parents = _git(repo_root, "rev-list", "--parents", "-n", "1", evidence_commit).split()
+    if len(parents) != 2:
+        raise ExactTargetEvidenceError("exact-target evidence commit must be a single-parent commit")
+    parent = _sha40(parents[1], "exact-target evidence commit parent")
+    if parent != identity["release_carrier_ref"]:
+        raise ExactTargetEvidenceError(
+            "exact-target evidence commit parent must equal the recorded release_carrier_ref"
+        )
+
+    changes: list[tuple[str, str]] = []
+    raw = _git(
+        repo_root,
+        "diff-tree",
+        "--no-commit-id",
+        "--name-status",
+        "-r",
+        "--no-renames",
+        evidence_commit,
+    )
+    for line in raw.splitlines():
+        if not line.strip():
+            continue
+        parts = line.split("\t")
+        if len(parts) != 2:
+            raise ExactTargetEvidenceError(f"unexpected evidence commit diff row: {line}")
+        changes.append((parts[0], parts[1]))
+    expected_changes = {( "A", path.as_posix()) for path in paths}
+    if set(changes) != expected_changes or len(changes) != 3:
+        raise ExactTargetEvidenceError(
+            "exact-target evidence commit must add exactly the retained manifest, execution evidence, and runtime identity"
+        )
+
+    for path in paths:
+        first_blob = _git(repo_root, "rev-parse", f"{evidence_commit}:{path.as_posix()}")
+        current_blob = _git(repo_root, "rev-parse", f"HEAD:{path.as_posix()}")
+        if first_blob != current_blob:
+            raise ExactTargetEvidenceError(
+                f"retained exact-target evidence changed after its evidence commit: {path.as_posix()}"
+            )
+    return {
+        "evidence_commit": evidence_commit,
+        "release_carrier_ref": parent,
+        "retained_paths": [path.as_posix() for path in paths],
+    }
 
 
 def validate_run_manifest(data: Any) -> dict[str, Any]:
@@ -313,7 +415,9 @@ def validate_binding(repo_root: Path, framework_revision: str, execution: dict[s
     if manifest["adapter"]["revision"] != execution.get("adapter_revision"):
         raise ExactTargetEvidenceError("exact-target run adapter_revision mismatch")
 
-    _durable_identity_binding(repo_root, framework_revision, path, manifest, execution)
+    identity = _durable_identity_binding(repo_root, framework_revision, path, manifest, execution)
+    if _is_git_checkout(repo_root):
+        _validate_history_binding(repo_root, identity)
 
     match = next(
         (item for item in manifest["executions"] if item["suite_id"] == suite_id and item["case_id"] == case_id),
