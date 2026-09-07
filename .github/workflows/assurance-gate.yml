@@ -50,8 +50,8 @@ jobs:
       - name: Execute all 44 cases at reference-contract level
         run: python evals/runner.py run evals/cases --adapter "python evals/fixtures/reference_oracle_adapter.py"
 
-      - name: Report retained independent runtime evidence coverage honestly
-        run: python evals/runner.py coverage evals/cases --evidence evals/EXECUTION_EVIDENCE.json
+      - name: Report exact-target-runtime evidence coverage honestly
+        run: python evals/runner.py coverage evals/cases --evidence evals/EXECUTION_EVIDENCE.json --minimum-level exact_target_runtime
 
       - name: Validate structured central feedback decisions
         run: python tools/feedback_decisions.py validate feedback/DECISIONS.jsonl
