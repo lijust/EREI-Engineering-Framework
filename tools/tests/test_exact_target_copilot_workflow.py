@@ -14,7 +14,7 @@ class ExactTargetCopilotWorkflowTests(unittest.TestCase):
         self.assertNotIn("pull_request:", text)
         self.assertNotIn("schedule:", text)
         self.assertIn("contents: read", text)
-        self.assertIn("copilot-requests: write", text)
+        self.assertNotIn("copilot-requests: write", text)
         self.assertIn("expected_carrier_sha", text)
         self.assertIn("release_target.py --repo-root . --validate-closure", text)
         self.assertIn("ref: ${{ steps.target.outputs.target_ref }}", text)
@@ -36,6 +36,7 @@ class ExactTargetCopilotWorkflowTests(unittest.TestCase):
     def test_workflow_contains_no_automatic_repository_mutation_or_broad_copilot_permissions(self):
         text = WORKFLOW.read_text(encoding="utf-8").lower()
         forbidden = (
+            "copilot-requests: write",
             "--yolo",
             "--allow-all",
             "--allow-tool",
