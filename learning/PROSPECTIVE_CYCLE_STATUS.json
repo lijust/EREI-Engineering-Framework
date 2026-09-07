@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "cycle_id": "PLC-20260907-C1F01A84",
-  "updated_at": "2026-09-07T11:33:52Z",
-  "status": "awaiting_measured_outcome",
+  "updated_at": "2026-09-07T11:49:38Z",
+  "status": "complete",
   "stable_framework_ref": "69079018606750312344cb3c648952b9ab72d35b",
   "framework_candidate_ref": "07460985d9984dbcf3833e6142709c0965a05967",
   "source_project": {
@@ -61,11 +61,18 @@
       ]
     },
     "measured_outcome": {
-      "status": "pending",
-      "reason": "No genuine project task or pull request has occurred after the source-project Candidate adoption merge; downstream outcome evidence cannot be manufactured."
+      "status": "completed",
+      "repository": "lijust/EREI-App-Google",
+      "ref": "9adf44b92f1994304ccfad5d3d553f967c1436df",
+      "evidence": [
+        "github-pr:88",
+        "github-actions:34118146756",
+        "app-merge:9adf44b92f1994304ccfad5d3d553f967c1436df",
+        "github-pr:89",
+        "github-actions:34118499862",
+        "app-merge:5a90d0c05934341c79fb79740ae15edff049f167"
+      ]
     }
   },
-  "blockers": [
-    "measured_post_adoption_outcome_pending"
-  ]
+  "blockers": []
 }
