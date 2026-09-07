@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "assurance_contract_version": 1,
+  "release_id": "task-learning-review-v1",
+  "baseline": "task-learning-review-v1",
+  "status": "stable",
+  "framework_ref": "69079018606750312344cb3c648952b9ab72d35b",
+  "released_at": "2026-09-01T23:22:41Z",
+  "release_pr": 27,
+  "release_commit_verified": true,
+  "capabilities": {
+    "eval_harness": "stable-v1",
+    "project_integration": "stable-v1",
+    "framework_upgrade_planning": "stable-v1",
+    "runtime_adapter_contract": "stable-v1",
+    "framework_feedback_capture": "stable-v1",
+    "knowledge_promotion": "stable-v1",
+    "prospective_task_learning": "stable-v1",
+    "learning_review": "stable-v1"
+  },
+  "notes": "Immutable manifest for the last approved Stable release. Later Candidate tooling on main is not implied by this release. Assurance contract V2 gates apply to the next Stable release."
+}
