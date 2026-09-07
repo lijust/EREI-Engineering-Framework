@@ -41,9 +41,9 @@ Because this repository is personal-account owned, the controlled workflow requi
 The runtime supply chain is pinned at two layers:
 
 - every third-party GitHub Action used by the workflow is referenced by an exact 40-character commit, not a mutable major tag;
-- the Copilot CLI requires both an exact `@github/copilot` npm version and its exact npm `dist.integrity` `sha512-...` value. The workflow verifies the registry's integrity for that exact version before installation and before any model call.
+- the Copilot CLI requires both an exact `@github/copilot` npm version and its exact full npm `dist.integrity` SHA-512 SRI. The workflow verifies the registry's integrity for that exact version before installation and before any model call.
 
-The observed CLI version and approved package SRI are retained in runtime provenance. `latest`, version ranges, mutable npm tags, or an unbound version are not acceptable for release evidence.
+The observed CLI version and approved package SRI are retained in runtime provenance. `latest`, version ranges, mutable npm tags, truncated SRI values, or an unbound version are not acceptable for release evidence.
 
 ## Evidence production
 
@@ -51,9 +51,15 @@ The observed CLI version and approved package SRI are retained in runtime proven
 
 The V2 run manifest retains each normalized adapter response in addition to its response digest and status. Stable/readiness validation must be able to reload the published case, validate the retained response, rerun the authoritative scorers, and reproduce the recorded PASS/FAIL result. Digest-only exact-target manifests are not sufficient for V2 Stable.
 
-The artifact package has a strict V2 runtime identity that binds the exact repository, target, carrier, GitHub run/attempt, adapter, model, CLI version, CLI package SRI, governed destination paths, run id, and SHA-256 digests of the evidence files. It must enter a frozen release closure through the governed importer; manual copying is not valid release evidence.
+The Actions artifact package contains three files:
 
-The workflow does not commit, push, open a pull request, change approvals, or promote Stable.
+1. `exact-target-run.json` — reconstructible runtime responses;
+2. `execution-evidence.json` — case-level assurance rows;
+3. `runtime-identity.json` — strict structured provenance that binds the exact repository, target, carrier, GitHub run/attempt, adapter, model, CLI version, full CLI package SRI, governed destination paths, run id, and SHA-256 digests of the first two files.
+
+The governed importer retains all three package files in the frozen release closure. The identity is not disposable import metadata: its retained destination is derived from the run-manifest path as `<run>.identity.json`, and Stable/readiness validation must reopen it, re-hash the retained run manifest and execution-evidence file, confirm the exact execution row is digest-bound to that evidence file, verify runtime provenance, and only then rerun the published scorers.
+
+Manual copying is not valid release evidence. The workflow itself does not commit, push, open a pull request, change approvals, or promote Stable.
 
 ## Release boundary
 
