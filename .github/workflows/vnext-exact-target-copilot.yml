@@ -18,7 +18,6 @@ on:
 
 permissions:
   contents: read
-  copilot-requests: write
 
 jobs:
   exact-target-copilot:
