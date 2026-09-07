@@ -55,6 +55,19 @@ class VNextExactTargetWorkflowTests(unittest.TestCase):
         self.assertIn("git -C target rev-parse HEAD", self.text)
         self.assertIn("git -C target rev-parse 'HEAD^{tree}'", self.text)
 
+    def test_skill_event_transport_is_probed_before_exact_target_execution(self):
+        probe_marker = "- name: Verify skill invocation telemetry transport"
+        execute_marker = "- name: Execute 43 behavioral cases against frozen target"
+        self.assertIn(probe_marker, self.text)
+        self.assertLess(self.text.index(probe_marker), self.text.index(execute_marker))
+        probe = self.text.split(probe_marker, 1)[1].split(execute_marker, 1)[0]
+        self.assertIn("--probe-skill-event skills/impact-analysis", probe)
+        self.assertIn("EREI_COPILOT_EXACT_TARGET_TOKEN", probe)
+        self.assertIn(
+            '--runtime-evidence "copilot-skill-event-transport:skill.invoked-v1"',
+            self.text,
+        )
+
     def test_workflow_executes_exact_target_coverage_without_auto_commit(self):
         self.assertIn("python evals/exact_target_run.py evals/cases", self.text)
         self.assertIn("--minimum-level exact_target_runtime", self.text)
