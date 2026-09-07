@@ -42,12 +42,17 @@ class ExactTargetCopilotWorkflowTests(unittest.TestCase):
             self.assertIn(f"{action}@{revision}", text)
         self.assertNotRegex(text, r"uses:\s*actions/[A-Za-z0-9_.-]+@v\d+")
 
-    def test_workflow_requires_personal_repo_pat_and_pinned_cli_version(self):
+    def test_workflow_requires_personal_repo_pat_pinned_cli_and_integrity(self):
         text = WORKFLOW.read_text(encoding="utf-8")
         self.assertIn("EREI_COPILOT_EXACT_TARGET_TOKEN", text)
         self.assertIn("copilot_cli_version", text)
+        self.assertIn("copilot_cli_integrity", text)
+        self.assertIn('npm view "@github/copilot@${COPILOT_CLI_VERSION}" dist.integrity', text)
+        self.assertIn('registry_integrity" != "$COPILOT_CLI_INTEGRITY', text)
         self.assertIn('npm install -g "@github/copilot@${COPILOT_CLI_VERSION}"', text)
         self.assertNotIn("npm install -g @github/copilot\n", text)
+        self.assertIn('--runtime-evidence "copilot-package-integrity:${COPILOT_CLI_INTEGRITY}"', text)
+        self.assertIn('--requested-cli-integrity "$COPILOT_CLI_INTEGRITY"', text)
         execute = text.split("- name: Execute 43 behavioral cases against frozen target", 1)[1]
         execute = execute.split("- name: Write evidence package identity", 1)[0]
         self.assertIn("COPILOT_GITHUB_TOKEN", execute)
