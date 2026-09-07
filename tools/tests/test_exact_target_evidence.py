@@ -118,6 +118,32 @@ class ExactTargetEvidenceTests(unittest.TestCase):
             with self.assertRaisesRegex(exact_target_evidence.ExactTargetEvidenceError, "status mismatch"):
                 exact_target_evidence.validate_binding(root, "b" * 40, execution)
 
+    def test_adapter_error_still_requires_published_behavioral_case(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.write_repo(root)
+            path = root / "evals" / "exact-target-runs" / "run.json"
+            value = self.manifest()
+            item = value["executions"][0]
+            item["suite_id"] = "invented-suite"
+            item["case_id"] = "invented-case"
+            item["status"] = "fail"
+            item["response"] = None
+            item["adapter_error"] = True
+            item["response_digest"] = exact_target_evidence._adapter_error_digest(
+                item["suite_id"], item["case_id"]
+            )
+            path.write_text(json.dumps(value), encoding="utf-8")
+            execution = self.execution()
+            execution.update({
+                "suite_id": "invented-suite",
+                "case_id": "invented-case",
+                "status": "fail",
+                "evidence_ref": "exact-target-run:evals/exact-target-runs/run.json#invented-suite/invented-case",
+            })
+            with self.assertRaisesRegex(exact_target_evidence.ExactTargetEvidenceError, "published behavioral case"):
+                exact_target_evidence.validate_binding(root, "b" * 40, execution)
+
     def test_rejects_path_escape(self):
         execution = self.execution()
         execution["evidence_ref"] = "exact-target-run:../outside.json#suite/case"
