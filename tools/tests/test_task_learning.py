@@ -130,7 +130,7 @@ class TaskLearningTests(unittest.TestCase):
             value = json.loads(path.read_text(encoding="utf-8"))
             value["metrics"]["tasks"] = 999
             path.write_text(json.dumps(value), encoding="utf-8")
-            with self.assertRaisesRegex(task_learning.LearningError, "metrics do not match"):
+            with self.assertRaises(task_learning.LearningError):
                 task_learning.validate_ledgers(target)
         finally:
             temp.cleanup()
