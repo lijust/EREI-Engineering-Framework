@@ -102,7 +102,7 @@ def eval_gate(repo_root: Path, head_ref: str) -> dict[str, Any]:
         "evidence_schema_version": schema_version,
         "expected_cases": len(expected),
         "evidence_records": len(observed),
-        "passing_exact_target": len(passing & expected.keys()) if False else len(set(passing) & expected),
+        "passing_exact_target": len(set(passing) & expected),
         "bound_exact_target": bound,
         "missing_count": len(missing),
         "lower_assurance_count": len(lower),
