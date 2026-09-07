@@ -20,6 +20,7 @@ class ExactTargetEvidenceHistoryTests(unittest.TestCase):
         self.git("init", "-q")
         self.git("config", "user.email", "test@example.invalid")
         self.git("config", "user.name", "EREI Test")
+        self.base_branch = self.git("branch", "--show-current")
         self.write("README.md", "carrier\n")
         self.carrier = self.commit("release carrier")
 
@@ -99,7 +100,7 @@ class ExactTargetEvidenceHistoryTests(unittest.TestCase):
     def test_side_branch_evidence_merged_later_is_not_release_first_parent_history(self):
         self.git("checkout", "-q", "-b", "evidence-side")
         self.add_three()
-        self.git("checkout", "-q", "master")
+        self.git("checkout", "-q", self.base_branch)
         self.write("main-note.txt", "release branch moved\n")
         self.commit("move release branch")
         self.git("merge", "--no-ff", "-q", "-m", "merge evidence side branch", "evidence-side")
