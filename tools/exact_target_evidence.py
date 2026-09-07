@@ -210,12 +210,13 @@ def validate_binding(repo_root: Path, framework_revision: str, execution: dict[s
         raise ExactTargetEvidenceError("exact-target run manifest does not contain referenced case")
     if match["status"] != execution.get("status"):
         raise ExactTargetEvidenceError("exact-target run case status mismatch")
+
+    runner, _suite, case = _published_case(repo_root, suite_id, case_id)
     if match["adapter_error"]:
         if match["status"] != "fail":
             raise ExactTargetEvidenceError("adapter-error execution cannot validate as pass")
         return manifest
 
-    runner, _suite, case = _published_case(repo_root, suite_id, case_id)
     try:
         response = runner.validate_adapter_response(match["response"], case["expectations"])
         scorer_results = [runner.score(expectation, response) for expectation in case["expectations"]]
