@@ -66,6 +66,23 @@ class ExactTargetCopilotWorkflowTests(unittest.TestCase):
         self.assertNotIn('npm install -g "@github/copilot@${COPILOT_CLI_VERSION}"', text)
         self.assertIn("Copilot installation source: byte-verified local npm tarball", text)
 
+    def test_skill_event_transport_probe_precedes_and_binds_evidence_production(self):
+        text = WORKFLOW.read_text(encoding="utf-8")
+        probe_marker = "- name: Verify skill invocation telemetry transport"
+        execute_marker = "- name: Execute 43 behavioral cases against frozen target"
+        self.assertIn(probe_marker, text)
+        self.assertIn(execute_marker, text)
+        self.assertLess(text.index(probe_marker), text.index(execute_marker))
+        probe = text.split(probe_marker, 1)[1].split(execute_marker, 1)[0]
+        self.assertIn("EREI_COPILOT_EXACT_TARGET_TOKEN", probe)
+        self.assertIn("--probe-skill-event skills/impact-analysis", probe)
+        self.assertIn("--model=gpt-5.4", probe)
+        self.assertIn(
+            '--runtime-evidence "copilot-skill-event-transport:skill.invoked-v1"',
+            text,
+        )
+        self.assertIn("Skill invocation telemetry: `skill.invoked-v1` transport probe PASS", text)
+
     def test_workflow_builds_three_file_digest_bound_package(self):
         text = WORKFLOW.read_text(encoding="utf-8")
         self.assertIn("target/tools/build_exact_target_package_identity.py", text)
@@ -94,15 +111,17 @@ class ExactTargetCopilotWorkflowTests(unittest.TestCase):
         for marker in forbidden:
             self.assertNotIn(marker, text, marker)
 
-    def test_adapter_has_separate_direct_and_observed_routing_modes(self):
+    def test_adapter_has_direct_mode_and_authoritative_fail_closed_routing_telemetry(self):
         text = ADAPTER.read_text(encoding="utf-8")
-        self.assertIn('available_tools = "skill" if routing_mode else "ask_user"', text)
+        self.assertIn('available_tools = "skill" if expected_skill is not None else "ask_user"', text)
         self.assertIn('"--no-ask-user"', text)
         self.assertIn('"--no-custom-instructions"', text)
         self.assertIn('"--disable-builtin-mcps"', text)
         self.assertIn('"--no-remote"', text)
         self.assertIn('"--no-remote-export"', text)
         self.assertIn('event_type == "skill.invoked"', text)
+        self.assertIn("observed skill tool activity without authoritative skill.invoked telemetry", text)
+        self.assertIn("--probe-skill-event", text)
         self.assertNotIn('"--allow-all"', text)
         self.assertNotIn('"--yolo"', text)
 
