@@ -23,6 +23,7 @@
     "run_id",
     "run_manifest_path",
     "execution_evidence_path",
+    "runtime_identity_path",
     "run_manifest_sha256",
     "execution_evidence_sha256"
   ],
@@ -51,11 +52,15 @@
     "run_id": {"type": "string", "pattern": "^ETR-[0-9]{8}T[0-9]{6}Z-[A-F0-9]{8}$"},
     "run_manifest_path": {
       "type": "string",
-      "pattern": "^evals/exact-target-runs/[^/]+\\.json$"
+      "pattern": "^evals/exact-target-runs/(?![^/]*\\.identity\\.json$)[^/]+\\.json$"
     },
     "execution_evidence_path": {
       "type": "string",
       "pattern": "^evals/EXECUTION_EVIDENCE\\.[^/]+\\.json$"
+    },
+    "runtime_identity_path": {
+      "type": "string",
+      "pattern": "^evals/exact-target-runs/[^/]+\\.identity\\.json$"
     },
     "run_manifest_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
     "execution_evidence_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
