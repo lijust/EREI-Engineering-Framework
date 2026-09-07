@@ -221,7 +221,8 @@ class ReleaseAssuranceTests(unittest.TestCase):
             security = self.approval("security")
             security["decision"] = "rejected"
             (root / "releases" / "approvals" / "security.json").write_text(json.dumps(security), encoding="utf-8")
-            with mock.patch.object(release_assurance, "_load_runner", return_value=self.FakeRunner):
+            with mock.patch.object(release_assurance, "_load_runner", return_value=self.FakeRunner), \
+                 mock.patch.object(release_assurance.exact_target_evidence, "validate_binding", return_value={}):
                 with self.assertRaisesRegex(release_assurance.ReleaseError, "security release approval"):
                     release_assurance.validate_manifest(self.stable(), repo_root=root)
 
@@ -232,7 +233,8 @@ class ReleaseAssuranceTests(unittest.TestCase):
             architecture = self.approval("architecture")
             architecture["target_tree"] = "9" * 40
             (root / "releases" / "approvals" / "architecture.json").write_text(json.dumps(architecture), encoding="utf-8")
-            with mock.patch.object(release_assurance, "_load_runner", return_value=self.FakeRunner):
+            with mock.patch.object(release_assurance, "_load_runner", return_value=self.FakeRunner), \
+                 mock.patch.object(release_assurance.exact_target_evidence, "validate_binding", return_value={}):
                 with self.assertRaisesRegex(release_assurance.ReleaseError, "architecture release approval"):
                     release_assurance.validate_manifest(self.stable(), repo_root=root)
 
