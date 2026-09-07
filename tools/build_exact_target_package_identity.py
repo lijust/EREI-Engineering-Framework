@@ -9,8 +9,9 @@ import sys
 from pathlib import Path
 
 try:
-    from . import exact_target_package_identity
+    from . import exact_target_evidence, exact_target_package_identity
 except ImportError:
+    import exact_target_evidence
     import exact_target_package_identity
 
 
@@ -33,6 +34,35 @@ def _digest(path: Path) -> str:
         raise exact_target_package_identity.ExactTargetPackageIdentityError(
             f"unable to hash package file {path}: {exc}"
         ) from exc
+
+
+def _validate_manifest_identity_binding(manifest: dict, identity: dict) -> None:
+    if manifest["framework_revision"] != identity["framework_ref"]:
+        raise exact_target_package_identity.ExactTargetPackageIdentityError(
+            "run manifest framework_revision does not match package identity"
+        )
+    if manifest["adapter"]["id"] != identity["adapter_id"]:
+        raise exact_target_package_identity.ExactTargetPackageIdentityError(
+            "run manifest adapter id does not match package identity"
+        )
+    if manifest["adapter"]["revision"] != identity["adapter_revision"]:
+        raise exact_target_package_identity.ExactTargetPackageIdentityError(
+            "run manifest adapter revision does not match package identity"
+        )
+    if manifest["runtime"]["id"] != identity["runtime_id"]:
+        raise exact_target_package_identity.ExactTargetPackageIdentityError(
+            "run manifest runtime id does not match package identity"
+        )
+    if manifest["runtime"]["version"] != identity["runtime_version"]:
+        raise exact_target_package_identity.ExactTargetPackageIdentityError(
+            "run manifest runtime version does not match package identity"
+        )
+    expected = exact_target_package_identity.expected_runtime_evidence(identity)
+    observed = set(manifest["runtime"]["identity_evidence"])
+    if observed != expected:
+        raise exact_target_package_identity.ExactTargetPackageIdentityError(
+            "run manifest runtime identity evidence does not match package identity provenance"
+        )
 
 
 def build_identity(
@@ -59,7 +89,12 @@ def build_identity(
     package_dir = package_dir.resolve()
     manifest_file = package_dir / "exact-target-run.json"
     evidence_file = package_dir / "execution-evidence.json"
-    manifest = _load(manifest_file)
+    try:
+        manifest = exact_target_evidence.validate_run_manifest(_load(manifest_file))
+    except exact_target_evidence.ExactTargetEvidenceError as exc:
+        raise exact_target_package_identity.ExactTargetPackageIdentityError(
+            f"run manifest is invalid before package identity build: {exc}"
+        ) from exc
     payload = {
         "schema_version": 2,
         "repository": repository,
@@ -83,7 +118,9 @@ def build_identity(
         "run_manifest_sha256": _digest(manifest_file),
         "execution_evidence_sha256": _digest(evidence_file),
     }
-    return exact_target_package_identity.validate_runtime_identity(payload)
+    identity = exact_target_package_identity.validate_runtime_identity(payload)
+    _validate_manifest_identity_binding(manifest, identity)
+    return identity
 
 
 def main(argv=None) -> int:
