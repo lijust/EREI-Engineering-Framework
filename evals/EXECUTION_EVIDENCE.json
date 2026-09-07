@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "framework_revision": "066270a770adbe8bc2c73622fe7b1bce6f03af08",
+  "executions": [
+    {
+      "suite_id": "harness-smoke",
+      "case_id": "SMOKE-001",
+      "status": "pass",
+      "adapter_id": "framework-mock-adapter",
+      "evidence_ref": "github-actions:34071238956"
+    }
+  ]
+}
