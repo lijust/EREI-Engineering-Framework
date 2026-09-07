@@ -48,6 +48,8 @@ Dispatch `VNext Exact Target Copilot Evidence` with:
 - `copilot_cli_version =` one exact npm version;
 - `copilot_cli_integrity =` one full SHA-512 npm SRI for that same version.
 
+### 2.1 Verify package bytes before installation
+
 Before installation the workflow must:
 
 1. query `npm view @github/copilot@<version> dist.integrity` and require an exact match with the supplied SRI;
@@ -57,22 +59,59 @@ Before installation the workflow must:
 
 A mismatch at either metadata or downloaded-byte verification stops execution before any model call. Direct registry installation after metadata-only verification is not permitted for governed evidence production.
 
-The workflow must:
+### 2.2 Verify skill-event telemetry transport before behavioral execution
+
+After the exact CLI version is installed and verified, but **before** any of the 43 behavioral cases are executed, the workflow must run the adapter telemetry probe:
+
+```bash
+python evals/adapters/copilot_cli_exact_target.py \
+  --target-root . \
+  --model=gpt-5.4 \
+  --timeout=120 \
+  --probe-skill-event skills/impact-analysis
+```
+
+The probe:
+
+- runs against the exact frozen target and installed CLI/model path intended for the behavioral evidence run;
+- stages exactly one routing skill;
+- does not name `impact-analysis` in the probe prompt;
+- requires the available project skill to be invoked exactly once;
+- accepts only an authoritative observed `skill.invoked` name/path that resolves to the staged skill;
+- fails closed if generic `skill` tool activity is visible without an authoritative named skill event;
+- fails closed on an out-of-bound skill name/path, conflicting observed request/start correlation, explicitly failed correlated completion, duplicate invocation telemetry, or missing exact trace;
+- succeeds only when the normalized trace is exactly `[{"type":"tool","name":"impact-analysis"}]`.
+
+If this probe fails, **do not run the 43 behavioral cases and do not produce an exact-target evidence package**. Changing the CLI version, model, adapter, or telemetry path after the probe invalidates the probe; rerun it on the exact path that will produce evidence.
+
+A successful probe must be retained in the exact runtime provenance as:
+
+```text
+copilot-skill-event-transport:skill.invoked-v1
+```
+
+The package-identity builder, importer, and Stable/readiness binder require this marker. It is not an optional note.
+
+### 2.3 Execute the behavioral set
+
+Only after the package-byte checks and skill-event telemetry probe pass may the workflow:
 
 - validate the exact release carrier and `VNEXT_TARGET` closure;
 - use only exact-commit-pinned GitHub Actions;
 - check out the exact frozen target/tree separately;
-- verify the requested Copilot npm version/integrity pair and downloaded tarball bytes before installation;
 - execute only the 43 `behavioral_runtime` cases;
 - send no `harness_only` case to the model;
 - keep real suite ids, case ids, tags, and scorer expectations outside the model boundary;
 - use observed runtime routing events only; synthetic trace is forbidden;
-- record the Copilot package SRI in runtime identity evidence;
+- record the Copilot package SRI and `copilot-skill-event-transport:skill.invoked-v1` in runtime identity evidence;
 - produce a reconstructible V2 run manifest;
 - produce V2 execution evidence;
-- produce digest-bound V2 `runtime-identity.json` whose governed destination is derived from the run-manifest path;
+- build digest-bound V2 `runtime-identity.json` whose governed destination is derived from the run-manifest path;
+- validate Framework/adapter/runtime/provenance parity at package-identity build time;
 - upload the three-file evidence package only;
 - perform no repository write, commit, push, approval, or promotion.
+
+The package-identity builder must fail before upload if the run manifest omits the skill-event marker or its Framework/adapter/runtime provenance differs from the package identity.
 
 The workflow itself is not Stable evidence unless it completes successfully with an allocated runner and an uploaded artifact.
 
@@ -96,6 +135,7 @@ Validation must prove:
 - SHA-256 integrity of the run manifest and execution-evidence files against the retained identity;
 - exact repository/run/attempt/carrier/model provenance;
 - exact requested Copilot CLI version and full SHA-512 package-integrity provenance;
+- exact `copilot-skill-event-transport:skill.invoked-v1` runtime-provenance marker;
 - exact frozen target id/ref/tree;
 - vendored adapter revision equals the frozen target;
 - exact 43-case behavioral set with no extras;
@@ -155,7 +195,7 @@ Run:
 python tools/stable_readiness.py --repo-root .
 ```
 
-Stable/readiness validation must re-open the retained `.identity.json`, re-hash the run manifest and execution-evidence file, confirm the exact execution row comes from that digest-bound evidence file, verify runtime provenance and evidence-commit history, and then re-run the published scorers.
+Stable/readiness validation must re-open the retained `.identity.json`, re-hash the run manifest and execution-evidence file, confirm the exact execution row comes from that digest-bound evidence file, verify the full runtime provenance including the skill-event transport marker, verify evidence-commit history, and then re-run the published scorers.
 
 For a real Git checkout, the exact-target binder fails unless the three retained files were introduced by the one evidence-only first-parent commit directly above the recorded release carrier. Temporary non-Git staging used by the importer can validate content before commit, but it does not satisfy the later Stable history gate by itself.
 
