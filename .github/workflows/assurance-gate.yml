@@ -59,6 +59,9 @@ jobs:
       - name: Validate last Stable release manifest
         run: python tools/release_assurance.py releases/task-learning-review-v1.json --repo-root .
 
+      - name: Validate VNext Candidate manifest
+        run: python tools/release_assurance.py releases/vnext-assurance-candidate.json --repo-root .
+
       - name: Validate capability registry
         shell: bash
         run: |
