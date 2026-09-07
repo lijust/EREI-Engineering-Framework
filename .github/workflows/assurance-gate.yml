@@ -41,6 +41,9 @@ jobs:
       - name: Run all Framework tool tests
         run: python -m unittest discover -s tools/tests -p 'test_*.py' -v
 
+      - name: Validate repository-local assurance references
+        run: python tools/validate_project_assurance_refs.py --target .
+
       - name: Run eval harness tests
         run: python -m unittest discover -s evals/tests -p 'test_*.py' -v
 

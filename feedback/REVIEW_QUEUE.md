@@ -2,6 +2,28 @@
 
 `DECISIONS.jsonl` is the machine-readable source of truth for central review decisions. Raw project feedback remains authoritative in each source project's `.erei/feedback/` records.
 
+## FCL-ASSURANCE-REFERENCE-INTEGRITY-001
+
+### EFF-20260907T110336Z-C1F01A84
+
+- Source project: `lijust/EREI-App-Google`
+- Source project ref: `23a7522544c1a36a36f1b3b81f7eccf002cb49cb`
+- Decision revision: `07460985d9984dbcf3833e6142709c0965a05967`
+- Review state: `CANDIDATE`
+- Promotion state: `CANDIDATE`
+- Decision ID: `EFD-20260907T110819Z-C1F01A84`
+- Evidence:
+  - `github-pr:84`
+  - `github-pr:85`
+  - `github-actions:34107892973`
+  - `github-actions:34113250077`
+  - `app-review:ELR-20260907T110207Z-C1A57F01`
+  - `framework-candidate:07460985d9984dbcf3833e6142709c0965a05967`
+  - `github-actions:34116080178`
+  - `github-actions:34116080202`
+- Candidate ref: `07460985d9984dbcf3833e6142709c0965a05967`
+- Review note: Exact candidate 07460985d9984dbcf3833e6142709c0965a05967 passed Framework Assurance Gate run 34116080178 and Project Bootstrap Tests run 34116080202. The reference-integrity guard is accepted as a Framework Candidate; promotion remains closed pending source-project adoption and a measured post-adoption outcome.
+
 ## FCL-CONFORMANCE-LADDER-001
 
 ### EFF-20260907T010601Z-41B9942F
@@ -54,7 +76,7 @@
 ## Intake summary
 
 - Source projects represented: `1`
-- Feedback events ingested: `3`
-- Clusters created: `2`
+- Feedback events ingested: `4`
+- Clusters created: `3`
 - Promoted decisions: `0`
 - Source observations mutated by central intake: `0`

@@ -42,6 +42,12 @@
         "status": "candidate",
         "version": "v1-structured-decisions",
         "notes": "Central review decisions are machine-readable and separate from immutable source observations."
+      },
+      "project_assurance_reference_integrity": {
+        "status": "candidate",
+        "version": "v1-literal-local-reference-guard",
+        "stable_ref": "69079018606750312344cb3c648952b9ab72d35b",
+        "notes": "Prospective feedback-driven guard for missing literal repository-local workflow scripts and local actions; dynamic references remain outside static proof."
       }
     }
   }
