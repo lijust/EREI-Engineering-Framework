@@ -15,6 +15,7 @@ SHA40_RE = re.compile(r"^[a-f0-9]{40}$")
 SHA256_RE = re.compile(r"^[a-f0-9]{64}$")
 RUN_ID_RE = re.compile(r"^ETR-[0-9]{8}T[0-9]{6}Z-[A-F0-9]{8}$")
 REF_RE = re.compile(r"^exact-target-run:(?P<path>[^#]+)#(?P<suite>[^/]+)/(?P<case>[^/]+)$")
+RETAINED_RESPONSE_FIELDS = {"output", "metadata", "trace"}
 
 
 class ExactTargetEvidenceError(RuntimeError):
@@ -65,6 +66,30 @@ def _canonical_digest(value: Any) -> str:
 
 def _adapter_error_digest(suite_id: str, case_id: str) -> str:
     return _canonical_digest({"adapter_error": True, "suite_id": suite_id, "case_id": case_id})
+
+
+def _validate_retained_response(value: Any, label: str) -> dict[str, Any]:
+    if not isinstance(value, dict):
+        raise ExactTargetEvidenceError(f"{label} must be an object")
+    unknown = sorted(set(value) - RETAINED_RESPONSE_FIELDS)
+    if unknown:
+        raise ExactTargetEvidenceError(f"{label} contains unknown fields: {unknown}")
+    if "output" not in value:
+        raise ExactTargetEvidenceError(f"{label}.output is required")
+    if "metadata" in value and not isinstance(value["metadata"], dict):
+        raise ExactTargetEvidenceError(f"{label}.metadata must be an object")
+    if "trace" in value:
+        trace = value["trace"]
+        if not isinstance(trace, list):
+            raise ExactTargetEvidenceError(f"{label}.trace must be an array")
+        for index, step in enumerate(trace):
+            if not isinstance(step, dict):
+                raise ExactTargetEvidenceError(f"{label}.trace[{index}] must be an object")
+            if "type" in step and not isinstance(step["type"], str):
+                raise ExactTargetEvidenceError(f"{label}.trace[{index}].type must be a string")
+            if step.get("type") == "tool" and (not isinstance(step.get("name"), str) or not step["name"]):
+                raise ExactTargetEvidenceError(f"{label}.trace[{index}] tool step requires name")
+    return value
 
 
 def _load_runner(repo_root: Path):
@@ -142,9 +167,8 @@ def validate_run_manifest(data: Any) -> dict[str, Any]:
                 raise ExactTargetEvidenceError(f"executions[{index}] adapter_error cannot be recorded as pass")
             expected_digest = _adapter_error_digest(suite, case)
         else:
-            if not isinstance(item["response"], dict):
-                raise ExactTargetEvidenceError(f"executions[{index}].response must be an object when adapter_error=false")
-            expected_digest = _canonical_digest(item["response"])
+            response = _validate_retained_response(item["response"], f"executions[{index}].response")
+            expected_digest = _canonical_digest(response)
         if digest != expected_digest:
             raise ExactTargetEvidenceError(f"executions[{index}] response_digest does not match retained response")
     return data
