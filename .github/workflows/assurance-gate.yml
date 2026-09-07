@@ -59,6 +59,9 @@ jobs:
       - name: Validate structured central feedback decisions
         run: python tools/feedback_decisions.py validate feedback/DECISIONS.jsonl
 
+      - name: Validate current prospective learning-cycle progress
+        run: python tools/prospective_cycle_status.py learning/PROSPECTIVE_CYCLE_STATUS.json
+
       - name: Validate truthful assurance enforcement state
         run: python tools/assurance_enforcement.py security/ASSURANCE_ENFORCEMENT.json
 
