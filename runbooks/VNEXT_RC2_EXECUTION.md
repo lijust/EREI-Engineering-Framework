@@ -63,7 +63,7 @@ The workflow must:
 - record the Copilot package SRI in runtime identity evidence;
 - produce a reconstructible V2 run manifest;
 - produce V2 execution evidence;
-- produce digest-bound V2 `runtime-identity.json`;
+- produce digest-bound V2 `runtime-identity.json` whose governed destination is derived from the run-manifest path;
 - upload the three-file evidence package only;
 - perform no repository write, commit, push, approval, or promotion.
 
@@ -86,17 +86,18 @@ python tools/import_exact_target_evidence.py \
 
 Validation must prove:
 
-- package SHA-256 integrity;
+- SHA-256 integrity of the run manifest and execution-evidence files against the retained identity;
 - exact repository/run/attempt/carrier/model provenance;
-- exact requested Copilot CLI version and sha512 package integrity provenance;
+- exact requested Copilot CLI version and sha512 package-integrity provenance;
 - exact frozen target id/ref/tree;
 - vendored adapter revision equals the frozen target;
 - exact 43-case behavioral set with no extras;
 - every case is `exact_target_runtime`, independent, and PASS;
-- every evidence ref points to the package run manifest destination;
+- every evidence ref points to the package run-manifest destination;
+- the runtime-identity destination is exactly `<run-manifest stem>.identity.json`;
 - every retained response digest is valid;
 - every PASS can be deterministically reproduced from the published case and authoritative scorer;
-- both destination files are new and closure-allowed.
+- all three destination files are new and closure-allowed.
 
 Only then import:
 
@@ -106,11 +107,17 @@ python tools/import_exact_target_evidence.py \
   --package-dir <downloaded-package>
 ```
 
-The importer reserves both evidence destinations exclusively, writes/fsyncs the validated bytes, and rolls back both new files on handled partial-write failure. It never commits or pushes. If the import process is interrupted externally, do not commit partial local state; rerun validation from the unchanged release carrier and package.
+The importer reserves all three destinations exclusively, writes/fsyncs the validated bytes, and rolls back the whole three-file set on handled partial-write failure. It never commits or pushes. If the import process is interrupted externally, do not commit partial local state; remove the partial uncommitted files, return to the unchanged release carrier, and rerun validation from the original package.
+
+The retained files are:
+
+1. `evals/exact-target-runs/<run>.json` — reconstructible normalized runtime responses;
+2. `evals/EXECUTION_EVIDENCE.<run>.json` — case-level assurance rows;
+3. `evals/exact-target-runs/<run>.identity.json` — durable repository/run/carrier/model/CLI/SRI provenance plus hashes of the first two files.
 
 ## 4. Commit evidence without changing the target
 
-Commit only the two imported evidence paths. Do not modify:
+Commit only the three imported evidence paths as one evidence-only closure commit. Do not modify:
 
 - `VNEXT_TARGET.json`;
 - Framework behavior/tooling/schema/eval cases;
@@ -118,7 +125,7 @@ Commit only the two imported evidence paths. Do not modify:
 - enforcement state;
 - Stable identity.
 
-The release branch must pass the frozen release-closure gate. Any later rewrite of an imported evidence file invalidates the RC and requires a new RC rather than an overwrite.
+The release branch must pass the frozen release-closure gate. Any later rewrite of any imported evidence file invalidates the RC and requires a new RC rather than an overwrite.
 
 ## 5. Recompute Stable readiness
 
@@ -127,6 +134,8 @@ Run:
 ```bash
 python tools/stable_readiness.py --repo-root .
 ```
+
+Stable/readiness validation must re-open the retained `.identity.json`, re-hash the run manifest and execution-evidence file, confirm the exact execution row comes from that digest-bound evidence file, verify runtime provenance, and then re-run the published scorers.
 
 Expected after valid 43/43 imported evidence:
 
