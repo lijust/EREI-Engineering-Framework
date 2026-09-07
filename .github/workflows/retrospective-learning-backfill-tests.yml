@@ -1,0 +1,38 @@
+name: Retrospective Learning Backfill Tests
+
+on:
+  pull_request:
+    paths:
+      - "schemas/retrospective-task-learning-event.schema.json"
+      - "tools/backfill_task_learning.py"
+      - "tools/tests/test_backfill_task_learning.py"
+      - "workflows/retrospective-learning-backfill/**"
+      - ".github/workflows/retrospective-learning-backfill-tests.yml"
+  push:
+    branches: [main]
+    paths:
+      - "schemas/retrospective-task-learning-event.schema.json"
+      - "tools/backfill_task_learning.py"
+      - "tools/tests/test_backfill_task_learning.py"
+      - "workflows/retrospective-learning-backfill/**"
+      - ".github/workflows/retrospective-learning-backfill-tests.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  retrospective-learning:
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Compile tooling
+        run: python -m py_compile tools/backfill_task_learning.py tools/tests/test_backfill_task_learning.py
+      - name: Run unit tests
+        run: python -m unittest tools.tests.test_backfill_task_learning -v
