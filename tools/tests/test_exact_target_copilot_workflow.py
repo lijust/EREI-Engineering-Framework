@@ -22,6 +22,17 @@ class ExactTargetCopilotWorkflowTests(unittest.TestCase):
         self.assertIn("--minimum-level exact_target_runtime", text)
         self.assertIn("actions/upload-artifact@v4", text)
 
+    def test_workflow_requires_personal_repo_pat_and_pinned_cli_version(self):
+        text = WORKFLOW.read_text(encoding="utf-8")
+        self.assertIn("EREI_COPILOT_EXACT_TARGET_TOKEN", text)
+        self.assertIn("copilot_cli_version", text)
+        self.assertIn('npm install -g "@github/copilot@${COPILOT_CLI_VERSION}"', text)
+        self.assertNotIn("npm install -g @github/copilot\n", text)
+        execute = text.split("- name: Execute 43 behavioral cases against frozen target", 1)[1]
+        execute = execute.split("- name: Write evidence package identity", 1)[0]
+        self.assertIn("COPILOT_GITHUB_TOKEN", execute)
+        self.assertNotIn("GITHUB_TOKEN:", execute)
+
     def test_workflow_contains_no_automatic_repository_mutation_or_broad_copilot_permissions(self):
         text = WORKFLOW.read_text(encoding="utf-8").lower()
         forbidden = (
@@ -37,14 +48,15 @@ class ExactTargetCopilotWorkflowTests(unittest.TestCase):
         for marker in forbidden:
             self.assertNotIn(marker, text, marker)
 
-    def test_adapter_exposes_no_effective_model_tools(self):
+    def test_adapter_has_separate_direct_and_observed_routing_modes(self):
         text = ADAPTER.read_text(encoding="utf-8")
-        self.assertIn('"--available-tools=ask_user"', text)
+        self.assertIn('available_tools = "skill" if routing_mode else "ask_user"', text)
         self.assertIn('"--no-ask-user"', text)
         self.assertIn('"--no-custom-instructions"', text)
         self.assertIn('"--disable-builtin-mcps"', text)
         self.assertIn('"--no-remote"', text)
         self.assertIn('"--no-remote-export"', text)
+        self.assertIn('event_type == "skill.invoked"', text)
         self.assertNotIn('"--allow-all"', text)
         self.assertNotIn('"--yolo"', text)
 
