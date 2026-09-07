@@ -8,6 +8,7 @@ import re
 import shlex
 import subprocess
 import sys
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -22,10 +23,26 @@ SUPPORTED_SCORERS = {
     "max_trace_steps",
 }
 TRACE_SCORERS = {"trace_tool_called", "trace_tool_not_called", "max_trace_steps"}
+ASSURANCE_LEVELS = {
+    "harness_smoke": 0,
+    "reference_contract": 1,
+    "managed_runtime": 2,
+    "exact_target_runtime": 3,
+}
 
 
 def load_json(path: Path) -> Any:
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _valid_datetime(value: Any) -> bool:
+    if not isinstance(value, str) or not value:
+        return False
+    try:
+        datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return False
+    return True
 
 
 def validate_suite(data: Any, source: str = "<memory>") -> list[str]:
@@ -298,18 +315,28 @@ def _expected_cases(paths: list[str]) -> set[tuple[str, str]]:
     return expected
 
 
+def execution_assurance_level(execution: dict[str, Any], schema_version: int) -> str:
+    return "harness_smoke" if schema_version == 1 else execution["assurance_level"]
+
+
 def validate_execution_evidence(data: Any) -> dict[str, Any]:
     if not isinstance(data, dict):
         raise RuntimeError("execution evidence root must be an object")
-    required = {"schema_version", "framework_revision", "executions"}
-    unknown = sorted(set(data) - required)
-    if unknown or not required.issubset(data):
-        raise RuntimeError("execution evidence must contain only schema_version/framework_revision/executions")
-    if data["schema_version"] != 1:
+    version = data.get("schema_version")
+    if version == 1:
+        required = {"schema_version", "framework_revision", "executions"}
+    elif version == 2:
+        required = {"schema_version", "framework_revision", "produced_at", "executions"}
+    else:
         raise RuntimeError("unsupported execution evidence schema_version")
+    unknown = sorted(set(data) - required)
+    if unknown or set(data) != required:
+        raise RuntimeError(f"execution evidence V{version} has unexpected/missing fields")
     revision = data["framework_revision"]
     if not isinstance(revision, str) or not re.fullmatch(r"[a-f0-9]{40}", revision):
         raise RuntimeError("framework_revision must be an exact commit")
+    if version == 2 and not _valid_datetime(data["produced_at"]):
+        raise RuntimeError("produced_at must be a valid date-time")
     executions = data["executions"]
     if not isinstance(executions, list):
         raise RuntimeError("executions must be an array")
@@ -317,7 +344,13 @@ def validate_execution_evidence(data: Any) -> dict[str, Any]:
     for index, execution in enumerate(executions):
         if not isinstance(execution, dict):
             raise RuntimeError(f"executions[{index}] must be an object")
-        required_execution = {"suite_id", "case_id", "status", "adapter_id", "evidence_ref"}
+        if version == 1:
+            required_execution = {"suite_id", "case_id", "status", "adapter_id", "evidence_ref"}
+        else:
+            required_execution = {
+                "suite_id", "case_id", "status", "adapter_id", "adapter_revision",
+                "assurance_level", "independent_runtime", "evidence_ref",
+            }
         if set(execution) != required_execution:
             raise RuntimeError(f"executions[{index}] has unexpected/missing fields")
         key = (execution["suite_id"], execution["case_id"])
@@ -332,6 +365,19 @@ def validate_execution_evidence(data: Any) -> dict[str, Any]:
             raise RuntimeError(f"executions[{index}] adapter_id required")
         if not isinstance(execution["evidence_ref"], str) or not execution["evidence_ref"]:
             raise RuntimeError(f"executions[{index}] evidence_ref required")
+        if version == 2:
+            adapter_revision = execution["adapter_revision"]
+            if not isinstance(adapter_revision, str) or not re.fullmatch(r"[a-f0-9]{40}", adapter_revision):
+                raise RuntimeError(f"executions[{index}] adapter_revision must be an exact commit")
+            level = execution["assurance_level"]
+            if level not in ASSURANCE_LEVELS:
+                raise RuntimeError(f"executions[{index}] invalid assurance_level")
+            if type(execution["independent_runtime"]) is not bool:
+                raise RuntimeError(f"executions[{index}] independent_runtime must be boolean")
+            if level == "reference_contract" and execution["independent_runtime"]:
+                raise RuntimeError(f"executions[{index}] reference_contract cannot claim independent runtime")
+            if level in {"managed_runtime", "exact_target_runtime"} and not execution["independent_runtime"]:
+                raise RuntimeError(f"executions[{index}] {level} requires independent_runtime=true")
     return data
 
 
@@ -342,22 +388,31 @@ def command_coverage(args: argparse.Namespace) -> int:
     except Exception as exc:
         print(f"FAIL coverage evidence: {exc}", file=sys.stderr)
         return 2
+    minimum_level = args.minimum_level
+    schema_version = evidence["schema_version"]
     observed = {(item["suite_id"], item["case_id"]): item for item in evidence["executions"]}
-    passed = {key for key, item in observed.items() if item["status"] == "pass"}
+    eligible = {
+        key: item for key, item in observed.items()
+        if ASSURANCE_LEVELS[execution_assurance_level(item, schema_version)] >= ASSURANCE_LEVELS[minimum_level]
+    }
+    passed = {key for key, item in eligible.items() if item["status"] == "pass"}
     missing = sorted(expected - set(observed))
-    nonpass = sorted(key for key in expected & set(observed) if observed[key]["status"] != "pass")
+    lower_assurance = sorted((expected & set(observed)) - set(eligible))
+    nonpass = sorted(key for key in expected & set(eligible) if eligible[key]["status"] != "pass")
     extras = sorted(set(observed) - expected)
     coverage = 0.0 if not expected else round(len(passed & expected) / len(expected), 4)
     payload = {
         "framework_revision": evidence["framework_revision"],
+        "minimum_assurance_level": minimum_level,
         "expected_cases": len(expected),
         "evidence_records": len(observed),
-        "passing_cases": len(passed & expected),
+        "passing_cases_at_level": len(passed & expected),
         "coverage": coverage,
         "missing": [f"{suite}/{case}" for suite, case in missing],
+        "lower_assurance": [f"{suite}/{case}" for suite, case in lower_assurance],
         "nonpassing": [f"{suite}/{case}" for suite, case in nonpass],
         "unexpected": [f"{suite}/{case}" for suite, case in extras],
-        "complete": not missing and not nonpass and not extras,
+        "complete": not missing and not lower_assurance and not nonpass and not extras,
     }
     print(json.dumps(payload, sort_keys=True))
     if args.require_complete and not payload["complete"]:
@@ -376,9 +431,10 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--adapter", required=True)
     run.add_argument("--timeout", type=float, default=120.0)
     run.set_defaults(func=command_run)
-    coverage = subparsers.add_parser("coverage", help="measure behavioral execution evidence coverage")
+    coverage = subparsers.add_parser("coverage", help="measure retained execution evidence coverage at a stated assurance level")
     coverage.add_argument("paths", nargs="+")
     coverage.add_argument("--evidence", required=True)
+    coverage.add_argument("--minimum-level", choices=tuple(ASSURANCE_LEVELS), default="harness_smoke")
     coverage.add_argument("--require-complete", action="store_true")
     coverage.set_defaults(func=command_coverage)
     return parser
