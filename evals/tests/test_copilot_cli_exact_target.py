@@ -42,6 +42,30 @@ class CopilotCliExactTargetTests(unittest.TestCase):
         schemas.mkdir()
         (schemas / "CONTRACT.md").write_text("SCHEMA CONTRACT\n", encoding="utf-8")
 
+    def final_event(self, output="Framework answer", risk="L3"):
+        payload = json.dumps({"output": output, "metadata": {"risk": risk}})
+        return {"type": "assistant.message", "data": {"content": payload, "toolRequests": []}}
+
+    def skill_events(self, *, name="impact-analysis", path=".github/skills/impact-analysis/SKILL.md", success=True):
+        return [
+            {
+                "type": "assistant.message",
+                "data": {
+                    "content": "",
+                    "toolRequests": [{"toolCallId": "skill-1", "name": "skill", "arguments": {}}],
+                },
+            },
+            {
+                "type": "tool.execution_start",
+                "data": {"toolCallId": "skill-1", "toolName": "skill", "arguments": {}},
+            },
+            {"type": "skill.invoked", "data": {"name": name, "path": path, "content": "POLICY"}},
+            {
+                "type": "tool.execution_complete",
+                "data": {"toolCallId": "skill-1", "success": success},
+            },
+        ]
+
     def test_request_requires_blinded_ids_and_no_extra_fields(self):
         valid = self.request()
         self.assertEqual(adapter.validate_request(valid), valid)
@@ -118,28 +142,71 @@ class CopilotCliExactTargetTests(unittest.TestCase):
             with self.assertRaisesRegex(adapter.CopilotExactTargetError, "routing-sensitive"):
                 adapter.stage_routing_skill(root, workspace, "skills/impact-analysis + workflows/review")
 
-    def test_jsonl_parser_uses_observed_skill_invocation_as_trace(self):
-        payload = json.dumps({"output": "Framework answer", "metadata": {"risk": "L3"}})
-        stdout = "\n".join([
-            json.dumps({"type": "session.start", "data": {"id": "x"}}),
-            json.dumps({
-                "type": "assistant.message",
-                "data": {"content": "", "toolRequests": [{"toolCallId": "1", "name": "skill", "arguments": {}}]},
-            }),
-            json.dumps({
-                "type": "skill.invoked",
-                "data": {"name": "impact-analysis", "path": ".github/skills/impact-analysis/SKILL.md"},
-            }),
-            json.dumps({
-                "type": "assistant.message",
-                "data": {"content": f"```json\n{payload}\n```", "toolRequests": []},
-            }),
-            json.dumps({"type": "result", "data": {"ok": True}}),
+    def test_jsonl_parser_uses_authoritative_skill_invocation_as_trace(self):
+        stdout = "\n".join(json.dumps(event) for event in [
+            {"type": "session.start", "data": {"id": "x"}},
+            *self.skill_events(),
+            self.final_event(),
         ])
         self.assertEqual(
-            adapter.parse_copilot_jsonl(stdout),
-            {"output": "Framework answer", "metadata": {"risk": "L3"}, "trace": [{"type": "tool", "name": "impact-analysis"}]},
+            adapter.parse_copilot_jsonl(stdout, allowed_skill_names={"impact-analysis"}),
+            {
+                "output": "Framework answer",
+                "metadata": {"risk": "L3"},
+                "trace": [{"type": "tool", "name": "impact-analysis"}],
+            },
         )
+
+    def test_jsonl_parser_rejects_skill_activity_without_named_invocation_event(self):
+        events = self.skill_events()
+        events = [event for event in events if event["type"] != "skill.invoked"]
+        stdout = "\n".join(json.dumps(event) for event in [*events, self.final_event()])
+        with self.assertRaisesRegex(adapter.CopilotExactTargetError, "authoritative skill.invoked"):
+            adapter.parse_copilot_jsonl(stdout, allowed_skill_names={"impact-analysis"})
+
+    def test_jsonl_parser_rejects_wrong_skill_name_or_path(self):
+        wrong_name = "\n".join(json.dumps(event) for event in [
+            *self.skill_events(name="other-skill", path=".github/skills/other-skill/SKILL.md"),
+            self.final_event(),
+        ])
+        with self.assertRaisesRegex(adapter.CopilotExactTargetError, "outside staged routing boundary"):
+            adapter.parse_copilot_jsonl(wrong_name, allowed_skill_names={"impact-analysis"})
+
+        wrong_path = "\n".join(json.dumps(event) for event in [
+            *self.skill_events(path="/tmp/other/impact-analysis/SKILL.md"),
+            self.final_event(),
+        ])
+        with self.assertRaisesRegex(adapter.CopilotExactTargetError, "does not resolve to the staged"):
+            adapter.parse_copilot_jsonl(wrong_path, allowed_skill_names={"impact-analysis"})
+
+    def test_jsonl_parser_rejects_failed_skill_completion_after_invocation(self):
+        stdout = "\n".join(json.dumps(event) for event in [
+            *self.skill_events(success=False),
+            self.final_event(),
+        ])
+        with self.assertRaisesRegex(adapter.CopilotExactTargetError, "execution failed"):
+            adapter.parse_copilot_jsonl(stdout, allowed_skill_names={"impact-analysis"})
+
+    def test_jsonl_parser_rejects_skill_invocation_outside_routing_mode(self):
+        stdout = "\n".join(json.dumps(event) for event in [
+            {"type": "skill.invoked", "data": {
+                "name": "impact-analysis",
+                "path": ".github/skills/impact-analysis/SKILL.md",
+                "content": "POLICY",
+            }},
+            self.final_event(output="answer", risk="L1"),
+        ])
+        with self.assertRaisesRegex(adapter.CopilotExactTargetError, "outside staged routing boundary"):
+            adapter.parse_copilot_jsonl(stdout, allowed_skill_names=set())
+
+    def test_jsonl_parser_rejects_request_start_correlation_mismatch(self):
+        events = self.skill_events()
+        for event in events:
+            if event["type"] == "tool.execution_start":
+                event["data"]["toolCallId"] = "other-id"
+        stdout = "\n".join(json.dumps(event) for event in [*events, self.final_event()])
+        with self.assertRaisesRegex(adapter.CopilotExactTargetError, "request/start correlation"):
+            adapter.parse_copilot_jsonl(stdout, allowed_skill_names={"impact-analysis"})
 
     def test_jsonl_parser_rejects_ambiguous_final_answer_and_invalid_jsonl(self):
         payload = json.dumps({"output": "answer", "metadata": {"risk": "L1"}})
@@ -148,9 +215,9 @@ class CopilotCliExactTargetTests(unittest.TestCase):
             json.dumps({"type": "assistant.message", "data": {"content": payload, "toolRequests": []}}),
         ])
         with self.assertRaisesRegex(adapter.CopilotExactTargetError, "exactly one"):
-            adapter.parse_copilot_jsonl(duplicated)
+            adapter.parse_copilot_jsonl(duplicated, allowed_skill_names=set())
         with self.assertRaisesRegex(adapter.CopilotExactTargetError, "invalid JSON"):
-            adapter.parse_copilot_jsonl("not-json")
+            adapter.parse_copilot_jsonl("not-json", allowed_skill_names=set())
 
     def test_child_environment_requires_dedicated_pat_and_drops_unrelated_secrets(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -186,12 +253,20 @@ class CopilotCliExactTargetTests(unittest.TestCase):
 
     def test_invoke_copilot_direct_mode_has_no_effective_model_tools(self):
         payload = json.dumps({"output": "answer", "metadata": {"risk": "L1"}})
-        completed = subprocess.CompletedProcess(args=[], returncode=0, stdout=json.dumps({"type": "assistant.message", "data": {"content": payload, "toolRequests": []}}) + "\n", stderr="")
+        completed = subprocess.CompletedProcess(
+            args=[],
+            returncode=0,
+            stdout=json.dumps({"type": "assistant.message", "data": {"content": payload, "toolRequests": []}}) + "\n",
+            stderr="",
+        )
         with tempfile.TemporaryDirectory() as tmp:
             workspace = Path(tmp)
             with mock.patch.dict(os.environ, {"PATH": "/safe/bin", "COPILOT_GITHUB_TOKEN": "token"}, clear=True):
                 with mock.patch.object(adapter.subprocess, "run", return_value=completed) as run:
-                    result = adapter.invoke_copilot("PROMPT", model="gpt-5.4", copilot_bin="copilot", timeout=30, workspace=workspace, routing_mode=False)
+                    result = adapter.invoke_copilot(
+                        "PROMPT", model="gpt-5.4", copilot_bin="copilot", timeout=30,
+                        workspace=workspace, expected_skill=None,
+                    )
         self.assertEqual(result, {"output": "answer", "metadata": {"risk": "L1"}, "trace": []})
         args = run.call_args.args[0]
         self.assertIn("--available-tools=ask_user", args)
@@ -206,10 +281,11 @@ class CopilotCliExactTargetTests(unittest.TestCase):
     def test_invoke_copilot_routing_mode_exposes_only_skill_tool(self):
         payload = json.dumps({"output": "analysis", "metadata": {"risk": "L3"}})
         completed = subprocess.CompletedProcess(
-            args=[], returncode=0,
-            stdout="\n".join([
-                json.dumps({"type": "skill.invoked", "data": {"name": "impact-analysis", "path": ".github/skills/impact-analysis/SKILL.md"}}),
-                json.dumps({"type": "assistant.message", "data": {"content": payload, "toolRequests": []}}),
+            args=[],
+            returncode=0,
+            stdout="\n".join(json.dumps(event) for event in [
+                *self.skill_events(),
+                {"type": "assistant.message", "data": {"content": payload, "toolRequests": []}},
             ]) + "\n",
             stderr="",
         )
@@ -217,7 +293,10 @@ class CopilotCliExactTargetTests(unittest.TestCase):
             workspace = Path(tmp)
             with mock.patch.dict(os.environ, {"PATH": "/safe/bin", "COPILOT_GITHUB_TOKEN": "token"}, clear=True):
                 with mock.patch.object(adapter.subprocess, "run", return_value=completed) as run:
-                    result = adapter.invoke_copilot("PROMPT", model="gpt-5.4", copilot_bin="copilot", timeout=30, workspace=workspace, routing_mode=True)
+                    result = adapter.invoke_copilot(
+                        "PROMPT", model="gpt-5.4", copilot_bin="copilot", timeout=30,
+                        workspace=workspace, expected_skill="impact-analysis",
+                    )
         self.assertEqual(result["trace"], [{"type": "tool", "name": "impact-analysis"}])
         args = run.call_args.args[0]
         self.assertIn("--available-tools=skill", args)
@@ -228,15 +307,23 @@ class CopilotCliExactTargetTests(unittest.TestCase):
             root = Path(tmp)
             self.make_root(root)
             request = self.request("skills/impact-analysis")
-            def fake_invoke(prompt, *, model, copilot_bin, timeout, workspace, routing_mode):
-                self.assertTrue(routing_mode)
+
+            def fake_invoke(prompt, *, model, copilot_bin, timeout, workspace, expected_skill):
+                self.assertEqual(expected_skill, "impact-analysis")
                 self.assertTrue((workspace / ".github" / "skills" / "impact-analysis" / "SKILL.md").is_file())
                 self.assertNotIn("IMPACT POLICY", prompt)
                 self.assertNotIn(request["suite_id"], prompt)
                 self.assertNotIn(request["case_id"], prompt)
-                return {"output": "analysis", "metadata": {"risk": "L3"}, "trace": [{"type": "tool", "name": "impact-analysis"}]}
+                return {
+                    "output": "analysis",
+                    "metadata": {"risk": "L3"},
+                    "trace": [{"type": "tool", "name": "impact-analysis"}],
+                }
+
             with mock.patch.object(adapter, "invoke_copilot", side_effect=fake_invoke):
-                result = adapter.run_adapter(request, target_root=root, model="gpt-5.4", copilot_bin="copilot", timeout=30)
+                result = adapter.run_adapter(
+                    request, target_root=root, model="gpt-5.4", copilot_bin="copilot", timeout=30
+                )
             self.assertEqual(result["trace"], [{"type": "tool", "name": "impact-analysis"}])
 
     def test_run_adapter_direct_mode_injects_only_canonical_artifact(self):
@@ -244,17 +331,64 @@ class CopilotCliExactTargetTests(unittest.TestCase):
             root = Path(tmp)
             self.make_root(root)
             request = self.request("skills/example")
-            def fake_invoke(prompt, *, model, copilot_bin, timeout, workspace, routing_mode):
-                self.assertFalse(routing_mode)
+
+            def fake_invoke(prompt, *, model, copilot_bin, timeout, workspace, expected_skill):
+                self.assertIsNone(expected_skill)
                 self.assertIn("SKILL POLICY", prompt)
                 self.assertIn("SPEC CONTRACT", prompt)
                 self.assertNotIn("FORBIDDEN CASE HINT", prompt)
                 self.assertNotIn(request["suite_id"], prompt)
                 self.assertNotIn(request["case_id"], prompt)
                 return {"output": "answer", "metadata": {"risk": "L1"}, "trace": []}
+
             with mock.patch.object(adapter, "invoke_copilot", side_effect=fake_invoke):
-                result = adapter.run_adapter(request, target_root=root, model="gpt-5.4", copilot_bin="copilot", timeout=30)
+                result = adapter.run_adapter(
+                    request, target_root=root, model="gpt-5.4", copilot_bin="copilot", timeout=30
+                )
             self.assertEqual(result["trace"], [])
+
+    def test_skill_event_transport_probe_requires_exact_authoritative_trace(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.make_root(root)
+
+            def fake_invoke(prompt, *, model, copilot_bin, timeout, workspace, expected_skill):
+                self.assertEqual(expected_skill, "impact-analysis")
+                self.assertNotIn("impact-analysis", prompt.lower())
+                self.assertTrue((workspace / ".github" / "skills" / "impact-analysis" / "SKILL.md").is_file())
+                return {
+                    "output": "skill telemetry probe complete",
+                    "metadata": {"risk": "L0"},
+                    "trace": [{"type": "tool", "name": "impact-analysis"}],
+                }
+
+            with mock.patch.object(adapter, "invoke_copilot", side_effect=fake_invoke):
+                name = adapter.probe_skill_event_transport(
+                    target_root=root,
+                    artifact_declaration="skills/impact-analysis",
+                    model="gpt-5.4",
+                    copilot_bin="copilot",
+                    timeout=30,
+                )
+            self.assertEqual(name, "impact-analysis")
+
+    def test_skill_event_transport_probe_fails_without_named_trace(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.make_root(root)
+            with mock.patch.object(
+                adapter,
+                "invoke_copilot",
+                return_value={"output": "probe", "metadata": {"risk": "L0"}, "trace": []},
+            ):
+                with self.assertRaisesRegex(adapter.CopilotExactTargetError, "did not observe exactly one"):
+                    adapter.probe_skill_event_transport(
+                        target_root=root,
+                        artifact_declaration="skills/impact-analysis",
+                        model="gpt-5.4",
+                        copilot_bin="copilot",
+                        timeout=30,
+                    )
 
 
 if __name__ == "__main__":
