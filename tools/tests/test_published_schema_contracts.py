@@ -49,7 +49,8 @@ class PublishedSchemaContractTests(unittest.TestCase):
             "release_carrier_ref", "adapter_id", "adapter_revision", "runtime_id",
             "runtime_version", "requested_cli_version", "requested_cli_integrity", "model",
             "github_run_id", "github_run_attempt", "run_id", "run_manifest_path",
-            "execution_evidence_path", "run_manifest_sha256", "execution_evidence_sha256",
+            "execution_evidence_path", "runtime_identity_path", "run_manifest_sha256",
+            "execution_evidence_sha256",
         }
         self.assertEqual(set(schema["required"]), required)
         self.assertEqual(set(schema["properties"]), required)
@@ -58,6 +59,8 @@ class PublishedSchemaContractTests(unittest.TestCase):
             schema["properties"]["requested_cli_integrity"]["pattern"],
             "^sha512-[A-Za-z0-9+/]+={0,2}$",
         )
+        self.assertIn("identity", schema["properties"]["runtime_identity_path"]["pattern"])
+        self.assertIn("identity", schema["properties"]["run_manifest_path"]["pattern"])
         self.assertEqual(schema["properties"]["github_run_id"]["minimum"], 1)
         self.assertEqual(schema["properties"]["github_run_attempt"]["minimum"], 1)
         self.assertEqual(schema["properties"]["run_manifest_sha256"]["pattern"], "^[a-f0-9]{64}$")
