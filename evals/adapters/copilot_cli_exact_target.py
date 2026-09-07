@@ -149,15 +149,14 @@ def build_direct_prompt(artifacts: list[tuple[str, str]], case_input: dict[str, 
         f"CONTEXT:\n{json.dumps(context, sort_keys=True, ensure_ascii=False)}\n"
     )
 
-def build_routing_prompt(skill_name: str, case_input: dict[str, Any], context: dict[str, Any]) -> str:
+def build_routing_prompt(case_input: dict[str, Any], context: dict[str, Any]) -> str:
     return (
         "Evaluate the engineering request under the EREI Engineering Framework.\n"
-        "A project skill is available to you. Decide from the request itself whether that skill is relevant; do not invoke it merely because it exists. Use no outside knowledge, web access, hidden assumptions, or unstated scorer criteria.\n"
-        "If the skill is relevant, invoke it through the skill tool before answering. If it is not relevant, answer proportionally without inventing a skill invocation.\n"
+        "A project skill may be available in the current workspace. Decide from the request itself whether any available skill is relevant; do not invoke a skill merely because it exists. Use no outside knowledge, web access, hidden assumptions, or unstated scorer criteria.\n"
+        "If a skill is relevant, invoke it through the skill tool before answering. If no skill is relevant, answer proportionally without inventing a skill invocation.\n"
         "Return exactly one JSON object and no markdown or commentary, with this shape:\n"
         '{"output":"concise Framework-grounded answer","metadata":{"risk":"L0|L1|L2|L3"}}\n'
         "Do not expose private chain-of-thought.\n\n"
-        f"AVAILABLE FRAMEWORK SKILL NAME: {skill_name}\n"
         f"INPUT:\n{json.dumps(case_input, sort_keys=True, ensure_ascii=False)}\n\n"
         f"CONTEXT:\n{json.dumps(context, sort_keys=True, ensure_ascii=False)}\n"
     )
@@ -262,8 +261,8 @@ def run_adapter(request: dict[str, Any], *, target_root: Path, model: str, copil
         (workspace / "copilot-home").mkdir()
         (workspace / "copilot-cache").mkdir()
         if routing_skill is not None:
-            staged_name = stage_routing_skill(target_root, workspace, request["artifact"])
-            prompt = build_routing_prompt(staged_name, request["input"], request["context"])
+            stage_routing_skill(target_root, workspace, request["artifact"])
+            prompt = build_routing_prompt(request["input"], request["context"])
             return invoke_copilot(prompt, model=model, copilot_bin=copilot_bin, timeout=timeout, workspace=workspace, routing_mode=True)
         artifacts = resolve_artifact(target_root, request["artifact"])
         prompt = build_direct_prompt(artifacts, request["input"], request["context"])
