@@ -15,7 +15,7 @@ The current published suite contains **44 total reference-contract cases**: **43
 
 ## Reconstructible run evidence
 
-Each exact-target run writes two target artifacts:
+Each exact-target execution initially produces two target-checkout outputs:
 
 1. a **V2 run manifest** under `evals/exact-target-runs/` containing the exact Framework revision, adapter identity/revision, runtime identity evidence, a digest of the adapter command, and for every behavioral-runtime case:
    - retained normalized adapter response;
@@ -24,30 +24,39 @@ Each exact-target run writes two target artifacts:
    - explicit `adapter_error` state;
 2. V2 execution evidence whose `evidence_ref` points back to the exact run manifest and case.
 
-The controlled Copilot workflow packages those two files with a third **V2 runtime-identity record**. The package identity binds:
+The controlled Copilot workflow then packages those two files with a third **V2 runtime-identity record**. The identity binds:
 
 - source repository;
 - frozen target id/ref/tree;
 - exact release-carrier ref used to run the evidence;
 - adapter/runtime/model identities;
 - exact GitHub Actions run id and attempt;
-- requested exact CLI version;
-- requested npm `dist.integrity` sha512 SRI for that CLI package;
-- original governed destination paths;
+- exact requested Copilot CLI version;
+- exact npm `sha512` SRI for that CLI package;
+- original governed destination paths for all three retained files;
 - run id;
-- SHA-256 digests of both evidence files.
+- SHA-256 digests of the run manifest and execution-evidence files.
 
-Before installation, the controlled workflow compares `npm view @github/copilot@<version> dist.integrity` with the supplied exact SRI. A mismatch stops the run before any model call. The same SRI is retained in run-manifest runtime identity evidence and package identity, and the importer requires them to agree exactly.
+The runtime-identity destination is derived deterministically from the run-manifest path:
 
-All external GitHub Actions in the controlled runtime workflow are pinned to exact commit SHAs rather than mutable major-version refs.
+```text
++evals/exact-target-runs/<run>.json
++→ evals/exact-target-runs/<run>.identity.json
+```
 
-Digest-only run manifests are not sufficient for V2 Stable because a later reviewer cannot reconstruct the scorer result from a digest alone.
+Digest-only run manifests are not sufficient for V2 Stable because a later reviewer cannot reconstruct the scorer result from a digest alone. Likewise, discarding `runtime-identity.json` after import is not permitted because that would discard the structured repository/run/carrier/model/CLI/SRI provenance used to authenticate the retained evidence set.
 
-The Stable/readiness validators resolve every exact-target `evidence_ref`, load the corresponding published behavioral case, revalidate the retained adapter response using the same authoritative eval runner, rerun every published scorer, and compare the recomputed status with both the run manifest and execution-evidence row. They fail closed if the retained response digest, Framework revision, adapter identity/revision, case identity, scorer result, status, or required behavioral case set do not agree.
+The Stable/readiness validators resolve every exact-target `evidence_ref`, derive and load the retained `.identity.json`, re-hash both bound data files, confirm the caller execution row is present exactly in the digest-bound execution-evidence file, verify runtime provenance, load the corresponding published behavioral case, revalidate the retained adapter response using the same authoritative eval runner, rerun every published scorer, and compare the recomputed status with both the run manifest and execution-evidence row.
 
 Supplying a `harness_only` row as exact-target evidence is invalid and does not satisfy the gate.
 
 The adapter command itself is never retained; only its SHA-256 digest is stored. Credentials must remain in the target runtime's normal secret/configuration boundary and must not be embedded in the adapter command.
+
+## Controlled runtime supply chain
+
+The exact-target workflow uses exact commit SHAs for all third-party GitHub Actions. Mutable major tags are not acceptable for Stable evidence production.
+
+For `@github/copilot`, both an exact npm version and its exact `dist.integrity` `sha512-...` SRI are required. The workflow checks the registry metadata for the exact requested version before installation and fails before any model call if the SRI differs. The same SRI is retained in the run manifest's runtime identity evidence and in the durable runtime-identity record.
 
 ## Governed import into the release closure
 
@@ -62,9 +71,9 @@ python tools/import_exact_target_evidence.py \
   --validate-only
 ```
 
-The importer verifies the frozen `VNEXT_TARGET`, current carrier HEAD, package hashes, repository/run/attempt/carrier/model provenance, exact CLI version/package-integrity provenance, complete behavioral case set, exact assurance level, immutable destinations, retained response digests, and deterministic rescoring for every case using a temporary staging root. No release file is written during validation.
+The importer verifies the frozen `VNEXT_TARGET`, current carrier HEAD, package hashes, repository/run/attempt/carrier/model/CLI/SRI provenance, deterministic identity destination, complete behavioral case set, exact assurance level, immutable destinations, retained response digests, digest-bound execution rows, and deterministic rescoring for every case using a temporary staging root. No release file is written during validation.
 
-Only after validation succeeds may the same tool write the two governed evidence files:
+Only after validation succeeds may the same tool write the governed evidence set:
 
 ```bash
 python tools/import_exact_target_evidence.py \
@@ -72,7 +81,13 @@ python tools/import_exact_target_evidence.py \
   --package-dir <downloaded-evidence-package>
 ```
 
-The importer reserves both destination paths exclusively before writing, writes/fsyncs the validated bytes, and rolls back both newly created files on handled partial-write failure. It does not commit, push, modify `VNEXT_TARGET`, write approvals, alter enforcement state, or authorize promotion. Existing destination files are never overwritten. The subsequent evidence commit must still pass the release-closure CI; the closure validator rejects later rewrites of the evidence files.
+The importer atomically reserves and writes the original three package files to the destination paths bound in the identity:
+
+- `evals/exact-target-runs/<run>.json`;
+- `evals/EXECUTION_EVIDENCE.<run>.json`;
+- `evals/exact-target-runs/<run>.identity.json`.
+
+It does not commit, push, modify `VNEXT_TARGET`, write approvals, alter enforcement state, or authorize promotion. Existing destination files are never overwritten. A handled partial-write failure rolls back the entire three-file set. The subsequent evidence commit must still pass the release-closure CI; the closure validator rejects later rewrites of any retained evidence file.
 
 ## Producer shape
 
@@ -89,4 +104,4 @@ python evals/exact_target_run.py evals/cases \
   --evidence "evals/EXECUTION_EVIDENCE.<new-run>.json"
 ```
 
-A generated or imported manifest does not authorize Stable promotion by itself. All 43 published `behavioral_runtime` cases must pass at `exact_target_runtime`; all 44 cases must continue to pass at reference-contract level; the prospective cycle must be complete; enforcement must satisfy the Stable gate; and architecture/security approvals must bind the final immutable release candidate.
+A generated or imported evidence set does not authorize Stable promotion by itself. All 43 published `behavioral_runtime` cases must pass at `exact_target_runtime`; all 44 cases must continue to pass at reference-contract level; the prospective cycle must be complete; enforcement must satisfy the Stable gate; and architecture/security approvals must bind the final immutable release candidate.
