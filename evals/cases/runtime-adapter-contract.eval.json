@@ -2,6 +2,7 @@
   "schema_version": "1.0",
   "suite_id": "runtime-adapter-contract-v1",
   "artifact": "schemas/RUNTIME_ADAPTER_CONTRACT.md",
+  "assurance_scope": "behavioral_runtime",
   "cases": [
     {
       "id": "missing-required-capability-blocks",
