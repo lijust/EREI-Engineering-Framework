@@ -76,7 +76,9 @@ def _load_runner(repo_root: Path):
 
 def _closure_destination(value: Any, *, prefix: str, label: str) -> Path:
     try:
-        path = exact_target_package_identity._relative_json_path(value, prefix=prefix, label=label)
+        path = exact_target_package_identity.validate_relative_json_path(
+            value, prefix=prefix, label=label
+        )
     except exact_target_package_identity.ExactTargetPackageIdentityError as exc:
         raise ExactTargetImportError(str(exc)) from exc
     if not release_target.allowed_closure_path(path.as_posix()):
