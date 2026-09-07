@@ -37,25 +37,32 @@ The release branch must pass its normal assurance/closure CI before external run
 
 ## 2. Execute independent behavioral evidence
 
-Configure the dedicated personal-repository Copilot PAT as `EREI_COPILOT_EXACT_TARGET_TOKEN` through the repository secret-management UI. Do not place the PAT in the repository, workflow inputs, command line, issue, PR, or evidence files.
+Configure the dedicated personal-repository Copilot PAT as `EREI_COPILOT_EXACT_TARGET_TOKEN` through the repository secret-management UI. Do not place the PAT in the repository, workflow inputs, command line, issue, PR, or evidence files. The exact-target adapter itself is PAT-only and must not fall back to the workflow `GITHUB_TOKEN`.
 
-Before dispatch, choose one exact published `@github/copilot` npm version and independently record its npm `dist.integrity` value. The pair is part of the runtime identity; do not use `latest`, a mutable tag, a version range, or an unbound package version.
+Before dispatch, choose one exact published `@github/copilot` npm version and independently record its npm `dist.integrity` value. The pair is part of the runtime identity; do not use `latest`, a mutable tag, a version range, an unbound package version, or a truncated SRI value.
 
 Dispatch `VNext Exact Target Copilot Evidence` with:
 
 - `release_ref = release/vnext-rc2`;
 - `expected_carrier_sha =` exact current release-branch HEAD;
 - `copilot_cli_version =` one exact npm version;
-- `copilot_cli_integrity =` exact `sha512-...` npm SRI for that same version.
+- `copilot_cli_integrity =` one full SHA-512 npm SRI for that same version.
 
-Before installation the workflow must query `npm view @github/copilot@<version> dist.integrity` and require an exact match with the supplied SRI. A mismatch stops execution before any model call.
+Before installation the workflow must:
+
+1. query `npm view @github/copilot@<version> dist.integrity` and require an exact match with the supplied SRI;
+2. download the exact package tarball with `npm pack`;
+3. compute SHA-512 from the downloaded tarball bytes and require that SRI to equal the supplied SRI;
+4. install only that verified local tarball.
+
+A mismatch at either metadata or downloaded-byte verification stops execution before any model call. Direct registry installation after metadata-only verification is not permitted for governed evidence production.
 
 The workflow must:
 
 - validate the exact release carrier and `VNEXT_TARGET` closure;
 - use only exact-commit-pinned GitHub Actions;
 - check out the exact frozen target/tree separately;
-- verify the requested Copilot npm version/integrity pair before installation;
+- verify the requested Copilot npm version/integrity pair and downloaded tarball bytes before installation;
 - execute only the 43 `behavioral_runtime` cases;
 - send no `harness_only` case to the model;
 - keep real suite ids, case ids, tags, and scorer expectations outside the model boundary;
@@ -88,7 +95,7 @@ Validation must prove:
 
 - SHA-256 integrity of the run manifest and execution-evidence files against the retained identity;
 - exact repository/run/attempt/carrier/model provenance;
-- exact requested Copilot CLI version and sha512 package-integrity provenance;
+- exact requested Copilot CLI version and full SHA-512 package-integrity provenance;
 - exact frozen target id/ref/tree;
 - vendored adapter revision equals the frozen target;
 - exact 43-case behavioral set with no extras;
@@ -117,15 +124,28 @@ The retained files are:
 
 ## 4. Commit evidence without changing the target
 
-Commit only the three imported evidence paths as one evidence-only closure commit. Do not modify:
+Commit only the three imported evidence paths as one evidence-only closure commit directly on the release branch. This commit is part of the evidence identity, not an administrative detail.
+
+The evidence commit must satisfy all of the following:
+
+- it is a single-parent commit;
+- its only three file changes are `A` additions of the retained run manifest, execution-evidence file, and runtime identity;
+- its parent is exactly the `release_carrier_ref` recorded by the runtime identity;
+- it appears on the release HEAD first-parent history, not on a side branch merged later;
+- all three retained blobs remain byte-identical to their first evidence commit for the lifetime of the RC.
+
+Do not modify in that evidence commit:
 
 - `VNEXT_TARGET.json`;
 - Framework behavior/tooling/schema/eval cases;
 - approval records;
 - enforcement state;
-- Stable identity.
+- Stable identity;
+- notes or any unrelated fourth file.
 
-The release branch must pass the frozen release-closure gate. Any later rewrite of any imported evidence file invalidates the RC and requires a new RC rather than an overwrite.
+Split evidence commits, merge-based evidence ingestion, manual side-branch copying, or any later rewrite of any retained evidence file fail the durable history binding and invalidate the RC. Restart from a new RC instead of rewriting evidence.
+
+The release branch must pass the frozen release-closure gate after the evidence commit.
 
 ## 5. Recompute Stable readiness
 
@@ -135,7 +155,9 @@ Run:
 python tools/stable_readiness.py --repo-root .
 ```
 
-Stable/readiness validation must re-open the retained `.identity.json`, re-hash the run manifest and execution-evidence file, confirm the exact execution row comes from that digest-bound evidence file, verify runtime provenance, and then re-run the published scorers.
+Stable/readiness validation must re-open the retained `.identity.json`, re-hash the run manifest and execution-evidence file, confirm the exact execution row comes from that digest-bound evidence file, verify runtime provenance and evidence-commit history, and then re-run the published scorers.
+
+For a real Git checkout, the exact-target binder fails unless the three retained files were introduced by the one evidence-only first-parent commit directly above the recorded release carrier. Temporary non-Git staging used by the importer can validate content before commit, but it does not satisfy the later Stable history gate by itself.
 
 Expected after valid 43/43 imported evidence:
 
