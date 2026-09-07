@@ -25,6 +25,7 @@ FORBIDDEN_EXACT_TARGET_MARKERS = (
     "mock_adapter",
     "framework-mock-adapter",
 )
+RETAINED_RESPONSE_FIELDS = {"output", "metadata", "trace"}
 
 
 class ExactTargetRunError(RuntimeError):
@@ -77,6 +78,22 @@ def _blinded_request(suite: dict[str, Any], case: dict[str, Any]) -> dict[str, A
         "input": case_input,
         "context": context,
     }
+
+
+def _retained_response(response: Any) -> dict[str, Any]:
+    if not isinstance(response, dict):
+        raise ExactTargetRunError("adapter response must be an object before retention")
+    unknown = sorted(set(response) - RETAINED_RESPONSE_FIELDS)
+    if unknown:
+        raise ExactTargetRunError(f"adapter response contains unknown retained fields: {unknown}")
+    if "output" not in response:
+        raise ExactTargetRunError("adapter response output is required before retention")
+    if "metadata" in response and not isinstance(response["metadata"], dict):
+        raise ExactTargetRunError("adapter response metadata must be an object before retention")
+    if "trace" in response and not isinstance(response["trace"], list):
+        raise ExactTargetRunError("adapter response trace must be an array before retention")
+    # Round-trip through canonical JSON to retain a detached JSON value, not a mutable adapter object.
+    return json.loads(json.dumps(response, ensure_ascii=False, sort_keys=True))
 
 
 def _validate_adapter_command(command: str) -> str:
@@ -145,13 +162,15 @@ def run_suites(
             response: dict[str, Any] | None = None
             adapter_error = False
             try:
-                response = runner.call_adapter(command, request, timeout, case["expectations"])
+                raw_response = runner.call_adapter(command, request, timeout, case["expectations"])
+                response = _retained_response(raw_response)
                 scorer_results = [runner.score(expectation, response) for expectation in case["expectations"]]
                 status = "pass" if all(item[0] for item in scorer_results) else "fail"
                 response_digest = _canonical_digest(response)
             except Exception:
                 adapter_error = True
                 status = "fail"
+                response = None
                 response_digest = _canonical_digest({
                     "adapter_error": True,
                     "suite_id": data["suite_id"],
