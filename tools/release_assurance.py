@@ -39,6 +39,16 @@ def _load(path: Path) -> dict:
     return value
 
 
+def _load_runner(repo_root: Path):
+    runner_path = repo_root / "evals" / "runner.py"
+    spec = importlib.util.spec_from_file_location("erei_release_eval_runner", runner_path)
+    if spec is None or spec.loader is None:
+        raise ReleaseError("unable to load eval runner")
+    runner = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(runner)
+    return runner
+
+
 def validate_manifest(manifest: dict, *, repo_root: Path | None = None) -> dict:
     required = {
         "schema_version", "assurance_contract_version", "release_id", "baseline", "status",
@@ -72,6 +82,9 @@ def validate_manifest(manifest: dict, *, repo_root: Path | None = None) -> dict:
         result["next_stable_gate_applied"] = True
         for key in ("approval_ref", "security_review_ref"):
             _sha(manifest.get(key), key)
+        minimum_level = _text(manifest.get("minimum_eval_assurance_level"), "minimum_eval_assurance_level")
+        if minimum_level != "exact_target_runtime":
+            raise ReleaseError("V2 Stable requires minimum_eval_assurance_level=exact_target_runtime")
         evidence_path = _text(manifest.get("behavioral_eval_evidence"), "behavioral_eval_evidence")
         cycle = manifest.get("prospective_learning_cycle")
         if not isinstance(cycle, dict):
@@ -88,21 +101,23 @@ def validate_manifest(manifest: dict, *, repo_root: Path | None = None) -> dict:
         evidence = _load(repo_root / evidence_path)
         if evidence.get("framework_revision") != manifest["framework_ref"]:
             raise ReleaseError("behavioral eval evidence revision does not match release framework_ref")
-        runner_path = repo_root / "evals" / "runner.py"
-        spec = importlib.util.spec_from_file_location("erei_release_eval_runner", runner_path)
-        if spec is None or spec.loader is None:
-            raise ReleaseError("unable to load eval runner")
-        runner = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(runner)
+        runner = _load_runner(repo_root)
         validated = runner.validate_execution_evidence(evidence)
+        if validated.get("schema_version") != 2:
+            raise ReleaseError("V2 Stable requires V2 execution evidence with explicit assurance levels")
         expected = runner._expected_cases([str(repo_root / "evals" / "cases")])
         observed = {(item["suite_id"], item["case_id"]): item for item in validated["executions"]}
         missing = expected - set(observed)
         nonpass = {key for key in expected & set(observed) if observed[key]["status"] != "pass"}
+        lower = {
+            key for key in expected & set(observed)
+            if runner.ASSURANCE_LEVELS[runner.execution_assurance_level(observed[key], 2)] < runner.ASSURANCE_LEVELS[minimum_level]
+        }
         extras = set(observed) - expected
-        if missing or nonpass or extras:
+        if missing or nonpass or lower or extras:
             raise ReleaseError(
-                f"behavioral eval evidence is incomplete: missing={len(missing)} nonpass={len(nonpass)} unexpected={len(extras)}"
+                "behavioral eval evidence is insufficient: "
+                f"missing={len(missing)} nonpass={len(nonpass)} lower_assurance={len(lower)} unexpected={len(extras)}"
             )
     elif manifest["status"] == "candidate":
         blockers = manifest.get("stable_blockers")
