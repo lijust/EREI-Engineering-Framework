@@ -17,7 +17,7 @@ def base_manifest():
         "status": "candidate",
         "runtime_kind": "mock",
         "transport": "cli",
-        "capabilities": ["execute_task", "trace_export"]
+        "capabilities": ["execute_task", "trace_export"],
     }
 
 
@@ -34,6 +34,30 @@ class RuntimeAdapterValidatorTests(unittest.TestCase):
     def test_duplicate_capability_rejected(self):
         data = base_manifest()
         data["capabilities"].append("execute_task")
+        with self.assertRaises(mod.ValidationError):
+            mod.validate_manifest(data)
+
+    def test_unknown_field_rejected(self):
+        data = base_manifest()
+        data["unpublished_contract"] = True
+        with self.assertRaisesRegex(mod.ValidationError, "unknown fields"):
+            mod.validate_manifest(data)
+
+    def test_display_name_type_is_enforced(self):
+        data = base_manifest()
+        data["display_name"] = {"not": "a string"}
+        with self.assertRaises(mod.ValidationError):
+            mod.validate_manifest(data)
+
+    def test_runtime_kind_type_is_enforced(self):
+        data = base_manifest()
+        data["runtime_kind"] = ["mock"]
+        with self.assertRaises(mod.ValidationError):
+            mod.validate_manifest(data)
+
+    def test_metadata_must_be_object(self):
+        data = base_manifest()
+        data["metadata"] = "not-an-object"
         with self.assertRaises(mod.ValidationError):
             mod.validate_manifest(data)
 
