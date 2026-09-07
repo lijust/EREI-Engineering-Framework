@@ -149,6 +149,7 @@ class ExactTargetEvidenceImportTests(unittest.TestCase):
         (self.package / "execution-evidence.json").write_text(json.dumps(evidence), encoding="utf-8")
         identity = build_exact_target_package_identity.build_identity(
             package_dir=self.package,
+            repository="lijust/EREI-Engineering-Framework",
             target_id="vnext-rc2",
             framework_ref=self.target_ref,
             target_tree=self.target_tree,
@@ -202,6 +203,14 @@ class ExactTargetEvidenceImportTests(unittest.TestCase):
         identity["unexpected"] = True
         with self.assertRaisesRegex(import_exact_target_evidence.ExactTargetImportError, "fields mismatch"):
             import_exact_target_evidence.validate_runtime_identity(identity)
+
+    def test_runtime_identity_run_attempt_must_match_manifest_provenance(self):
+        identity_path = self.package / "runtime-identity.json"
+        identity = json.loads(identity_path.read_text(encoding="utf-8"))
+        identity["github_run_attempt"] = 2
+        identity_path.write_text(json.dumps(identity), encoding="utf-8")
+        with self.assertRaisesRegex(import_exact_target_evidence.ExactTargetImportError, "runtime identity evidence"):
+            import_exact_target_evidence.validate_package(self.repo, self.package)
 
 
 if __name__ == "__main__":
