@@ -26,6 +26,12 @@ ALLOWED_PREFIXES = ("skills/", "workflows/", "schemas/")
 CANONICAL_DIRECTORY_FILES = ("SKILL.md", "SPEC.md", "WORKFLOW.md", "CONTRACT.md")
 OPAQUE_ID_RE = re.compile(r"^blind-(suite|case)-[a-f0-9]{16}$")
 RISK_LEVELS = {"L0", "L1", "L2", "L3"}
+SAFE_INHERITED_ENV = {
+    "PATH", "PATHEXT", "SYSTEMROOT", "WINDIR", "COMSPEC",
+    "TMP", "TEMP", "TMPDIR", "LANG", "LC_ALL",
+    "HTTPS_PROXY", "HTTP_PROXY", "NO_PROXY",
+    "SSL_CERT_FILE", "SSL_CERT_DIR", "NODE_EXTRA_CA_CERTS",
+}
 
 
 class CopilotExactTargetError(RuntimeError):
@@ -193,12 +199,13 @@ def invocation_trace(artifact_declaration: str) -> list[dict[str, str]]:
 
 
 def _copilot_environment(workspace: Path) -> dict[str, str]:
-    env = os.environ.copy()
-    token = env.get("COPILOT_GITHUB_TOKEN") or env.get("GITHUB_TOKEN")
+    source = os.environ
+    token = source.get("COPILOT_GITHUB_TOKEN") or source.get("GITHUB_TOKEN")
     if not token:
         raise CopilotExactTargetError("COPILOT_GITHUB_TOKEN or GITHUB_TOKEN is required")
+    env = {key: source[key] for key in SAFE_INHERITED_ENV if key in source}
     env["COPILOT_GITHUB_TOKEN"] = token
-    env.pop("GH_TOKEN", None)
+    env["HOME"] = str(workspace)
     env["COPILOT_HOME"] = str(workspace / "copilot-home")
     env["COPILOT_CACHE_HOME"] = str(workspace / "copilot-cache")
     env["COPILOT_AUTO_UPDATE"] = "false"
