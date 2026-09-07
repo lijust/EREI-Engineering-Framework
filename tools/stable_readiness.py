@@ -13,11 +13,12 @@ from pathlib import Path
 from typing import Any
 
 try:
-    from . import assurance_enforcement, exact_target_evidence, prospective_cycle_status
+    from . import assurance_enforcement, exact_target_evidence, prospective_cycle_status, release_target
 except ImportError:
     import assurance_enforcement
     import exact_target_evidence
     import prospective_cycle_status
+    import release_target
 
 SHA40_RE = re.compile(r"^[a-f0-9]{40}$")
 
@@ -95,6 +96,18 @@ def _event_target_revision(event_path: Path) -> str | None:
 
 
 def _target_revision(repo_root: Path, explicit: str | None = None) -> str:
+    frozen_path = repo_root / release_target.DEFAULT_TARGET
+    if frozen_path.exists():
+        try:
+            manifest = release_target.load_and_validate_target(repo_root, release_target.DEFAULT_TARGET)
+        except release_target.ReleaseTargetError as exc:
+            raise StableReadinessError(f"invalid frozen release target: {exc}") from exc
+        frozen_ref = manifest["framework_ref"]
+        if explicit is not None and explicit != frozen_ref:
+            raise StableReadinessError(
+                f"--target-ref {explicit} cannot override frozen release target {frozen_ref}"
+            )
+        return frozen_ref
     if explicit is not None:
         return _assert_git_commit(repo_root, explicit, "target_ref")
     event_path = os.environ.get("GITHUB_EVENT_PATH")
@@ -105,10 +118,8 @@ def _target_revision(repo_root: Path, explicit: str | None = None) -> str:
     return _git_head(repo_root)
 
 
-def eval_gate(repo_root: Path, target_ref: str) -> dict[str, Any]:
-    runner = _load_runner(repo_root)
-    evidence = runner.validate_execution_evidence(_load_json(repo_root / "evals" / "EXECUTION_EVIDENCE.json"))
-    expected = runner._expected_cases([str(repo_root / "evals" / "cases")])
+def _evaluate_evidence_file(repo_root: Path, runner, expected: set[tuple[str, str]], path: Path, target_ref: str) -> dict[str, Any]:
+    evidence = runner.validate_execution_evidence(_load_json(path))
     observed = {(item["suite_id"], item["case_id"]): item for item in evidence["executions"]}
     schema_version = evidence["schema_version"]
     exact_rows = {
@@ -143,9 +154,9 @@ def eval_gate(repo_root: Path, target_ref: str) -> dict[str, Any]:
         and not binding_errors
     )
     return {
-        "status": "pass" if complete else "blocked",
+        "evidence_path": path.relative_to(repo_root).as_posix(),
+        "complete": complete,
         "framework_revision": evidence["framework_revision"],
-        "target_framework_revision": target_ref,
         "revision_matches_target": revision_matches_target,
         "evidence_schema_version": schema_version,
         "expected_cases": len(expected),
@@ -158,6 +169,24 @@ def eval_gate(repo_root: Path, target_ref: str) -> dict[str, Any]:
         "unexpected_count": len(unexpected),
         "binding_error_count": len(binding_errors),
         "binding_errors": binding_errors,
+    }
+
+
+def eval_gate(repo_root: Path, target_ref: str) -> dict[str, Any]:
+    runner = _load_runner(repo_root)
+    expected = runner._expected_cases([str(repo_root / "evals" / "cases")])
+    paths = sorted((repo_root / "evals").glob("EXECUTION_EVIDENCE*.json"))
+    if not paths:
+        raise StableReadinessError("no execution-evidence files found")
+    reports = [_evaluate_evidence_file(repo_root, runner, expected, path, target_ref) for path in paths]
+    complete = [item for item in reports if item["complete"]]
+    return {
+        "status": "pass" if len(complete) == 1 else "blocked",
+        "target_framework_revision": target_ref,
+        "evidence_file_count": len(reports),
+        "complete_evidence_file_count": len(complete),
+        "selected_evidence_path": complete[0]["evidence_path"] if len(complete) == 1 else None,
+        "evidence_reports": reports,
     }
 
 

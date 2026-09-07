@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://erei-framework.local/schemas/release-target.schema.json",
+  "title": "EREI VNext Frozen Release Target V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "target_id",
+    "status",
+    "framework_ref",
+    "target_tree",
+    "selected_at",
+    "source_branch",
+    "assurance",
+    "stable_baseline",
+    "promotion_authorized"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "target_id": {"type": "string", "pattern": "^vnext-rc[0-9]+$"},
+    "status": {"const": "frozen_candidate"},
+    "framework_ref": {"type": "string", "pattern": "^[a-f0-9]{40}$"},
+    "target_tree": {"type": "string", "pattern": "^[a-f0-9]{40}$"},
+    "selected_at": {"type": "string", "format": "date-time"},
+    "source_branch": {"const": "main"},
+    "assurance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["workflow", "run_id", "event", "conclusion"],
+      "properties": {
+        "workflow": {"const": "Framework Assurance Gate"},
+        "run_id": {"type": "integer", "minimum": 1},
+        "event": {"const": "push"},
+        "conclusion": {"const": "success"}
+      }
+    },
+    "stable_baseline": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["baseline", "framework_ref"],
+      "properties": {
+        "baseline": {"type": "string", "minLength": 1},
+        "framework_ref": {"type": "string", "pattern": "^[a-f0-9]{40}$"}
+      }
+    },
+    "promotion_authorized": {"const": false}
+  }
+}
