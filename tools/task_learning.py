@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Project-local task learning ledger and deterministic review trigger for EREI.
+"""Project-local Task Learning V2 with immutable occurrences and deterministic reviews.
 
-Uses only the Python standard library. Every engineering execution can emit one
-structured event. The tool derives learning state from immutable event/review
-ledgers and never modifies Framework Core or a project Framework pin.
+Authoritative V2 events/reviews are individual immutable JSON files so parallel Git
+branches normally merge without editing one shared ledger. JSONL, state and Markdown
+are rebuildable projections. Legacy V1 JSONL remains readable for compatibility.
 """
 from __future__ import annotations
 
@@ -11,22 +11,32 @@ import argparse
 import hashlib
 import json
 import os
-import re
 import sys
 import time
-from collections import Counter
+from collections import Counter, defaultdict
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 from uuid import uuid4
 
+from validation_contract import (
+    ContractValidationError,
+    OCCURRENCE_ID_RE,
+    REVIEW_ID_RE,
+    validate_learning_review_shape,
+    validate_task_event_shape,
+)
+
 RISK_LEVELS = {"L0", "L1", "L2", "L3", "L4"}
 OUTCOME_CLASSES = {"verified_success", "success_with_deferred", "blocked", "failed", "canceled"}
 DURATION_CLASSES = {"short", "medium", "long", "unknown"}
-TASK_ID_RE = re.compile(r"^ETASK-[0-9]{8}T[0-9]{6}Z-[A-F0-9]{8}$")
-REVIEW_ID_RE = re.compile(r"^ELR-[0-9]{8}T[0-9]{6}Z-[A-F0-9]{8}$")
-FEEDBACK_FP_RE = re.compile(r"^[a-f0-9]{64}$")
+SIGNAL_KEYS = (
+    "rework_cycles", "verification_failures", "verification_escape",
+    "framework_feedback_created", "manual_workaround", "context_gap",
+    "unexpected_scope_growth", "security_or_data_critical_event",
+)
 TRIGGER_LEVELS = {
+    "INSUFFICIENT_EVIDENCE": -1,
     "LEARNING_HEALTHY": 0,
     "LEARNING_WATCH": 1,
     "REVIEW_RECOMMENDED": 2,
@@ -39,30 +49,33 @@ class LearningError(RuntimeError):
     pass
 
 
-def _utc_now():
+def _utc_now() -> datetime:
     return datetime.now(timezone.utc).replace(microsecond=0)
 
 
-def _timestamp(now):
+def _timestamp(now: datetime) -> str:
     return now.isoformat().replace("+00:00", "Z")
 
 
-def _event_id(now):
+def _event_id(now: datetime) -> str:
     return f"ETASK-{now.strftime('%Y%m%dT%H%M%SZ')}-{uuid4().hex[:8].upper()}"
 
 
-def _review_id(now):
+def _occurrence_id(now: datetime) -> str:
+    return f"EOCC-{now.strftime('%Y%m%dT%H%M%SZ')}-{uuid4().hex[:8].upper()}"
+
+
+def _review_id(now: datetime) -> str:
     return f"ELR-{now.strftime('%Y%m%dT%H%M%SZ')}-{uuid4().hex[:8].upper()}"
 
 
-def _nonempty(value, label):
-    value = value.strip()
-    if not value:
+def _nonempty(value, label: str) -> str:
+    if not isinstance(value, str) or not value.strip():
         raise LearningError(f"{label} must not be empty")
-    return value
+    return value.strip()
 
 
-def _fingerprint(event):
+def _fingerprint(event: dict) -> str:
     semantic = {
         "project": event["project"],
         "framework_ref": event["framework_ref"],
@@ -83,13 +96,30 @@ def _fingerprint(event):
         "feedback_ids": event.get("feedback_ids", []),
         "feedback_fingerprints": event.get("feedback_fingerprints", []),
         "tags": event.get("tags", []),
+        "task_group": event.get("task_group", ""),
+        "failure_stage": event.get("failure_stage", "unknown"),
+        "failure_subject": event.get("failure_subject", ""),
+        "signal_assessment": event.get("signal_assessment", {}),
     }
     canonical = json.dumps(semantic, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
+def _occurrence(event: dict) -> str:
+    return event.get("occurrence_id") or event["task_id"]
+
+
+def _event_digest(events: list[dict]) -> str:
+    members = sorted(
+        ({"occurrence_id": _occurrence(event), "fingerprint": event["fingerprint"]} for event in events),
+        key=lambda item: item["occurrence_id"],
+    )
+    canonical = json.dumps(members, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
 @contextmanager
-def _lock(directory, timeout_seconds=5.0):
+def _lock(directory: Path, timeout_seconds: float = 5.0):
     directory.mkdir(parents=True, exist_ok=True)
     lock_path = directory / ".learning.lock"
     deadline = time.monotonic() + timeout_seconds
@@ -113,10 +143,20 @@ def _lock(directory, timeout_seconds=5.0):
             pass
 
 
-def _read_jsonl(path):
+def _read_json(path: Path) -> dict:
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise LearningError(f"invalid JSON at {path}: {exc}") from exc
+    if not isinstance(value, dict):
+        raise LearningError(f"record at {path} is not an object")
+    return value
+
+
+def _read_jsonl(path: Path) -> list[dict]:
     if not path.exists():
         return []
-    values = []
+    values: list[dict] = []
     for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
         if not line.strip():
             continue
@@ -130,7 +170,8 @@ def _read_jsonl(path):
     return values
 
 
-def _write_jsonl(path, values):
+def _write_jsonl(path: Path, values: list[dict]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
     temp = path.with_suffix(path.suffix + ".tmp")
     temp.write_text(
         "".join(json.dumps(item, ensure_ascii=False, sort_keys=True) + "\n" for item in values),
@@ -139,7 +180,22 @@ def _write_jsonl(path, values):
     os.replace(temp, path)
 
 
-def _paths(target):
+def _write_immutable_json(path: Path, value: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if path.exists():
+        existing = _read_json(path)
+        if existing == value:
+            return
+        raise LearningError(f"immutable record already exists with different content: {path}")
+    temp = path.with_name(path.name + f".{uuid4().hex}.tmp")
+    temp.write_text(json.dumps(value, ensure_ascii=False, sort_keys=True, indent=2) + "\n", encoding="utf-8")
+    if path.exists():
+        temp.unlink(missing_ok=True)
+        raise LearningError(f"immutable record already exists: {path}")
+    os.replace(temp, path)
+
+
+def _paths(target: Path) -> dict[str, Path]:
     if not target.exists() or not target.is_dir():
         raise LearningError(f"target project does not exist or is not a directory: {target}")
     erei = target / ".erei"
@@ -148,6 +204,8 @@ def _paths(target):
     root = erei / "learning"
     return {
         "root": root,
+        "event_dir": root / "events",
+        "review_dir": root / "reviews",
         "events": root / "TASK_EVENTS.jsonl",
         "reviews": root / "LEARNING_REVIEWS.jsonl",
         "state": root / "LEARNING_STATE.json",
@@ -155,84 +213,131 @@ def _paths(target):
     }
 
 
-def validate_event(event):
-    required = {
-        "schema_version", "task_id", "recorded_at", "project", "framework_ref", "workflow",
-        "risk", "terminal_state", "outcome_class", "material", "rework_cycles",
-        "verification_failures", "verification_escape", "framework_feedback_created",
-        "manual_workaround", "context_gap", "unexpected_scope_growth",
-        "security_or_data_critical_event", "duration_class", "fingerprint",
-    }
-    missing = sorted(required - set(event))
-    if missing:
-        raise LearningError("task event missing fields: " + ", ".join(missing))
-    if event["schema_version"] != 1:
-        raise LearningError("unsupported task event schema_version")
-    if not isinstance(event.get("task_id"), str) or not TASK_ID_RE.fullmatch(event["task_id"]):
-        raise LearningError("invalid task_id")
-    if not isinstance(event["project"], dict) or not str(event["project"].get("repository", "")).strip():
-        raise LearningError("task event project.repository is required")
-    if event["risk"] not in RISK_LEVELS:
-        raise LearningError("invalid task risk")
-    if event["outcome_class"] not in OUTCOME_CLASSES:
-        raise LearningError("invalid outcome_class")
-    if event["duration_class"] not in DURATION_CLASSES:
-        raise LearningError("invalid duration_class")
-    for key in [
-        "material", "verification_escape", "framework_feedback_created", "manual_workaround",
-        "context_gap", "unexpected_scope_growth", "security_or_data_critical_event",
-    ]:
-        if not isinstance(event[key], bool):
-            raise LearningError(f"{key} must be boolean")
-    for key in ["rework_cycles", "verification_failures"]:
-        if not isinstance(event[key], int) or event[key] < 0:
-            raise LearningError(f"{key} must be a non-negative integer")
-    for fingerprint in event.get("feedback_fingerprints", []):
-        if not isinstance(fingerprint, str) or not FEEDBACK_FP_RE.fullmatch(fingerprint):
-            raise LearningError("invalid feedback fingerprint")
+def validate_event(event: dict) -> None:
+    try:
+        validate_task_event_shape(event)
+    except ContractValidationError as exc:
+        raise LearningError(str(exc)) from exc
     if event["fingerprint"] != _fingerprint(event):
         raise LearningError(f"task event fingerprint mismatch: {event.get('task_id', 'UNKNOWN')}")
 
 
-def validate_review(review, *, expected_epoch, previous_cutoff, total_events):
-    required = {
-        "schema_version", "review_id", "closed_at", "epoch_id", "through_event_count",
-        "trigger", "metrics", "findings", "decision", "evidence",
+def _deduplicate_records(records: list[dict], key_fn, label: str) -> list[dict]:
+    result: dict[str, dict] = {}
+    for item in records:
+        key = key_fn(item)
+        if key in result and result[key] != item:
+            raise LearningError(f"conflicting duplicate {label}: {key}")
+        result[key] = item
+    return sorted(result.values(), key=key_fn)
+
+
+def _load_events(paths: dict[str, Path]) -> list[dict]:
+    records = _read_jsonl(paths["events"])
+    if paths["event_dir"].exists():
+        records.extend(_read_json(path) for path in sorted(paths["event_dir"].glob("*.json")))
+    events = _deduplicate_records(records, _occurrence, "occurrence identity")
+    seen_task_ids: dict[str, str] = {}
+    for event in events:
+        validate_event(event)
+        task_id = event["task_id"]
+        occurrence = _occurrence(event)
+        if task_id in seen_task_ids and seen_task_ids[task_id] != occurrence:
+            raise LearningError(f"duplicate task_id across occurrences: {task_id}")
+        seen_task_ids[task_id] = occurrence
+    return events
+
+
+def _load_reviews(paths: dict[str, Path]) -> list[dict]:
+    records = _read_jsonl(paths["reviews"])
+    if paths["review_dir"].exists():
+        records.extend(_read_json(path) for path in sorted(paths["review_dir"].glob("*.json")))
+    reviews = _deduplicate_records(records, lambda item: str(item.get("review_id", "")), "review identity")
+    try:
+        for review in reviews:
+            validate_learning_review_shape(review)
+    except ContractValidationError as exc:
+        raise LearningError(str(exc)) from exc
+    return reviews
+
+
+def _is_measured(event: dict, signal: str) -> bool:
+    if event.get("schema_version") == 1:
+        return True
+    return event.get("signal_assessment", {}).get(signal) == "measured"
+
+
+def _cohorts(events: list[dict]) -> dict:
+    by_risk: dict[str, dict[str, int]] = defaultdict(lambda: {"tasks": 0, "material_tasks": 0})
+    by_workflow: dict[str, dict[str, int]] = defaultdict(lambda: {"tasks": 0, "material_tasks": 0})
+    for event in events:
+        for bucket in (by_risk[event["risk"]], by_workflow[event["workflow"]]):
+            bucket["tasks"] += 1
+            bucket["material_tasks"] += int(event["material"])
+    return {
+        "by_risk": {key: by_risk[key] for key in sorted(by_risk)},
+        "by_workflow": {key: by_workflow[key] for key in sorted(by_workflow)},
     }
-    missing = sorted(required - set(review))
-    if missing:
-        raise LearningError("learning review missing fields: " + ", ".join(missing))
-    if review["schema_version"] != 1:
-        raise LearningError("unsupported learning review schema_version")
-    if not isinstance(review["review_id"], str) or not REVIEW_ID_RE.fullmatch(review["review_id"]):
-        raise LearningError("invalid learning review_id")
-    if review["epoch_id"] != expected_epoch:
-        raise LearningError("learning review epoch sequence mismatch")
-    cutoff = review["through_event_count"]
-    if not isinstance(cutoff, int) or cutoff < previous_cutoff or cutoff > total_events:
-        raise LearningError("invalid learning review cutoff")
-    if not isinstance(review["trigger"], dict) or review["trigger"].get("level") not in TRIGGER_LEVELS:
-        raise LearningError("invalid learning review trigger")
-    if not isinstance(review["metrics"], dict):
-        raise LearningError("learning review metrics must be an object")
-    if not isinstance(review["findings"], str) or not review["findings"].strip():
-        raise LearningError("learning review findings are required")
-    if not isinstance(review["decision"], str) or not review["decision"].strip():
-        raise LearningError("learning review decision is required")
-    if (
-        not isinstance(review["evidence"], list)
-        or not review["evidence"]
-        or any(not isinstance(item, str) or not item.strip() for item in review["evidence"])
+
+
+def _metrics(events: list[dict]) -> dict:
+    material = [event for event in events if event["material"]]
+    rework_assessed = [event for event in material if _is_measured(event, "rework_cycles")]
+    verification_assessed = [event for event in material if _is_measured(event, "verification_failures")]
+    feedback_counts = Counter(
+        fingerprint
+        for event in events
+        for fingerprint in event.get("feedback_fingerprints", [])
+    )
+    unassessed_signal_values = sum(
+        1
+        for event in events
+        for signal in SIGNAL_KEYS
+        if not _is_measured(event, signal)
+    )
+    failure_stages = Counter(event.get("failure_stage", "unknown") for event in events if event["verification_failures"] > 0)
+    failure_subjects = Counter(event.get("failure_subject", "unknown") for event in events if event["verification_failures"] > 0)
+    return {
+        "tasks": len(events),
+        "material_tasks": len(material),
+        "verified_successes": sum(event["outcome_class"] == "verified_success" for event in events),
+        "blocked_tasks": sum(event["outcome_class"] == "blocked" for event in events),
+        "failed_tasks": sum(event["outcome_class"] == "failed" for event in events),
+        "rework_assessed_material_tasks": len(rework_assessed),
+        "verification_assessed_material_tasks": len(verification_assessed),
+        "unassessed_signal_values": unassessed_signal_values,
+        "rework_tasks": sum(event["rework_cycles"] > 0 for event in rework_assessed),
+        "total_rework_cycles": sum(event["rework_cycles"] for event in rework_assessed),
+        "verification_failure_tasks": sum(event["verification_failures"] > 0 for event in verification_assessed),
+        "verification_failures": sum(event["verification_failures"] for event in verification_assessed),
+        "verification_escapes": sum(event["verification_escape"] for event in events if _is_measured(event, "verification_escape")),
+        "framework_feedback_tasks": sum(event["framework_feedback_created"] for event in events if _is_measured(event, "framework_feedback_created")),
+        "manual_workarounds": sum(event["manual_workaround"] for event in events if _is_measured(event, "manual_workaround")),
+        "context_gaps": sum(event["context_gap"] for event in events if _is_measured(event, "context_gap")),
+        "unexpected_scope_growth_tasks": sum(event["unexpected_scope_growth"] for event in events if _is_measured(event, "unexpected_scope_growth")),
+        "security_or_data_critical_events": sum(event["security_or_data_critical_event"] for event in events if _is_measured(event, "security_or_data_critical_event")),
+        "max_feedback_fingerprint_occurrences": max(feedback_counts.values(), default=0),
+        "rework_rate": round(sum(event["rework_cycles"] > 0 for event in rework_assessed) / len(rework_assessed), 4) if rework_assessed else None,
+        "verification_failure_rate": round(sum(event["verification_failures"] > 0 for event in verification_assessed) / len(verification_assessed), 4) if verification_assessed else None,
+        "failure_stages": dict(sorted(failure_stages.items())),
+        "failure_subjects": dict(sorted(failure_subjects.items())),
+        "cohorts": _cohorts(events),
+    }
+
+
+def _trigger(metrics: dict) -> dict:
+    reasons: list[str] = []
+    if metrics["tasks"] == 0 or (
+        metrics["material_tasks"] > 0
+        and metrics["rework_assessed_material_tasks"] == 0
+        and metrics["verification_assessed_material_tasks"] == 0
     ):
-        raise LearningError("learning review evidence is required")
-    return cutoff
+        level = "INSUFFICIENT_EVIDENCE"
+        reasons.append("no_measured_learning_evidence")
+    else:
+        level = "LEARNING_HEALTHY"
 
-
-def _trigger(metrics):
-    reasons = []
-    level = "LEARNING_HEALTHY"
-
-    def raise_to(candidate, reason):
+    def raise_to(candidate: str, reason: str) -> None:
         nonlocal level
         if TRIGGER_LEVELS[candidate] > TRIGGER_LEVELS[level]:
             level = candidate
@@ -250,9 +355,17 @@ def _trigger(metrics):
         raise_to("REVIEW_DUE", "5_framework_feedback_tasks_since_last_review")
     if metrics["material_tasks"] >= 20:
         raise_to("REVIEW_RECOMMENDED", "20_material_tasks_since_last_review")
-    if metrics["material_tasks"] >= 8 and metrics["rework_rate"] >= 0.25:
+    if (
+        metrics["rework_assessed_material_tasks"] >= 8
+        and metrics["rework_rate"] is not None
+        and metrics["rework_rate"] >= 0.25
+    ):
         raise_to("REVIEW_RECOMMENDED", "rework_rate_at_or_above_25_percent")
-    if metrics["material_tasks"] >= 8 and metrics["verification_failure_rate"] >= 0.15:
+    if (
+        metrics["verification_assessed_material_tasks"] >= 8
+        and metrics["verification_failure_rate"] is not None
+        and metrics["verification_failure_rate"] >= 0.15
+    ):
         raise_to("REVIEW_RECOMMENDED", "verification_failure_rate_at_or_above_15_percent")
     if metrics["manual_workarounds"] >= 3:
         raise_to("REVIEW_RECOMMENDED", "3_manual_workarounds_since_last_review")
@@ -265,64 +378,71 @@ def _trigger(metrics):
     return {"level": level, "reasons": list(dict.fromkeys(reasons))}
 
 
-def derive_state(events, reviews, now=None):
+def _reviewed_occurrences(events: list[dict], reviews: list[dict]) -> tuple[set[str], int]:
+    by_occurrence = {_occurrence(event): event for event in events}
+    reviewed: set[str] = set()
+    legacy_cutoff = 0
+    for index, review in enumerate(reviews, start=1):
+        expected_epoch = f"EPOCH-{index:03d}"
+        if review["epoch_id"] != expected_epoch:
+            raise LearningError("learning review epoch sequence mismatch")
+        if review["schema_version"] == 1:
+            cutoff = review["through_event_count"]
+            if cutoff < legacy_cutoff or cutoff > len(events):
+                raise LearningError("invalid legacy learning review cutoff")
+            selected = events[legacy_cutoff:cutoff]
+            legacy_cutoff = cutoff
+        else:
+            ids = review["reviewed_occurrence_ids"]
+            missing = sorted(set(ids) - set(by_occurrence))
+            overlap = sorted(set(ids) & reviewed)
+            if missing:
+                raise LearningError("review references missing occurrences: " + ", ".join(missing))
+            if overlap:
+                raise LearningError("review re-closes occurrences: " + ", ".join(overlap))
+            selected = [by_occurrence[item] for item in ids]
+            if review["event_digest"] != _event_digest(selected):
+                raise LearningError("learning review event digest mismatch")
+            expected_metrics = _metrics(selected)
+            expected_trigger = _trigger(expected_metrics)
+            if review["metrics"] != expected_metrics:
+                raise LearningError("learning review metrics do not match reviewed events")
+            if review["trigger"] != expected_trigger:
+                raise LearningError("learning review trigger does not match reviewed events")
+        reviewed.update(_occurrence(event) for event in selected)
+    return reviewed, legacy_cutoff
+
+
+def derive_state(events: list[dict], reviews: list[dict], now: datetime | None = None) -> dict:
     for event in events:
         validate_event(event)
-    cutoff = 0
-    for index, review in enumerate(reviews, start=1):
-        cutoff = validate_review(
-            review,
-            expected_epoch=f"EPOCH-{index:03d}",
-            previous_cutoff=cutoff,
-            total_events=len(events),
-        )
-    current = events[cutoff:]
-    material = [event for event in current if event["material"]]
-    denominator = max(len(material), 1)
-    feedback_counts = Counter(
-        fingerprint
-        for event in current
-        for fingerprint in event.get("feedback_fingerprints", [])
-        if isinstance(fingerprint, str) and fingerprint
-    )
-    metrics = {
-        "tasks": len(current),
-        "material_tasks": len(material),
-        "verified_successes": sum(event["outcome_class"] == "verified_success" for event in current),
-        "blocked_tasks": sum(event["outcome_class"] == "blocked" for event in current),
-        "failed_tasks": sum(event["outcome_class"] == "failed" for event in current),
-        "rework_tasks": sum(event["rework_cycles"] > 0 for event in material),
-        "total_rework_cycles": sum(event["rework_cycles"] for event in material),
-        "verification_failure_tasks": sum(event["verification_failures"] > 0 for event in material),
-        "verification_failures": sum(event["verification_failures"] for event in material),
-        "verification_escapes": sum(event["verification_escape"] for event in current),
-        "framework_feedback_tasks": sum(event["framework_feedback_created"] for event in current),
-        "manual_workarounds": sum(event["manual_workaround"] for event in current),
-        "context_gaps": sum(event["context_gap"] for event in current),
-        "unexpected_scope_growth_tasks": sum(event["unexpected_scope_growth"] for event in current),
-        "security_or_data_critical_events": sum(event["security_or_data_critical_event"] for event in current),
-        "max_feedback_fingerprint_occurrences": max(feedback_counts.values(), default=0),
-        "rework_rate": round(
-            sum(event["rework_cycles"] > 0 for event in material) / denominator, 4
-        ) if material else 0.0,
-        "verification_failure_rate": round(
-            sum(event["verification_failures"] > 0 for event in material) / denominator, 4
-        ) if material else 0.0,
-    }
+    try:
+        for review in reviews:
+            validate_learning_review_shape(review)
+    except ContractValidationError as exc:
+        raise LearningError(str(exc)) from exc
+    reviewed, legacy_cutoff = _reviewed_occurrences(events, reviews)
+    current = [event for event in events if _occurrence(event) not in reviewed]
+    metrics = _metrics(current)
     return {
-        "schema_version": 1,
+        "schema_version": 2,
         "epoch_id": f"EPOCH-{len(reviews) + 1:03d}",
         "updated_at": _timestamp(now or _utc_now()),
         "last_review_id": reviews[-1].get("review_id") if reviews else None,
         "last_review_at": reviews[-1].get("closed_at") if reviews else None,
-        "event_cutoff": cutoff,
+        "legacy_event_cutoff": legacy_cutoff,
+        "reviewed_occurrence_count": len(reviewed),
         "total_events": len(events),
         "metrics_since_last_review": metrics,
         "trigger": _trigger(metrics),
     }
 
 
-def _render_summary(state):
+def _format_rate(value) -> str:
+    return "unknown" if value is None else f"{value:.1%}"
+
+
+def _render_summary(state: dict) -> str:
     metrics = state["metrics_since_last_review"]
     trigger = state["trigger"]
     lines = [
@@ -332,13 +452,13 @@ def _render_summary(state):
         f"- Trigger: **{trigger['level']}**",
         f"- Tasks since last review: **{metrics['tasks']}**",
         f"- Material tasks: **{metrics['material_tasks']}**",
-        f"- Framework-feedback tasks: **{metrics['framework_feedback_tasks']}**",
-        f"- Rework rate: **{metrics['rework_rate']:.1%}**",
-        f"- Verification-failure rate: **{metrics['verification_failure_rate']:.1%}**",
+        f"- Rework assessment coverage: **{metrics['rework_assessed_material_tasks']}/{metrics['material_tasks']}**",
+        f"- Verification assessment coverage: **{metrics['verification_assessed_material_tasks']}/{metrics['material_tasks']}**",
+        f"- Rework rate: **{_format_rate(metrics['rework_rate'])}**",
+        f"- Verification-failure rate: **{_format_rate(metrics['verification_failure_rate'])}**",
         f"- Verification escapes: **{metrics['verification_escapes']}**",
-        f"- Manual workarounds: **{metrics['manual_workarounds']}**",
-        f"- Context gaps: **{metrics['context_gaps']}**",
-        f"- Critical security/data events: **{metrics['security_or_data_critical_events']}**",
+        f"- Framework-feedback tasks: **{metrics['framework_feedback_tasks']}**",
+        f"- Unassessed signal values: **{metrics['unassessed_signal_values']}**",
         "",
         "## Review trigger reasons",
         "",
@@ -346,30 +466,60 @@ def _render_summary(state):
     lines += [f"- `{reason}`" for reason in trigger["reasons"]] if trigger["reasons"] else ["- None."]
     lines += [
         "",
-        "Derived deterministically from project-local task events. It never authorizes Framework self-modification.",
+        "JSONL/state/summary files are projections. V2 event/review JSON files are immutable authoritative occurrences.",
+        "Task Learning never authorizes Framework self-modification.",
         "",
     ]
     return "\n".join(lines)
 
 
-def _persist(paths, state):
+def _persist_projections(paths: dict[str, Path], events: list[dict], reviews: list[dict], state: dict) -> None:
     paths["root"].mkdir(parents=True, exist_ok=True)
+    _write_jsonl(paths["events"], events)
+    _write_jsonl(paths["reviews"], reviews)
     temp_state = paths["state"].with_suffix(".json.tmp")
     temp_summary = paths["summary"].with_suffix(".md.tmp")
-    temp_state.write_text(
-        json.dumps(state, ensure_ascii=False, sort_keys=True, indent=2) + "\n",
-        encoding="utf-8",
-    )
+    temp_state.write_text(json.dumps(state, ensure_ascii=False, sort_keys=True, indent=2) + "\n", encoding="utf-8")
     temp_summary.write_text(_render_summary(state), encoding="utf-8")
     os.replace(temp_state, paths["state"])
     os.replace(temp_summary, paths["summary"])
 
 
-def build_event(args, now=None):
+def _assessment(value) -> tuple[object, str]:
+    return (value, "measured") if value is not None else (None, "not_assessed")
+
+
+def build_event(args: argparse.Namespace, now: datetime | None = None) -> dict:
     current = now or _utc_now()
+    feedback_ids = sorted({item.strip() for item in getattr(args, "feedback_id", []) if item.strip()})
+    feedback_fingerprints = sorted({item.strip() for item in getattr(args, "feedback_fingerprint", []) if item.strip()})
+    tags = sorted({item.strip() for item in getattr(args, "tag", []) if item.strip()})
+
+    rework_value, rework_assessment = _assessment(getattr(args, "rework_cycles", None))
+    verification_value, verification_assessment = _assessment(getattr(args, "verification_failures", None))
+    bool_values: dict[str, bool] = {}
+    assessment = {
+        "rework_cycles": rework_assessment,
+        "verification_failures": verification_assessment,
+    }
+    for key in SIGNAL_KEYS[2:]:
+        raw = getattr(args, key, None)
+        bool_values[key] = bool(raw) if raw is not None else False
+        assessment[key] = "measured" if raw is not None else "not_assessed"
+    if feedback_ids or feedback_fingerprints:
+        bool_values["framework_feedback_created"] = True
+        assessment["framework_feedback_created"] = "measured"
+
+    rework_cycles = 0 if rework_value is None else rework_value
+    verification_failures = 0 if verification_value is None else verification_value
+    failure_stage = getattr(args, "failure_stage", None)
+    if failure_stage is None:
+        failure_stage = "unknown" if verification_failures > 0 else "none"
+
     event = {
-        "schema_version": 1,
-        "task_id": args.task_id.strip() if args.task_id else _event_id(current),
+        "schema_version": 2,
+        "task_id": args.task_id.strip() if getattr(args, "task_id", None) else _event_id(current),
+        "occurrence_id": args.occurrence_id.strip() if getattr(args, "occurrence_id", None) else _occurrence_id(current),
         "recorded_at": _timestamp(current),
         "project": {"repository": _nonempty(args.project_repository, "project repository")},
         "framework_ref": _nonempty(args.framework_ref, "framework ref"),
@@ -378,93 +528,115 @@ def build_event(args, now=None):
         "terminal_state": _nonempty(args.terminal_state, "terminal state"),
         "outcome_class": args.outcome_class,
         "material": args.material,
-        "rework_cycles": args.rework_cycles,
-        "verification_failures": args.verification_failures,
-        "verification_escape": args.verification_escape,
-        "framework_feedback_created": args.framework_feedback_created,
-        "manual_workaround": args.manual_workaround,
-        "context_gap": args.context_gap,
-        "unexpected_scope_growth": args.unexpected_scope_growth,
-        "security_or_data_critical_event": args.security_or_data_critical_event,
+        "rework_cycles": rework_cycles,
+        "verification_failures": verification_failures,
+        "verification_escape": bool_values["verification_escape"],
+        "framework_feedback_created": bool_values["framework_feedback_created"],
+        "manual_workaround": bool_values["manual_workaround"],
+        "context_gap": bool_values["context_gap"],
+        "unexpected_scope_growth": bool_values["unexpected_scope_growth"],
+        "security_or_data_critical_event": bool_values["security_or_data_critical_event"],
         "duration_class": args.duration_class,
+        "signal_assessment": assessment,
+        "failure_stage": failure_stage,
     }
-    if args.project_name and args.project_name.strip():
+    if getattr(args, "project_name", None) and args.project_name.strip():
         event["project"]["name"] = args.project_name.strip()
-    for key, values in [
-        ("feedback_ids", args.feedback_id),
-        ("feedback_fingerprints", args.feedback_fingerprint),
-        ("tags", args.tag),
-    ]:
-        values = sorted({item.strip() for item in values if item.strip()})
-        if values:
-            event[key] = values
+    if getattr(args, "task_group", None) and args.task_group.strip():
+        event["task_group"] = args.task_group.strip()
+    if getattr(args, "failure_subject", None) and args.failure_subject.strip():
+        event["failure_subject"] = args.failure_subject.strip()
+    if feedback_ids:
+        event["feedback_ids"] = feedback_ids
+    if feedback_fingerprints:
+        event["feedback_fingerprints"] = feedback_fingerprints
+    if tags:
+        event["tags"] = tags
     event["fingerprint"] = _fingerprint(event)
     validate_event(event)
     return event
 
 
-def capture(target, event):
+def capture(target: Path, event: dict) -> tuple[dict, bool]:
+    paths = _paths(target)
+    validate_event(event)
+    with _lock(paths["root"]):
+        events = _load_events(paths)
+        reviews = _load_reviews(paths)
+        current_state = derive_state(events, reviews)
+        occurrence = _occurrence(event)
+        existing = next((item for item in events if _occurrence(item) == occurrence), None)
+        if existing is not None:
+            if existing["fingerprint"] != event["fingerprint"]:
+                raise LearningError(f"occurrence_id already exists with conflicting semantics: {occurrence}")
+            _persist_projections(paths, events, reviews, current_state)
+            return current_state, True
+        if any(item["task_id"] == event["task_id"] for item in events):
+            raise LearningError(f"task_id already exists under another occurrence: {event['task_id']}")
+        candidate_events = events + [event]
+        state = derive_state(candidate_events, reviews)
+        _write_immutable_json(paths["event_dir"] / f"{occurrence}.json", event)
+        persisted_events = _load_events(paths)
+        state = derive_state(persisted_events, reviews)
+        _persist_projections(paths, persisted_events, reviews, state)
+    return state, False
+
+
+def status(target: Path) -> dict:
     paths = _paths(target)
     with _lock(paths["root"]):
-        events = _read_jsonl(paths["events"])
-        reviews = _read_jsonl(paths["reviews"])
-        events.append(event)
-        _write_jsonl(paths["events"], events)
+        events = _load_events(paths)
+        reviews = _load_reviews(paths)
         state = derive_state(events, reviews)
-        _persist(paths, state)
+        _persist_projections(paths, events, reviews, state)
     return state
 
 
-def status(target):
-    paths = _paths(target)
-    with _lock(paths["root"]):
-        events = _read_jsonl(paths["events"])
-        reviews = _read_jsonl(paths["reviews"])
-        state = derive_state(events, reviews)
-        _persist(paths, state)
-    return state
-
-
-def close_review(target, args, now=None):
+def close_review(target: Path, args: argparse.Namespace, now: datetime | None = None) -> tuple[dict, dict]:
     paths = _paths(target)
     current = now or _utc_now()
     with _lock(paths["root"]):
-        events = _read_jsonl(paths["events"])
-        reviews = _read_jsonl(paths["reviews"])
+        events = _load_events(paths)
+        reviews = _load_reviews(paths)
         before = derive_state(events, reviews, current)
-        evidence = sorted({_nonempty(item, "review evidence") for item in args.evidence})
-        if before["metrics_since_last_review"]["tasks"] == 0:
+        reviewed, _ = _reviewed_occurrences(events, reviews)
+        current_events = [event for event in events if _occurrence(event) not in reviewed]
+        if not current_events:
             raise LearningError("cannot close an empty learning epoch")
-        if not evidence:
-            raise LearningError("at least one review evidence reference is required")
+        evidence = sorted({_nonempty(item, "review evidence") for item in args.evidence})
         review = {
-            "schema_version": 1,
+            "schema_version": 2,
             "review_id": args.review_id.strip() if args.review_id else _review_id(current),
             "closed_at": _timestamp(current),
             "epoch_id": before["epoch_id"],
-            "through_event_count": len(events),
+            "reviewed_occurrence_ids": sorted(_occurrence(event) for event in current_events),
+            "event_digest": _event_digest(current_events),
             "trigger": before["trigger"],
             "metrics": before["metrics_since_last_review"],
             "findings": _nonempty(args.findings, "review findings"),
             "decision": _nonempty(args.decision, "review decision"),
             "evidence": evidence,
         }
-        if not REVIEW_ID_RE.fullmatch(review["review_id"]):
-            raise LearningError("invalid learning review_id")
         actions = sorted({item.strip() for item in args.action if item.strip()})
         if actions:
             review["actions"] = actions
-        reviews.append(review)
-        _write_jsonl(paths["reviews"], reviews)
-        after = derive_state(events, reviews, current)
-        _persist(paths, after)
+        try:
+            validate_learning_review_shape(review)
+        except ContractValidationError as exc:
+            raise LearningError(str(exc)) from exc
+        candidate_reviews = reviews + [review]
+        after = derive_state(events, candidate_reviews, current)
+        _write_immutable_json(paths["review_dir"] / f"{review['review_id']}.json", review)
+        persisted_reviews = _load_reviews(paths)
+        after = derive_state(events, persisted_reviews, current)
+        _persist_projections(paths, events, persisted_reviews, after)
     return review, after
 
 
-def validate_ledgers(target):
+def validate_ledgers(target: Path) -> dict:
     paths = _paths(target)
-    events = _read_jsonl(paths["events"])
-    reviews = _read_jsonl(paths["reviews"])
+    events = _load_events(paths)
+    reviews = _load_reviews(paths)
     state = derive_state(events, reviews)
     return {
         "valid": True,
@@ -475,8 +647,8 @@ def validate_ledgers(target):
     }
 
 
-def parse_args(argv=None):
-    parser = argparse.ArgumentParser(description="EREI project-local task learning and review trigger.")
+def parse_args(argv=None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="EREI project-local Task Learning V2 and review trigger.")
     sub = parser.add_subparsers(dest="command", required=True)
 
     capture_cmd = sub.add_parser("capture")
@@ -485,20 +657,24 @@ def parse_args(argv=None):
     capture_cmd.add_argument("--project-name")
     capture_cmd.add_argument("--framework-ref", required=True)
     capture_cmd.add_argument("--task-id")
+    capture_cmd.add_argument("--occurrence-id")
+    capture_cmd.add_argument("--task-group")
     capture_cmd.add_argument("--workflow", required=True)
     capture_cmd.add_argument("--risk", required=True, choices=sorted(RISK_LEVELS))
     capture_cmd.add_argument("--terminal-state", required=True)
     capture_cmd.add_argument("--outcome-class", required=True, choices=sorted(OUTCOME_CLASSES))
     capture_cmd.add_argument("--material", action=argparse.BooleanOptionalAction, default=True)
-    capture_cmd.add_argument("--rework-cycles", type=int, default=0)
-    capture_cmd.add_argument("--verification-failures", type=int, default=0)
-    capture_cmd.add_argument("--verification-escape", action="store_true")
-    capture_cmd.add_argument("--framework-feedback-created", action="store_true")
-    capture_cmd.add_argument("--manual-workaround", action="store_true")
-    capture_cmd.add_argument("--context-gap", action="store_true")
-    capture_cmd.add_argument("--unexpected-scope-growth", action="store_true")
-    capture_cmd.add_argument("--security-or-data-critical-event", action="store_true")
+    capture_cmd.add_argument("--rework-cycles", type=int, default=None)
+    capture_cmd.add_argument("--verification-failures", type=int, default=None)
+    capture_cmd.add_argument("--verification-escape", action=argparse.BooleanOptionalAction, default=None)
+    capture_cmd.add_argument("--framework-feedback-created", action=argparse.BooleanOptionalAction, default=None)
+    capture_cmd.add_argument("--manual-workaround", action=argparse.BooleanOptionalAction, default=None)
+    capture_cmd.add_argument("--context-gap", action=argparse.BooleanOptionalAction, default=None)
+    capture_cmd.add_argument("--unexpected-scope-growth", action=argparse.BooleanOptionalAction, default=None)
+    capture_cmd.add_argument("--security-or-data-critical-event", action=argparse.BooleanOptionalAction, default=None)
     capture_cmd.add_argument("--duration-class", choices=sorted(DURATION_CLASSES), default="unknown")
+    capture_cmd.add_argument("--failure-stage", choices=("none", "pre_merge", "post_merge", "runtime", "unknown"))
+    capture_cmd.add_argument("--failure-subject")
     capture_cmd.add_argument("--feedback-id", action="append", default=[])
     capture_cmd.add_argument("--feedback-fingerprint", action="append", default=[])
     capture_cmd.add_argument("--tag", action="append", default=[])
@@ -517,16 +693,17 @@ def parse_args(argv=None):
     return parser.parse_args(argv)
 
 
-def main(argv=None):
+def main(argv=None) -> int:
     try:
         args = parse_args(argv)
         target = Path(args.target).resolve()
         if args.command == "capture":
             event = build_event(args)
-            state = capture(target, event)
+            state, idempotent = capture(target, event)
             payload = {
-                "status": "captured",
+                "status": "already_captured" if idempotent else "captured",
                 "task_id": event["task_id"],
+                "occurrence_id": event["occurrence_id"],
                 "epoch_id": state["epoch_id"],
                 "review_trigger": state["trigger"],
                 "total_events": state["total_events"],
@@ -544,7 +721,7 @@ def main(argv=None):
             }
         else:
             payload = validate_ledgers(target)
-    except LearningError as exc:
+    except (LearningError, ContractValidationError, OSError, json.JSONDecodeError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 2
     print(json.dumps(payload, ensure_ascii=False, sort_keys=True))
