@@ -15,6 +15,10 @@ on:
         description: Exact @github/copilot npm version to execute (for example 1.0.54)
         required: true
         type: string
+      copilot_cli_integrity:
+        description: Exact npm dist.integrity sha512 SRI for the requested @github/copilot version
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -92,10 +96,11 @@ jobs:
         with:
           node-version: '24'
 
-      - name: Verify Copilot credential and requested CLI version
+      - name: Verify Copilot credential, version, and package integrity
         env:
           COPILOT_GITHUB_TOKEN: ${{ secrets.EREI_COPILOT_EXACT_TARGET_TOKEN }}
           COPILOT_CLI_VERSION: ${{ inputs.copilot_cli_version }}
+          COPILOT_CLI_INTEGRITY: ${{ inputs.copilot_cli_integrity }}
         shell: bash
         run: |
           set -euo pipefail
@@ -107,6 +112,16 @@ jobs:
             echo "copilot_cli_version must be an exact npm version, not latest/range/tag" >&2
             exit 2
           fi
+          if [[ ! "$COPILOT_CLI_INTEGRITY" =~ ^sha512-[A-Za-z0-9+/]+={0,2}$ ]]; then
+            echo "copilot_cli_integrity must be an exact sha512 npm SRI value" >&2
+            exit 2
+          fi
+          registry_integrity="$(npm view "@github/copilot@${COPILOT_CLI_VERSION}" dist.integrity)"
+          if [[ "$registry_integrity" != "$COPILOT_CLI_INTEGRITY" ]]; then
+            echo "Copilot package integrity mismatch for version ${COPILOT_CLI_VERSION}" >&2
+            exit 2
+          fi
+          echo "PASS: Copilot package version/integrity binding verified"
 
       - name: Install pinned GitHub Copilot CLI
         env:
@@ -135,6 +150,7 @@ jobs:
       - name: Execute 43 behavioral cases against frozen target
         env:
           COPILOT_GITHUB_TOKEN: ${{ secrets.EREI_COPILOT_EXACT_TARGET_TOKEN }}
+          COPILOT_CLI_INTEGRITY: ${{ inputs.copilot_cli_integrity }}
           TARGET_REF: ${{ steps.target.outputs.target_ref }}
           CARRIER_SHA: ${{ inputs.expected_carrier_sha }}
           COPILOT_VERSION: ${{ steps.runtime.outputs.copilot_version }}
@@ -154,6 +170,7 @@ jobs:
             --runtime-evidence "github-actions:${GITHUB_REPOSITORY}/run/${GITHUB_RUN_ID}/attempt/${GITHUB_RUN_ATTEMPT}" \
             --runtime-evidence "release-carrier:${CARRIER_SHA}" \
             --runtime-evidence "copilot-model:gpt-5.4" \
+            --runtime-evidence "copilot-package-integrity:${COPILOT_CLI_INTEGRITY}" \
             --framework-ref "$TARGET_REF" \
             --manifest "$manifest" \
             --evidence "$evidence" \
@@ -186,6 +203,7 @@ jobs:
           CARRIER_SHA: ${{ inputs.expected_carrier_sha }}
           COPILOT_VERSION: ${{ steps.runtime.outputs.copilot_version }}
           COPILOT_CLI_VERSION_INPUT: ${{ inputs.copilot_cli_version }}
+          COPILOT_CLI_INTEGRITY: ${{ inputs.copilot_cli_integrity }}
         shell: bash
         run: |
           set -euo pipefail
@@ -202,6 +220,7 @@ jobs:
             --runtime-id "github-copilot-cli" \
             --runtime-version "$COPILOT_VERSION" \
             --requested-cli-version "$COPILOT_CLI_VERSION_INPUT" \
+            --requested-cli-integrity "$COPILOT_CLI_INTEGRITY" \
             --model "gpt-5.4" \
             --github-run-id "$GITHUB_RUN_ID" \
             --github-run-attempt "$GITHUB_RUN_ATTEMPT" \
@@ -222,6 +241,7 @@ jobs:
           TARGET_REF: ${{ steps.target.outputs.target_ref }}
           CARRIER_SHA: ${{ inputs.expected_carrier_sha }}
           COPILOT_CLI_VERSION: ${{ inputs.copilot_cli_version }}
+          COPILOT_CLI_INTEGRITY: ${{ inputs.copilot_cli_integrity }}
         shell: bash
         run: |
           {
@@ -233,6 +253,7 @@ jobs:
             echo '- Harness-only cases sent to Copilot: 0'
             echo '- Model: `gpt-5.4`'
             echo "- Requested Copilot CLI: \`$COPILOT_CLI_VERSION\`"
+            echo "- Copilot npm integrity: \`$COPILOT_CLI_INTEGRITY\`"
             echo '- Evidence package: digest-bound V2 runtime identity + reconstructible run manifest + execution evidence'
             echo '- Repository mutation/commit/promotion: none'
           } >> "$GITHUB_STEP_SUMMARY"
