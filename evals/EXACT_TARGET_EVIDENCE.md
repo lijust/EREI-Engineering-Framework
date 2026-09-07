@@ -13,14 +13,24 @@ Every published eval suite declares one of two scopes:
 
 The current published suite contains **44 total reference-contract cases**: **43 behavioral-runtime cases** plus **1 harness-only case** (`harness-smoke/SMOKE-001`). This separation prevents a harness self-test from requiring an external adapter to infer hidden scorer expectations that are not supported by the referenced artifact.
 
+## Reconstructible run evidence
+
 Each exact-target run writes two artifacts:
 
-1. a run manifest under `evals/exact-target-runs/` containing the exact Framework revision, adapter identity/revision, runtime identity evidence, a digest of the adapter command, and a response digest for every behavioral-runtime case;
+1. a **V2 run manifest** under `evals/exact-target-runs/` containing the exact Framework revision, adapter identity/revision, runtime identity evidence, a digest of the adapter command, and for every behavioral-runtime case:
+   - retained normalized adapter response;
+   - SHA-256 digest of that response;
+   - recorded PASS/FAIL status;
+   - explicit `adapter_error` state;
 2. V2 execution evidence whose `evidence_ref` points back to the exact run manifest and case.
 
-The Stable release validator resolves every exact-target `evidence_ref` and fails closed if the run manifest, Framework revision, adapter identity/revision, case identity, status, or required behavioral case set do not agree. Supplying a `harness_only` row as exact-target evidence is unexpected evidence and does not satisfy the gate.
+Digest-only run manifests are not sufficient for V2 Stable because a later reviewer cannot reconstruct the scorer result from a digest alone.
 
-The command itself is never retained; only its SHA-256 digest is stored, so credentials must remain in the target runtime's normal secret/configuration boundary and must not be embedded in the adapter command.
+The Stable/readiness validators resolve every exact-target `evidence_ref`, load the corresponding published behavioral case, revalidate the retained adapter response using the same authoritative eval runner, rerun every published scorer, and compare the recomputed status with both the run manifest and execution-evidence row. They fail closed if the retained response digest, Framework revision, adapter identity/revision, case identity, scorer result, status, or required behavioral case set do not agree.
+
+Supplying a `harness_only` row as exact-target evidence is invalid and does not satisfy the gate.
+
+The adapter command itself is never retained; only its SHA-256 digest is stored. Credentials must remain in the target runtime's normal secret/configuration boundary and must not be embedded in the adapter command.
 
 Example shape:
 
