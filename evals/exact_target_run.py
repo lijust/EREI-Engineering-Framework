@@ -53,6 +53,37 @@ def _command_digest(command: str) -> str:
     return hashlib.sha256(command.encode("utf-8")).hexdigest()
 
 
+def _blind_id(prefix: str, value: str) -> str:
+    digest = hashlib.sha256(value.encode("utf-8")).hexdigest()[:16]
+    return f"blind-{prefix}-{digest}"
+
+
+def _blinded_request(suite: dict[str, Any], case: dict[str, Any]) -> dict[str, Any]:
+    """Build the external-runtime request without scorer-derived identity hints.
+
+    Stable suite/case identities, tags and expectations remain inside the harness.
+    The adapter receives only opaque protocol IDs plus the declared artifact,
+    input and context needed to evaluate behavior.
+    """
+    suite_id = _text(suite.get("suite_id"), "suite_id")
+    case_id = _text(case.get("id"), "case_id")
+    artifact = _text(suite.get("artifact"), "artifact")
+    case_input = case.get("input")
+    context = case.get("context", {})
+    if not isinstance(case_input, dict):
+        raise ExactTargetRunError("case input must be an object")
+    if not isinstance(context, dict):
+        raise ExactTargetRunError("case context must be an object")
+    return {
+        "protocol_version": "1.0",
+        "suite_id": _blind_id("suite", suite_id),
+        "case_id": _blind_id("case", f"{suite_id}\0{case_id}"),
+        "artifact": artifact,
+        "input": case_input,
+        "context": context,
+    }
+
+
 def _validate_adapter_command(command: str) -> str:
     command = _text(command, "adapter command")
     normalized = command.replace("\\", "/").lower()
@@ -115,15 +146,7 @@ def run_suites(
         if not runner.suite_required_for_level(data, "exact_target_runtime"):
             continue
         for case in data["cases"]:
-            request = {
-                "protocol_version": "1.0",
-                "suite_id": data["suite_id"],
-                "case_id": case["id"],
-                "artifact": data["artifact"],
-                "input": case["input"],
-                "context": case.get("context", {}),
-                "tags": case.get("tags", []),
-            }
+            request = _blinded_request(data, case)
             try:
                 response = runner.call_adapter(command, request, timeout, case["expectations"])
                 scorer_results = [runner.score(expectation, response) for expectation in case["expectations"]]
