@@ -65,6 +65,9 @@ jobs:
       - name: Validate truthful assurance enforcement state
         run: python tools/assurance_enforcement.py security/ASSURANCE_ENFORCEMENT.json
 
+      - name: Report derived VNext Stable readiness
+        run: python tools/stable_readiness.py --repo-root .
+
       - name: Validate last Stable release manifest
         run: python tools/release_assurance.py releases/task-learning-review-v1.json --repo-root .
 
