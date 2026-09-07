@@ -67,12 +67,16 @@ class VNextExactTargetWorkflowTests(unittest.TestCase):
         self.assertIn("target/tools/build_exact_target_package_identity.py", self.text)
         self.assertIn('--repository "$GITHUB_REPOSITORY"', self.text)
         self.assertIn('--release-carrier-ref "$CARRIER_SHA"', self.text)
+        self.assertIn('--requested-cli-integrity "$COPILOT_CLI_INTEGRITY"', self.text)
         self.assertIn("evidence-package/runtime-identity.json", self.text)
         self.assertIn("digest-bound V2 runtime identity", self.text)
 
-    def test_model_runtime_is_bounded_and_version_pinned(self):
+    def test_model_runtime_is_bounded_version_and_integrity_pinned(self):
         self.assertIn("--model=gpt-5.4", self.text)
         self.assertIn("copilot_cli_version", self.text)
+        self.assertIn("copilot_cli_integrity", self.text)
+        self.assertIn("dist.integrity", self.text)
+        self.assertIn('copilot-package-integrity:${COPILOT_CLI_INTEGRITY}', self.text)
         self.assertIn('@github/copilot@${COPILOT_CLI_VERSION}', self.text)
         self.assertNotIn("--allow-all", self.lowered)
         self.assertNotIn("--yolo", self.lowered)
