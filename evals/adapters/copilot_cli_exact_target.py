@@ -214,9 +214,9 @@ def parse_copilot_jsonl(stdout: str) -> dict[str, Any]:
 
 def _copilot_environment(workspace: Path) -> dict[str, str]:
     source = os.environ
-    token = source.get("COPILOT_GITHUB_TOKEN") or source.get("GITHUB_TOKEN")
+    token = source.get("COPILOT_GITHUB_TOKEN")
     if not token:
-        raise CopilotExactTargetError("COPILOT_GITHUB_TOKEN or GITHUB_TOKEN is required")
+        raise CopilotExactTargetError("dedicated COPILOT_GITHUB_TOKEN is required; GITHUB_TOKEN fallback is forbidden")
     env = {key: source[key] for key in SAFE_INHERITED_ENV if key in source}
     env["COPILOT_GITHUB_TOKEN"] = token
     env["HOME"] = str(workspace)
