@@ -47,6 +47,13 @@ class VNextExactTargetWorkflowTests(unittest.TestCase):
         self.assertIn("Behavioral runtime cases: 43", self.text)
         self.assertIn("Harness-only cases sent to Copilot: 0", self.text)
 
+    def test_evidence_package_identity_is_built_from_frozen_target_tooling(self):
+        self.assertIn("target/tools/build_exact_target_package_identity.py", self.text)
+        self.assertIn('--repository "$GITHUB_REPOSITORY"', self.text)
+        self.assertIn('--release-carrier-ref "$CARRIER_SHA"', self.text)
+        self.assertIn("evidence-package/runtime-identity.json", self.text)
+        self.assertIn("digest-bound V2 runtime identity", self.text)
+
     def test_model_runtime_is_bounded_and_version_pinned(self):
         self.assertIn("--model=gpt-5.4", self.text)
         self.assertIn("copilot_cli_version", self.text)
