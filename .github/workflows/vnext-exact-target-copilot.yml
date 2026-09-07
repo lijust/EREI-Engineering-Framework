@@ -96,7 +96,7 @@ jobs:
         with:
           node-version: '24'
 
-      - name: Verify Copilot credential, version, and package integrity
+      - name: Verify Copilot credential, version, and registry integrity
         env:
           COPILOT_GITHUB_TOKEN: ${{ secrets.EREI_COPILOT_EXACT_TARGET_TOKEN }}
           COPILOT_CLI_VERSION: ${{ inputs.copilot_cli_version }}
@@ -118,15 +118,45 @@ jobs:
           fi
           registry_integrity="$(npm view "@github/copilot@${COPILOT_CLI_VERSION}" dist.integrity)"
           if [[ "$registry_integrity" != "$COPILOT_CLI_INTEGRITY" ]]; then
-            echo "Copilot package integrity mismatch for version ${COPILOT_CLI_VERSION}" >&2
+            echo "Copilot registry integrity mismatch for version ${COPILOT_CLI_VERSION}" >&2
             exit 2
           fi
-          echo "PASS: Copilot package version/integrity binding verified"
+          echo "PASS: Copilot registry version/integrity binding verified"
 
-      - name: Install pinned GitHub Copilot CLI
+      - name: Fetch and byte-verify pinned Copilot CLI tarball
+        id: copilot_package
         env:
           COPILOT_CLI_VERSION: ${{ inputs.copilot_cli_version }}
-        run: npm install -g "@github/copilot@${COPILOT_CLI_VERSION}"
+          COPILOT_CLI_INTEGRITY: ${{ inputs.copilot_cli_integrity }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p copilot-package
+          cd copilot-package
+          npm pack "@github/copilot@${COPILOT_CLI_VERSION}" --json > pack.json
+          node <<'NODE'
+          const crypto = require('crypto');
+          const fs = require('fs');
+          const pack = JSON.parse(fs.readFileSync('pack.json', 'utf8'));
+          if (!Array.isArray(pack) || pack.length !== 1 || typeof pack[0].filename !== 'string') {
+            throw new Error('npm pack did not return exactly one tarball filename');
+          }
+          const filename = pack[0].filename;
+          const bytes = fs.readFileSync(filename);
+          const actual = 'sha512-' + crypto.createHash('sha512').update(bytes).digest('base64');
+          const expected = process.env.COPILOT_CLI_INTEGRITY;
+          if (actual !== expected) {
+            throw new Error(`downloaded Copilot tarball integrity mismatch: expected=${expected} actual=${actual}`);
+          }
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `tarball=${filename}\n`);
+          console.log(`PASS: byte-verified Copilot tarball ${filename}`);
+          NODE
+
+      - name: Install byte-verified GitHub Copilot CLI tarball
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install -g "./copilot-package/${{ steps.copilot_package.outputs.tarball }}"
 
       - name: Record runtime identity
         id: runtime
@@ -255,6 +285,7 @@ jobs:
             echo '- Model: `gpt-5.4`'
             echo "- Requested Copilot CLI: \`$COPILOT_CLI_VERSION\`"
             echo "- Copilot npm integrity: \`$COPILOT_CLI_INTEGRITY\`"
+            echo '- Copilot installation source: byte-verified local npm tarball'
             echo '- Evidence package: digest-bound V2 runtime identity + reconstructible run manifest + execution evidence'
             echo '- Governed release import retains all three package files immutably'
             echo '- Repository mutation/commit/promotion: none'
