@@ -40,6 +40,25 @@ class PublishedSchemaContractTests(unittest.TestCase):
         self.assertEqual(condition["then"]["properties"]["response"]["type"], "null")
         self.assertEqual(condition["else"]["properties"]["response"]["type"], "object")
 
+    def test_exact_target_package_identity_schema_is_strict_v2(self):
+        schema = json.loads(Path("evals/exact-target-package-identity.schema.json").read_text(encoding="utf-8"))
+        self.assertEqual(schema["properties"]["schema_version"]["const"], 2)
+        self.assertFalse(schema["additionalProperties"])
+        required = {
+            "schema_version", "repository", "target_id", "framework_ref", "target_tree",
+            "release_carrier_ref", "adapter_id", "adapter_revision", "runtime_id",
+            "runtime_version", "requested_cli_version", "model", "github_run_id",
+            "github_run_attempt", "run_id", "run_manifest_path", "execution_evidence_path",
+            "run_manifest_sha256", "execution_evidence_sha256",
+        }
+        self.assertEqual(set(schema["required"]), required)
+        self.assertEqual(set(schema["properties"]), required)
+        self.assertEqual(schema["properties"]["repository"]["pattern"], "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
+        self.assertEqual(schema["properties"]["github_run_id"]["minimum"], 1)
+        self.assertEqual(schema["properties"]["github_run_attempt"]["minimum"], 1)
+        self.assertEqual(schema["properties"]["run_manifest_sha256"]["pattern"], "^[a-f0-9]{64}$")
+        self.assertEqual(schema["properties"]["execution_evidence_sha256"]["pattern"], "^[a-f0-9]{64}$")
+
 
 if __name__ == "__main__":
     unittest.main()
