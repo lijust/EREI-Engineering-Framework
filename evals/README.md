@@ -56,6 +56,16 @@ python evals/runner.py run evals/cases/impact-analysis.eval.json \
   --adapter "<adapter command>"
 ```
 
+Measure retained evidence at a specific assurance level:
+
+```bash
+python evals/runner.py coverage evals/cases \
+  --evidence evals/EXECUTION_EVIDENCE.json \
+  --minimum-level exact_target_runtime
+```
+
+At runtime assurance levels, suites declared `harness_only` are intentionally excluded from the required behavioral case set. See `EXACT_TARGET_EVIDENCE.md`.
+
 ## Exit codes
 
 - `0`: pass
@@ -69,7 +79,13 @@ Each `*.eval.json` contains:
 - `schema_version`
 - `suite_id`
 - `artifact`
+- `assurance_scope`
 - `cases[]`
+
+`assurance_scope` is one of:
+
+- `behavioral_runtime`: observable Framework behavior that must be evaluated by independent runtime evidence for managed/exact-target assurance;
+- `harness_only`: an eval-harness self-test that remains mandatory in reference-contract CI but must not be treated as external behavioral evidence.
 
 Each case contains:
 
@@ -84,7 +100,7 @@ See `schema/eval-case.schema.json`.
 
 See `adapters/PROTOCOL.md`.
 
-Adapters isolate runtime-specific behavior from EREI's canonical eval contract.
+Adapters isolate runtime-specific behavior from EREI's canonical eval contract. The adapter request contains the artifact identity and case input/context/tags; scorer expectations remain in the harness and are not part of the adapter request.
 
 ## Scoring philosophy
 
@@ -115,6 +131,4 @@ Migration policy:
 
 ## CI
 
-The runner is intentionally CLI-first and returns stable exit codes so GitHub Actions or any other CI system can call it later without changing the canonical eval format.
-
-Adding a CI workflow is a separate release/integration decision.
+The aggregate `Framework Assurance Gate` validates every published suite and executes all 44 current cases at reference-contract level. Independent exact-target evidence is a separate release gate over the 43 current `behavioral_runtime` cases; `harness-smoke/SMOKE-001` remains a harness-only self-test and is never counted as external behavioral evidence.
