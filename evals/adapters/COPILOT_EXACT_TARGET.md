@@ -26,27 +26,23 @@ For routing-sensitive `skills/impact-analysis` evaluation, the adapter stages on
 
 ## Trace truthfulness
 
-The adapter must never synthesize tool or skill traces from the eval artifact declaration. Routing evidence is accepted only from observed Copilot runtime events such as `skill.invoked`. The normalized eval trace is derived from those runtime events.
+The adapter must never synthesize tool or skill traces from the eval artifact declaration. Routing evidence is accepted only from Copilot JSONL runtime events such as `skill.invoked`. The normalized eval trace is derived from those observed runtime events.
 
-If a positive trace expectation exists and the runtime emits no matching invocation event, the case fails. Mocked parser tests only validate the adapter contract; they are not runtime evidence. Exact event compatibility must be proven by the controlled external run before evidence is accepted.
+If a positive trace expectation exists and the runtime emits no matching invocation event, the case fails.
 
 ## Runtime isolation
 
 Each case runs in a fresh temporary workspace and fresh Copilot home/cache. Direct semantic mode exposes no effective model tools. Routing mode exposes only the skill tool. Built-in MCPs, custom instructions, remote access/export, experimental behavior, auto-update, and interactive approval are disabled.
 
-The Copilot child process receives an allowlisted environment containing only basic process/network/certificate variables plus its Copilot token. Unrelated runner secrets are not inherited.
+The Copilot child process receives an allowlisted environment containing only basic process/network/certificate variables plus its Copilot PAT. Unrelated runner secrets are not inherited.
 
-## Authentication and runtime reproducibility
-
-This repository is personal-owned, so the controlled workflow requires the `EREI_COPILOT_EXACT_TARGET_TOKEN` repository secret containing a fine-grained token authorized for Copilot requests. The external model execution does not silently fall back to the workflow `GITHUB_TOKEN`.
-
-The manual workflow also requires an exact `copilot_cli_version` input and installs `@github/copilot@<exact-version>`. It records both the requested npm version and the CLI-reported runtime identity in the evidence package. Floating `latest`, semver ranges, and npm tags are rejected.
-
-The model identifier is fixed to `gpt-5.4`. The provider may evolve the hosted model behind that identifier, so the durable Actions run/attempt and execution timestamp remain part of the runtime evidence boundary.
+Because this repository is personal-account owned, the controlled workflow requires the dedicated `EREI_COPILOT_EXACT_TARGET_TOKEN` secret rather than silently falling back to the normal Actions `GITHUB_TOKEN`. The workflow also requires an exact `@github/copilot` npm version input and records the observed CLI version as runtime identity evidence; `latest` is not accepted for release evidence.
 
 ## Evidence production
 
 `.github/workflows/vnext-exact-target-copilot.yml` is manual-only and requires an exact frozen release carrier and validated `VNEXT_TARGET.json`. It checks out the exact target revision/tree, runs behavioral exact-target evidence, validates complete coverage, confirms only the two evidence outputs changed in the target checkout, and uploads an Actions artifact.
+
+The V2 run manifest retains each normalized adapter response in addition to its response digest and status. Stable/readiness validation must be able to reload the published case, validate the retained response, rerun the authoritative scorers, and reproduce the recorded PASS/FAIL result. Digest-only exact-target manifests are not sufficient for V2 Stable.
 
 The workflow does not commit, push, open a pull request, change approvals, or promote Stable. Evidence must later enter the frozen release closure through the governed immutable-evidence process.
 
