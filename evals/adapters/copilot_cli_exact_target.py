@@ -1,21 +1,6 @@
 #!/usr/bin/env python3
-"""Blind, read-only GitHub Copilot CLI adapter for exact-target Framework evals.
-
-The adapter receives the blinded Eval Adapter Protocol request on stdin. It resolves
-only the declared Framework artifact from an exact target checkout, embeds that
-artifact plus case input/context into the model prompt, and exposes no useful tools
-to the model. Scorer expectations, tags, real suite IDs and real case IDs never cross
-the adapter boundary.
-"""
 from __future__ import annotations
-
-import argparse
-import json
-import os
-import re
-import subprocess
-import sys
-import tempfile
+import argparse, json, os, re, subprocess, sys, tempfile
 from pathlib import Path
 from typing import Any
 
@@ -32,23 +17,20 @@ SAFE_INHERITED_ENV = {
     "HTTPS_PROXY", "HTTP_PROXY", "NO_PROXY",
     "SSL_CERT_FILE", "SSL_CERT_DIR", "NODE_EXTRA_CA_CERTS",
 }
-
+ROUTING_SKILLS = {"skills/impact-analysis": "impact-analysis"}
 
 class CopilotExactTargetError(RuntimeError):
     pass
-
 
 def _object(value: Any, label: str) -> dict[str, Any]:
     if not isinstance(value, dict):
         raise CopilotExactTargetError(f"{label} must be an object")
     return value
 
-
 def _text(value: Any, label: str) -> str:
     if not isinstance(value, str) or not value.strip():
         raise CopilotExactTargetError(f"{label} must be a non-empty string")
     return value.strip()
-
 
 def validate_request(value: Any) -> dict[str, Any]:
     request = _object(value, "request")
@@ -66,7 +48,6 @@ def validate_request(value: Any) -> dict[str, Any]:
     _object(request["context"], "context")
     return request
 
-
 def _safe_component(root: Path, raw: str) -> Path:
     raw = _text(raw, "artifact component")
     normalized = raw.replace("\\", "/")
@@ -81,7 +62,6 @@ def _safe_component(root: Path, raw: str) -> Path:
     except ValueError as exc:
         raise CopilotExactTargetError(f"artifact escapes target root: {raw}") from exc
     return candidate
-
 
 def _read_utf8(path: Path, root: Path) -> str:
     try:
@@ -99,20 +79,16 @@ def _read_utf8(path: Path, root: Path) -> str:
     except (OSError, UnicodeError) as exc:
         raise CopilotExactTargetError(f"unable to read artifact file: {path}") from exc
 
-
 def resolve_artifact(root: Path, declaration: str, *, max_bytes: int = MAX_ARTIFACT_BYTES) -> list[tuple[str, str]]:
     root = root.resolve()
     if not root.is_dir():
         raise CopilotExactTargetError("target root must be an existing directory")
     components = [_text(item, "artifact component") for item in declaration.split(" + ")]
-    if not components:
-        raise CopilotExactTargetError("artifact declaration is empty")
     resolved: list[tuple[str, str]] = []
     total = 0
     seen: set[str] = set()
     for raw in components:
         candidate = _safe_component(root, raw)
-        files: list[Path]
         if candidate.is_file():
             files = [candidate]
         elif candidate.is_dir():
@@ -126,8 +102,7 @@ def resolve_artifact(root: Path, declaration: str, *, max_bytes: int = MAX_ARTIF
             if rel in seen:
                 continue
             text = _read_utf8(path, root)
-            size = len(text.encode("utf-8"))
-            total += size
+            total += len(text.encode("utf-8"))
             if total > max_bytes:
                 raise CopilotExactTargetError(f"artifact context exceeds {max_bytes} bytes")
             resolved.append((rel, text))
@@ -136,14 +111,33 @@ def resolve_artifact(root: Path, declaration: str, *, max_bytes: int = MAX_ARTIF
         raise CopilotExactTargetError("artifact resolution produced no context")
     return resolved
 
+def _routing_skill_name(artifact_declaration: str) -> str | None:
+    components = [item.strip().replace("\\", "/") for item in artifact_declaration.split(" + ")]
+    matches = [ROUTING_SKILLS[item] for item in components if item in ROUTING_SKILLS]
+    if not matches:
+        return None
+    if len(matches) != 1 or len(components) != 1:
+        raise CopilotExactTargetError("routing-sensitive exact-target artifacts must be declared as one canonical skill")
+    return matches[0]
 
-def build_prompt(artifacts: list[tuple[str, str]], case_input: dict[str, Any], context: dict[str, Any]) -> str:
-    sections = []
-    for path, text in artifacts:
-        sections.append(f"--- BEGIN FRAMEWORK ARTIFACT: {path} ---\n{text}\n--- END FRAMEWORK ARTIFACT: {path} ---")
-    artifact_text = "\n\n".join(sections)
-    input_text = json.dumps(case_input, sort_keys=True, ensure_ascii=False)
-    context_text = json.dumps(context, sort_keys=True, ensure_ascii=False)
+def stage_routing_skill(target_root: Path, workspace: Path, artifact_declaration: str) -> str:
+    skill_name = _routing_skill_name(artifact_declaration)
+    if skill_name is None:
+        raise CopilotExactTargetError("artifact is not configured for skill-routing mode")
+    source = _safe_component(target_root.resolve(), artifact_declaration)
+    if not source.is_dir():
+        raise CopilotExactTargetError("routing skill artifact must be a directory")
+    skill_text = _read_utf8(source / "SKILL.md", target_root.resolve())
+    target_dir = workspace / ".github" / "skills" / skill_name
+    target_dir.mkdir(parents=True, exist_ok=False)
+    (target_dir / "SKILL.md").write_text(skill_text, encoding="utf-8")
+    return skill_name
+
+def build_direct_prompt(artifacts: list[tuple[str, str]], case_input: dict[str, Any], context: dict[str, Any]) -> str:
+    artifact_text = "\n\n".join(
+        f"--- BEGIN FRAMEWORK ARTIFACT: {path} ---\n{text}\n--- END FRAMEWORK ARTIFACT: {path} ---"
+        for path, text in artifacts
+    )
     return (
         "You are evaluating the behavior required by the supplied EREI Engineering Framework artifact.\n"
         "Use only the supplied Framework artifact, INPUT, and CONTEXT. Do not use outside knowledge, web access, repository files, hidden assumptions, or unstated scorer criteria.\n"
@@ -151,29 +145,24 @@ def build_prompt(artifacts: list[tuple[str, str]], case_input: dict[str, Any], c
         "Return exactly one JSON object and no markdown or commentary, with this shape:\n"
         '{"output":"concise Framework-grounded answer","metadata":{"risk":"L0|L1|L2|L3"}}\n'
         "Classify risk conservatively from the artifact and request. Do not expose private chain-of-thought.\n\n"
-        f"{artifact_text}\n\nINPUT:\n{input_text}\n\nCONTEXT:\n{context_text}\n"
+        f"{artifact_text}\n\nINPUT:\n{json.dumps(case_input, sort_keys=True, ensure_ascii=False)}\n\n"
+        f"CONTEXT:\n{json.dumps(context, sort_keys=True, ensure_ascii=False)}\n"
     )
 
+def build_routing_prompt(skill_name: str, case_input: dict[str, Any], context: dict[str, Any]) -> str:
+    return (
+        "Evaluate the engineering request under the EREI Engineering Framework.\n"
+        "A project skill is available to you. Decide from the request itself whether that skill is relevant; do not invoke it merely because it exists. Use no outside knowledge, web access, hidden assumptions, or unstated scorer criteria.\n"
+        "If the skill is relevant, invoke it through the skill tool before answering. If it is not relevant, answer proportionally without inventing a skill invocation.\n"
+        "Return exactly one JSON object and no markdown or commentary, with this shape:\n"
+        '{"output":"concise Framework-grounded answer","metadata":{"risk":"L0|L1|L2|L3"}}\n'
+        "Do not expose private chain-of-thought.\n\n"
+        f"AVAILABLE FRAMEWORK SKILL NAME: {skill_name}\n"
+        f"INPUT:\n{json.dumps(case_input, sort_keys=True, ensure_ascii=False)}\n\n"
+        f"CONTEXT:\n{json.dumps(context, sort_keys=True, ensure_ascii=False)}\n"
+    )
 
-def parse_copilot_jsonl(stdout: str) -> dict[str, Any]:
-    messages: list[str] = []
-    for index, raw in enumerate(stdout.splitlines(), start=1):
-        if not raw.strip():
-            continue
-        try:
-            event = json.loads(raw)
-        except json.JSONDecodeError as exc:
-            raise CopilotExactTargetError(f"Copilot JSONL line {index} is invalid JSON") from exc
-        if not isinstance(event, dict):
-            raise CopilotExactTargetError(f"Copilot JSONL line {index} must be an object")
-        if event.get("type") == "assistant.message":
-            data = event.get("data")
-            if not isinstance(data, dict) or not isinstance(data.get("content"), str) or not data["content"].strip():
-                raise CopilotExactTargetError("assistant.message event requires non-empty data.content")
-            messages.append(data["content"].strip())
-    if len(messages) != 1:
-        raise CopilotExactTargetError(f"expected exactly one assistant.message event, got {len(messages)}")
-    content = messages[0]
+def _parse_final_json(content: str) -> dict[str, Any]:
     fence = re.fullmatch(r"```(?:json)?\s*(.*?)\s*```", content, flags=re.DOTALL | re.IGNORECASE)
     if fence:
         content = fence.group(1).strip()
@@ -189,14 +178,40 @@ def parse_copilot_jsonl(stdout: str) -> dict[str, Any]:
         raise CopilotExactTargetError("Copilot metadata must contain exactly risk=L0|L1|L2|L3")
     return {"output": output, "metadata": {"risk": metadata["risk"]}}
 
-
-def invocation_trace(artifact_declaration: str) -> list[dict[str, str]]:
-    components = [item.strip().replace("\\", "/") for item in artifact_declaration.split(" + ")]
-    trace: list[dict[str, str]] = []
-    if any(item == "skills/impact-analysis" or item.startswith("skills/impact-analysis/") for item in components):
-        trace.append({"type": "tool", "name": "impact-analysis"})
-    return trace
-
+def parse_copilot_jsonl(stdout: str) -> dict[str, Any]:
+    final_messages: list[str] = []
+    invoked_skills: list[str] = []
+    for index, raw in enumerate(stdout.splitlines(), start=1):
+        if not raw.strip():
+            continue
+        try:
+            event = json.loads(raw)
+        except json.JSONDecodeError as exc:
+            raise CopilotExactTargetError(f"Copilot JSONL line {index} is invalid JSON") from exc
+        if not isinstance(event, dict):
+            raise CopilotExactTargetError(f"Copilot JSONL line {index} must be an object")
+        event_type = event.get("type")
+        data = event.get("data")
+        if event_type == "assistant.message":
+            if not isinstance(data, dict):
+                raise CopilotExactTargetError("assistant.message event requires object data")
+            content = data.get("content")
+            if content is not None and not isinstance(content, str):
+                raise CopilotExactTargetError("assistant.message data.content must be a string when present")
+            tool_requests = data.get("toolRequests", [])
+            if tool_requests is not None and not isinstance(tool_requests, list):
+                raise CopilotExactTargetError("assistant.message data.toolRequests must be an array")
+            if isinstance(content, str) and content.strip() and not tool_requests:
+                final_messages.append(content.strip())
+        elif event_type == "skill.invoked":
+            if not isinstance(data, dict):
+                raise CopilotExactTargetError("skill.invoked event requires object data")
+            invoked_skills.append(_text(data.get("name"), "skill.invoked name"))
+    if len(final_messages) != 1:
+        raise CopilotExactTargetError(f"expected exactly one final assistant.message event, got {len(final_messages)}")
+    response = _parse_final_json(final_messages[0])
+    response["trace"] = [{"type": "tool", "name": name} for name in invoked_skills]
+    return response
 
 def _copilot_environment(workspace: Path) -> dict[str, str]:
     source = os.environ
@@ -214,58 +229,45 @@ def _copilot_environment(workspace: Path) -> dict[str, str]:
     env["GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP"] = "false"
     return env
 
-
-def invoke_copilot(prompt: str, *, model: str, copilot_bin: str, timeout: float) -> dict[str, Any]:
+def invoke_copilot(prompt: str, *, model: str, copilot_bin: str, timeout: float, workspace: Path, routing_mode: bool) -> dict[str, Any]:
     model = _text(model, "model")
     copilot_bin = _text(copilot_bin, "copilot binary")
     if timeout <= 0:
         raise CopilotExactTargetError("timeout must be > 0")
+    available_tools = "skill" if routing_mode else "ask_user"
+    args = [
+        copilot_bin, "-p", prompt, "--output-format=json", f"--model={model}",
+        "--no-ask-user", "--no-auto-update", "--no-custom-instructions",
+        "--disable-builtin-mcps", "--no-remote", "--no-remote-export",
+        "--no-experimental", "--no-banner", "--no-color",
+        f"--available-tools={available_tools}", "-C", str(workspace),
+    ]
+    try:
+        process = subprocess.run(
+            args, text=True, capture_output=True, timeout=timeout, check=False,
+            env=_copilot_environment(workspace),
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        raise CopilotExactTargetError(f"Copilot CLI execution failed: {exc}") from exc
+    if process.returncode != 0:
+        raise CopilotExactTargetError(f"Copilot CLI exited {process.returncode}: {process.stderr.strip()[:1000]}")
+    return parse_copilot_jsonl(process.stdout)
+
+def run_adapter(request: dict[str, Any], *, target_root: Path, model: str, copilot_bin: str, timeout: float) -> dict[str, Any]:
+    request = validate_request(request)
+    target_root = target_root.resolve()
+    routing_skill = _routing_skill_name(request["artifact"])
     with tempfile.TemporaryDirectory(prefix="erei-copilot-exact-target-") as tmp:
         workspace = Path(tmp)
         (workspace / "copilot-home").mkdir()
         (workspace / "copilot-cache").mkdir()
-        args = [
-            copilot_bin,
-            "-p", prompt,
-            "--output-format=json",
-            f"--model={model}",
-            "--no-ask-user",
-            "--no-auto-update",
-            "--no-custom-instructions",
-            "--disable-builtin-mcps",
-            "--no-remote",
-            "--no-remote-export",
-            "--no-experimental",
-            "--no-banner",
-            "--no-color",
-            "--available-tools=ask_user",
-            "-C", str(workspace),
-        ]
-        try:
-            process = subprocess.run(
-                args,
-                text=True,
-                capture_output=True,
-                timeout=timeout,
-                check=False,
-                env=_copilot_environment(workspace),
-            )
-        except (OSError, subprocess.TimeoutExpired) as exc:
-            raise CopilotExactTargetError(f"Copilot CLI execution failed: {exc}") from exc
-        if process.returncode != 0:
-            detail = process.stderr.strip()
-            raise CopilotExactTargetError(f"Copilot CLI exited {process.returncode}: {detail[:1000]}")
-        return parse_copilot_jsonl(process.stdout)
-
-
-def run_adapter(request: dict[str, Any], *, target_root: Path, model: str, copilot_bin: str, timeout: float) -> dict[str, Any]:
-    request = validate_request(request)
-    artifacts = resolve_artifact(target_root, request["artifact"])
-    prompt = build_prompt(artifacts, request["input"], request["context"])
-    response = invoke_copilot(prompt, model=model, copilot_bin=copilot_bin, timeout=timeout)
-    response["trace"] = invocation_trace(request["artifact"])
-    return response
-
+        if routing_skill is not None:
+            staged_name = stage_routing_skill(target_root, workspace, request["artifact"])
+            prompt = build_routing_prompt(staged_name, request["input"], request["context"])
+            return invoke_copilot(prompt, model=model, copilot_bin=copilot_bin, timeout=timeout, workspace=workspace, routing_mode=True)
+        artifacts = resolve_artifact(target_root, request["artifact"])
+        prompt = build_direct_prompt(artifacts, request["input"], request["context"])
+        return invoke_copilot(prompt, model=model, copilot_bin=copilot_bin, timeout=timeout, workspace=workspace, routing_mode=False)
 
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser()
@@ -276,19 +278,12 @@ def main(argv=None) -> int:
     args = parser.parse_args(argv)
     try:
         request = json.loads(sys.stdin.read())
-        response = run_adapter(
-            request,
-            target_root=Path(args.target_root),
-            model=args.model,
-            copilot_bin=args.copilot_bin,
-            timeout=args.timeout,
-        )
+        response = run_adapter(request, target_root=Path(args.target_root), model=args.model, copilot_bin=args.copilot_bin, timeout=args.timeout)
     except (json.JSONDecodeError, CopilotExactTargetError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 2
     print(json.dumps(response, sort_keys=True, ensure_ascii=False))
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())
