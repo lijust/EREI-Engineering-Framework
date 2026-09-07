@@ -24,6 +24,7 @@ SHA40_RE = re.compile(r"^[a-f0-9]{40}$")
 SHA256_RE = re.compile(r"^[a-f0-9]{64}$")
 RUN_ID_RE = re.compile(r"^ETR-[0-9]{8}T[0-9]{6}Z-[A-F0-9]{8}$")
 SEMVER_RE = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+(?:[-.][0-9A-Za-z.-]+)?$")
+REPOSITORY_RE = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
 PACKAGE_FILES = {
     "identity": "runtime-identity.json",
     "manifest": "exact-target-run.json",
@@ -121,7 +122,7 @@ def validate_runtime_identity(data: Any) -> dict[str, Any]:
     if not isinstance(data, dict):
         raise ExactTargetImportError("runtime identity must be an object")
     fields = {
-        "schema_version", "target_id", "framework_ref", "target_tree", "release_carrier_ref",
+        "schema_version", "repository", "target_id", "framework_ref", "target_tree", "release_carrier_ref",
         "adapter_id", "adapter_revision", "runtime_id", "runtime_version", "requested_cli_version",
         "model", "github_run_id", "github_run_attempt", "run_id", "run_manifest_path",
         "execution_evidence_path", "run_manifest_sha256", "execution_evidence_sha256",
@@ -129,6 +130,9 @@ def validate_runtime_identity(data: Any) -> dict[str, Any]:
     _exact_fields(data, fields, "runtime identity")
     if data["schema_version"] != 2:
         raise ExactTargetImportError("runtime identity schema_version must be 2")
+    repository = _text(data["repository"], "repository")
+    if not REPOSITORY_RE.fullmatch(repository):
+        raise ExactTargetImportError("repository must use owner/name format")
     _text(data["target_id"], "target_id")
     _sha40(data["framework_ref"], "framework_ref")
     _sha40(data["target_tree"], "target_tree")
@@ -136,10 +140,12 @@ def validate_runtime_identity(data: Any) -> dict[str, Any]:
     _text(data["adapter_id"], "adapter_id")
     _sha40(data["adapter_revision"], "adapter_revision")
     _text(data["runtime_id"], "runtime_id")
-    _text(data["runtime_version"], "runtime_version")
+    runtime_version = _text(data["runtime_version"], "runtime_version")
     version = _text(data["requested_cli_version"], "requested_cli_version")
     if not SEMVER_RE.fullmatch(version):
         raise ExactTargetImportError("requested_cli_version must be an exact semantic version")
+    if version not in runtime_version:
+        raise ExactTargetImportError("runtime_version must contain the requested CLI version")
     _text(data["model"], "model")
     _int(data["github_run_id"], "github_run_id")
     _int(data["github_run_attempt"], "github_run_attempt")
@@ -181,6 +187,8 @@ def validate_package(repo_root: Path, package_dir: Path) -> dict[str, Any]:
         raise ExactTargetImportError("runtime identity framework_ref does not match frozen release target")
     if identity["target_tree"] != target["target_tree"]:
         raise ExactTargetImportError("runtime identity target_tree does not match frozen release target")
+    if identity["adapter_revision"] != target["framework_ref"]:
+        raise ExactTargetImportError("vendored adapter revision must equal the frozen target ref")
     if _git_head(repo_root) != identity["release_carrier_ref"]:
         raise ExactTargetImportError("import must run at the exact release carrier used to execute the runtime evidence")
 
@@ -202,6 +210,13 @@ def validate_package(repo_root: Path, package_dir: Path) -> dict[str, Any]:
         raise ExactTargetImportError("run manifest runtime id does not match runtime identity")
     if manifest["runtime"]["version"] != identity["runtime_version"]:
         raise ExactTargetImportError("run manifest runtime version does not match runtime identity")
+    expected_runtime_evidence = {
+        f"github-actions:{identity['repository']}/run/{identity['github_run_id']}/attempt/{identity['github_run_attempt']}",
+        f"release-carrier:{identity['release_carrier_ref']}",
+        f"copilot-model:{identity['model']}",
+    }
+    if set(manifest["runtime"]["identity_evidence"]) != expected_runtime_evidence:
+        raise ExactTargetImportError("run manifest runtime identity evidence does not match package provenance")
 
     runner = _load_runner(repo_root)
     evidence = runner.validate_execution_evidence(_load_json(evidence_package, "execution evidence"))
