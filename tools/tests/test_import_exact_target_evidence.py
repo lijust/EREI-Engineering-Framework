@@ -106,6 +106,7 @@ class ExactTargetEvidenceImportTests(unittest.TestCase):
         run_id = "ETR-20260907T160100Z-A1B2C3D4"
         manifest_path = "evals/exact-target-runs/copilot-123-1.json"
         evidence_path = "evals/EXECUTION_EVIDENCE.copilot-123-1.json"
+        identity_path = "evals/exact-target-runs/copilot-123-1.identity.json"
         manifest = {
             "schema_version": 2,
             "run_id": run_id,
@@ -168,27 +169,34 @@ class ExactTargetEvidenceImportTests(unittest.TestCase):
             github_run_attempt=1,
             run_manifest_path=manifest_path,
             execution_evidence_path=evidence_path,
+            runtime_identity_path=identity_path,
         )
         (self.package / "runtime-identity.json").write_text(
             json.dumps(identity, indent=2, sort_keys=True) + "\n", encoding="utf-8"
         )
 
-    def test_valid_package_is_imported_only_to_governed_destinations(self):
+    def test_valid_package_imports_all_three_governed_files(self):
         result = import_exact_target_evidence.import_package(self.repo, self.package)
         self.assertEqual(result["case_count"], 1)
         manifest = self.repo / result["manifest_destination"]
         evidence = self.repo / result["evidence_destination"]
+        identity = self.repo / result["identity_destination"]
         self.assertTrue(manifest.is_file())
         self.assertTrue(evidence.is_file())
+        self.assertTrue(identity.is_file())
         self.assertEqual(manifest.read_bytes(), (self.package / "exact-target-run.json").read_bytes())
         self.assertEqual(evidence.read_bytes(), (self.package / "execution-evidence.json").read_bytes())
+        self.assertEqual(identity.read_bytes(), (self.package / "runtime-identity.json").read_bytes())
+        row = json.loads(evidence.read_text(encoding="utf-8"))["executions"][0]
+        exact_target_evidence.validate_binding(self.repo, self.target_ref, row)
 
-    def test_hash_tamper_is_rejected_before_write(self):
+    def test_hash_tamper_is_rejected_before_any_write(self):
         path = self.package / "execution-evidence.json"
         path.write_text(path.read_text(encoding="utf-8") + "\n", encoding="utf-8")
         with self.assertRaisesRegex(import_exact_target_evidence.ExactTargetImportError, "digest mismatch"):
             import_exact_target_evidence.validate_package(self.repo, self.package)
         self.assertFalse((self.repo / "evals" / "exact-target-runs" / "copilot-123-1.json").exists())
+        self.assertFalse((self.repo / "evals" / "exact-target-runs" / "copilot-123-1.identity.json").exists())
 
     def test_carrier_drift_is_rejected(self):
         self._write("notes.txt", "carrier moved\n")
@@ -196,8 +204,9 @@ class ExactTargetEvidenceImportTests(unittest.TestCase):
         with self.assertRaisesRegex(import_exact_target_evidence.ExactTargetImportError, "exact release carrier"):
             import_exact_target_evidence.validate_package(self.repo, self.package)
 
-    def test_existing_destination_is_never_overwritten(self):
-        import_exact_target_evidence.import_package(self.repo, self.package)
+    def test_existing_any_destination_prevents_import(self):
+        result = import_exact_target_evidence.import_package(self.repo, self.package)
+        self.assertTrue((self.repo / result["identity_destination"]).exists())
         with self.assertRaisesRegex(import_exact_target_evidence.ExactTargetImportError, "destination already exists"):
             import_exact_target_evidence.validate_package(self.repo, self.package)
 
@@ -205,15 +214,17 @@ class ExactTargetEvidenceImportTests(unittest.TestCase):
         identity_path = self.package / "runtime-identity.json"
         identity = json.loads(identity_path.read_text(encoding="utf-8"))
         identity["unexpected"] = True
+        identity_path.write_text(json.dumps(identity), encoding="utf-8")
         with self.assertRaisesRegex(import_exact_target_evidence.ExactTargetImportError, "fields mismatch"):
-            import_exact_target_evidence.validate_runtime_identity(identity)
+            import_exact_target_evidence.validate_package(self.repo, self.package)
 
     def test_runtime_identity_rejects_invalid_cli_integrity(self):
         identity_path = self.package / "runtime-identity.json"
         identity = json.loads(identity_path.read_text(encoding="utf-8"))
         identity["requested_cli_integrity"] = "sha256-not-allowed"
+        identity_path.write_text(json.dumps(identity), encoding="utf-8")
         with self.assertRaisesRegex(import_exact_target_evidence.ExactTargetImportError, "sha512"):
-            import_exact_target_evidence.validate_runtime_identity(identity)
+            import_exact_target_evidence.validate_package(self.repo, self.package)
 
     def test_runtime_identity_integrity_must_match_manifest_provenance(self):
         identity_path = self.package / "runtime-identity.json"
@@ -231,53 +242,50 @@ class ExactTargetEvidenceImportTests(unittest.TestCase):
         with self.assertRaisesRegex(import_exact_target_evidence.ExactTargetImportError, "runtime identity evidence"):
             import_exact_target_evidence.validate_package(self.repo, self.package)
 
-    def test_exclusive_write_pair_rolls_back_first_reservation_if_second_destination_exists(self):
-        scratch = Path(self.tmp.name) / "write-pair-existing"
-        source_one = scratch / "source-one"
-        source_two = scratch / "source-two"
-        destination_one = scratch / "dest" / "one.json"
-        destination_two = scratch / "dest" / "two.json"
+    def test_runtime_identity_destination_must_be_derived_from_manifest(self):
+        identity_path = self.package / "runtime-identity.json"
+        identity = json.loads(identity_path.read_text(encoding="utf-8"))
+        identity["runtime_identity_path"] = "evals/exact-target-runs/other.identity.json"
+        identity_path.write_text(json.dumps(identity), encoding="utf-8")
+        with self.assertRaisesRegex(import_exact_target_evidence.ExactTargetImportError, "must equal"):
+            import_exact_target_evidence.validate_package(self.repo, self.package)
+
+    def test_exclusive_write_set_rolls_back_prior_reservations_if_later_destination_exists(self):
+        scratch = Path(self.tmp.name) / "write-set-existing"
+        sources = [scratch / f"source-{index}" for index in range(3)]
+        destinations = [scratch / "dest" / f"{index}.json" for index in range(3)]
         scratch.mkdir(parents=True)
-        source_one.write_bytes(b"one")
-        source_two.write_bytes(b"two")
-        destination_two.parent.mkdir(parents=True)
-        destination_two.write_bytes(b"existing")
+        for index, source in enumerate(sources):
+            source.write_bytes(str(index).encode())
+        destinations[2].parent.mkdir(parents=True)
+        destinations[2].write_bytes(b"existing")
 
         with self.assertRaisesRegex(import_exact_target_evidence.ExactTargetImportError, "already exists"):
-            import_exact_target_evidence._exclusive_write_pair((
-                (source_one, destination_one),
-                (source_two, destination_two),
-            ))
+            import_exact_target_evidence._exclusive_write_set(tuple(zip(sources, destinations)))
 
-        self.assertFalse(destination_one.exists())
-        self.assertEqual(destination_two.read_bytes(), b"existing")
+        self.assertFalse(destinations[0].exists())
+        self.assertFalse(destinations[1].exists())
+        self.assertEqual(destinations[2].read_bytes(), b"existing")
 
-    def test_exclusive_write_pair_rolls_back_both_reservations_on_source_failure(self):
-        scratch = Path(self.tmp.name) / "write-pair-failure"
-        source_one = scratch / "source-one"
-        source_two = scratch / "source-two"
-        destination_one = scratch / "dest" / "one.json"
-        destination_two = scratch / "dest" / "two.json"
+    def test_exclusive_write_set_rolls_back_all_three_on_source_failure(self):
+        scratch = Path(self.tmp.name) / "write-set-failure"
+        sources = [scratch / f"source-{index}" for index in range(3)]
+        destinations = [scratch / "dest" / f"{index}.json" for index in range(3)]
         scratch.mkdir(parents=True)
-        source_one.write_bytes(b"one")
-        source_two.write_bytes(b"two")
-
+        for index, source in enumerate(sources):
+            source.write_bytes(str(index).encode())
         original_read_bytes = Path.read_bytes
 
         def failing_read(path):
-            if path == source_two:
-                raise OSError("simulated second-source failure")
+            if path == sources[2]:
+                raise OSError("simulated third-source failure")
             return original_read_bytes(path)
 
         with mock.patch.object(Path, "read_bytes", failing_read):
             with self.assertRaisesRegex(import_exact_target_evidence.ExactTargetImportError, "rolled back"):
-                import_exact_target_evidence._exclusive_write_pair((
-                    (source_one, destination_one),
-                    (source_two, destination_two),
-                ))
+                import_exact_target_evidence._exclusive_write_set(tuple(zip(sources, destinations)))
 
-        self.assertFalse(destination_one.exists())
-        self.assertFalse(destination_two.exists())
+        self.assertTrue(all(not destination.exists() for destination in destinations))
 
 
 if __name__ == "__main__":
