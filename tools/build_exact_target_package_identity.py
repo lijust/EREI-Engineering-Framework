@@ -34,6 +34,7 @@ def _digest(path: Path) -> str:
 def build_identity(
     *,
     package_dir: Path,
+    repository: str,
     target_id: str,
     framework_ref: str,
     target_tree: str,
@@ -55,6 +56,7 @@ def build_identity(
     manifest = _load(manifest_file)
     payload = {
         "schema_version": 2,
+        "repository": repository,
         "target_id": target_id,
         "framework_ref": framework_ref,
         "target_tree": target_tree,
@@ -79,6 +81,7 @@ def build_identity(
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--package-dir", required=True)
+    parser.add_argument("--repository", required=True)
     parser.add_argument("--target-id", required=True)
     parser.add_argument("--framework-ref", required=True)
     parser.add_argument("--target-tree", required=True)
@@ -98,6 +101,7 @@ def main(argv=None) -> int:
     try:
         payload = build_identity(
             package_dir=Path(args.package_dir),
+            repository=args.repository,
             target_id=args.target_id,
             framework_ref=args.framework_ref,
             target_tree=args.target_tree,
