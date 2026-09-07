@@ -137,7 +137,9 @@ class ReleaseAssuranceTests(unittest.TestCase):
             return data
 
         @staticmethod
-        def _expected_cases(paths):
+        def _expected_cases(paths, minimum_level=None):
+            if minimum_level not in {None, "exact_target_runtime"}:
+                raise AssertionError(f"unexpected minimum_level={minimum_level}")
             return {("suite", "case")}
 
         @staticmethod
