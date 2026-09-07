@@ -31,10 +31,15 @@ The controlled Copilot workflow packages those two files with a third **V2 runti
 - exact release-carrier ref used to run the evidence;
 - adapter/runtime/model identities;
 - exact GitHub Actions run id and attempt;
-- requested pinned CLI version;
+- requested exact CLI version;
+- requested npm `dist.integrity` sha512 SRI for that CLI package;
 - original governed destination paths;
 - run id;
 - SHA-256 digests of both evidence files.
+
+Before installation, the controlled workflow compares `npm view @github/copilot@<version> dist.integrity` with the supplied exact SRI. A mismatch stops the run before any model call. The same SRI is retained in run-manifest runtime identity evidence and package identity, and the importer requires them to agree exactly.
+
+All external GitHub Actions in the controlled runtime workflow are pinned to exact commit SHAs rather than mutable major-version refs.
 
 Digest-only run manifests are not sufficient for V2 Stable because a later reviewer cannot reconstruct the scorer result from a digest alone.
 
@@ -57,7 +62,7 @@ python tools/import_exact_target_evidence.py \
   --validate-only
 ```
 
-The importer verifies the frozen `VNEXT_TARGET`, current carrier HEAD, package hashes, repository/run/attempt/carrier/model provenance, complete behavioral case set, exact assurance level, immutable destinations, retained response digests, and deterministic rescoring for every case using a temporary staging root. No release file is written during validation.
+The importer verifies the frozen `VNEXT_TARGET`, current carrier HEAD, package hashes, repository/run/attempt/carrier/model provenance, exact CLI version/package-integrity provenance, complete behavioral case set, exact assurance level, immutable destinations, retained response digests, and deterministic rescoring for every case using a temporary staging root. No release file is written during validation.
 
 Only after validation succeeds may the same tool write the two governed evidence files:
 
@@ -67,7 +72,7 @@ python tools/import_exact_target_evidence.py \
   --package-dir <downloaded-evidence-package>
 ```
 
-The importer writes only the original run-manifest and execution-evidence bytes to the destination paths bound in the package identity. It does not commit, push, modify `VNEXT_TARGET`, write approvals, alter enforcement state, or authorize promotion. Existing destination files are never overwritten. The subsequent evidence commit must still pass the release-closure CI; the closure validator rejects later rewrites of the evidence files.
+The importer reserves both destination paths exclusively before writing, writes/fsyncs the validated bytes, and rolls back both newly created files on handled partial-write failure. It does not commit, push, modify `VNEXT_TARGET`, write approvals, alter enforcement state, or authorize promotion. Existing destination files are never overwritten. The subsequent evidence commit must still pass the release-closure CI; the closure validator rejects later rewrites of the evidence files.
 
 ## Producer shape
 
