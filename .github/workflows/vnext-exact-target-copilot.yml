@@ -177,6 +177,19 @@ jobs:
           echo "copilot_version=$version" >> "$GITHUB_OUTPUT"
           printf '%s\n' "$version"
 
+      - name: Verify skill invocation telemetry transport
+        env:
+          COPILOT_GITHUB_TOKEN: ${{ secrets.EREI_COPILOT_EXACT_TARGET_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd target
+          python evals/adapters/copilot_cli_exact_target.py \
+            --target-root . \
+            --model=gpt-5.4 \
+            --timeout=120 \
+            --probe-skill-event skills/impact-analysis
+
       - name: Execute 43 behavioral cases against frozen target
         env:
           COPILOT_GITHUB_TOKEN: ${{ secrets.EREI_COPILOT_EXACT_TARGET_TOKEN }}
@@ -201,6 +214,7 @@ jobs:
             --runtime-evidence "release-carrier:${CARRIER_SHA}" \
             --runtime-evidence "copilot-model:gpt-5.4" \
             --runtime-evidence "copilot-package-integrity:${COPILOT_CLI_INTEGRITY}" \
+            --runtime-evidence "copilot-skill-event-transport:skill.invoked-v1" \
             --framework-ref "$TARGET_REF" \
             --manifest "$manifest" \
             --evidence "$evidence" \
@@ -286,6 +300,7 @@ jobs:
             echo "- Requested Copilot CLI: \`$COPILOT_CLI_VERSION\`"
             echo "- Copilot npm integrity: \`$COPILOT_CLI_INTEGRITY\`"
             echo '- Copilot installation source: byte-verified local npm tarball'
+            echo '- Skill invocation telemetry: `skill.invoked-v1` transport probe PASS required before evidence production'
             echo '- Evidence package: digest-bound V2 runtime identity + reconstructible run manifest + execution evidence'
             echo '- Governed release import retains all three package files immutably'
             echo '- Repository mutation/commit/promotion: none'
