@@ -16,10 +16,11 @@ class VNextExactTargetWorkflowTests(unittest.TestCase):
         self.assertIn("workflow_dispatch:", self.text)
         self.assertNotRegex(self.text, r"(?m)^\s{2}(push|pull_request|schedule):")
 
-    def test_permissions_are_read_only_except_copilot_requests(self):
+    def test_permissions_are_read_only_and_runtime_uses_pat(self):
         self.assertRegex(self.text, r"(?m)^permissions:\s*$")
         self.assertRegex(self.text, r"(?m)^\s{2}contents:\s*read\s*$")
-        self.assertRegex(self.text, r"(?m)^\s{2}copilot-requests:\s*write\s*$")
+        self.assertNotIn("copilot-requests: write", self.lowered)
+        self.assertIn("EREI_COPILOT_EXACT_TARGET_TOKEN", self.text)
         for forbidden in ("issues: write", "pull-requests: write", "actions: write", "checks: write", "statuses: write"):
             self.assertNotIn(forbidden, self.lowered)
 
@@ -46,9 +47,10 @@ class VNextExactTargetWorkflowTests(unittest.TestCase):
         self.assertIn("Behavioral runtime cases: 43", self.text)
         self.assertIn("Harness-only cases sent to Copilot: 0", self.text)
 
-    def test_model_runtime_is_bounded(self):
+    def test_model_runtime_is_bounded_and_version_pinned(self):
         self.assertIn("--model=gpt-5.4", self.text)
-        self.assertIn("copilot-requests: write", self.text)
+        self.assertIn("copilot_cli_version", self.text)
+        self.assertIn('@github/copilot@${COPILOT_CLI_VERSION}', self.text)
         self.assertNotIn("--allow-all", self.lowered)
         self.assertNotIn("--yolo", self.lowered)
 
