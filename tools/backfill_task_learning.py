@@ -170,7 +170,13 @@ def import_events(target: Path, source: Path) -> tuple[int, Path]:
     with _lock(learning_dir):
         existing = _read_jsonl(ledger)
         known = {item["fingerprint"] for item in existing}
-        additions = [item for item in incoming if item["fingerprint"] not in known]
+        additions: list[dict] = []
+        for item in incoming:
+            fingerprint = item["fingerprint"]
+            if fingerprint in known:
+                continue
+            additions.append(item)
+            known.add(fingerprint)
         _write_jsonl(ledger, existing + additions)
     return len(additions), ledger
 
