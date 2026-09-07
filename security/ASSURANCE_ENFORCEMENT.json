@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "repository": "lijust/EREI-Engineering-Framework",
+  "main_branch": "main",
+  "status": "candidate_control",
+  "server_enforcement": {
+    "branch_protection_enabled": false,
+    "required_status_checks_enforced": false,
+    "source": "github-api-branch-metadata"
+  },
+  "fallback": {
+    "mode": "controlled_release_v2",
+    "required_workflow": "Framework Assurance Gate",
+    "release_branch_prefix": "release/",
+    "exact_candidate_sha_required": true,
+    "release_assurance_contract_version": 2,
+    "architecture_approval_required": true,
+    "security_approval_required": true,
+    "exact_target_runtime_evidence_required": true,
+    "complete_prospective_cycle_required": true,
+    "equivalent_enforcement_verified": false,
+    "stable_promotion_policy": "blocked_until_server_or_equivalent_enforcement"
+  },
+  "evidence": [
+    "github-branch:main protected=false",
+    "github-commit:93eebafb87fcb6734550e214182950a19b901b3b",
+    "github-commit:72f03d2a905c38c88b40cc9b6639596fa1e1353f"
+  ],
+  "limitations": [
+    "CI cannot prevent a direct write to an unprotected main branch.",
+    "The controlled-release fallback reduces release risk but is not treated as server-enforced equivalence until independently verified and explicitly accepted."
+  ]
+}
