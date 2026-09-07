@@ -44,7 +44,7 @@
     },
     "requested_cli_integrity": {
       "type": "string",
-      "pattern": "^sha512-[A-Za-z0-9+/]+={0,2}$"
+      "pattern": "^sha512-[A-Za-z0-9+/]{86}==$"
     },
     "model": {"type": "string", "minLength": 1},
     "github_run_id": {"type": "integer", "minimum": 1},
