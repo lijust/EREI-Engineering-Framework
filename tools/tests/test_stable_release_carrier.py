@@ -1,0 +1,179 @@
+import json
+import subprocess
+import tempfile
+import unittest
+from pathlib import Path
+from unittest import mock
+
+from tools import stable_release_carrier as mod
+
+
+class StableReleaseCarrierTests(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.repo = Path(self.tmp.name)
+        self._git("init", "-q")
+        self._git("config", "user.email", "test@example.invalid")
+        self._git("config", "user.name", "EREI Test")
+        self._write("README.md", "target\n")
+        self.target = self._commit("target")
+        self.target_tree = self._git("rev-parse", f"{self.target}^{{tree}}")
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def _git(self, *args):
+        proc = subprocess.run(
+            ["git", "-C", str(self.repo), *args],
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        if proc.returncode != 0:
+            self.fail(f"git {' '.join(args)} failed: {proc.stderr}")
+        return proc.stdout.strip()
+
+    def _write(self, path, value):
+        full = self.repo / path
+        full.parent.mkdir(parents=True, exist_ok=True)
+        full.write_text(value if isinstance(value, str) else json.dumps(value, indent=2) + "\n", encoding="utf-8")
+
+    def _commit(self, message):
+        self._git("add", "-A")
+        self._git("commit", "-q", "-m", message)
+        return self._git("rev-parse", "HEAD")
+
+    def _target_manifest(self):
+        return {
+            "schema_version": 1,
+            "target_id": "vnext-rc9",
+            "status": "frozen_candidate",
+            "framework_ref": self.target,
+            "target_tree": self.target_tree,
+            "selected_at": "2026-09-07T12:00:00Z",
+            "source_branch": "main",
+            "assurance": {
+                "workflow": "Framework Assurance Gate",
+                "run_id": 123,
+                "event": "push",
+                "conclusion": "success",
+            },
+            "stable_baseline": {
+                "baseline": "task-learning-review-v1",
+                "framework_ref": mod.LEGACY_STABLE_REF,
+            },
+            "promotion_authorized": False,
+        }
+
+    def _build_v2_carrier(self, *, behavior_drift=False, rewrite_target=False):
+        self._write(mod.TARGET_MANIFEST, self._target_manifest())
+        self._commit("freeze target")
+        if rewrite_target:
+            target = self._target_manifest()
+            target["selected_at"] = "2026-09-07T12:01:00Z"
+            self._write(mod.TARGET_MANIFEST, target)
+            self._commit("rewrite target")
+        self._write("releases/approvals/architecture.json", {"kind": "architecture", "target": self.target})
+        approval_ref = self._commit("architecture approval")
+        self._write("releases/approvals/security.json", {"kind": "security", "target": self.target})
+        security_ref = self._commit("security approval")
+        if behavior_drift:
+            self._write("tools/forbidden-drift.txt", "drift\n")
+            self._commit("forbidden behavior drift")
+        stable = {
+            "schema_version": 1,
+            "assurance_contract_version": 2,
+            "release_id": "vnext-assurance-v2",
+            "baseline": "vnext-assurance-v2",
+            "status": "stable",
+            "framework_ref": self.target,
+            "released_at": "2026-09-07T12:02:00Z",
+            "capabilities": {"assurance": "stable-v2"},
+            "notes": "test carrier",
+            "approval_ref": approval_ref,
+            "security_review_ref": security_ref,
+            "minimum_eval_assurance_level": "exact_target_runtime",
+            "behavioral_eval_evidence": "evals/EXECUTION_EVIDENCE.vnext-rc9.json",
+            "prospective_learning_cycle": {
+                "capture_ref": "capture",
+                "review_ref": "review",
+                "feedback_ref": "feedback",
+                "improvement_ref": "improvement",
+                "adoption_ref": "adoption",
+                "measured_outcome_ref": "outcome",
+            },
+        }
+        self._write(mod.V2_STABLE_MANIFEST, stable)
+        carrier = self._commit("stable manifest")
+        return carrier
+
+    def test_v1_is_grandfathered_only_for_exact_last_stable(self):
+        manifest = {
+            "schema_version": 1,
+            "assurance_contract_version": 1,
+            "release_id": mod.LEGACY_STABLE_ID,
+            "baseline": mod.LEGACY_STABLE_ID,
+            "status": "stable",
+            "framework_ref": "f" * 40,
+            "released_at": "2026-09-01T00:00:00Z",
+            "capabilities": {"x": "stable"},
+            "notes": "forged",
+        }
+        with self.assertRaisesRegex(mod.StableCarrierError, "grandfathered only"):
+            mod._validate_legacy(mod.LEGACY_MANIFEST, manifest, "f" * 40)
+
+    def test_valid_v2_structure_reaches_full_release_assurance(self):
+        carrier = self._build_v2_carrier()
+        fake_result = {"status": "stable", "framework_ref": self.target, "exact_target_bindings_validated": 44}
+        with mock.patch.object(mod.release_assurance, "validate_manifest", return_value=fake_result) as validate:
+            result = mod.verify_stable_release_carrier(self.repo, self.target, carrier)
+        self.assertEqual(result["status"], "verified_stable_release_carrier")
+        self.assertEqual(result["framework_ref"], self.target)
+        self.assertEqual(result["carrier_ref"], carrier)
+        self.assertEqual(result["assurance_contract_version"], 2)
+        self.assertFalse(result["grandfathered_v1"])
+        self.assertIn(mod.TARGET_MANIFEST, result["closure_changed_paths"])
+        self.assertIn(mod.V2_STABLE_MANIFEST, result["closure_changed_paths"])
+        validate.assert_called_once()
+
+    def test_behavior_drift_in_v2_carrier_fails_before_assurance(self):
+        carrier = self._build_v2_carrier(behavior_drift=True)
+        with mock.patch.object(mod.release_assurance, "validate_manifest") as validate:
+            with self.assertRaisesRegex(mod.StableCarrierError, "behavior/governance drift"):
+                mod.verify_stable_release_carrier(self.repo, self.target, carrier)
+        validate.assert_not_called()
+
+    def test_rewritten_frozen_target_fails(self):
+        carrier = self._build_v2_carrier(rewrite_target=True)
+        with mock.patch.object(mod.release_assurance, "validate_manifest") as validate:
+            with self.assertRaisesRegex(mod.StableCarrierError, "changed after its first post-freeze write"):
+                mod.verify_stable_release_carrier(self.repo, self.target, carrier)
+        validate.assert_not_called()
+
+    def test_carrier_ref_must_be_exact_commit(self):
+        with self.assertRaisesRegex(mod.StableCarrierError, "exact 40-character"):
+            mod.verify_stable_release_carrier(self.repo, self.target, "HEAD")
+
+    def test_target_must_be_ancestor_of_carrier(self):
+        self._git("checkout", "-q", "--detach", self.target)
+        self._write("other.txt", "other\n")
+        other = self._commit("other")
+        self._git("checkout", "-q", "--detach", self.target)
+        self._write("releases/fake.json", {
+            "schema_version": 1,
+            "assurance_contract_version": 2,
+            "release_id": "fake",
+            "baseline": "fake",
+            "status": "stable",
+            "framework_ref": other,
+            "released_at": "2026-09-07T00:00:00Z",
+            "capabilities": {"x": "stable"},
+            "notes": "fake",
+        })
+        carrier = self._commit("unrelated carrier")
+        with self.assertRaisesRegex(mod.StableCarrierError, "must be an ancestor"):
+            mod.verify_stable_release_carrier(self.repo, other, carrier)
+
+
+if __name__ == "__main__":
+    unittest.main()

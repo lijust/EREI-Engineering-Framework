@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
 """Plan EREI Framework upgrades from verified immutable Git objects.
 
-Verified mode derives baseline metadata and changed paths from the repository itself.
-Legacy caller-supplied metadata remains available only as an explicitly unverified
-planning aid and is never marked approval-eligible.
+Verified Stable upgrades require two independent identities:
+1. the exact Framework target commit under evaluation;
+2. an immutable Stable release carrier that proves that exact target was promoted.
+
+BASELINE.json is historical/project metadata, not sufficient Stable provenance for V2.
+Legacy caller-supplied metadata remains an unverified planning aid and is never
+approval-eligible.
 """
 from __future__ import annotations
 
@@ -13,6 +17,11 @@ import re
 import subprocess
 import sys
 from pathlib import Path
+
+try:
+    from . import stable_release_carrier
+except ImportError:
+    import stable_release_carrier
 
 PROTECTED_EXACT = {
     "BASELINE.json",
@@ -91,7 +100,7 @@ def validate_baseline(baseline: dict, label: str) -> None:
 
 def is_immutable_ref(ref_type: str, ref: str) -> bool:
     if ref_type == "commit":
-        return bool(re.fullmatch(r"[0-9a-fA-F]{7,40}", ref))
+        return bool(SHA_RE.fullmatch(ref))
     if ref_type == "tag":
         return bool(isinstance(ref, str) and ref.strip())
     return False
@@ -119,8 +128,6 @@ def classify(paths: list[str]):
         elif p.startswith(REVIEW_PREFIXES) or p in KNOWN_LOW_RISK_EXACT:
             review.append(p)
         else:
-            # Framework governance expands over time. Unknown paths fail toward stronger review
-            # rather than silently inheriting NO_GOVERNANCE_CHANGE.
             unknown.append(p)
     if protected or unknown:
         return "ARCHITECTURE_APPROVAL_REQUIRED", "L3", sorted(protected + unknown), sorted(review), sorted(unknown)
@@ -185,10 +192,23 @@ def _legacy_inputs(args: argparse.Namespace) -> tuple[dict, dict, list[str], str
     return current, target, paths, current_ref, args.target_ref
 
 
+def _verified_release(args: argparse.Namespace, target_ref: str) -> dict | None:
+    carrier = getattr(args, "release_carrier_ref", None)
+    if not carrier:
+        return None
+    try:
+        return stable_release_carrier.verify_stable_release_carrier(
+            Path(args.framework_repo), target_ref, carrier
+        )
+    except stable_release_carrier.StableCarrierError as exc:
+        raise PlanError(f"Stable release carrier verification failed: {exc}") from exc
+
+
 def build_plan(args: argparse.Namespace) -> dict:
     manifest = load_json(Path(args.project_manifest))
     validate_manifest(manifest)
     verified = bool(getattr(args, "framework_repo", None))
+    release_info: dict | None = None
     if verified:
         current, target, paths, current_resolved_ref, target_resolved_ref = _verified_inputs(args, manifest)
         verification = "verified_git_objects"
@@ -206,13 +226,37 @@ def build_plan(args: argparse.Namespace) -> dict:
         )
     if current.get("framework") != target.get("framework"):
         raise PlanError("current and target baseline framework identities differ")
-    if target["status"] != "stable" and not args.allow_nonstable_target:
-        raise PlanError(f"target baseline status is {target['status']!r}, not 'stable'")
     if not is_immutable_ref(args.target_ref_type, args.target_ref) and not args.allow_mutable_target:
-        raise PlanError("target ref is not immutable; use commit/tag or explicitly allow mutable target")
+        raise PlanError("target ref is not immutable; use exact commit/tag or explicitly allow mutable target")
+
+    warnings: list[str] = []
+    if verified:
+        release_info = _verified_release(args, target_resolved_ref)
+        if release_info is None:
+            if not args.allow_nonstable_target:
+                raise PlanError(
+                    "verified Stable upgrade requires --release-carrier-ref; BASELINE.status alone is not Stable provenance"
+                )
+            effective_target_baseline = target["baseline"]
+            effective_target_status = "candidate_unverified"
+            warnings.append(
+                "No Stable release carrier was supplied. Target is treated as Candidate/unreleased even if BASELINE.json says stable."
+            )
+        else:
+            effective_target_baseline = release_info["baseline"]
+            effective_target_status = "stable"
+            verification = "verified_git_objects_and_stable_release_carrier"
+            if target["baseline"] != effective_target_baseline or target["status"] != "stable":
+                warnings.append(
+                    "Target BASELINE.json is not the release authority; verified Stable release-manifest identity is used for adoption."
+                )
+    else:
+        effective_target_baseline = target["baseline"]
+        effective_target_status = target["status"]
+        if effective_target_status != "stable" and not args.allow_nonstable_target:
+            raise PlanError(f"target baseline status is {effective_target_status!r}, not 'stable'")
 
     compatibility, risk, protected, review, unknown = classify(paths)
-    warnings: list[str] = []
     if current_fw["repository"] != args.target_repository:
         compatibility = "ARCHITECTURE_APPROVAL_REQUIRED"
         risk = "L3"
@@ -227,9 +271,18 @@ def build_plan(args: argparse.Namespace) -> dict:
             "This output is a planning aid only and MUST NOT be used as an approval/compatibility gate."
         )
 
-    gates = ["immutable-target", "verified-inputs", "compatibility", "project-verification", "convergence", "release"]
+    approval_eligible = bool(verified and release_info is not None)
+    gates = [
+        "immutable-target",
+        "verified-inputs",
+        "stable-release-carrier" if release_info is not None else "stable-release-carrier-BLOCKED",
+        "compatibility",
+        "project-verification",
+        "convergence",
+        "release",
+    ]
     if compatibility == "ARCHITECTURE_APPROVAL_REQUIRED":
-        gates.insert(3, "explicit-architecture-approval")
+        gates.insert(4, "explicit-architecture-approval")
     if any(
         p.startswith(("security/", "overlays/", "agents/security-engineer/", "skills/security-", "skills/threat-", "workflows/security-"))
         for p in paths
@@ -242,7 +295,7 @@ def build_plan(args: argparse.Namespace) -> dict:
         "schema_version": 2,
         "operation": "framework-upgrade-plan",
         "input_verification": verification,
-        "approval_eligible": verified,
+        "approval_eligible": approval_eligible,
         "current": {
             "repository": current_fw["repository"],
             "baseline": current_fw["baseline"],
@@ -253,11 +306,20 @@ def build_plan(args: argparse.Namespace) -> dict:
         },
         "target": {
             "repository": args.target_repository,
-            "baseline": target["baseline"],
-            "status": target["status"],
+            "baseline": effective_target_baseline,
+            "status": effective_target_status,
             "ref_type": args.target_ref_type,
             "ref": args.target_ref,
             "resolved_commit": target_resolved_ref if verified else None,
+            "framework_baseline_metadata": target["baseline"],
+        },
+        "stable_release": {
+            "verified": release_info is not None,
+            "carrier_ref": release_info["carrier_ref"] if release_info else None,
+            "manifest_path": release_info["manifest_path"] if release_info else None,
+            "release_id": release_info["release_id"] if release_info else None,
+            "assurance_contract_version": release_info["assurance_contract_version"] if release_info else None,
+            "grandfathered_v1": release_info["grandfathered_v1"] if release_info else False,
         },
         "classification": {
             "compatibility": compatibility,
@@ -290,6 +352,7 @@ def parse_args(argv=None):
     parser.add_argument("--target-repository", default="lijust/EREI-Engineering-Framework")
     parser.add_argument("--target-ref-type", choices=("commit", "tag", "branch"), default="commit")
     parser.add_argument("--target-ref", required=True)
+    parser.add_argument("--release-carrier-ref", help="exact immutable commit carrying the verified Stable release evidence")
     parser.add_argument("--allow-nonstable-target", action="store_true")
     parser.add_argument("--allow-mutable-target", action="store_true")
     parser.add_argument("--output")

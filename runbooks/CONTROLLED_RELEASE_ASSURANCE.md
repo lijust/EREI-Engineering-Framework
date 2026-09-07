@@ -44,6 +44,29 @@ Until condition 7 is satisfied, VNext remains Candidate even if every other Stab
 7. Merge only the reviewed release PR with an expected-head SHA guard.
 8. Verify post-merge tree/release identity and record the immutable Stable release manifest.
 
+## Consumer-side Stable adoption
+
+Project adoption does not trust `BASELINE.json` status by itself. An approval-eligible verified Framework upgrade must supply both the exact target commit and an exact immutable Stable release-carrier commit.
+
+Use:
+
+```bash
+python tools/stable_release_carrier.py \
+  --framework-repo <framework-checkout> \
+  --target-ref <exact-framework-target> \
+  --release-carrier-ref <exact-stable-carrier>
+
+python tools/plan_framework_upgrade.py \
+  --project-manifest <project>/.erei/framework.json \
+  --framework-repo <framework-checkout> \
+  --target-ref <exact-framework-target> \
+  --release-carrier-ref <exact-stable-carrier>
+```
+
+For Assurance Contract V2, the carrier verifier requires the frozen target, fixed evidence-only closure, immutable first writes, final approval refs, exact-target evidence, enforcement truth and full `release_assurance.py` validation. A V1 carrier is grandfathered only for `task-learning-review-v1` at `69079018606750312344cb3c648952b9ab72d35b`; no new release may downgrade to V1.
+
+A verified target without a Stable carrier may be inspected only with `--allow-nonstable-target`; such a plan is explicitly `approval_eligible=false` even if the target's historical `BASELINE.json` says `stable`.
+
 ## Prohibited shortcuts
 
 - No direct Stable promotion from a mutable branch name or tag-only reference.
@@ -51,3 +74,4 @@ Until condition 7 is satisfied, VNext remains Candidate even if every other Stab
 - No setting `equivalent_enforcement_verified=true` merely because this runbook exists.
 - No rewriting historical learning, feedback, or release evidence to satisfy a gate.
 - No using Candidate capabilities as the project Stable pin before explicit Stable promotion.
+- No treating `BASELINE.status=stable` as sufficient Stable provenance for a new Framework target.
