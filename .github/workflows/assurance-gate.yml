@@ -20,17 +20,17 @@ jobs:
           fetch-depth: 0
 
       - name: Verify local Python 3.12
-        shell: pwsh
+        shell: powershell
         run: |
           py "-3.12" -c "import sys, encodings, ssl; print(sys.version); print(sys.executable)"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Compile Framework Python
-        shell: pwsh
+        shell: powershell
         run: py "-3.12" -m compileall -q tools evals validation_contract.py validate_framework_feedback.py capture_framework_feedback.py
 
       - name: Parse all published JSON contracts
-        shell: pwsh
+        shell: powershell
         run: |
           @'
           import json
@@ -43,27 +43,27 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Run all Framework tool tests
-        shell: pwsh
+        shell: powershell
         run: py "-3.12" -m unittest discover -s tools/tests -p 'test_*.py' -v
 
       - name: Validate repository-local assurance references
-        shell: pwsh
+        shell: powershell
         run: py "-3.12" tools/validate_project_assurance_refs.py --target .
 
       - name: Run eval harness tests
-        shell: pwsh
+        shell: powershell
         run: py "-3.12" -m unittest discover -s evals/tests -p 'test_*.py' -v
 
       - name: Validate all machine-readable eval suites
-        shell: pwsh
+        shell: powershell
         run: py "-3.12" evals/runner.py validate evals/cases
 
       - name: Execute all 44 cases at reference-contract level
-        shell: pwsh
+        shell: powershell
         run: py "-3.12" evals/runner.py run evals/cases --adapter "py -3.12 evals/fixtures/reference_oracle_adapter.py"
 
       - name: Report retained execution-evidence coverage honestly
-        shell: pwsh
+        shell: powershell
         run: |
           $evidenceFiles = Get-ChildItem -Path 'evals' -Filter 'EXECUTION_EVIDENCE*.json' | Sort-Object Name
           foreach ($evidence in $evidenceFiles) {
@@ -73,31 +73,31 @@ jobs:
           }
 
       - name: Validate structured central feedback decisions
-        shell: pwsh
+        shell: powershell
         run: py "-3.12" tools/feedback_decisions.py validate feedback/DECISIONS.jsonl
 
       - name: Validate current prospective learning-cycle progress
-        shell: pwsh
+        shell: powershell
         run: py "-3.12" tools/prospective_cycle_status.py learning/PROSPECTIVE_CYCLE_STATUS.json
 
       - name: Validate truthful assurance enforcement state
-        shell: pwsh
+        shell: powershell
         run: py "-3.12" tools/assurance_enforcement.py security/ASSURANCE_ENFORCEMENT.json
 
       - name: Validate frozen release-target closure when selected
-        shell: pwsh
+        shell: powershell
         run: py "-3.12" tools/release_target.py --repo-root . --if-present --validate-closure
 
       - name: Report derived VNext Stable readiness
-        shell: pwsh
+        shell: powershell
         run: py "-3.12" tools/stable_readiness.py --repo-root .
 
       - name: Validate last Stable release manifest
-        shell: pwsh
+        shell: powershell
         run: py "-3.12" tools/release_assurance.py releases/task-learning-review-v1.json --repo-root .
 
       - name: Validate grandfathered last Stable carrier provenance
-        shell: pwsh
+        shell: powershell
         run: |
           $carrierRef = (git rev-parse origin/main).Trim()
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
@@ -105,11 +105,11 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Validate VNext Candidate manifest
-        shell: pwsh
+        shell: powershell
         run: py "-3.12" tools/release_assurance.py releases/vnext-assurance-candidate.json --repo-root .
 
       - name: Validate capability registry
-        shell: pwsh
+        shell: powershell
         run: |
           @'
           import json

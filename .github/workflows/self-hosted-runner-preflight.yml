@@ -17,7 +17,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Report runner identity
-        shell: pwsh
+        shell: powershell
         run: |
           Write-Host "runner_name=$env:RUNNER_NAME"
           Write-Host "runner_os=$env:RUNNER_OS"
@@ -26,7 +26,7 @@ jobs:
           [System.Environment]::OSVersion.VersionString
 
       - name: Verify required local toolchain
-        shell: pwsh
+        shell: powershell
         run: |
           git --version
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
@@ -40,7 +40,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Verify isolated writable temp boundary
-        shell: pwsh
+        shell: powershell
         run: |
           if ([string]::IsNullOrWhiteSpace($env:RUNNER_TEMP)) {
             throw 'RUNNER_TEMP is not set'

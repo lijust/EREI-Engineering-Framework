@@ -30,19 +30,19 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Verify local Python 3.12
-        shell: pwsh
+        shell: powershell
         run: |
           py "-3.12" -c "import sys, encodings, ssl; print(sys.version); print(sys.executable)"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Compile runner
-        shell: pwsh
+        shell: powershell
         run: py "-3.12" -m py_compile evals/runner.py evals/fixtures/mock_adapter.py evals/tests/test_runner.py
 
       - name: Run harness unit smoke tests
-        shell: pwsh
+        shell: powershell
         run: py "-3.12" -m unittest discover -s evals/tests -v
 
       - name: Validate all machine-readable eval suites
-        shell: pwsh
+        shell: powershell
         run: py "-3.12" evals/runner.py validate evals/cases

@@ -33,16 +33,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Verify local Python
-        shell: pwsh
+        shell: powershell
         run: |
           py "-${{ matrix.python-version }}" -c "import sys, encodings, ssl; print(sys.version); print(sys.executable)"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Compile bootstrap tool
-        shell: pwsh
+        shell: powershell
         run: py "-${{ matrix.python-version }}" -m py_compile tools/bootstrap_project.py
       - name: Parse integration schema
-        shell: pwsh
+        shell: powershell
         run: py "-${{ matrix.python-version }}" -m json.tool schemas/project-framework.schema.json
       - name: Run bootstrap unit tests
-        shell: pwsh
+        shell: powershell
         run: py "-${{ matrix.python-version }}" -m unittest discover -s tools/tests -p 'test_*.py' -v
