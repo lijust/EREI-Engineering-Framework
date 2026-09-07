@@ -25,8 +25,14 @@
   - `app-merge:9f677504bafc3a2a8460f81b3b2088341a51a302`
   - `task:ETASK-20260907T112848Z-C1AD0A87`
   - `github-actions:34116935307`
+  - `github-pr:88`
+  - `app-merge:9adf44b92f1994304ccfad5d3d553f967c1436df`
+  - `github-actions:34118146756`
+  - `github-pr:89`
+  - `app-merge:5a90d0c05934341c79fb79740ae15edff049f167`
+  - `github-actions:34118499862`
 - Candidate ref: `07460985d9984dbcf3833e6142709c0965a05967`
-- Review note: The exact reference-integrity Candidate passed Framework CI and has now been adopted by the source project at merge 9f677504bafc3a2a8460f81b3b2088341a51a302 with provenance/reference validation and a terminal prospective adoption event. Promotion remains closed only with respect to this feedback item until a genuine later project task supplies a measured post-adoption outcome.
+- Review note: The reference-integrity Candidate completed the full feedback-specific prospective loop. After source adoption at 9f677504bafc3a2a8460f81b3b2088341a51a302, genuine downstream App PR #88 ran Task Learning Lifecycle Gate 34118146756 with Candidate provenance and repository-local reference validation both PASS; independent downstream PR #89 repeated the same PASS in run 34118499862. The measured post-adoption outcome is therefore satisfied for this feedback item. Promotion remains Candidate because Framework-wide Stable gates such as exact-target-runtime eval coverage, release enforcement, and final immutable approvals are separate.
 
 ## FCL-CONFORMANCE-LADDER-001
 
