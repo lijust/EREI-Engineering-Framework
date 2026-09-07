@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "status": "candidate",
+  "default_runner": "self-hosted",
+  "converted_workflows": [
+    "Framework Assurance Gate",
+    "Framework Evals",
+    "Project Bootstrap Tests",
+    "Runtime Adapter Tests"
+  ],
+  "preflight_workflow": "Self-Hosted Runner Preflight",
+  "preflight_required": true,
+  "stable_promotion_authorized": false
+}
