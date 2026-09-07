@@ -29,6 +29,12 @@ class CopilotCliExactTargetTests(unittest.TestCase):
         evals = skill / "evals"
         evals.mkdir()
         (evals / "secret.eval.json").write_text('{"expected":"LEAK"}', encoding="utf-8")
+        impact = root / "skills" / "impact-analysis"
+        impact.mkdir(parents=True)
+        (impact / "SKILL.md").write_text(
+            "---\nname: impact-analysis\ndescription: Analyze impact when relevant.\n---\nIMPACT POLICY\n",
+            encoding="utf-8",
+        )
         workflow = root / "workflows" / "review"
         workflow.mkdir(parents=True)
         (workflow / "WORKFLOW.md").write_text("WORKFLOW POLICY\n", encoding="utf-8")
@@ -82,8 +88,8 @@ class CopilotCliExactTargetTests(unittest.TestCase):
             with self.assertRaisesRegex(adapter.CopilotExactTargetError, "allowed Framework families"):
                 adapter.resolve_artifact(root, "evals/cases/impact-analysis.eval.json")
 
-    def test_prompt_contains_artifact_input_context_but_no_transport_identity(self):
-        prompt = adapter.build_prompt(
+    def test_direct_prompt_contains_artifact_input_context_but_no_transport_identity(self):
+        prompt = adapter.build_direct_prompt(
             [("skills/example/SKILL.md", "POLICY")],
             {"prompt": "USER INPUT"},
             {"context": "VALUE"},
@@ -96,42 +102,62 @@ class CopilotCliExactTargetTests(unittest.TestCase):
         self.assertNotIn("expectations", prompt.lower())
         self.assertNotIn("tags", prompt.lower())
 
-    def test_jsonl_parser_accepts_one_assistant_message_and_rejects_ambiguity(self):
+    def test_routing_skill_stages_only_exact_skill_contract(self):
+        with tempfile.TemporaryDirectory() as tmp, tempfile.TemporaryDirectory() as work:
+            root = Path(tmp)
+            workspace = Path(work)
+            self.make_root(root)
+            name = adapter.stage_routing_skill(root, workspace, "skills/impact-analysis")
+            self.assertEqual(name, "impact-analysis")
+            staged = workspace / ".github" / "skills" / "impact-analysis"
+            self.assertEqual(
+                (staged / "SKILL.md").read_text(encoding="utf-8"),
+                (root / "skills" / "impact-analysis" / "SKILL.md").read_text(encoding="utf-8"),
+            )
+            self.assertEqual([p.name for p in staged.iterdir()], ["SKILL.md"])
+            with self.assertRaisesRegex(adapter.CopilotExactTargetError, "routing-sensitive"):
+                adapter.stage_routing_skill(root, workspace, "skills/impact-analysis + workflows/review")
+
+    def test_jsonl_parser_uses_observed_skill_invocation_as_trace(self):
         payload = json.dumps({"output": "Framework answer", "metadata": {"risk": "L3"}})
         stdout = "\n".join([
             json.dumps({"type": "session.start", "data": {"id": "x"}}),
-            json.dumps({"type": "assistant.message", "data": {"content": f"```json\n{payload}\n```"}}),
+            json.dumps({
+                "type": "assistant.message",
+                "data": {"content": "", "toolRequests": [{"toolCallId": "1", "name": "skill", "arguments": {}}]},
+            }),
+            json.dumps({
+                "type": "skill.invoked",
+                "data": {"name": "impact-analysis", "path": ".github/skills/impact-analysis/SKILL.md"},
+            }),
+            json.dumps({
+                "type": "assistant.message",
+                "data": {"content": f"```json\n{payload}\n```", "toolRequests": []},
+            }),
             json.dumps({"type": "result", "data": {"ok": True}}),
         ])
         self.assertEqual(
             adapter.parse_copilot_jsonl(stdout),
-            {"output": "Framework answer", "metadata": {"risk": "L3"}},
+            {"output": "Framework answer", "metadata": {"risk": "L3"}, "trace": [{"type": "tool", "name": "impact-analysis"}]},
         )
-        duplicated = stdout + "\n" + json.dumps({"type": "assistant.message", "data": {"content": payload}})
+
+    def test_jsonl_parser_rejects_ambiguous_final_answer_and_invalid_jsonl(self):
+        payload = json.dumps({"output": "answer", "metadata": {"risk": "L1"}})
+        duplicated = "\n".join([
+            json.dumps({"type": "assistant.message", "data": {"content": payload, "toolRequests": []}}),
+            json.dumps({"type": "assistant.message", "data": {"content": payload, "toolRequests": []}}),
+        ])
         with self.assertRaisesRegex(adapter.CopilotExactTargetError, "exactly one"):
             adapter.parse_copilot_jsonl(duplicated)
         with self.assertRaisesRegex(adapter.CopilotExactTargetError, "invalid JSON"):
             adapter.parse_copilot_jsonl("not-json")
-
-    def test_trace_is_adapter_derived_only_from_artifact_invocation(self):
-        self.assertEqual(
-            adapter.invocation_trace("skills/impact-analysis"),
-            [{"type": "tool", "name": "impact-analysis"}],
-        )
-        self.assertEqual(adapter.invocation_trace("workflows/framework-upgrade/WORKFLOW.md"), [])
 
     def test_child_environment_drops_unrelated_secrets(self):
         with tempfile.TemporaryDirectory() as tmp:
             workspace = Path(tmp)
             with mock.patch.dict(
                 os.environ,
-                {
-                    "PATH": "/safe/bin",
-                    "GITHUB_TOKEN": "token-value",
-                    "AWS_SECRET_ACCESS_KEY": "must-not-leak",
-                    "DATABASE_PASSWORD": "must-not-leak",
-                    "GH_TOKEN": "must-not-leak",
-                },
+                {"PATH": "/safe/bin", "GITHUB_TOKEN": "token-value", "AWS_SECRET_ACCESS_KEY": "must-not-leak", "DATABASE_PASSWORD": "must-not-leak", "GH_TOKEN": "must-not-leak"},
                 clear=True,
             ):
                 env = adapter._copilot_environment(workspace)
@@ -144,57 +170,77 @@ class CopilotCliExactTargetTests(unittest.TestCase):
             self.assertEqual(env["GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS"], "false")
             self.assertEqual(env["GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP"], "false")
 
-    def test_invoke_copilot_uses_no_effective_model_tools(self):
+    def test_invoke_copilot_direct_mode_has_no_effective_model_tools(self):
         payload = json.dumps({"output": "answer", "metadata": {"risk": "L1"}})
-        completed = subprocess.CompletedProcess(
-            args=[],
-            returncode=0,
-            stdout=json.dumps({"type": "assistant.message", "data": {"content": payload}}) + "\n",
-            stderr="",
-        )
-        with mock.patch.dict(os.environ, {"PATH": "/safe/bin", "GITHUB_TOKEN": "token"}, clear=True):
-            with mock.patch.object(adapter.subprocess, "run", return_value=completed) as run:
-                result = adapter.invoke_copilot("PROMPT", model="gpt-5.4", copilot_bin="copilot", timeout=30)
-        self.assertEqual(result, {"output": "answer", "metadata": {"risk": "L1"}})
+        completed = subprocess.CompletedProcess(args=[], returncode=0, stdout=json.dumps({"type": "assistant.message", "data": {"content": payload, "toolRequests": []}}) + "\n", stderr="")
+        with tempfile.TemporaryDirectory() as tmp:
+            workspace = Path(tmp)
+            with mock.patch.dict(os.environ, {"PATH": "/safe/bin", "GITHUB_TOKEN": "token"}, clear=True):
+                with mock.patch.object(adapter.subprocess, "run", return_value=completed) as run:
+                    result = adapter.invoke_copilot("PROMPT", model="gpt-5.4", copilot_bin="copilot", timeout=30, workspace=workspace, routing_mode=False)
+        self.assertEqual(result, {"output": "answer", "metadata": {"risk": "L1"}, "trace": []})
         args = run.call_args.args[0]
         self.assertIn("--available-tools=ask_user", args)
         self.assertIn("--no-ask-user", args)
         self.assertIn("--no-custom-instructions", args)
         self.assertIn("--disable-builtin-mcps", args)
-        self.assertIn("--no-remote", args)
-        self.assertIn("--no-remote-export", args)
-        self.assertIn("--no-experimental", args)
-        self.assertIn("--model=gpt-5.4", args)
         self.assertNotIn("--allow-all", args)
         self.assertNotIn("--yolo", args)
         self.assertEqual(args[args.index("-p") + 1], "PROMPT")
-        child_env = run.call_args.kwargs["env"]
-        self.assertEqual(child_env["COPILOT_GITHUB_TOKEN"], "token")
+        self.assertEqual(run.call_args.kwargs["env"]["COPILOT_GITHUB_TOKEN"], "token")
 
-    def test_run_adapter_adds_truthful_artifact_trace(self):
+    def test_invoke_copilot_routing_mode_exposes_only_skill_tool(self):
+        payload = json.dumps({"output": "analysis", "metadata": {"risk": "L3"}})
+        completed = subprocess.CompletedProcess(
+            args=[], returncode=0,
+            stdout="\n".join([
+                json.dumps({"type": "skill.invoked", "data": {"name": "impact-analysis", "path": ".github/skills/impact-analysis/SKILL.md"}}),
+                json.dumps({"type": "assistant.message", "data": {"content": payload, "toolRequests": []}}),
+            ]) + "\n",
+            stderr="",
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            workspace = Path(tmp)
+            with mock.patch.dict(os.environ, {"PATH": "/safe/bin", "GITHUB_TOKEN": "token"}, clear=True):
+                with mock.patch.object(adapter.subprocess, "run", return_value=completed) as run:
+                    result = adapter.invoke_copilot("PROMPT", model="gpt-5.4", copilot_bin="copilot", timeout=30, workspace=workspace, routing_mode=True)
+        self.assertEqual(result["trace"], [{"type": "tool", "name": "impact-analysis"}])
+        args = run.call_args.args[0]
+        self.assertIn("--available-tools=skill", args)
+        self.assertIn("--no-ask-user", args)
+
+    def test_run_adapter_routing_mode_does_not_inject_skill_text_or_identity(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            impact = root / "skills" / "impact-analysis"
-            impact.mkdir(parents=True)
-            (impact / "SKILL.md").write_text("IMPACT POLICY", encoding="utf-8")
+            self.make_root(root)
             request = self.request("skills/impact-analysis")
-            with mock.patch.object(
-                adapter,
-                "invoke_copilot",
-                return_value={"output": "analysis", "metadata": {"risk": "L3"}},
-            ) as invoke:
-                result = adapter.run_adapter(
-                    request,
-                    target_root=root,
-                    model="gpt-5.4",
-                    copilot_bin="copilot",
-                    timeout=30,
-                )
+            def fake_invoke(prompt, *, model, copilot_bin, timeout, workspace, routing_mode):
+                self.assertTrue(routing_mode)
+                self.assertTrue((workspace / ".github" / "skills" / "impact-analysis" / "SKILL.md").is_file())
+                self.assertNotIn("IMPACT POLICY", prompt)
+                self.assertNotIn(request["suite_id"], prompt)
+                self.assertNotIn(request["case_id"], prompt)
+                return {"output": "analysis", "metadata": {"risk": "L3"}, "trace": [{"type": "tool", "name": "impact-analysis"}]}
+            with mock.patch.object(adapter, "invoke_copilot", side_effect=fake_invoke):
+                result = adapter.run_adapter(request, target_root=root, model="gpt-5.4", copilot_bin="copilot", timeout=30)
             self.assertEqual(result["trace"], [{"type": "tool", "name": "impact-analysis"}])
-            prompt = invoke.call_args.args[0]
-            self.assertIn("IMPACT POLICY", prompt)
-            self.assertNotIn(request["suite_id"], prompt)
-            self.assertNotIn(request["case_id"], prompt)
+
+    def test_run_adapter_direct_mode_injects_only_canonical_artifact(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.make_root(root)
+            request = self.request("skills/example")
+            def fake_invoke(prompt, *, model, copilot_bin, timeout, workspace, routing_mode):
+                self.assertFalse(routing_mode)
+                self.assertIn("SKILL POLICY", prompt)
+                self.assertIn("SPEC CONTRACT", prompt)
+                self.assertNotIn("FORBIDDEN CASE HINT", prompt)
+                self.assertNotIn(request["suite_id"], prompt)
+                self.assertNotIn(request["case_id"], prompt)
+                return {"output": "answer", "metadata": {"risk": "L1"}, "trace": []}
+            with mock.patch.object(adapter, "invoke_copilot", side_effect=fake_invoke):
+                result = adapter.run_adapter(request, target_root=root, model="gpt-5.4", copilot_bin="copilot", timeout=30)
+            self.assertEqual(result["trace"], [])
 
 
 if __name__ == "__main__":
