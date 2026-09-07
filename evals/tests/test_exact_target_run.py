@@ -109,7 +109,7 @@ class ExactTargetRunTests(unittest.TestCase):
             )
             self.assertEqual(manifest["executions"][0]["status"], "pass")
 
-    def test_generates_bound_v2_evidence(self):
+    def test_generates_bound_v2_reconstructible_evidence(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             suite = self.suite(root)
@@ -127,7 +127,12 @@ class ExactTargetRunTests(unittest.TestCase):
                 produced_at="2026-09-07T12:00:00Z",
                 run_id="ETR-20260907T120000Z-ABCDEF12",
             )
-            self.assertEqual(manifest["executions"][0]["status"], "pass")
+            self.assertEqual(manifest["schema_version"], 2)
+            execution = manifest["executions"][0]
+            self.assertEqual(execution["status"], "pass")
+            self.assertFalse(execution["adapter_error"])
+            self.assertEqual(execution["response"], {"output": "hello from external runtime"})
+            self.assertEqual(execution["response_digest"], exact_target_run._canonical_digest(execution["response"]))
             self.assertEqual(evidence["schema_version"], 2)
             row = evidence["executions"][0]
             self.assertEqual(row["assurance_level"], "exact_target_runtime")
