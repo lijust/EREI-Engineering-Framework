@@ -47,7 +47,10 @@ jobs:
       - name: Validate all machine-readable eval suites
         run: python evals/runner.py validate evals/cases
 
-      - name: Report behavioral execution coverage honestly
+      - name: Execute all 44 cases at reference-contract level
+        run: python evals/runner.py run evals/cases --adapter "python evals/fixtures/reference_oracle_adapter.py"
+
+      - name: Report retained independent runtime evidence coverage honestly
         run: python evals/runner.py coverage evals/cases --evidence evals/EXECUTION_EVIDENCE.json
 
       - name: Validate structured central feedback decisions
