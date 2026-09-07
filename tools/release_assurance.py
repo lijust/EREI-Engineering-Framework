@@ -10,10 +10,12 @@ import sys
 from pathlib import Path
 
 try:
-    from . import assurance_enforcement, exact_target_evidence
+    from . import assurance_enforcement, exact_target_evidence, release_approval, release_target
 except ImportError:
     import assurance_enforcement
     import exact_target_evidence
+    import release_approval
+    import release_target
 
 SHA40_RE = re.compile(r"^[a-f0-9]{40}$")
 
@@ -55,6 +57,33 @@ def _load_runner(repo_root: Path):
     return runner
 
 
+def _validate_structured_approvals(manifest: dict, repo_root: Path) -> int:
+    target_path = repo_root / release_target.DEFAULT_TARGET
+    try:
+        target_manifest = _load(target_path)
+        release_target.validate_manifest_shape(target_manifest)
+    except (OSError, release_target.ReleaseTargetError) as exc:
+        raise ReleaseError(f"invalid or missing frozen release target: {exc}") from exc
+    if target_manifest["framework_ref"] != manifest["framework_ref"]:
+        raise ReleaseError("frozen release target framework_ref does not match release framework_ref")
+    target_tree = target_manifest["target_tree"]
+
+    validated = 0
+    for approval_type, relative_path in release_approval.APPROVAL_PATHS.items():
+        try:
+            release_approval.load_and_validate(
+                repo_root / relative_path,
+                expected_type=approval_type,
+                expected_target=manifest["framework_ref"],
+                expected_tree=target_tree,
+                require_approved=True,
+            )
+        except release_approval.ReleaseApprovalError as exc:
+            raise ReleaseError(f"invalid {approval_type} release approval: {exc}") from exc
+        validated += 1
+    return validated
+
+
 def validate_manifest(manifest: dict, *, repo_root: Path | None = None) -> dict:
     required = {
         "schema_version", "assurance_contract_version", "release_id", "baseline", "status",
@@ -85,6 +114,7 @@ def validate_manifest(manifest: dict, *, repo_root: Path | None = None) -> dict:
         "next_stable_gate_applied": False,
         "stable_enforcement_satisfied": None,
         "exact_target_bindings_validated": 0,
+        "approval_records_validated": 0,
     }
     if manifest["status"] == "stable" and manifest["assurance_contract_version"] >= 2:
         result["next_stable_gate_applied"] = True
@@ -106,6 +136,7 @@ def validate_manifest(manifest: dict, *, repo_root: Path | None = None) -> dict:
             _text(cycle[key], f"prospective_learning_cycle.{key}")
         if repo_root is None:
             raise ReleaseError("repo_root is required to validate a V2 Stable release")
+
         try:
             enforcement = assurance_enforcement.load_and_validate(
                 repo_root / "security" / "ASSURANCE_ENFORCEMENT.json"
@@ -117,6 +148,7 @@ def validate_manifest(manifest: dict, *, repo_root: Path | None = None) -> dict:
             raise ReleaseError(
                 "V2 Stable requires server branch/status-check enforcement or an independently verified equivalent fallback"
             )
+
         evidence = _load(repo_root / evidence_path)
         if evidence.get("framework_revision") != manifest["framework_ref"]:
             raise ReleaseError("behavioral eval evidence revision does not match release framework_ref")
@@ -138,6 +170,9 @@ def validate_manifest(manifest: dict, *, repo_root: Path | None = None) -> dict:
                 "behavioral eval evidence is insufficient: "
                 f"missing={len(missing)} nonpass={len(nonpass)} lower_assurance={len(lower)} unexpected={len(extras)}"
             )
+
+        result["approval_records_validated"] = _validate_structured_approvals(manifest, repo_root)
+
         for key in sorted(expected):
             try:
                 exact_target_evidence.validate_binding(repo_root, manifest["framework_ref"], observed[key])
