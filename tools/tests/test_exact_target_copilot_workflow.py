@@ -1,3 +1,4 @@
+import re
 import unittest
 from pathlib import Path
 
@@ -5,6 +6,12 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 WORKFLOW = ROOT / ".github" / "workflows" / "vnext-exact-target-copilot.yml"
 ADAPTER = ROOT / "evals" / "adapters" / "copilot_cli_exact_target.py"
+ACTION_PINS = {
+    "actions/checkout": "d23441a48e516b6c34aea4fa41551a30e30af803",
+    "actions/setup-python": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+    "actions/setup-node": "820762786026740c76f36085b0efc47a31fe5020",
+    "actions/upload-artifact": "ea165f8d65b6e75b540449e92b4886f43607fa02",
+}
 
 
 class ExactTargetCopilotWorkflowTests(unittest.TestCase):
@@ -20,7 +27,20 @@ class ExactTargetCopilotWorkflowTests(unittest.TestCase):
         self.assertIn("ref: ${{ steps.target.outputs.target_ref }}", text)
         self.assertIn("--framework-ref \"$TARGET_REF\"", text)
         self.assertIn("--minimum-level exact_target_runtime", text)
-        self.assertIn("actions/upload-artifact@v4", text)
+
+    def test_all_external_actions_are_pinned_to_exact_commits(self):
+        text = WORKFLOW.read_text(encoding="utf-8")
+        uses = re.findall(r"(?m)^\s*uses:\s*([^\s#]+)", text)
+        self.assertTrue(uses)
+        for ref in uses:
+            action, separator, revision = ref.partition("@")
+            self.assertEqual(separator, "@", ref)
+            self.assertRegex(revision, r"^[a-f0-9]{40}$", ref)
+            self.assertIn(action, ACTION_PINS, action)
+            self.assertEqual(revision, ACTION_PINS[action], action)
+        for action, revision in ACTION_PINS.items():
+            self.assertIn(f"{action}@{revision}", text)
+        self.assertNotRegex(text, r"uses:\s*actions/[A-Za-z0-9_.-]+@v\d+")
 
     def test_workflow_requires_personal_repo_pat_and_pinned_cli_version(self):
         text = WORKFLOW.read_text(encoding="utf-8")
