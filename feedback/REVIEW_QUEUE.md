@@ -1,66 +1,60 @@
 # Framework Feedback Review Queue
 
-Raw project feedback remains authoritative in each source project's `.erei/feedback/FRAMEWORK_FEEDBACK.jsonl`. Intake here records review/classification only and never rewrites the source event.
+`DECISIONS.jsonl` is the machine-readable source of truth for central review decisions. Raw project feedback remains authoritative in each source project's `.erei/feedback/` records.
 
-## FCL-VERIFICATION-MODEL-001 — verification signal/model semantics
-
-### EFF-20260907T010601Z-88D7BF2F
-
-- Source project: `lijust/EREI-App-Google`
-- Source project ref: `a862f1e24fe25cc43d208b8ef26861977a767617`
-- Observed under Framework ref: `69079018606750312344cb3c648952b9ab72d35b`
-- Type / severity: `false_positive / medium`
-- Generalizability / confidence: `likely_generic / high`
-- Evidence reviewed: `.erei/learning/RETROSPECTIVE_SUMMARY.md`, PR48/49/54 and their recorded failed/final-PASS CI runs
-- Review state: `CLUSTERED`
-- Cluster / candidate: `FCL-VERIFICATION-MODEL-001`
-- Review note: Pre-release deterministic catches should not be conflated with escaped defects in Framework health metrics. Evidence is strong inside one project; cross-project confirmation is still pending.
-
-### EFF-20260907T010601Z-51FBCEB9
-
-- Source project: `lijust/EREI-App-Google`
-- Source project ref: `a862f1e24fe25cc43d208b8ef26861977a767617`
-- Observed under Framework ref: `69079018606750312344cb3c648952b9ab72d35b`
-- Type / severity: `false_negative / high`
-- Generalizability / confidence: `likely_generic / high`
-- Evidence reviewed: `.erei/learning/RETROSPECTIVE_SUMMARY.md`, PERF-004 PR7 and PERF-006 PR9
-- Review state: `CLUSTERED`
-- Cluster / candidate: `FCL-VERIFICATION-MODEL-001`
-- Review note: Deterministic acceptance rules can themselves be invalidated by runtime evidence. Product failure and acceptance-model failure need separate semantics before this becomes a Framework candidate.
-
-## FCL-CONFORMANCE-LADDER-001 — evidence-level conformance
+## FCL-CONFORMANCE-LADDER-001
 
 ### EFF-20260907T010601Z-41B9942F
 
 - Source project: `lijust/EREI-App-Google`
 - Source project ref: `a862f1e24fe25cc43d208b8ef26861977a767617`
-- Observed under Framework ref: `69079018606750312344cb3c648952b9ab72d35b`
-- Type / severity: `verification_gap / high`
-- Generalizability / confidence: `likely_generic / high`
-- Evidence reviewed: `.erei/learning/RETROSPECTIVE_SUMMARY.md`, PR41, PR67, PR70 and PERF-005 PR8
+- Decision revision: `066270a770adbe8bc2c73622fe7b1bce6f03af08`
 - Review state: `CLUSTERED`
-- Cluster / candidate: `FCL-CONFORMANCE-LADDER-001`
-- Review note: Static/generic-engine, managed-provider, exact target-runtime and convergence evidence are distinct assurance levels. One project provides several independent examples, but promotion remains gated by candidate spec/evals and preferably additional project evidence.
+- Promotion state: `NOT_PROMOTED`
+- Decision ID: `EFD-20260907T011016Z-41B9942F`
+- Evidence:
+  - `project:.erei/learning/RETROSPECTIVE_SUMMARY.md`
+  - `github-pr:41`
+  - `github-pr:67`
+  - `github-pr:70`
+  - `github-pr:8`
+- Review note: Static/generic-engine, managed-provider, exact target-runtime and convergence evidence are distinct assurance dimensions. One project provides several independent examples; promotion remains gated by candidate spec/evals and preferably additional project evidence.
+
+## FCL-VERIFICATION-MODEL-001
+
+### EFF-20260907T010601Z-51FBCEB9
+
+- Source project: `lijust/EREI-App-Google`
+- Source project ref: `a862f1e24fe25cc43d208b8ef26861977a767617`
+- Decision revision: `066270a770adbe8bc2c73622fe7b1bce6f03af08`
+- Review state: `CLUSTERED`
+- Promotion state: `NOT_PROMOTED`
+- Decision ID: `EFD-20260907T011016Z-51FBCEB9`
+- Evidence:
+  - `project:.erei/learning/RETROSPECTIVE_SUMMARY.md`
+  - `github-pr:7`
+  - `github-pr:9`
+- Review note: Deterministic acceptance rules can themselves be invalidated by runtime evidence. Product failure and acceptance-model failure need separate semantics before this becomes a Framework candidate.
+
+### EFF-20260907T010601Z-88D7BF2F
+
+- Source project: `lijust/EREI-App-Google`
+- Source project ref: `a862f1e24fe25cc43d208b8ef26861977a767617`
+- Decision revision: `066270a770adbe8bc2c73622fe7b1bce6f03af08`
+- Review state: `CLUSTERED`
+- Promotion state: `NOT_PROMOTED`
+- Decision ID: `EFD-20260907T011016Z-88D7BF2F`
+- Evidence:
+  - `project:.erei/learning/RETROSPECTIVE_SUMMARY.md`
+  - `github-pr:48`
+  - `github-pr:49`
+  - `github-pr:54`
+- Review note: Pre-release deterministic catches should not be conflated with escaped defects in Framework health metrics. Evidence is strong inside one project; cross-project confirmation is still pending.
 
 ## Intake summary
 
 - Source projects represented: `1`
 - Feedback events ingested: `3`
 - Clusters created: `2`
-- Direct Framework Core mutations: `0`
-- Promotion state: `NOT_PROMOTED`
-
-## Entry template
-
-```text
-Feedback ID:
-Source project:
-Source project ref:
-Observed under Framework ref:
-Type / severity:
-Generalizability / confidence:
-Evidence reviewed:
-Review state: NEW | TRIAGED | PROJECT_LOCAL | NEEDS_EVIDENCE | CLUSTERED | CANDIDATE | PROMOTED | REJECTED
-Cluster / candidate:
-Review note:
-```
+- Promoted decisions: `0`
+- Source observations mutated by central intake: `0`
