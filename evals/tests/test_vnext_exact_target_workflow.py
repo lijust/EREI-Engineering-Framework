@@ -73,13 +73,17 @@ class VNextExactTargetWorkflowTests(unittest.TestCase):
         self.assertIn("retains all three package files immutably", self.text)
         self.assertIn("digest-bound V2 runtime identity", self.text)
 
-    def test_model_runtime_is_bounded_version_and_integrity_pinned(self):
+    def test_model_runtime_is_bounded_version_integrity_and_tarball_pinned(self):
         self.assertIn("--model=gpt-5.4", self.text)
         self.assertIn("copilot_cli_version", self.text)
         self.assertIn("copilot_cli_integrity", self.text)
+        self.assertIn("{86}==", self.text)
         self.assertIn("dist.integrity", self.text)
         self.assertIn('copilot-package-integrity:${COPILOT_CLI_INTEGRITY}', self.text)
-        self.assertIn('@github/copilot@${COPILOT_CLI_VERSION}', self.text)
+        self.assertIn('npm pack "@github/copilot@${COPILOT_CLI_VERSION}" --json > pack.json', self.text)
+        self.assertIn("crypto.createHash('sha512').update(bytes).digest('base64')", self.text)
+        self.assertIn('npm install -g "./copilot-package/${{ steps.copilot_package.outputs.tarball }}"', self.text)
+        self.assertNotIn('npm install -g "@github/copilot@${COPILOT_CLI_VERSION}"', self.text)
         self.assertNotIn("--allow-all", self.lowered)
         self.assertNotIn("--yolo", self.lowered)
 
