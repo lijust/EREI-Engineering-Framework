@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
-"""Validate exact-target eval run manifests and bind V2 execution evidence to them."""
+"""Validate reconstructible exact-target run manifests and bind V2 execution evidence."""
 from __future__ import annotations
 
 import argparse
+import hashlib
+import importlib.util
 import json
 import re
 from datetime import datetime
@@ -56,6 +58,25 @@ def _sha256(value: Any, label: str) -> str:
     return text
 
 
+def _canonical_digest(value: Any) -> str:
+    payload = json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def _adapter_error_digest(suite_id: str, case_id: str) -> str:
+    return _canonical_digest({"adapter_error": True, "suite_id": suite_id, "case_id": case_id})
+
+
+def _load_runner(repo_root: Path):
+    runner_path = repo_root / "evals" / "runner.py"
+    spec = importlib.util.spec_from_file_location("erei_exact_target_eval_runner", runner_path)
+    if spec is None or spec.loader is None:
+        raise ExactTargetEvidenceError("unable to load eval runner for exact-target reconstruction")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 def validate_run_manifest(data: Any) -> dict[str, Any]:
     if not isinstance(data, dict):
         raise ExactTargetEvidenceError("exact-target run manifest must be an object")
@@ -64,8 +85,8 @@ def validate_run_manifest(data: Any) -> dict[str, Any]:
         "runtime", "adapter_command_digest", "executions",
     }
     _exact_fields(data, root_fields, "run manifest")
-    if data["schema_version"] != 1:
-        raise ExactTargetEvidenceError("run manifest schema_version must be 1")
+    if data["schema_version"] != 2:
+        raise ExactTargetEvidenceError("exact-target run manifest schema_version must be 2 for reconstructible evidence")
     if not isinstance(data["run_id"], str) or not RUN_ID_RE.fullmatch(data["run_id"]):
         raise ExactTargetEvidenceError("run_id must match ETR-YYYYMMDDTHHMMSSZ-XXXXXXXX")
     _datetime(data["produced_at"], "produced_at")
@@ -101,16 +122,31 @@ def validate_run_manifest(data: Any) -> dict[str, Any]:
     for index, item in enumerate(executions):
         if not isinstance(item, dict):
             raise ExactTargetEvidenceError(f"executions[{index}] must be an object")
-        _exact_fields(item, {"suite_id", "case_id", "status", "response_digest"}, f"executions[{index}]")
+        fields = {"suite_id", "case_id", "status", "response_digest", "response", "adapter_error"}
+        _exact_fields(item, fields, f"executions[{index}]")
         suite = _text(item["suite_id"], f"executions[{index}].suite_id")
         case = _text(item["case_id"], f"executions[{index}].case_id")
         key = (suite, case)
         if key in seen:
             raise ExactTargetEvidenceError(f"duplicate exact-target execution {suite}/{case}")
         seen.add(key)
-        if item["status"] not in {"pass", "fail", "inconclusive"}:
-            raise ExactTargetEvidenceError(f"executions[{index}].status invalid")
-        _sha256(item["response_digest"], f"executions[{index}].response_digest")
+        if item["status"] not in {"pass", "fail"}:
+            raise ExactTargetEvidenceError(f"executions[{index}].status must be pass or fail")
+        digest = _sha256(item["response_digest"], f"executions[{index}].response_digest")
+        if type(item["adapter_error"]) is not bool:
+            raise ExactTargetEvidenceError(f"executions[{index}].adapter_error must be a boolean")
+        if item["adapter_error"]:
+            if item["response"] is not None:
+                raise ExactTargetEvidenceError(f"executions[{index}] adapter_error requires response=null")
+            if item["status"] != "fail":
+                raise ExactTargetEvidenceError(f"executions[{index}] adapter_error cannot be recorded as pass")
+            expected_digest = _adapter_error_digest(suite, case)
+        else:
+            if not isinstance(item["response"], dict):
+                raise ExactTargetEvidenceError(f"executions[{index}].response must be an object when adapter_error=false")
+            expected_digest = _canonical_digest(item["response"])
+        if digest != expected_digest:
+            raise ExactTargetEvidenceError(f"executions[{index}] response_digest does not match retained response")
     return data
 
 
@@ -126,7 +162,30 @@ def parse_evidence_ref(value: Any) -> tuple[Path, str, str]:
     return path, match.group("suite"), match.group("case")
 
 
+def _published_case(repo_root: Path, suite_id: str, case_id: str):
+    runner = _load_runner(repo_root)
+    matches: list[tuple[dict[str, Any], dict[str, Any]]] = []
+    for suite_path in runner.discover_suites([str(repo_root / "evals" / "cases")]):
+        suite = runner.load_json(suite_path)
+        errors = runner.validate_suite(suite, str(suite_path))
+        if errors:
+            raise ExactTargetEvidenceError("published eval suite invalid during evidence reconstruction: " + "; ".join(errors))
+        if suite.get("suite_id") != suite_id:
+            continue
+        if not runner.suite_required_for_level(suite, "exact_target_runtime"):
+            raise ExactTargetEvidenceError(f"suite {suite_id} is not eligible for exact_target_runtime evidence")
+        for case in suite["cases"]:
+            if case.get("id") == case_id:
+                matches.append((suite, case))
+    if len(matches) != 1:
+        raise ExactTargetEvidenceError(
+            f"expected exactly one published behavioral case for {suite_id}/{case_id}, found {len(matches)}"
+        )
+    return runner, matches[0][0], matches[0][1]
+
+
 def validate_binding(repo_root: Path, framework_revision: str, execution: dict[str, Any]) -> dict[str, Any]:
+    repo_root = repo_root.resolve()
     if execution.get("assurance_level") != "exact_target_runtime" or execution.get("independent_runtime") is not True:
         raise ExactTargetEvidenceError("binding validation requires exact_target_runtime with independent_runtime=true")
     path, suite_id, case_id = parse_evidence_ref(execution.get("evidence_ref"))
@@ -151,6 +210,24 @@ def validate_binding(repo_root: Path, framework_revision: str, execution: dict[s
         raise ExactTargetEvidenceError("exact-target run manifest does not contain referenced case")
     if match["status"] != execution.get("status"):
         raise ExactTargetEvidenceError("exact-target run case status mismatch")
+    if match["adapter_error"]:
+        if match["status"] != "fail":
+            raise ExactTargetEvidenceError("adapter-error execution cannot validate as pass")
+        return manifest
+
+    runner, _suite, case = _published_case(repo_root, suite_id, case_id)
+    try:
+        response = runner.validate_adapter_response(match["response"], case["expectations"])
+        scorer_results = [runner.score(expectation, response) for expectation in case["expectations"]]
+    except Exception as exc:
+        raise ExactTargetEvidenceError(f"retained response cannot be revalidated: {exc}") from exc
+    recomputed_status = "pass" if all(item[0] for item in scorer_results) else "fail"
+    if recomputed_status != match["status"]:
+        raise ExactTargetEvidenceError(
+            f"retained response rescoring mismatch: stored={match['status']} recomputed={recomputed_status}"
+        )
+    if recomputed_status != execution.get("status"):
+        raise ExactTargetEvidenceError("execution evidence status does not match reconstructed scorer result")
     return manifest
 
 
