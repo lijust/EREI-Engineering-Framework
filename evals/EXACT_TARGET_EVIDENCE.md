@@ -32,7 +32,7 @@ The controlled Copilot workflow then packages those two files with a third **V2 
 - adapter/runtime/model identities;
 - exact GitHub Actions run id and attempt;
 - exact requested Copilot CLI version;
-- exact npm `sha512` SRI for that CLI package;
+- exact full npm SHA-512 SRI for that CLI package;
 - original governed destination paths for all three retained files;
 - run id;
 - SHA-256 digests of the run manifest and execution-evidence files.
@@ -40,13 +40,15 @@ The controlled Copilot workflow then packages those two files with a third **V2 
 The runtime-identity destination is derived deterministically from the run-manifest path:
 
 ```text
-+evals/exact-target-runs/<run>.json
-+→ evals/exact-target-runs/<run>.identity.json
+evals/exact-target-runs/<run>.json
+→ evals/exact-target-runs/<run>.identity.json
 ```
 
 Digest-only run manifests are not sufficient for V2 Stable because a later reviewer cannot reconstruct the scorer result from a digest alone. Likewise, discarding `runtime-identity.json` after import is not permitted because that would discard the structured repository/run/carrier/model/CLI/SRI provenance used to authenticate the retained evidence set.
 
 The Stable/readiness validators resolve every exact-target `evidence_ref`, derive and load the retained `.identity.json`, re-hash both bound data files, confirm the caller execution row is present exactly in the digest-bound execution-evidence file, verify runtime provenance, load the corresponding published behavioral case, revalidate the retained adapter response using the same authoritative eval runner, rerun every published scorer, and compare the recomputed status with both the run manifest and execution-evidence row.
+
+On a real Git checkout the same binder also validates the evidence-introduction history. The manifest, execution evidence, and runtime identity must have one shared first-add commit; that commit must be single-parent, must be on the release HEAD first-parent history, must add exactly those three files and nothing else, and its parent must equal the identity's recorded `release_carrier_ref`. Current blobs must remain identical to the blobs first introduced by that evidence commit.
 
 Supplying a `harness_only` row as exact-target evidence is invalid and does not satisfy the gate.
 
@@ -56,7 +58,11 @@ The adapter command itself is never retained; only its SHA-256 digest is stored.
 
 The exact-target workflow uses exact commit SHAs for all third-party GitHub Actions. Mutable major tags are not acceptable for Stable evidence production.
 
-For `@github/copilot`, both an exact npm version and its exact `dist.integrity` `sha512-...` SRI are required. The workflow checks the registry metadata for the exact requested version before installation and fails before any model call if the SRI differs. The same SRI is retained in the run manifest's runtime identity evidence and in the durable runtime-identity record.
+For `@github/copilot`, both an exact npm version and its exact full `dist.integrity` SHA-512 SRI are required. The workflow first verifies registry metadata for the exact requested version. It then downloads the exact package tarball with `npm pack`, computes SHA-512 from the downloaded tarball bytes, requires that byte-derived SRI to match the approved SRI, and installs only the verified local tarball. A metadata match alone is not sufficient. Direct registry installation after metadata-only verification is not permitted for governed evidence production.
+
+The same SRI is retained in the run manifest's runtime identity evidence and in the durable runtime-identity record.
+
+The Copilot adapter itself requires `COPILOT_GITHUB_TOKEN`; it does not fall back to the workflow `GITHUB_TOKEN`. The child process inherits only the explicit Copilot credential plus the narrow process/network/certificate allowlist.
 
 ## Governed import into the release closure
 
@@ -87,7 +93,9 @@ The importer atomically reserves and writes the original three package files to 
 - `evals/EXECUTION_EVIDENCE.<run>.json`;
 - `evals/exact-target-runs/<run>.identity.json`.
 
-It does not commit, push, modify `VNEXT_TARGET`, write approvals, alter enforcement state, or authorize promotion. Existing destination files are never overwritten. A handled partial-write failure rolls back the entire three-file set. The subsequent evidence commit must still pass the release-closure CI; the closure validator rejects later rewrites of any retained evidence file.
+It does not commit, push, modify `VNEXT_TARGET`, write approvals, alter enforcement state, or authorize promotion. Existing destination files are never overwritten. A handled partial-write failure rolls back the entire three-file set.
+
+The next repository commit must add exactly those three retained files directly on the release first-parent chain. Its parent must be the recorded release carrier. Split commits, side-branch/merge ingestion, an unrelated fourth file, or any later rewrite fail durable evidence history validation. Temporary non-Git importer staging can prove content before commit, but cannot by itself satisfy the later Stable Git-history gate.
 
 ## Producer shape
 
