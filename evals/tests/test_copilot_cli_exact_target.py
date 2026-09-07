@@ -152,17 +152,25 @@ class CopilotCliExactTargetTests(unittest.TestCase):
         with self.assertRaisesRegex(adapter.CopilotExactTargetError, "invalid JSON"):
             adapter.parse_copilot_jsonl("not-json")
 
-    def test_child_environment_drops_unrelated_secrets(self):
+    def test_child_environment_requires_dedicated_pat_and_drops_unrelated_secrets(self):
         with tempfile.TemporaryDirectory() as tmp:
             workspace = Path(tmp)
             with mock.patch.dict(
                 os.environ,
-                {"PATH": "/safe/bin", "GITHUB_TOKEN": "token-value", "AWS_SECRET_ACCESS_KEY": "must-not-leak", "DATABASE_PASSWORD": "must-not-leak", "GH_TOKEN": "must-not-leak"},
+                {
+                    "PATH": "/safe/bin",
+                    "COPILOT_GITHUB_TOKEN": "dedicated-token",
+                    "GITHUB_TOKEN": "must-not-be-used",
+                    "AWS_SECRET_ACCESS_KEY": "must-not-leak",
+                    "DATABASE_PASSWORD": "must-not-leak",
+                    "GH_TOKEN": "must-not-leak",
+                },
                 clear=True,
             ):
                 env = adapter._copilot_environment(workspace)
             self.assertEqual(env["PATH"], "/safe/bin")
-            self.assertEqual(env["COPILOT_GITHUB_TOKEN"], "token-value")
+            self.assertEqual(env["COPILOT_GITHUB_TOKEN"], "dedicated-token")
+            self.assertNotIn("GITHUB_TOKEN", env)
             self.assertNotIn("AWS_SECRET_ACCESS_KEY", env)
             self.assertNotIn("DATABASE_PASSWORD", env)
             self.assertNotIn("GH_TOKEN", env)
@@ -170,12 +178,18 @@ class CopilotCliExactTargetTests(unittest.TestCase):
             self.assertEqual(env["GITHUB_COPILOT_PROMPT_MODE_REPO_HOOKS"], "false")
             self.assertEqual(env["GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP"], "false")
 
+    def test_child_environment_rejects_github_token_fallback(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            with mock.patch.dict(os.environ, {"PATH": "/safe/bin", "GITHUB_TOKEN": "ordinary-token"}, clear=True):
+                with self.assertRaisesRegex(adapter.CopilotExactTargetError, "fallback is forbidden"):
+                    adapter._copilot_environment(Path(tmp))
+
     def test_invoke_copilot_direct_mode_has_no_effective_model_tools(self):
         payload = json.dumps({"output": "answer", "metadata": {"risk": "L1"}})
         completed = subprocess.CompletedProcess(args=[], returncode=0, stdout=json.dumps({"type": "assistant.message", "data": {"content": payload, "toolRequests": []}}) + "\n", stderr="")
         with tempfile.TemporaryDirectory() as tmp:
             workspace = Path(tmp)
-            with mock.patch.dict(os.environ, {"PATH": "/safe/bin", "GITHUB_TOKEN": "token"}, clear=True):
+            with mock.patch.dict(os.environ, {"PATH": "/safe/bin", "COPILOT_GITHUB_TOKEN": "token"}, clear=True):
                 with mock.patch.object(adapter.subprocess, "run", return_value=completed) as run:
                     result = adapter.invoke_copilot("PROMPT", model="gpt-5.4", copilot_bin="copilot", timeout=30, workspace=workspace, routing_mode=False)
         self.assertEqual(result, {"output": "answer", "metadata": {"risk": "L1"}, "trace": []})
@@ -201,7 +215,7 @@ class CopilotCliExactTargetTests(unittest.TestCase):
         )
         with tempfile.TemporaryDirectory() as tmp:
             workspace = Path(tmp)
-            with mock.patch.dict(os.environ, {"PATH": "/safe/bin", "GITHUB_TOKEN": "token"}, clear=True):
+            with mock.patch.dict(os.environ, {"PATH": "/safe/bin", "COPILOT_GITHUB_TOKEN": "token"}, clear=True):
                 with mock.patch.object(adapter.subprocess, "run", return_value=completed) as run:
                     result = adapter.invoke_copilot("PROMPT", model="gpt-5.4", copilot_bin="copilot", timeout=30, workspace=workspace, routing_mode=True)
         self.assertEqual(result["trace"], [{"type": "tool", "name": "impact-analysis"}])
