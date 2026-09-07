@@ -79,6 +79,15 @@ jobs:
       - name: Validate last Stable release manifest
         run: python tools/release_assurance.py releases/task-learning-review-v1.json --repo-root .
 
+      - name: Validate grandfathered last Stable carrier provenance
+        shell: bash
+        run: |
+          carrier_ref="$(git rev-parse origin/main)"
+          python tools/stable_release_carrier.py \
+            --framework-repo . \
+            --target-ref 69079018606750312344cb3c648952b9ab72d35b \
+            --release-carrier-ref "$carrier_ref"
+
       - name: Validate VNext Candidate manifest
         run: python tools/release_assurance.py releases/vnext-assurance-candidate.json --repo-root .
 
