@@ -2,6 +2,24 @@
 
 `DECISIONS.jsonl` is the machine-readable source of truth for central review decisions. Raw project feedback remains authoritative in each source project's `.erei/feedback/` records.
 
+## FCL-ASSURANCE-REFERENCE-INTEGRITY-001
+
+### EFF-20260907T110336Z-C1F01A84
+
+- Source project: `lijust/EREI-App-Google`
+- Source project ref: `23a7522544c1a36a36f1b3b81f7eccf002cb49cb`
+- Decision revision: `1b60baf1bca2936c87d1dbdb91e9dfb56800807b`
+- Review state: `CLUSTERED`
+- Promotion state: `NOT_PROMOTED`
+- Decision ID: `EFD-20260907T110819Z-C1F01A84`
+- Evidence:
+  - `github-pr:84`
+  - `github-pr:85`
+  - `github-actions:34107892973`
+  - `github-actions:34113250077`
+  - `app-review:ELR-20260907T110207Z-C1A57F01`
+- Review note: The prospective App review demonstrated two stale repository-local workflow references causing false CI failures. The pattern is generalizable enough for a dependency-free candidate guard, but promotion remains closed until the implementation is validated and adopted by the source project.
+
 ## FCL-CONFORMANCE-LADDER-001
 
 ### EFF-20260907T010601Z-41B9942F
@@ -54,7 +72,7 @@
 ## Intake summary
 
 - Source projects represented: `1`
-- Feedback events ingested: `3`
-- Clusters created: `2`
+- Feedback events ingested: `4`
+- Clusters created: `3`
 - Promoted decisions: `0`
 - Source observations mutated by central intake: `0`
