@@ -9,6 +9,7 @@ from tools import build_exact_target_package_identity, exact_target_evidence, im
 
 
 ROOT = Path(__file__).resolve().parents[2]
+CLI_INTEGRITY = "sha512-QUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVo="
 
 
 class ExactTargetEvidenceImportTests(unittest.TestCase):
@@ -119,6 +120,7 @@ class ExactTargetEvidenceImportTests(unittest.TestCase):
                     "github-actions:lijust/EREI-Engineering-Framework/run/123/attempt/1",
                     f"release-carrier:{self.carrier_ref}",
                     "copilot-model:gpt-5.4",
+                    f"copilot-package-integrity:{CLI_INTEGRITY}",
                 ],
             },
             "adapter_command_digest": "a" * 64,
@@ -160,6 +162,7 @@ class ExactTargetEvidenceImportTests(unittest.TestCase):
             runtime_id="github-copilot-cli",
             runtime_version="GitHub Copilot CLI 1.2.3",
             requested_cli_version="1.2.3",
+            requested_cli_integrity=CLI_INTEGRITY,
             model="gpt-5.4",
             github_run_id=123,
             github_run_attempt=1,
@@ -204,6 +207,21 @@ class ExactTargetEvidenceImportTests(unittest.TestCase):
         identity["unexpected"] = True
         with self.assertRaisesRegex(import_exact_target_evidence.ExactTargetImportError, "fields mismatch"):
             import_exact_target_evidence.validate_runtime_identity(identity)
+
+    def test_runtime_identity_rejects_invalid_cli_integrity(self):
+        identity_path = self.package / "runtime-identity.json"
+        identity = json.loads(identity_path.read_text(encoding="utf-8"))
+        identity["requested_cli_integrity"] = "sha256-not-allowed"
+        with self.assertRaisesRegex(import_exact_target_evidence.ExactTargetImportError, "sha512"):
+            import_exact_target_evidence.validate_runtime_identity(identity)
+
+    def test_runtime_identity_integrity_must_match_manifest_provenance(self):
+        identity_path = self.package / "runtime-identity.json"
+        identity = json.loads(identity_path.read_text(encoding="utf-8"))
+        identity["requested_cli_integrity"] = "sha512-WlpaWlpaWlpaWg=="
+        identity_path.write_text(json.dumps(identity), encoding="utf-8")
+        with self.assertRaisesRegex(import_exact_target_evidence.ExactTargetImportError, "runtime identity evidence"):
+            import_exact_target_evidence.validate_package(self.repo, self.package)
 
     def test_runtime_identity_run_attempt_must_match_manifest_provenance(self):
         identity_path = self.package / "runtime-identity.json"
