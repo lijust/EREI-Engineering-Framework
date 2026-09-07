@@ -5,12 +5,18 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from tools import build_exact_target_package_identity, exact_target_evidence, import_exact_target_evidence
+from tools import (
+    build_exact_target_package_identity,
+    exact_target_evidence,
+    exact_target_package_identity,
+    import_exact_target_evidence,
+)
 
 
 ROOT = Path(__file__).resolve().parents[2]
 CLI_INTEGRITY = "sha512-AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4vMDEyMzQ1Njc4OTo7PD0+Pw=="
 OTHER_CLI_INTEGRITY = "sha512-Pz49PDs6OTg3NjU0MzIxMC8uLSwrKikoJyYlJCMiISAfHh0cGxoZGBcWFRQTEhEQDw4NDAsKCQgHBgUEAwIBAA=="
+SKILL_TRANSPORT = exact_target_package_identity.SKILL_EVENT_TRANSPORT_EVIDENCE
 
 
 class ExactTargetEvidenceImportTests(unittest.TestCase):
@@ -123,6 +129,7 @@ class ExactTargetEvidenceImportTests(unittest.TestCase):
                     f"release-carrier:{self.carrier_ref}",
                     "copilot-model:gpt-5.4",
                     f"copilot-package-integrity:{CLI_INTEGRITY}",
+                    SKILL_TRANSPORT,
                 ],
             },
             "adapter_command_digest": "a" * 64,
@@ -176,7 +183,7 @@ class ExactTargetEvidenceImportTests(unittest.TestCase):
             json.dumps(identity, indent=2, sort_keys=True) + "\n", encoding="utf-8"
         )
 
-    def test_valid_package_imports_all_three_governed_files(self):
+    def test_valid_package_imports_all_three_governed_files_then_binds_committed_history(self):
         result = import_exact_target_evidence.import_package(self.repo, self.package)
         self.assertEqual(result["case_count"], 1)
         manifest = self.repo / result["manifest_destination"]
@@ -188,6 +195,8 @@ class ExactTargetEvidenceImportTests(unittest.TestCase):
         self.assertEqual(manifest.read_bytes(), (self.package / "exact-target-run.json").read_bytes())
         self.assertEqual(evidence.read_bytes(), (self.package / "execution-evidence.json").read_bytes())
         self.assertEqual(identity.read_bytes(), (self.package / "runtime-identity.json").read_bytes())
+        evidence_commit = self._commit("commit exact-target evidence")
+        self.assertEqual(self._git("rev-parse", f"{evidence_commit}^"), self.carrier_ref)
         row = json.loads(evidence.read_text(encoding="utf-8"))["executions"][0]
         exact_target_evidence.validate_binding(self.repo, self.target_ref, row)
 
