@@ -31,6 +31,15 @@ ASSURANCE_LEVELS = {
 }
 ASSURANCE_SCOPES = {"behavioral_runtime", "harness_only"}
 RUNTIME_ASSURANCE_LEVELS = {"managed_runtime", "exact_target_runtime"}
+SCORER_FIELDS = {
+    "output_contains_all": {"type", "values"},
+    "output_contains_none": {"type", "values"},
+    "output_regex": {"type", "pattern"},
+    "metadata_equals": {"type", "key", "value"},
+    "trace_tool_called": {"type", "tool"},
+    "trace_tool_not_called": {"type", "tool"},
+    "max_trace_steps": {"type", "value"},
+}
 
 
 def load_json(path: Path) -> Any:
@@ -48,8 +57,11 @@ def _valid_datetime(value: Any) -> bool:
 
 
 def suite_assurance_scope(data: dict[str, Any]) -> str:
-    """Return suite assurance scope; legacy suites default to behavioral runtime."""
-    return data.get("assurance_scope", "behavioral_runtime")
+    """Return an explicitly declared published-suite assurance scope."""
+    scope = data.get("assurance_scope")
+    if scope not in ASSURANCE_SCOPES:
+        raise RuntimeError("suite assurance_scope must be explicitly declared")
+    return scope
 
 
 def suite_required_for_level(data: dict[str, Any], minimum_level: str) -> bool:
@@ -74,7 +86,9 @@ def validate_suite(data: Any, source: str = "<memory>") -> list[str]:
         errors.append(f"{source}: suite_id is required")
     if not isinstance(data.get("artifact"), str) or not data.get("artifact"):
         errors.append(f"{source}: artifact is required")
-    if "assurance_scope" in data and data["assurance_scope"] not in ASSURANCE_SCOPES:
+    if "assurance_scope" not in data:
+        errors.append(f"{source}: assurance_scope is required")
+    elif data["assurance_scope"] not in ASSURANCE_SCOPES:
         errors.append(f"{source}: assurance_scope must be one of {sorted(ASSURANCE_SCOPES)}")
 
     cases = data.get("cases")
@@ -117,6 +131,9 @@ def validate_suite(data: Any, source: str = "<memory>") -> list[str]:
             if scorer_type not in SUPPORTED_SCORERS:
                 errors.append(f"{ep}.type unsupported: {scorer_type!r}")
                 continue
+            unknown_expectation = sorted(set(expectation) - SCORER_FIELDS[scorer_type])
+            if unknown_expectation:
+                errors.append(f"{ep} unknown fields: {unknown_expectation}")
             if scorer_type in {"output_contains_all", "output_contains_none"}:
                 values = expectation.get("values")
                 if not isinstance(values, list) or not values or not all(isinstance(v, str) for v in values):
