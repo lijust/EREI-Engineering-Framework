@@ -12,7 +12,7 @@ FRAMEWORK_REF = "b" * 40
 ADAPTER_REF = "a" * 40
 CARRIER_REF = "d" * 40
 TARGET_TREE = "e" * 40
-CLI_INTEGRITY = "sha512-QUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVo="
+CLI_INTEGRITY = "sha512-AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4vMDEyMzQ1Njc4OTo7PD0+Pw=="
 MANIFEST_REL = Path("evals/exact-target-runs/run.json")
 IDENTITY_REL = Path("evals/exact-target-runs/run.identity.json")
 EVIDENCE_REL = Path("evals/EXECUTION_EVIDENCE.run.json")
