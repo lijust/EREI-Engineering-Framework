@@ -52,7 +52,8 @@
     "run_id": {"type": "string", "pattern": "^ETR-[0-9]{8}T[0-9]{6}Z-[A-F0-9]{8}$"},
     "run_manifest_path": {
       "type": "string",
-      "pattern": "^evals/exact-target-runs/(?![^/]*\\.identity\\.json$)[^/]+\\.json$"
+      "pattern": "^evals/exact-target-runs/[^/]+\\.json$",
+      "not": {"pattern": "\\.identity\\.json$"}
     },
     "execution_evidence_path": {
       "type": "string",
