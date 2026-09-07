@@ -6,6 +6,7 @@ import argparse
 import hashlib
 import importlib.util
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -274,6 +275,51 @@ def validate_package(repo_root: Path, package_dir: Path) -> dict[str, Any]:
     }
 
 
+def _exclusive_write_pair(writes: tuple[tuple[Path, Path], ...]) -> None:
+    """Reserve all destinations exclusively, then write both; rollback on handled failures."""
+    handles: list[tuple[Any, Path, Path]] = []
+    created: list[Path] = []
+    rollback_errors: list[str] = []
+    try:
+        for _, destination in writes:
+            destination.parent.mkdir(parents=True, exist_ok=True)
+        for source, destination in writes:
+            try:
+                handle = destination.open("xb")
+            except FileExistsError as exc:
+                raise ExactTargetImportError(
+                    f"release evidence destination already exists: {destination}"
+                ) from exc
+            handles.append((handle, source, destination))
+            created.append(destination)
+        for handle, source, _ in handles:
+            payload = source.read_bytes()
+            handle.write(payload)
+            handle.flush()
+            os.fsync(handle.fileno())
+        for handle, _, _ in handles:
+            handle.close()
+    except Exception as exc:
+        for handle, _, _ in handles:
+            try:
+                if not handle.closed:
+                    handle.close()
+            except OSError:
+                pass
+        for destination in reversed(created):
+            try:
+                destination.unlink(missing_ok=True)
+            except OSError as rollback_exc:
+                rollback_errors.append(f"{destination}: {rollback_exc}")
+        if rollback_errors:
+            raise ExactTargetImportError(
+                "evidence import failed and rollback was incomplete: " + "; ".join(rollback_errors)
+            ) from exc
+        if isinstance(exc, ExactTargetImportError):
+            raise
+        raise ExactTargetImportError(f"evidence import write failed and was rolled back: {exc}") from exc
+
+
 def import_package(repo_root: Path, package_dir: Path) -> dict[str, Any]:
     repo_root = repo_root.resolve()
     validated = validate_package(repo_root, package_dir)
@@ -281,10 +327,7 @@ def import_package(repo_root: Path, package_dir: Path) -> dict[str, Any]:
         (validated["manifest_source"], repo_root / validated["manifest_destination"]),
         (validated["evidence_source"], repo_root / validated["evidence_destination"]),
     )
-    for _, destination in writes:
-        destination.parent.mkdir(parents=True, exist_ok=True)
-    for source, destination in writes:
-        destination.write_bytes(source.read_bytes())
+    _exclusive_write_pair(writes)
     return validated
 
 
