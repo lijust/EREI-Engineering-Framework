@@ -25,6 +25,7 @@ SHA40_RE = re.compile(r"^[a-f0-9]{40}$")
 SHA256_RE = re.compile(r"^[a-f0-9]{64}$")
 RUN_ID_RE = re.compile(r"^ETR-[0-9]{8}T[0-9]{6}Z-[A-F0-9]{8}$")
 SEMVER_RE = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+(?:[-.][0-9A-Za-z.-]+)?$")
+SRI_SHA512_RE = re.compile(r"^sha512-[A-Za-z0-9+/]+={0,2}$")
 REPOSITORY_RE = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
 PACKAGE_FILES = {
     "identity": "runtime-identity.json",
@@ -125,8 +126,8 @@ def validate_runtime_identity(data: Any) -> dict[str, Any]:
     fields = {
         "schema_version", "repository", "target_id", "framework_ref", "target_tree", "release_carrier_ref",
         "adapter_id", "adapter_revision", "runtime_id", "runtime_version", "requested_cli_version",
-        "model", "github_run_id", "github_run_attempt", "run_id", "run_manifest_path",
-        "execution_evidence_path", "run_manifest_sha256", "execution_evidence_sha256",
+        "requested_cli_integrity", "model", "github_run_id", "github_run_attempt", "run_id",
+        "run_manifest_path", "execution_evidence_path", "run_manifest_sha256", "execution_evidence_sha256",
     }
     _exact_fields(data, fields, "runtime identity")
     if data["schema_version"] != 2:
@@ -147,6 +148,9 @@ def validate_runtime_identity(data: Any) -> dict[str, Any]:
         raise ExactTargetImportError("requested_cli_version must be an exact semantic version")
     if version not in runtime_version:
         raise ExactTargetImportError("runtime_version must contain the requested CLI version")
+    integrity = _text(data["requested_cli_integrity"], "requested_cli_integrity")
+    if not SRI_SHA512_RE.fullmatch(integrity):
+        raise ExactTargetImportError("requested_cli_integrity must be an npm sha512 SRI value")
     _text(data["model"], "model")
     _int(data["github_run_id"], "github_run_id")
     _int(data["github_run_attempt"], "github_run_attempt")
@@ -215,6 +219,7 @@ def validate_package(repo_root: Path, package_dir: Path) -> dict[str, Any]:
         f"github-actions:{identity['repository']}/run/{identity['github_run_id']}/attempt/{identity['github_run_attempt']}",
         f"release-carrier:{identity['release_carrier_ref']}",
         f"copilot-model:{identity['model']}",
+        f"copilot-package-integrity:{identity['requested_cli_integrity']}",
     }
     if set(manifest["runtime"]["identity_evidence"]) != expected_runtime_evidence:
         raise ExactTargetImportError("run manifest runtime identity evidence does not match package provenance")
