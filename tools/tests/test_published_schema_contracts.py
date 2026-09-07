@@ -59,8 +59,11 @@ class PublishedSchemaContractTests(unittest.TestCase):
             schema["properties"]["requested_cli_integrity"]["pattern"],
             "^sha512-[A-Za-z0-9+/]+={0,2}$",
         )
-        self.assertIn("identity", schema["properties"]["runtime_identity_path"]["pattern"])
-        self.assertIn("identity", schema["properties"]["run_manifest_path"]["pattern"])
+        manifest_path = schema["properties"]["run_manifest_path"]
+        identity_path = schema["properties"]["runtime_identity_path"]
+        self.assertIn("exact-target-runs", manifest_path["pattern"])
+        self.assertEqual(manifest_path["not"]["pattern"], "\\.identity\\.json$")
+        self.assertIn("identity", identity_path["pattern"])
         self.assertEqual(schema["properties"]["github_run_id"]["minimum"], 1)
         self.assertEqual(schema["properties"]["github_run_attempt"]["minimum"], 1)
         self.assertEqual(schema["properties"]["run_manifest_sha256"]["pattern"], "^[a-f0-9]{64}$")
