@@ -22,27 +22,54 @@ Candidate hardening may merge to `main` through reviewed pull requests after the
 A V2 Stable release is blocked unless **all** of the following are true:
 
 1. The release manifest is bound to an exact 40-character Framework candidate commit.
-2. `approval_ref` and `security_review_ref` are exact immutable commits.
-3. Behavioral eval evidence is V2, matches the exact release revision, covers every published case, is PASS, and is at `exact_target_runtime` assurance level.
-4. One genuine prospective cycle is complete: capture → review → feedback → validated Framework improvement → project adoption → measured post-adoption outcome.
-5. `tools/release_assurance.py` passes for the release manifest.
-6. The aggregate `Framework Assurance Gate` passes on the exact release candidate revision.
-7. One of these enforcement conditions is satisfied:
+2. `approval_ref` and `security_review_ref` are exact immutable commits and each binds the first write of its corresponding structured approval record.
+3. `releases/approvals/architecture.json` and `releases/approvals/security.json` both validate against `schemas/release-approval.schema.json`, have `decision=approved`, and bind the same frozen Framework target commit and target tree.
+4. Behavioral eval evidence is V2, matches the exact release revision, covers every published case, is PASS, and is at `exact_target_runtime` assurance level.
+5. One genuine prospective cycle is complete: capture → review → feedback → validated Framework improvement → project adoption → measured post-adoption outcome.
+6. `tools/release_assurance.py` passes for the release manifest.
+7. The aggregate `Framework Assurance Gate` passes on the exact release candidate revision.
+8. One of these enforcement conditions is satisfied:
    - GitHub branch protection **and** required status checks are server-enforced; or
    - the controlled-release fallback has been independently verified as equivalent and `fallback.equivalent_enforcement_verified` is explicitly set to `true` in `security/ASSURANCE_ENFORCEMENT.json` through a reviewed change.
 
-Until condition 7 is satisfied, VNext remains Candidate even if every other Stable gate passes.
+Until condition 8 is satisfied, VNext remains Candidate even if every other Stable gate passes.
+
+## Structured final approvals
+
+Architecture and Security approvals are evidence objects, not labels or informal acknowledgments.
+
+The only V2 approval record paths are:
+
+- `releases/approvals/architecture.json`
+- `releases/approvals/security.json`
+
+Each record must contain the exact frozen `target_framework_ref` and `target_tree`, an explicit `approved` or `rejected` decision, reviewer identity, evidence references, rationale, and RFC3339 recording time. The validator is `tools/release_approval.py`.
+
+For an approval to satisfy Stable promotion:
+
+1. The record must validate strictly with no unknown fields.
+2. Its decision must be `approved`.
+3. Its target commit and tree must match `releases/VNEXT_TARGET.json` exactly.
+4. Its manifest ref (`approval_ref` or `security_review_ref`) must equal the **first post-target commit that wrote that approval file**.
+5. The file must not change after that bound commit. If the approval needs correction or reconsideration, abandon that RC and start a new release candidate rather than rewriting the frozen approval evidence.
+6. `tools/stable_readiness.py`, `tools/release_assurance.py`, and `tools/stable_release_carrier.py` must all independently accept the approval evidence.
+
+No final Architecture or Security approval should be recorded before the pre-approval gates (prospective cycle, exact-target runtime evidence, and release enforcement) are all satisfied.
 
 ## Controlled release procedure
 
 1. Create a `release/**` branch from the exact Candidate commit; never develop new behavior on that branch.
-2. Regenerate/verify the Candidate and proposed Stable release evidence without changing historical evidence.
-3. Run the aggregate assurance gate and retain the exact run evidence.
-4. Bind architecture and security approvals to immutable commit refs.
-5. Run `python tools/assurance_enforcement.py` and `python tools/release_assurance.py <manifest> --repo-root .`.
-6. Review the complete diff from the exact candidate SHA; unknown or protected-path changes require L3 review.
-7. Merge only the reviewed release PR with an expected-head SHA guard.
-8. Verify post-merge tree/release identity and record the immutable Stable release manifest.
+2. Freeze `releases/VNEXT_TARGET.json` and verify the target/tree binding.
+3. Regenerate/verify exact-target runtime evidence without changing historical evidence.
+4. Run the aggregate assurance gate and retain the exact run evidence.
+5. Satisfy the server-enforcement or independently verified equivalent-enforcement condition.
+6. Run `python tools/stable_readiness.py --repo-root . --require-ready-for-final-approvals`; final approvals remain deferred until this passes.
+7. Record Architecture and Security approval records as separate immutable first writes and retain their exact commit SHAs.
+8. Bind those exact SHAs as `approval_ref` and `security_review_ref` in the proposed V2 Stable manifest.
+9. Run `python tools/assurance_enforcement.py`, `python tools/release_assurance.py <manifest> --repo-root .`, and `python tools/stable_readiness.py --repo-root . --require-stable-ready`.
+10. Review the complete diff from the exact candidate SHA; the release closure must contain evidence/release artifacts only and no behavior/governance drift.
+11. Merge only the reviewed release PR with an expected-head SHA guard.
+12. Verify post-merge tree/release identity and retain the immutable Stable release carrier commit.
 
 ## Consumer-side Stable adoption
 
@@ -63,7 +90,7 @@ python tools/plan_framework_upgrade.py \
   --release-carrier-ref <exact-stable-carrier>
 ```
 
-For Assurance Contract V2, the carrier verifier requires the frozen target, fixed evidence-only closure, immutable first writes, final approval refs, exact-target evidence, enforcement truth and full `release_assurance.py` validation. A V1 carrier is grandfathered only for `task-learning-review-v1` at `69079018606750312344cb3c648952b9ab72d35b`; no new release may downgrade to V1.
+For Assurance Contract V2, the carrier verifier requires the frozen target, fixed evidence-only closure, immutable first writes, structured Architecture/Security approvals, exact-target evidence, enforcement truth and full `release_assurance.py` validation. A V1 carrier is grandfathered only for `task-learning-review-v1` at `69079018606750312344cb3c648952b9ab72d35b`; no new release may downgrade to V1.
 
 A verified target without a Stable carrier may be inspected only with `--allow-nonstable-target`; such a plan is explicitly `approval_eligible=false` even if the target's historical `BASELINE.json` says `stable`.
 
@@ -72,6 +99,7 @@ A verified target without a Stable carrier may be inspected only with `--allow-n
 - No direct Stable promotion from a mutable branch name or tag-only reference.
 - No treating a passing CI run as server branch protection.
 - No setting `equivalent_enforcement_verified=true` merely because this runbook exists.
-- No rewriting historical learning, feedback, or release evidence to satisfy a gate.
+- No rewriting historical learning, feedback, approval, or release evidence to satisfy a gate.
 - No using Candidate capabilities as the project Stable pin before explicit Stable promotion.
 - No treating `BASELINE.status=stable` as sufficient Stable provenance for a new Framework target.
+- No treating a SHA-shaped `approval_ref` as an approval unless the structured approval record, first-write binding, target/tree binding and immutable history all validate.
