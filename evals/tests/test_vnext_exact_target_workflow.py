@@ -4,6 +4,12 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 WORKFLOW = ROOT / ".github" / "workflows" / "vnext-exact-target-copilot.yml"
+ACTION_PINS = {
+    "actions/checkout": "d23441a48e516b6c34aea4fa41551a30e30af803",
+    "actions/setup-python": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+    "actions/setup-node": "820762786026740c76f36085b0efc47a31fe5020",
+    "actions/upload-artifact": "ea165f8d65b6e75b540449e92b4886f43607fa02",
+}
 
 
 class VNextExactTargetWorkflowTests(unittest.TestCase):
@@ -23,6 +29,16 @@ class VNextExactTargetWorkflowTests(unittest.TestCase):
         self.assertIn("EREI_COPILOT_EXACT_TARGET_TOKEN", self.text)
         for forbidden in ("issues: write", "pull-requests: write", "actions: write", "checks: write", "statuses: write"):
             self.assertNotIn(forbidden, self.lowered)
+
+    def test_external_actions_are_exact_commit_pinned(self):
+        uses = re.findall(r"(?m)^\s*uses:\s*([^\s#]+)", self.text)
+        self.assertTrue(uses)
+        for ref in uses:
+            action, separator, revision = ref.partition("@")
+            self.assertEqual(separator, "@", ref)
+            self.assertRegex(revision, r"^[a-f0-9]{40}$", ref)
+            self.assertEqual(revision, ACTION_PINS.get(action), action)
+        self.assertNotRegex(self.text, r"uses:\s*actions/[A-Za-z0-9_.-]+@v\d+")
 
     def test_workflow_cannot_mutate_repository_or_promote_release(self):
         for forbidden in (
