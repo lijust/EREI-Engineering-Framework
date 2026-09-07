@@ -174,6 +174,7 @@ def _validate_v2_closure(repo: Path, target_ref: str, carrier_ref: str) -> list[
 def _safe_materialize(repo: Path, carrier_ref: str, destination: Path) -> None:
     archive_bytes = _run(repo, "archive", "--format=tar", carrier_ref, binary=True)
     assert isinstance(archive_bytes, bytes)
+    destination = destination.resolve()
     with tarfile.open(fileobj=io.BytesIO(archive_bytes), mode="r:") as archive:
         members = archive.getmembers()
         for member in members:
@@ -182,7 +183,17 @@ def _safe_materialize(repo: Path, carrier_ref: str, destination: Path) -> None:
                 raise StableCarrierError(f"unsafe path in release carrier archive: {member.name}")
             if member.issym() or member.islnk() or member.isdev():
                 raise StableCarrierError(f"unsupported link/device in release carrier archive: {member.name}")
-        archive.extractall(destination)
+            output = destination.joinpath(*path.parts)
+            if member.isdir():
+                output.mkdir(parents=True, exist_ok=True)
+                continue
+            if not member.isfile():
+                raise StableCarrierError(f"unsupported archive member type: {member.name}")
+            output.parent.mkdir(parents=True, exist_ok=True)
+            source = archive.extractfile(member)
+            if source is None:
+                raise StableCarrierError(f"unable to read archive member: {member.name}")
+            output.write_bytes(source.read())
 
 
 def _validate_legacy(path: str, manifest: dict[str, Any], target_ref: str) -> dict[str, Any]:
