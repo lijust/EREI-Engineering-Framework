@@ -1,27 +1,18 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://erei-framework.local/schemas/retrospective-task-learning-event.schema.json",
-  "title": "EREI Retrospective Task Learning Event V1",
+  "title": "EREI Retrospective Task Learning Event V2",
   "type": "object",
   "additionalProperties": false,
   "required": [
-    "schema_version",
-    "historical_event_id",
-    "recorded_at",
-    "observed_at",
-    "project",
-    "framework_ref_when_executed",
-    "capture_mode",
-    "evidence_quality",
-    "task_label",
-    "source_refs",
-    "outcome_class",
-    "signals",
-    "fingerprint"
+    "schema_version", "historical_event_id", "occurrence_id", "recorded_at", "observed_at",
+    "project", "framework_ref_when_executed", "capture_mode", "evidence_quality", "task_label",
+    "source_refs", "outcome_class", "signals", "producer", "canonicalization_version", "fingerprint"
   ],
   "properties": {
-    "schema_version": {"const": 1},
+    "schema_version": {"const": 2},
     "historical_event_id": {"type": "string", "pattern": "^EHIST-[0-9]{8}T[0-9]{6}Z-[A-F0-9]{8}$"},
+    "occurrence_id": {"type": "string", "minLength": 1},
     "recorded_at": {"type": "string", "format": "date-time"},
     "observed_at": {"type": "string", "format": "date-time"},
     "project": {
@@ -43,38 +34,73 @@
       "type": "array",
       "minItems": 1,
       "uniqueItems": true,
-      "items": {"type": "string", "minLength": 1}
+      "items": {"type": "string", "pattern": "^ESRC-[A-Z0-9][A-Z0-9._-]{2,127}$"}
     },
     "outcome_class": {"enum": ["verified_success", "success_with_deferred", "blocked", "failed", "canceled", "unknown"]},
     "signals": {
       "type": "array",
       "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": ["name", "value", "quality", "source_refs"],
-        "properties": {
-          "name": {"enum": [
-            "rework_cycles",
-            "verification_failures",
-            "verification_escape",
-            "manual_workaround",
-            "context_gap",
-            "unexpected_scope_growth",
-            "security_or_data_critical_event",
-            "framework_feedback_candidate"
-          ]},
-          "value": {"type": ["boolean", "integer", "number", "string"]},
-          "quality": {"enum": ["confirmed", "reconstructed", "inferred"]},
-          "source_refs": {
-            "type": "array",
-            "minItems": 1,
-            "uniqueItems": true,
-            "items": {"type": "string", "minLength": 1}
-          }
+        "oneOf": [
+          {"$ref": "#/$defs/countSignal"},
+          {"$ref": "#/$defs/booleanSignal"}
+        ]
+      }
+    },
+    "producer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repository", "ref", "schema_version", "canonicalization_version"],
+      "properties": {
+        "repository": {"type": "string", "minLength": 1},
+        "ref": {"type": "string", "pattern": "^[a-f0-9]{40}$"},
+        "schema_version": {"type": "integer", "minimum": 1},
+        "canonicalization_version": {"const": 2}
+      }
+    },
+    "canonicalization_version": {"const": 2},
+    "notes": {"type": "string", "minLength": 1},
+    "fingerprint": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+  },
+  "$defs": {
+    "signalBase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "value", "quality", "source_refs"],
+      "properties": {
+        "quality": {"enum": ["confirmed", "reconstructed", "inferred"]},
+        "source_refs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "pattern": "^ESRC-[A-Z0-9][A-Z0-9._-]{2,127}$"}
         }
       }
     },
-    "notes": {"type": "string", "minLength": 1},
-    "fingerprint": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+    "countSignal": {
+      "allOf": [
+        {"$ref": "#/$defs/signalBase"},
+        {
+          "properties": {
+            "name": {"enum": ["rework_cycles", "verification_failures"]},
+            "value": {"type": "integer", "minimum": 0}
+          }
+        }
+      ]
+    },
+    "booleanSignal": {
+      "allOf": [
+        {"$ref": "#/$defs/signalBase"},
+        {
+          "properties": {
+            "name": {"enum": [
+              "verification_escape", "manual_workaround", "context_gap",
+              "unexpected_scope_growth", "security_or_data_critical_event",
+              "framework_feedback_candidate"
+            ]},
+            "value": {"type": "boolean"}
+          }
+        }
+      ]
+    }
   }
 }
