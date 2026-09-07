@@ -21,8 +21,12 @@
   - `framework-candidate:07460985d9984dbcf3833e6142709c0965a05967`
   - `github-actions:34116080178`
   - `github-actions:34116080202`
+  - `github-pr:87`
+  - `app-merge:9f677504bafc3a2a8460f81b3b2088341a51a302`
+  - `task:ETASK-20260907T112848Z-C1AD0A87`
+  - `github-actions:34116935307`
 - Candidate ref: `07460985d9984dbcf3833e6142709c0965a05967`
-- Review note: Exact candidate 07460985d9984dbcf3833e6142709c0965a05967 passed Framework Assurance Gate run 34116080178 and Project Bootstrap Tests run 34116080202. The reference-integrity guard is accepted as a Framework Candidate; promotion remains closed pending source-project adoption and a measured post-adoption outcome.
+- Review note: The exact reference-integrity Candidate passed Framework CI and has now been adopted by the source project at merge 9f677504bafc3a2a8460f81b3b2088341a51a302 with provenance/reference validation and a terminal prospective adoption event. Promotion remains closed only with respect to this feedback item until a genuine later project task supplies a measured post-adoption outcome.
 
 ## FCL-CONFORMANCE-LADDER-001
 

@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://erei-framework.local/schemas/prospective-learning-cycle-status.schema.json",
+  "title": "EREI Prospective Learning Cycle Status V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "cycle_id", "updated_at", "status", "stable_framework_ref",
+    "framework_candidate_ref", "source_project", "steps", "blockers"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "cycle_id": {"type": "string", "pattern": "^PLC-[0-9]{8}-[A-Z0-9-]+$"},
+    "updated_at": {"type": "string", "format": "date-time"},
+    "status": {"enum": ["awaiting_measured_outcome", "complete", "blocked"]},
+    "stable_framework_ref": {"type": "string", "pattern": "^[a-f0-9]{40}$"},
+    "framework_candidate_ref": {"type": "string", "pattern": "^[a-f0-9]{40}$"},
+    "source_project": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repository"],
+      "properties": {"repository": {"type": "string", "minLength": 1}}
+    },
+    "steps": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["capture", "review", "feedback", "improvement", "adoption", "measured_outcome"],
+      "properties": {
+        "capture": {"$ref": "#/$defs/step"},
+        "review": {"$ref": "#/$defs/step"},
+        "feedback": {"$ref": "#/$defs/step"},
+        "improvement": {"$ref": "#/$defs/step"},
+        "adoption": {"$ref": "#/$defs/step"},
+        "measured_outcome": {"$ref": "#/$defs/step"}
+      }
+    },
+    "blockers": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    }
+  },
+  "$defs": {
+    "step": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status"],
+      "properties": {
+        "status": {"enum": ["completed", "pending"]},
+        "repository": {"type": "string", "minLength": 1},
+        "ref": {"type": "string", "pattern": "^[a-f0-9]{40}$"},
+        "evidence": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "reason": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}
