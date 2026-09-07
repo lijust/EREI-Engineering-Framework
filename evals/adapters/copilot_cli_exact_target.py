@@ -19,18 +19,22 @@ SAFE_INHERITED_ENV = {
 }
 ROUTING_SKILLS = {"skills/impact-analysis": "impact-analysis"}
 
+
 class CopilotExactTargetError(RuntimeError):
     pass
+
 
 def _object(value: Any, label: str) -> dict[str, Any]:
     if not isinstance(value, dict):
         raise CopilotExactTargetError(f"{label} must be an object")
     return value
 
+
 def _text(value: Any, label: str) -> str:
     if not isinstance(value, str) or not value.strip():
         raise CopilotExactTargetError(f"{label} must be a non-empty string")
     return value.strip()
+
 
 def validate_request(value: Any) -> dict[str, Any]:
     request = _object(value, "request")
@@ -48,6 +52,7 @@ def validate_request(value: Any) -> dict[str, Any]:
     _object(request["context"], "context")
     return request
 
+
 def _safe_component(root: Path, raw: str) -> Path:
     raw = _text(raw, "artifact component")
     normalized = raw.replace("\\", "/")
@@ -62,6 +67,7 @@ def _safe_component(root: Path, raw: str) -> Path:
     except ValueError as exc:
         raise CopilotExactTargetError(f"artifact escapes target root: {raw}") from exc
     return candidate
+
 
 def _read_utf8(path: Path, root: Path) -> str:
     try:
@@ -78,6 +84,7 @@ def _read_utf8(path: Path, root: Path) -> str:
         return resolved.read_text(encoding="utf-8")
     except (OSError, UnicodeError) as exc:
         raise CopilotExactTargetError(f"unable to read artifact file: {path}") from exc
+
 
 def resolve_artifact(root: Path, declaration: str, *, max_bytes: int = MAX_ARTIFACT_BYTES) -> list[tuple[str, str]]:
     root = root.resolve()
@@ -111,6 +118,7 @@ def resolve_artifact(root: Path, declaration: str, *, max_bytes: int = MAX_ARTIF
         raise CopilotExactTargetError("artifact resolution produced no context")
     return resolved
 
+
 def _routing_skill_name(artifact_declaration: str) -> str | None:
     components = [item.strip().replace("\\", "/") for item in artifact_declaration.split(" + ")]
     matches = [ROUTING_SKILLS[item] for item in components if item in ROUTING_SKILLS]
@@ -119,6 +127,7 @@ def _routing_skill_name(artifact_declaration: str) -> str | None:
     if len(matches) != 1 or len(components) != 1:
         raise CopilotExactTargetError("routing-sensitive exact-target artifacts must be declared as one canonical skill")
     return matches[0]
+
 
 def stage_routing_skill(target_root: Path, workspace: Path, artifact_declaration: str) -> str:
     skill_name = _routing_skill_name(artifact_declaration)
@@ -132,6 +141,7 @@ def stage_routing_skill(target_root: Path, workspace: Path, artifact_declaration
     target_dir.mkdir(parents=True, exist_ok=False)
     (target_dir / "SKILL.md").write_text(skill_text, encoding="utf-8")
     return skill_name
+
 
 def build_direct_prompt(artifacts: list[tuple[str, str]], case_input: dict[str, Any], context: dict[str, Any]) -> str:
     artifact_text = "\n\n".join(
@@ -149,6 +159,7 @@ def build_direct_prompt(artifacts: list[tuple[str, str]], case_input: dict[str, 
         f"CONTEXT:\n{json.dumps(context, sort_keys=True, ensure_ascii=False)}\n"
     )
 
+
 def build_routing_prompt(case_input: dict[str, Any], context: dict[str, Any]) -> str:
     return (
         "Evaluate the engineering request under the EREI Engineering Framework.\n"
@@ -160,6 +171,16 @@ def build_routing_prompt(case_input: dict[str, Any], context: dict[str, Any]) ->
         f"INPUT:\n{json.dumps(case_input, sort_keys=True, ensure_ascii=False)}\n\n"
         f"CONTEXT:\n{json.dumps(context, sort_keys=True, ensure_ascii=False)}\n"
     )
+
+
+def build_skill_event_probe_prompt() -> str:
+    return (
+        "This is a runtime telemetry transport probe. Exactly one project skill is available in the current workspace. "
+        "Invoke that available project skill exactly once before answering. Do not infer or name scorer criteria. "
+        "After the skill invocation, return exactly one JSON object and no markdown or commentary with this shape:\n"
+        '{"output":"skill telemetry probe complete","metadata":{"risk":"L0"}}\n'
+    )
+
 
 def _parse_final_json(content: str) -> dict[str, Any]:
     fence = re.fullmatch(r"```(?:json)?\s*(.*?)\s*```", content, flags=re.DOTALL | re.IGNORECASE)
@@ -177,9 +198,39 @@ def _parse_final_json(content: str) -> dict[str, Any]:
         raise CopilotExactTargetError("Copilot metadata must contain exactly risk=L0|L1|L2|L3")
     return {"output": output, "metadata": {"risk": metadata["risk"]}}
 
-def parse_copilot_jsonl(stdout: str) -> dict[str, Any]:
+
+def _tool_request(value: Any, label: str) -> tuple[str, str]:
+    request = _object(value, label)
+    call_id = _text(request.get("toolCallId"), f"{label}.toolCallId")
+    name = _text(request.get("name"), f"{label}.name")
+    arguments = request.get("arguments")
+    if arguments is not None and not isinstance(arguments, dict):
+        raise CopilotExactTargetError(f"{label}.arguments must be an object when present")
+    return call_id, name
+
+
+def _skill_event_name(data: Any, allowed_skill_names: set[str]) -> str:
+    payload = _object(data, "skill.invoked data")
+    name = _text(payload.get("name"), "skill.invoked name")
+    path = _text(payload.get("path"), "skill.invoked path").replace("\\", "/")
+    if name not in allowed_skill_names:
+        raise CopilotExactTargetError(f"unexpected skill.invoked name outside staged routing boundary: {name}")
+    expected_suffix = f"/.github/skills/{name}/SKILL.md"
+    if not (path == expected_suffix[1:] or path.endswith(expected_suffix)):
+        raise CopilotExactTargetError(
+            f"skill.invoked path does not resolve to the staged project skill: name={name} path={path}"
+        )
+    return name
+
+
+def parse_copilot_jsonl(stdout: str, *, allowed_skill_names: set[str] | None = None) -> dict[str, Any]:
+    allowed_skill_names = set() if allowed_skill_names is None else set(allowed_skill_names)
     final_messages: list[str] = []
     invoked_skills: list[str] = []
+    skill_request_ids: set[str] = set()
+    skill_start_ids: set[str] = set()
+    completions: dict[str, bool] = {}
+
     for index, raw in enumerate(stdout.splitlines(), start=1):
         if not raw.strip():
             continue
@@ -200,17 +251,57 @@ def parse_copilot_jsonl(stdout: str) -> dict[str, Any]:
             tool_requests = data.get("toolRequests", [])
             if tool_requests is not None and not isinstance(tool_requests, list):
                 raise CopilotExactTargetError("assistant.message data.toolRequests must be an array")
+            for request_index, request in enumerate(tool_requests or []):
+                call_id, name = _tool_request(request, f"assistant.message toolRequests[{request_index}]")
+                if name == "skill":
+                    skill_request_ids.add(call_id)
             if isinstance(content, str) and content.strip() and not tool_requests:
                 final_messages.append(content.strip())
+        elif event_type == "tool.execution_start":
+            payload = _object(data, "tool.execution_start data")
+            call_id = _text(payload.get("toolCallId"), "tool.execution_start toolCallId")
+            tool_name = _text(payload.get("toolName"), "tool.execution_start toolName")
+            arguments = payload.get("arguments")
+            if arguments is not None and not isinstance(arguments, dict):
+                raise CopilotExactTargetError("tool.execution_start arguments must be an object when present")
+            if tool_name == "skill":
+                skill_start_ids.add(call_id)
+        elif event_type == "tool.execution_complete":
+            payload = _object(data, "tool.execution_complete data")
+            call_id = _text(payload.get("toolCallId"), "tool.execution_complete toolCallId")
+            success = payload.get("success")
+            if type(success) is not bool:
+                raise CopilotExactTargetError("tool.execution_complete success must be a boolean")
+            if call_id in completions:
+                raise CopilotExactTargetError(f"duplicate tool.execution_complete for {call_id}")
+            completions[call_id] = success
         elif event_type == "skill.invoked":
-            if not isinstance(data, dict):
-                raise CopilotExactTargetError("skill.invoked event requires object data")
-            invoked_skills.append(_text(data.get("name"), "skill.invoked name"))
+            invoked_skills.append(_skill_event_name(data, allowed_skill_names))
+
+    observed_skill_tool_ids = skill_request_ids | skill_start_ids
+    if observed_skill_tool_ids and not invoked_skills:
+        raise CopilotExactTargetError(
+            "observed skill tool activity without authoritative skill.invoked telemetry; routing trace is ambiguous"
+        )
+    if skill_request_ids and skill_start_ids and skill_request_ids != skill_start_ids:
+        raise CopilotExactTargetError(
+            "skill tool request/start correlation mismatch; routing trace is ambiguous"
+        )
+    for call_id in skill_start_ids:
+        if call_id in completions and completions[call_id] is False and invoked_skills:
+            raise CopilotExactTargetError(
+                f"skill tool execution failed after skill.invoked telemetry for {call_id}"
+            )
+    if invoked_skills and not allowed_skill_names:
+        raise CopilotExactTargetError("skill invocation observed outside routing mode")
+    if len(invoked_skills) != len(set(invoked_skills)):
+        raise CopilotExactTargetError("duplicate skill.invoked telemetry for the same staged skill")
     if len(final_messages) != 1:
         raise CopilotExactTargetError(f"expected exactly one final assistant.message event, got {len(final_messages)}")
     response = _parse_final_json(final_messages[0])
     response["trace"] = [{"type": "tool", "name": name} for name in invoked_skills]
     return response
+
 
 def _copilot_environment(workspace: Path) -> dict[str, str]:
     source = os.environ
@@ -228,12 +319,21 @@ def _copilot_environment(workspace: Path) -> dict[str, str]:
     env["GITHUB_COPILOT_PROMPT_MODE_WORKSPACE_MCP"] = "false"
     return env
 
-def invoke_copilot(prompt: str, *, model: str, copilot_bin: str, timeout: float, workspace: Path, routing_mode: bool) -> dict[str, Any]:
+
+def invoke_copilot(
+    prompt: str,
+    *,
+    model: str,
+    copilot_bin: str,
+    timeout: float,
+    workspace: Path,
+    expected_skill: str | None,
+) -> dict[str, Any]:
     model = _text(model, "model")
     copilot_bin = _text(copilot_bin, "copilot binary")
     if timeout <= 0:
         raise CopilotExactTargetError("timeout must be > 0")
-    available_tools = "skill" if routing_mode else "ask_user"
+    available_tools = "skill" if expected_skill is not None else "ask_user"
     args = [
         copilot_bin, "-p", prompt, "--output-format=json", f"--model={model}",
         "--no-ask-user", "--no-auto-update", "--no-custom-instructions",
@@ -250,7 +350,9 @@ def invoke_copilot(prompt: str, *, model: str, copilot_bin: str, timeout: float,
         raise CopilotExactTargetError(f"Copilot CLI execution failed: {exc}") from exc
     if process.returncode != 0:
         raise CopilotExactTargetError(f"Copilot CLI exited {process.returncode}: {process.stderr.strip()[:1000]}")
-    return parse_copilot_jsonl(process.stdout)
+    allowed = {expected_skill} if expected_skill is not None else set()
+    return parse_copilot_jsonl(process.stdout, allowed_skill_names=allowed)
+
 
 def run_adapter(request: dict[str, Any], *, target_root: Path, model: str, copilot_bin: str, timeout: float) -> dict[str, Any]:
     request = validate_request(request)
@@ -263,10 +365,58 @@ def run_adapter(request: dict[str, Any], *, target_root: Path, model: str, copil
         if routing_skill is not None:
             stage_routing_skill(target_root, workspace, request["artifact"])
             prompt = build_routing_prompt(request["input"], request["context"])
-            return invoke_copilot(prompt, model=model, copilot_bin=copilot_bin, timeout=timeout, workspace=workspace, routing_mode=True)
+            return invoke_copilot(
+                prompt,
+                model=model,
+                copilot_bin=copilot_bin,
+                timeout=timeout,
+                workspace=workspace,
+                expected_skill=routing_skill,
+            )
         artifacts = resolve_artifact(target_root, request["artifact"])
         prompt = build_direct_prompt(artifacts, request["input"], request["context"])
-        return invoke_copilot(prompt, model=model, copilot_bin=copilot_bin, timeout=timeout, workspace=workspace, routing_mode=False)
+        return invoke_copilot(
+            prompt,
+            model=model,
+            copilot_bin=copilot_bin,
+            timeout=timeout,
+            workspace=workspace,
+            expected_skill=None,
+        )
+
+
+def probe_skill_event_transport(
+    *,
+    target_root: Path,
+    artifact_declaration: str,
+    model: str,
+    copilot_bin: str,
+    timeout: float,
+) -> str:
+    target_root = target_root.resolve()
+    skill_name = _routing_skill_name(artifact_declaration)
+    if skill_name is None:
+        raise CopilotExactTargetError("skill-event transport probe requires a routing-sensitive skill artifact")
+    with tempfile.TemporaryDirectory(prefix="erei-copilot-skill-event-probe-") as tmp:
+        workspace = Path(tmp)
+        (workspace / "copilot-home").mkdir()
+        (workspace / "copilot-cache").mkdir()
+        stage_routing_skill(target_root, workspace, artifact_declaration)
+        response = invoke_copilot(
+            build_skill_event_probe_prompt(),
+            model=model,
+            copilot_bin=copilot_bin,
+            timeout=timeout,
+            workspace=workspace,
+            expected_skill=skill_name,
+        )
+    expected_trace = [{"type": "tool", "name": skill_name}]
+    if response.get("trace") != expected_trace:
+        raise CopilotExactTargetError(
+            f"skill-event transport probe did not observe exactly one authoritative invocation of {skill_name}"
+        )
+    return skill_name
+
 
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser()
@@ -274,15 +424,37 @@ def main(argv=None) -> int:
     parser.add_argument("--model", default=os.environ.get("EREI_COPILOT_MODEL", DEFAULT_MODEL))
     parser.add_argument("--copilot-bin", default=os.environ.get("EREI_COPILOT_BIN", "copilot"))
     parser.add_argument("--timeout", type=float, default=240.0)
+    parser.add_argument("--probe-skill-event")
     args = parser.parse_args(argv)
     try:
+        if args.probe_skill_event:
+            skill_name = probe_skill_event_transport(
+                target_root=Path(args.target_root),
+                artifact_declaration=args.probe_skill_event,
+                model=args.model,
+                copilot_bin=args.copilot_bin,
+                timeout=args.timeout,
+            )
+            print(json.dumps({
+                "status": "skill_event_transport_verified",
+                "transport": "skill.invoked-v1",
+                "skill": skill_name,
+            }, sort_keys=True))
+            return 0
         request = json.loads(sys.stdin.read())
-        response = run_adapter(request, target_root=Path(args.target_root), model=args.model, copilot_bin=args.copilot_bin, timeout=args.timeout)
+        response = run_adapter(
+            request,
+            target_root=Path(args.target_root),
+            model=args.model,
+            copilot_bin=args.copilot_bin,
+            timeout=args.timeout,
+        )
     except (json.JSONDecodeError, CopilotExactTargetError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 2
     print(json.dumps(response, sort_keys=True, ensure_ascii=False))
     return 0
+
 
 if __name__ == "__main__":
     raise SystemExit(main())
