@@ -8,6 +8,8 @@ from tools import exact_target_evidence, release_assurance
 
 
 class ReleaseAssuranceTests(unittest.TestCase):
+    TARGET_TREE = "e" * 40
+
     def base(self, **overrides):
         value = {
             "schema_version": 1,
@@ -89,6 +91,44 @@ class ReleaseAssuranceTests(unittest.TestCase):
             }],
         }
 
+    def target_manifest(self):
+        return {
+            "schema_version": 1,
+            "target_id": "vnext-rc9",
+            "status": "frozen_candidate",
+            "framework_ref": "a" * 40,
+            "target_tree": self.TARGET_TREE,
+            "selected_at": "2026-09-07T12:00:00Z",
+            "source_branch": "main",
+            "assurance": {
+                "workflow": "Framework Assurance Gate",
+                "run_id": 1,
+                "event": "push",
+                "conclusion": "success",
+            },
+            "stable_baseline": {
+                "baseline": "task-learning-review-v1",
+                "framework_ref": "f" * 40,
+            },
+            "promotion_authorized": False,
+        }
+
+    def approval(self, approval_type: str):
+        suffix = "A1B2C3D4" if approval_type == "architecture" else "E5F6A7B8"
+        role = "system-architect" if approval_type == "architecture" else "security-engineer"
+        return {
+            "schema_version": 1,
+            "approval_id": f"EAPP-20260907T123000Z-{suffix}",
+            "approval_type": approval_type,
+            "target_framework_ref": "a" * 40,
+            "target_tree": self.TARGET_TREE,
+            "decision": "approved",
+            "recorded_at": "2026-09-07T12:30:00Z",
+            "reviewer": {"kind": "framework_role", "id": role},
+            "evidence": ["test-evidence", "release-target:vnext-rc9"],
+            "rationale": f"{approval_type} approval for immutable test target.",
+        }
+
     class FakeRunner:
         ASSURANCE_LEVELS = {"harness_smoke": 0, "reference_contract": 1, "managed_runtime": 2, "exact_target_runtime": 3}
 
@@ -107,10 +147,18 @@ class ReleaseAssuranceTests(unittest.TestCase):
     def write_stable_root(self, root: Path):
         (root / "security").mkdir(parents=True)
         (root / "evals").mkdir(parents=True)
+        (root / "releases" / "approvals").mkdir(parents=True)
         (root / "security" / "ASSURANCE_ENFORCEMENT.json").write_text(
             json.dumps(self.enforcement(equivalent=True)), encoding="utf-8"
         )
         (root / "evals" / "evidence.json").write_text(json.dumps(self.exact_evidence()), encoding="utf-8")
+        (root / "releases" / "VNEXT_TARGET.json").write_text(json.dumps(self.target_manifest()), encoding="utf-8")
+        (root / "releases" / "approvals" / "architecture.json").write_text(
+            json.dumps(self.approval("architecture")), encoding="utf-8"
+        )
+        (root / "releases" / "approvals" / "security.json").write_text(
+            json.dumps(self.approval("security")), encoding="utf-8"
+        )
 
     def test_candidate_requires_explicit_stable_blockers(self):
         value = self.base()
@@ -124,6 +172,7 @@ class ReleaseAssuranceTests(unittest.TestCase):
         self.assertFalse(result["next_stable_gate_applied"])
         self.assertIsNone(result["stable_enforcement_satisfied"])
         self.assertEqual(result["exact_target_bindings_validated"], 0)
+        self.assertEqual(result["approval_records_validated"], 0)
 
     def test_v2_stable_requires_exact_target_runtime_level(self):
         value = self.stable(minimum_eval_assurance_level="reference_contract")
@@ -163,7 +212,29 @@ class ReleaseAssuranceTests(unittest.TestCase):
                 with self.assertRaisesRegex(release_assurance.ReleaseError, "exact-target evidence binding failed"):
                     release_assurance.validate_manifest(self.stable(), repo_root=root)
 
-    def test_v2_stable_counts_validated_exact_target_bindings(self):
+    def test_v2_stable_requires_structured_approved_records(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.write_stable_root(root)
+            security = self.approval("security")
+            security["decision"] = "rejected"
+            (root / "releases" / "approvals" / "security.json").write_text(json.dumps(security), encoding="utf-8")
+            with mock.patch.object(release_assurance, "_load_runner", return_value=self.FakeRunner):
+                with self.assertRaisesRegex(release_assurance.ReleaseError, "security release approval"):
+                    release_assurance.validate_manifest(self.stable(), repo_root=root)
+
+    def test_v2_stable_approval_target_tree_must_match_frozen_target(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.write_stable_root(root)
+            architecture = self.approval("architecture")
+            architecture["target_tree"] = "9" * 40
+            (root / "releases" / "approvals" / "architecture.json").write_text(json.dumps(architecture), encoding="utf-8")
+            with mock.patch.object(release_assurance, "_load_runner", return_value=self.FakeRunner):
+                with self.assertRaisesRegex(release_assurance.ReleaseError, "architecture release approval"):
+                    release_assurance.validate_manifest(self.stable(), repo_root=root)
+
+    def test_v2_stable_counts_validated_exact_target_bindings_and_approvals(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             self.write_stable_root(root)
@@ -171,6 +242,7 @@ class ReleaseAssuranceTests(unittest.TestCase):
                  mock.patch.object(release_assurance.exact_target_evidence, "validate_binding", return_value={}):
                 result = release_assurance.validate_manifest(self.stable(), repo_root=root)
             self.assertEqual(result["exact_target_bindings_validated"], 1)
+            self.assertEqual(result["approval_records_validated"], 2)
 
 
 if __name__ == "__main__":

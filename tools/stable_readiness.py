@@ -13,11 +13,12 @@ from pathlib import Path
 from typing import Any
 
 try:
-    from . import assurance_enforcement, exact_target_evidence, prospective_cycle_status, release_target
+    from . import assurance_enforcement, exact_target_evidence, prospective_cycle_status, release_approval, release_target
 except ImportError:
     import assurance_enforcement
     import exact_target_evidence
     import prospective_cycle_status
+    import release_approval
     import release_target
 
 SHA40_RE = re.compile(r"^[a-f0-9]{40}$")
@@ -43,6 +44,18 @@ def _sha(value: Any, label: str) -> str:
     return value
 
 
+def _git(repo_root: Path, *args: str) -> str:
+    process = subprocess.run(
+        ["git", "-C", str(repo_root), *args],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if process.returncode != 0:
+        raise StableReadinessError(f"git {' '.join(args)} failed: {process.stderr.strip()}")
+    return process.stdout.strip()
+
+
 def _load_runner(repo_root: Path):
     path = repo_root / "evals" / "runner.py"
     spec = importlib.util.spec_from_file_location("erei_readiness_eval_runner", path)
@@ -54,27 +67,20 @@ def _load_runner(repo_root: Path):
 
 
 def _git_head(repo_root: Path) -> str:
-    try:
-        value = subprocess.check_output(
-            ["git", "rev-parse", "HEAD"], cwd=repo_root, text=True, stderr=subprocess.STDOUT
-        ).strip()
-    except (OSError, subprocess.CalledProcessError) as exc:
-        raise StableReadinessError(f"unable to resolve git HEAD: {exc}") from exc
-    return _sha(value, "git HEAD")
+    return _sha(_git(repo_root, "rev-parse", "HEAD"), "git HEAD")
 
 
 def _assert_git_commit(repo_root: Path, revision: str, label: str) -> str:
     revision = _sha(revision, label)
     try:
-        subprocess.check_output(
-            ["git", "cat-file", "-e", f"{revision}^{{commit}}"],
-            cwd=repo_root,
-            text=True,
-            stderr=subprocess.STDOUT,
-        )
-    except (OSError, subprocess.CalledProcessError) as exc:
+        _git(repo_root, "cat-file", "-e", f"{revision}^{{commit}}")
+    except StableReadinessError as exc:
         raise StableReadinessError(f"{label} does not resolve to a fetched git commit: {revision}") from exc
     return revision
+
+
+def _tree_for(repo_root: Path, revision: str) -> str:
+    return _sha(_git(repo_root, "rev-parse", f"{revision}^{{tree}}"), "target tree")
 
 
 def _event_target_revision(event_path: Path) -> str | None:
@@ -190,8 +196,32 @@ def eval_gate(repo_root: Path, target_ref: str) -> dict[str, Any]:
     }
 
 
+def _approval_history_binding(repo_root: Path, target_ref: str, approval_path: str, expected_ref: Any) -> dict[str, Any]:
+    bound_ref = _sha(expected_ref, f"approval ref for {approval_path}")
+    commits = [
+        item.strip()
+        for item in _git(repo_root, "log", "--reverse", "--format=%H", f"{target_ref}..HEAD", "--", approval_path).splitlines()
+        if item.strip()
+    ]
+    if not commits:
+        raise StableReadinessError(f"no post-target approval write found for {approval_path}")
+    first_ref = _sha(commits[0], f"first approval write for {approval_path}")
+    if bound_ref != first_ref:
+        raise StableReadinessError(
+            f"approval ref for {approval_path} must equal first post-target write {first_ref}, got {bound_ref}"
+        )
+    try:
+        first_blob = _git(repo_root, "rev-parse", f"{first_ref}:{approval_path}")
+        current_blob = _git(repo_root, "rev-parse", f"HEAD:{approval_path}")
+    except StableReadinessError as exc:
+        raise StableReadinessError(f"unable to bind immutable approval blob for {approval_path}") from exc
+    if first_blob != current_blob:
+        raise StableReadinessError(f"approval record {approval_path} changed after its bound approval ref")
+    return {"bound_ref": bound_ref, "first_write_ref": first_ref, "immutable": True}
+
+
 def approval_gate(repo_root: Path, target_ref: str, preapproval_ready: bool) -> dict[str, Any]:
-    matches: list[dict[str, Any]] = []
+    matches: list[tuple[Path, dict[str, Any]]] = []
     for path in sorted((repo_root / "releases").glob("*.json")):
         value = _load_json(path)
         if (
@@ -199,22 +229,51 @@ def approval_gate(repo_root: Path, target_ref: str, preapproval_ready: bool) -> 
             and value.get("assurance_contract_version", 0) >= 2
             and value.get("framework_ref") == target_ref
         ):
-            matches.append(value)
-    if matches:
-        if len(matches) != 1:
-            return {"status": "blocked", "reason": "multiple V2 Stable manifests target selected Framework revision"}
-        manifest = matches[0]
-        approval = manifest.get("approval_ref")
-        security = manifest.get("security_review_ref")
-        valid = isinstance(approval, str) and bool(SHA40_RE.fullmatch(approval)) and isinstance(security, str) and bool(SHA40_RE.fullmatch(security))
+            matches.append((path, value))
+    if not matches:
         return {
-            "status": "pass" if valid else "blocked",
-            "approval_ref_bound": isinstance(approval, str) and bool(SHA40_RE.fullmatch(approval)),
-            "security_review_ref_bound": isinstance(security, str) and bool(SHA40_RE.fullmatch(security)),
+            "status": "pending" if preapproval_ready else "deferred",
+            "reason": "final immutable architecture/security approval records are bound only after all pre-approval gates pass",
+        }
+    if len(matches) != 1:
+        return {"status": "blocked", "reason": "multiple V2 Stable manifests target selected Framework revision"}
+
+    manifest_path, manifest = matches[0]
+    target_tree = _tree_for(repo_root, target_ref)
+    details: dict[str, Any] = {}
+    pairs = (
+        ("architecture", "approval_ref"),
+        ("security", "security_review_ref"),
+    )
+    for approval_type, ref_field in pairs:
+        rel_path = release_approval.APPROVAL_PATHS[approval_type]
+        try:
+            record = release_approval.load_and_validate(
+                repo_root / rel_path,
+                expected_type=approval_type,
+                expected_target=target_ref,
+                expected_tree=target_tree,
+                require_approved=True,
+            )
+            history = _approval_history_binding(repo_root, target_ref, rel_path, manifest.get(ref_field))
+        except (release_approval.ReleaseApprovalError, StableReadinessError) as exc:
+            return {
+                "status": "blocked",
+                "reason": f"{approval_type} approval invalid: {exc}",
+                "manifest_path": manifest_path.relative_to(repo_root).as_posix(),
+            }
+        details[approval_type] = {
+            "approval_id": record["approval_id"],
+            "decision": record["decision"],
+            "recorded_at": record["recorded_at"],
+            **history,
         }
     return {
-        "status": "pending" if preapproval_ready else "deferred",
-        "reason": "final immutable architecture/security approval refs are bound only after all pre-approval gates pass",
+        "status": "pass",
+        "manifest_path": manifest_path.relative_to(repo_root).as_posix(),
+        "target_tree": target_tree,
+        "validated_records": 2,
+        "approvals": details,
     }
 
 
