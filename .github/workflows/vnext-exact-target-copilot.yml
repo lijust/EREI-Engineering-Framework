@@ -112,8 +112,8 @@ jobs:
             echo "copilot_cli_version must be an exact npm version, not latest/range/tag" >&2
             exit 2
           fi
-          if [[ ! "$COPILOT_CLI_INTEGRITY" =~ ^sha512-[A-Za-z0-9+/]+={0,2}$ ]]; then
-            echo "copilot_cli_integrity must be an exact sha512 npm SRI value" >&2
+          if [[ ! "$COPILOT_CLI_INTEGRITY" =~ ^sha512-[A-Za-z0-9+/]{86}==$ ]]; then
+            echo "copilot_cli_integrity must be one full SHA-512 npm SRI digest" >&2
             exit 2
           fi
           registry_integrity="$(npm view "@github/copilot@${COPILOT_CLI_VERSION}" dist.integrity)"
