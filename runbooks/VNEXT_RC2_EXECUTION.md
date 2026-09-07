@@ -39,20 +39,28 @@ The release branch must pass its normal assurance/closure CI before external run
 
 Configure the dedicated personal-repository Copilot PAT as `EREI_COPILOT_EXACT_TARGET_TOKEN` through the repository secret-management UI. Do not place the PAT in the repository, workflow inputs, command line, issue, PR, or evidence files.
 
+Before dispatch, choose one exact published `@github/copilot` npm version and independently record its npm `dist.integrity` value. The pair is part of the runtime identity; do not use `latest`, a mutable tag, a version range, or an unbound package version.
+
 Dispatch `VNext Exact Target Copilot Evidence` with:
 
 - `release_ref = release/vnext-rc2`;
 - `expected_carrier_sha =` exact current release-branch HEAD;
-- `copilot_cli_version =` one exact installed npm version, never `latest`, a tag, or a range.
+- `copilot_cli_version =` one exact npm version;
+- `copilot_cli_integrity =` exact `sha512-...` npm SRI for that same version.
+
+Before installation the workflow must query `npm view @github/copilot@<version> dist.integrity` and require an exact match with the supplied SRI. A mismatch stops execution before any model call.
 
 The workflow must:
 
 - validate the exact release carrier and `VNEXT_TARGET` closure;
+- use only exact-commit-pinned GitHub Actions;
 - check out the exact frozen target/tree separately;
+- verify the requested Copilot npm version/integrity pair before installation;
 - execute only the 43 `behavioral_runtime` cases;
 - send no `harness_only` case to the model;
 - keep real suite ids, case ids, tags, and scorer expectations outside the model boundary;
 - use observed runtime routing events only; synthetic trace is forbidden;
+- record the Copilot package SRI in runtime identity evidence;
 - produce a reconstructible V2 run manifest;
 - produce V2 execution evidence;
 - produce digest-bound V2 `runtime-identity.json`;
@@ -80,6 +88,7 @@ Validation must prove:
 
 - package SHA-256 integrity;
 - exact repository/run/attempt/carrier/model provenance;
+- exact requested Copilot CLI version and sha512 package integrity provenance;
 - exact frozen target id/ref/tree;
 - vendored adapter revision equals the frozen target;
 - exact 43-case behavioral set with no extras;
@@ -97,7 +106,7 @@ python tools/import_exact_target_evidence.py \
   --package-dir <downloaded-package>
 ```
 
-The importer writes only the run manifest and execution-evidence bytes. It never commits or pushes.
+The importer reserves both evidence destinations exclusively, writes/fsyncs the validated bytes, and rolls back both new files on handled partial-write failure. It never commits or pushes. If the import process is interrupted externally, do not commit partial local state; rerun validation from the unchanged release carrier and package.
 
 ## 4. Commit evidence without changing the target
 
