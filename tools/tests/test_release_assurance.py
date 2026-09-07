@@ -94,7 +94,7 @@ class ReleaseAssuranceTests(unittest.TestCase):
     def target_manifest(self):
         return {
             "schema_version": 1,
-            "target_id": "vnext-test",
+            "target_id": "vnext-rc9",
             "status": "frozen_candidate",
             "framework_ref": "a" * 40,
             "target_tree": self.TARGET_TREE,
@@ -125,7 +125,7 @@ class ReleaseAssuranceTests(unittest.TestCase):
             "decision": "approved",
             "recorded_at": "2026-09-07T12:30:00Z",
             "reviewer": {"kind": "framework_role", "id": role},
-            "evidence": ["test-evidence", "release-target:vnext-test"],
+            "evidence": ["test-evidence", "release-target:vnext-rc9"],
             "rationale": f"{approval_type} approval for immutable test target.",
         }
 
