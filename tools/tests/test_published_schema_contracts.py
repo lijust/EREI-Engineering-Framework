@@ -57,7 +57,7 @@ class PublishedSchemaContractTests(unittest.TestCase):
         self.assertEqual(schema["properties"]["repository"]["pattern"], "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
         self.assertEqual(
             schema["properties"]["requested_cli_integrity"]["pattern"],
-            "^sha512-[A-Za-z0-9+/]+={0,2}$",
+            "^sha512-[A-Za-z0-9+/]{86}==$",
         )
         manifest_path = schema["properties"]["run_manifest_path"]
         identity_path = schema["properties"]["runtime_identity_path"]
