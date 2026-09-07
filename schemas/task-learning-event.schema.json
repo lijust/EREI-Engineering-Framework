@@ -1,20 +1,21 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://erei-framework.local/schemas/task-learning-event.schema.json",
-  "title": "EREI Task Learning Event V1",
+  "title": "EREI Task Learning Event V2",
   "type": "object",
   "additionalProperties": false,
   "required": [
-    "schema_version", "task_id", "recorded_at", "project", "framework_ref",
-    "workflow", "risk", "terminal_state", "outcome_class", "material",
-    "rework_cycles", "verification_failures", "verification_escape",
-    "framework_feedback_created", "manual_workaround", "context_gap",
-    "unexpected_scope_growth", "security_or_data_critical_event",
-    "duration_class", "fingerprint"
+    "schema_version", "task_id", "occurrence_id", "recorded_at", "project", "framework_ref",
+    "workflow", "risk", "terminal_state", "outcome_class", "material", "rework_cycles",
+    "verification_failures", "verification_escape", "framework_feedback_created",
+    "manual_workaround", "context_gap", "unexpected_scope_growth",
+    "security_or_data_critical_event", "duration_class", "signal_assessment",
+    "failure_stage", "fingerprint"
   ],
   "properties": {
-    "schema_version": {"const": 1},
+    "schema_version": {"const": 2},
     "task_id": {"type": "string", "pattern": "^ETASK-[0-9]{8}T[0-9]{6}Z-[A-F0-9]{8}$"},
+    "occurrence_id": {"type": "string", "pattern": "^EOCC-[0-9]{8}T[0-9]{6}Z-[A-F0-9]{8}$"},
     "recorded_at": {"type": "string", "format": "date-time"},
     "project": {
       "type": "object",
@@ -40,8 +41,30 @@
     "unexpected_scope_growth": {"type": "boolean"},
     "security_or_data_critical_event": {"type": "boolean"},
     "duration_class": {"enum": ["short", "medium", "long", "unknown"]},
+    "task_group": {"type": "string", "minLength": 1},
+    "failure_stage": {"enum": ["none", "pre_merge", "post_merge", "runtime", "unknown"]},
+    "failure_subject": {"type": "string", "minLength": 1},
+    "signal_assessment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rework_cycles", "verification_failures", "verification_escape",
+        "framework_feedback_created", "manual_workaround", "context_gap",
+        "unexpected_scope_growth", "security_or_data_critical_event"
+      ],
+      "properties": {
+        "rework_cycles": {"enum": ["measured", "not_assessed"]},
+        "verification_failures": {"enum": ["measured", "not_assessed"]},
+        "verification_escape": {"enum": ["measured", "not_assessed"]},
+        "framework_feedback_created": {"enum": ["measured", "not_assessed"]},
+        "manual_workaround": {"enum": ["measured", "not_assessed"]},
+        "context_gap": {"enum": ["measured", "not_assessed"]},
+        "unexpected_scope_growth": {"enum": ["measured", "not_assessed"]},
+        "security_or_data_critical_event": {"enum": ["measured", "not_assessed"]}
+      }
+    },
     "feedback_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
-    "feedback_fingerprints": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "feedback_fingerprints": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^[a-f0-9]{64}$"}},
     "tags": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
     "fingerprint": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
   }
