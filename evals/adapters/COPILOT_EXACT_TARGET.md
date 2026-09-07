@@ -26,15 +26,23 @@ For routing-sensitive `skills/impact-analysis` evaluation, the adapter stages on
 
 ## Trace truthfulness
 
-The adapter must never synthesize tool or skill traces from the eval artifact declaration. Routing evidence is accepted only from Copilot JSONL runtime events such as `skill.invoked`. The normalized eval trace is derived from those observed runtime events.
+The adapter must never synthesize tool or skill traces from the eval artifact declaration. Routing evidence is accepted only from observed Copilot runtime events such as `skill.invoked`. The normalized eval trace is derived from those runtime events.
 
-If a positive trace expectation exists and the runtime emits no matching invocation event, the case fails.
+If a positive trace expectation exists and the runtime emits no matching invocation event, the case fails. Mocked parser tests only validate the adapter contract; they are not runtime evidence. Exact event compatibility must be proven by the controlled external run before evidence is accepted.
 
 ## Runtime isolation
 
 Each case runs in a fresh temporary workspace and fresh Copilot home/cache. Direct semantic mode exposes no effective model tools. Routing mode exposes only the skill tool. Built-in MCPs, custom instructions, remote access/export, experimental behavior, auto-update, and interactive approval are disabled.
 
 The Copilot child process receives an allowlisted environment containing only basic process/network/certificate variables plus its Copilot token. Unrelated runner secrets are not inherited.
+
+## Authentication and runtime reproducibility
+
+This repository is personal-owned, so the controlled workflow requires the `EREI_COPILOT_EXACT_TARGET_TOKEN` repository secret containing a fine-grained token authorized for Copilot requests. The external model execution does not silently fall back to the workflow `GITHUB_TOKEN`.
+
+The manual workflow also requires an exact `copilot_cli_version` input and installs `@github/copilot@<exact-version>`. It records both the requested npm version and the CLI-reported runtime identity in the evidence package. Floating `latest`, semver ranges, and npm tags are rejected.
+
+The model identifier is fixed to `gpt-5.4`. The provider may evolve the hosted model behind that identifier, so the durable Actions run/attempt and execution timestamp remain part of the runtime evidence boundary.
 
 ## Evidence production
 
