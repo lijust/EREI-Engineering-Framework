@@ -59,12 +59,7 @@ def _blind_id(prefix: str, value: str) -> str:
 
 
 def _blinded_request(suite: dict[str, Any], case: dict[str, Any]) -> dict[str, Any]:
-    """Build the external-runtime request without scorer-derived identity hints.
-
-    Stable suite/case identities, tags and expectations remain inside the harness.
-    The adapter receives only opaque protocol IDs plus the declared artifact,
-    input and context needed to evaluate behavior.
-    """
+    """Build the external-runtime request without scorer-derived identity hints."""
     suite_id = _text(suite.get("suite_id"), "suite_id")
     case_id = _text(case.get("id"), "case_id")
     artifact = _text(suite.get("artifact"), "artifact")
@@ -147,12 +142,15 @@ def run_suites(
             continue
         for case in data["cases"]:
             request = _blinded_request(data, case)
+            response: dict[str, Any] | None = None
+            adapter_error = False
             try:
                 response = runner.call_adapter(command, request, timeout, case["expectations"])
                 scorer_results = [runner.score(expectation, response) for expectation in case["expectations"]]
                 status = "pass" if all(item[0] for item in scorer_results) else "fail"
                 response_digest = _canonical_digest(response)
             except Exception:
+                adapter_error = True
                 status = "fail"
                 response_digest = _canonical_digest({
                     "adapter_error": True,
@@ -164,6 +162,8 @@ def run_suites(
                 "case_id": case["id"],
                 "status": status,
                 "response_digest": response_digest,
+                "response": response,
+                "adapter_error": adapter_error,
             })
             evidence_rows.append({
                 "suite_id": data["suite_id"],
@@ -180,7 +180,7 @@ def run_suites(
         raise ExactTargetRunError("no behavioral_runtime eval cases found for exact-target execution")
 
     manifest = {
-        "schema_version": 1,
+        "schema_version": 2,
         "run_id": generated_run_id,
         "produced_at": now,
         "framework_revision": framework_ref,
