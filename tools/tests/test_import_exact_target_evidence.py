@@ -9,7 +9,8 @@ from tools import build_exact_target_package_identity, exact_target_evidence, im
 
 
 ROOT = Path(__file__).resolve().parents[2]
-CLI_INTEGRITY = "sha512-QUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVo="
+CLI_INTEGRITY = "sha512-AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4vMDEyMzQ1Njc4OTo7PD0+Pw=="
+OTHER_CLI_INTEGRITY = "sha512-Pz49PDs6OTg3NjU0MzIxMC8uLSwrKikoJyYlJCMiISAfHh0cGxoZGBcWFRQTEhEQDw4NDAsKCQgHBgUEAwIBAA=="
 
 
 class ExactTargetEvidenceImportTests(unittest.TestCase):
@@ -229,7 +230,7 @@ class ExactTargetEvidenceImportTests(unittest.TestCase):
     def test_runtime_identity_integrity_must_match_manifest_provenance(self):
         identity_path = self.package / "runtime-identity.json"
         identity = json.loads(identity_path.read_text(encoding="utf-8"))
-        identity["requested_cli_integrity"] = "sha512-WlpaWlpaWlpaWg=="
+        identity["requested_cli_integrity"] = OTHER_CLI_INTEGRITY
         identity_path.write_text(json.dumps(identity), encoding="utf-8")
         with self.assertRaisesRegex(import_exact_target_evidence.ExactTargetImportError, "runtime identity evidence"):
             import_exact_target_evidence.validate_package(self.repo, self.package)
