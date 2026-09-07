@@ -18,7 +18,7 @@
     "central_feedback_decisions": "candidate-v1"
   },
   "stable_blockers": [
-    "GitHub branch/ruleset enforcement is unavailable for this private repository on the active plan; main remains unprotected even though the aggregate Assurance Gate runs.",
+    "GitHub branch/ruleset enforcement is unavailable for this private repository on the active plan. A controlled-release fallback is now documented and CI-validated, but it is not treated as server-enforced equivalence until independently verified and explicitly accepted.",
     "Complete independent exact_target_runtime behavioral evidence is not yet retained for all 44 published eval cases.",
     "A genuine prospective learning cycle from capture through review, feedback, Framework improvement, project adoption, and measured post-adoption outcome has not yet completed.",
     "Final V2 Stable architecture/security approval references have not yet been bound to an immutable release candidate commit."

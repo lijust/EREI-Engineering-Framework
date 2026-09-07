@@ -9,6 +9,11 @@ import re
 import sys
 from pathlib import Path
 
+try:
+    from . import assurance_enforcement
+except ImportError:
+    import assurance_enforcement
+
 SHA40_RE = re.compile(r"^[a-f0-9]{40}$")
 
 
@@ -77,6 +82,7 @@ def validate_manifest(manifest: dict, *, repo_root: Path | None = None) -> dict:
         "framework_ref": manifest["framework_ref"],
         "assurance_contract_version": manifest["assurance_contract_version"],
         "next_stable_gate_applied": False,
+        "stable_enforcement_satisfied": None,
     }
     if manifest["status"] == "stable" and manifest["assurance_contract_version"] >= 2:
         result["next_stable_gate_applied"] = True
@@ -98,6 +104,17 @@ def validate_manifest(manifest: dict, *, repo_root: Path | None = None) -> dict:
             _text(cycle[key], f"prospective_learning_cycle.{key}")
         if repo_root is None:
             raise ReleaseError("repo_root is required to validate a V2 Stable release")
+        try:
+            enforcement = assurance_enforcement.load_and_validate(
+                repo_root / "security" / "ASSURANCE_ENFORCEMENT.json"
+            )
+        except assurance_enforcement.EnforcementError as exc:
+            raise ReleaseError(f"invalid assurance enforcement record: {exc}") from exc
+        result["stable_enforcement_satisfied"] = enforcement["stable_enforcement_satisfied"]
+        if not enforcement["stable_enforcement_satisfied"]:
+            raise ReleaseError(
+                "V2 Stable requires server branch/status-check enforcement or an independently verified equivalent fallback"
+            )
         evidence = _load(repo_root / evidence_path)
         if evidence.get("framework_revision") != manifest["framework_ref"]:
             raise ReleaseError("behavioral eval evidence revision does not match release framework_ref")

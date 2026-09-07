@@ -62,11 +62,13 @@
     "fingerprint": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
   },
   "$defs": {
-    "signalBase": {
+    "countSignal": {
       "type": "object",
       "additionalProperties": false,
       "required": ["name", "value", "quality", "source_refs"],
       "properties": {
+        "name": {"enum": ["rework_cycles", "verification_failures"]},
+        "value": {"type": "integer", "minimum": 0},
         "quality": {"enum": ["confirmed", "reconstructed", "inferred"]},
         "source_refs": {
           "type": "array",
@@ -76,31 +78,25 @@
         }
       }
     },
-    "countSignal": {
-      "allOf": [
-        {"$ref": "#/$defs/signalBase"},
-        {
-          "properties": {
-            "name": {"enum": ["rework_cycles", "verification_failures"]},
-            "value": {"type": "integer", "minimum": 0}
-          }
-        }
-      ]
-    },
     "booleanSignal": {
-      "allOf": [
-        {"$ref": "#/$defs/signalBase"},
-        {
-          "properties": {
-            "name": {"enum": [
-              "verification_escape", "manual_workaround", "context_gap",
-              "unexpected_scope_growth", "security_or_data_critical_event",
-              "framework_feedback_candidate"
-            ]},
-            "value": {"type": "boolean"}
-          }
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "value", "quality", "source_refs"],
+      "properties": {
+        "name": {"enum": [
+          "verification_escape", "manual_workaround", "context_gap",
+          "unexpected_scope_growth", "security_or_data_critical_event",
+          "framework_feedback_candidate"
+        ]},
+        "value": {"type": "boolean"},
+        "quality": {"enum": ["confirmed", "reconstructed", "inferred"]},
+        "source_refs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "pattern": "^ESRC-[A-Z0-9][A-Z0-9._-]{2,127}$"}
         }
-      ]
+      }
     }
   }
 }
