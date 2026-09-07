@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://erei-framework.local/schemas/retrospective-task-learning-event.schema.json",
+  "title": "EREI Retrospective Task Learning Event V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "historical_event_id",
+    "recorded_at",
+    "observed_at",
+    "project",
+    "framework_ref_when_executed",
+    "capture_mode",
+    "evidence_quality",
+    "task_label",
+    "source_refs",
+    "outcome_class",
+    "signals",
+    "fingerprint"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "historical_event_id": {"type": "string", "pattern": "^EHIST-[0-9]{8}T[0-9]{6}Z-[A-F0-9]{8}$"},
+    "recorded_at": {"type": "string", "format": "date-time"},
+    "observed_at": {"type": "string", "format": "date-time"},
+    "project": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repository"],
+      "properties": {
+        "repository": {"type": "string", "minLength": 1},
+        "name": {"type": "string", "minLength": 1}
+      }
+    },
+    "framework_ref_when_executed": {"type": "string", "minLength": 1},
+    "capture_mode": {"const": "retrospective"},
+    "evidence_quality": {"enum": ["confirmed", "reconstructed", "inferred"]},
+    "task_label": {"type": "string", "minLength": 1},
+    "workflow": {"type": "string", "minLength": 1},
+    "risk": {"enum": ["L0", "L1", "L2", "L3", "L4", "UNKNOWN"]},
+    "source_refs": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "outcome_class": {"enum": ["verified_success", "success_with_deferred", "blocked", "failed", "canceled", "unknown"]},
+    "signals": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "value", "quality", "source_refs"],
+        "properties": {
+          "name": {"enum": [
+            "rework_cycles",
+            "verification_failures",
+            "verification_escape",
+            "manual_workaround",
+            "context_gap",
+            "unexpected_scope_growth",
+            "security_or_data_critical_event",
+            "framework_feedback_candidate"
+          ]},
+          "value": {"type": ["boolean", "integer", "number", "string"]},
+          "quality": {"enum": ["confirmed", "reconstructed", "inferred"]},
+          "source_refs": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {"type": "string", "minLength": 1}
+          }
+        }
+      }
+    },
+    "notes": {"type": "string", "minLength": 1},
+    "fingerprint": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+  }
+}
