@@ -36,6 +36,13 @@ class EvalHarnessSelfTest(unittest.TestCase):
         self.assertIn("PASS harness-smoke/SMOKE-001", result.stdout)
         self.assertIn("Summary: 1 passed, 0 failed, 1 total", result.stdout)
 
+    def test_windows_adapter_command_preserves_backslashes_and_spaces(self):
+        command = r'"C:\Program Files\Python312\python.exe" "C:\repo path\mock_adapter.py"'
+        self.assertEqual(
+            runner.split_adapter_command(command, platform_name="nt"),
+            [r"C:\Program Files\Python312\python.exe", r"C:\repo path\mock_adapter.py"],
+        )
+
     def test_trace_null_is_invalid(self):
         with self.assertRaisesRegex(RuntimeError, "trace must be an array"):
             runner.validate_adapter_response(

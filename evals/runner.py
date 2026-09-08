@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import shlex
 import subprocess
@@ -134,6 +135,20 @@ def discover_suites(paths: list[str]) -> list[Path]:
     return suites
 
 
+def split_adapter_command(command: str, platform_name: str | None = None) -> list[str]:
+    """Split an adapter command without corrupting native Windows backslash paths."""
+    platform_name = os.name if platform_name is None else platform_name
+    if platform_name != "nt":
+        return shlex.split(command)
+    argv = shlex.split(command, posix=False)
+    return [
+        token[1:-1]
+        if len(token) >= 2 and token[0] == token[-1] and token[0] in {"'", '"'}
+        else token
+        for token in argv
+    ]
+
+
 def nested_value(mapping: dict[str, Any], dotted_key: str) -> Any:
     current: Any = mapping
     for part in dotted_key.split("."):
@@ -222,7 +237,7 @@ def score(expectation: dict[str, Any], response: dict[str, Any]) -> tuple[bool, 
 
 
 def call_adapter(command: str, request: dict[str, Any], timeout: float, expectations: list[dict[str, Any]] | None = None) -> dict[str, Any]:
-    argv = shlex.split(command)
+    argv = split_adapter_command(command)
     if not argv:
         raise RuntimeError("adapter command is empty")
     process = subprocess.run(

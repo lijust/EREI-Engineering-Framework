@@ -13,88 +13,105 @@ permissions:
 
 jobs:
   assurance:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Windows, X64]
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
+      - name: Verify local Python 3.12
+        shell: powershell
+        run: |
+          py "-3.12" -c "import sys, encodings, ssl; print(sys.version); print(sys.executable)"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Compile Framework Python
-        run: python -m compileall -q tools evals validation_contract.py validate_framework_feedback.py capture_framework_feedback.py
+        shell: powershell
+        run: py "-3.12" -m compileall -q tools evals validation_contract.py validate_framework_feedback.py capture_framework_feedback.py
 
       - name: Parse all published JSON contracts
-        shell: bash
+        shell: powershell
         run: |
-          python - <<'PY'
+          @'
           import json
           from pathlib import Path
           paths = sorted(Path('schemas').rglob('*.json')) + sorted(Path('evals').rglob('*.schema.json'))
           for path in paths:
               json.loads(path.read_text(encoding='utf-8'))
               print('PASS JSON', path)
-          PY
+          '@ | py "-3.12" -
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Run all Framework tool tests
-        run: python -m unittest discover -s tools/tests -p 'test_*.py' -v
+        shell: powershell
+        run: py "-3.12" -m unittest discover -s tools/tests -p 'test_*.py' -v
 
       - name: Validate repository-local assurance references
-        run: python tools/validate_project_assurance_refs.py --target .
+        shell: powershell
+        run: py "-3.12" tools/validate_project_assurance_refs.py --target .
 
       - name: Run eval harness tests
-        run: python -m unittest discover -s evals/tests -p 'test_*.py' -v
+        shell: powershell
+        run: py "-3.12" -m unittest discover -s evals/tests -p 'test_*.py' -v
 
       - name: Validate all machine-readable eval suites
-        run: python evals/runner.py validate evals/cases
+        shell: powershell
+        run: py "-3.12" evals/runner.py validate evals/cases
 
       - name: Execute all 44 cases at reference-contract level
-        run: python evals/runner.py run evals/cases --adapter "python evals/fixtures/reference_oracle_adapter.py"
+        shell: powershell
+        run: py "-3.12" evals/runner.py run evals/cases --adapter "py -3.12 evals/fixtures/reference_oracle_adapter.py"
 
       - name: Report retained execution-evidence coverage honestly
-        shell: bash
+        shell: powershell
         run: |
-          for evidence in evals/EXECUTION_EVIDENCE*.json; do
-            echo "EVIDENCE $evidence"
-            python evals/runner.py coverage evals/cases --evidence "$evidence" --minimum-level exact_target_runtime
-          done
+          $evidenceFiles = Get-ChildItem -Path 'evals' -Filter 'EXECUTION_EVIDENCE*.json' | Sort-Object Name
+          foreach ($evidence in $evidenceFiles) {
+            Write-Host "EVIDENCE $($evidence.FullName)"
+            py "-3.12" evals/runner.py coverage evals/cases --evidence $evidence.FullName --minimum-level exact_target_runtime
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
 
       - name: Validate structured central feedback decisions
-        run: python tools/feedback_decisions.py validate feedback/DECISIONS.jsonl
+        shell: powershell
+        run: py "-3.12" tools/feedback_decisions.py validate feedback/DECISIONS.jsonl
 
       - name: Validate current prospective learning-cycle progress
-        run: python tools/prospective_cycle_status.py learning/PROSPECTIVE_CYCLE_STATUS.json
+        shell: powershell
+        run: py "-3.12" tools/prospective_cycle_status.py learning/PROSPECTIVE_CYCLE_STATUS.json
 
       - name: Validate truthful assurance enforcement state
-        run: python tools/assurance_enforcement.py security/ASSURANCE_ENFORCEMENT.json
+        shell: powershell
+        run: py "-3.12" tools/assurance_enforcement.py security/ASSURANCE_ENFORCEMENT.json
 
       - name: Validate frozen release-target closure when selected
-        run: python tools/release_target.py --repo-root . --if-present --validate-closure
+        shell: powershell
+        run: py "-3.12" tools/release_target.py --repo-root . --if-present --validate-closure
 
       - name: Report derived VNext Stable readiness
-        run: python tools/stable_readiness.py --repo-root .
+        shell: powershell
+        run: py "-3.12" tools/stable_readiness.py --repo-root .
 
       - name: Validate last Stable release manifest
-        run: python tools/release_assurance.py releases/task-learning-review-v1.json --repo-root .
+        shell: powershell
+        run: py "-3.12" tools/release_assurance.py releases/task-learning-review-v1.json --repo-root .
 
       - name: Validate grandfathered last Stable carrier provenance
-        shell: bash
+        shell: powershell
         run: |
-          carrier_ref="$(git rev-parse origin/main)"
-          python tools/stable_release_carrier.py \
-            --framework-repo . \
-            --target-ref 69079018606750312344cb3c648952b9ab72d35b \
-            --release-carrier-ref "$carrier_ref"
+          $carrierRef = (git rev-parse origin/main).Trim()
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          py "-3.12" tools/stable_release_carrier.py --framework-repo . --target-ref 69079018606750312344cb3c648952b9ab72d35b --release-carrier-ref $carrierRef
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Validate VNext Candidate manifest
-        run: python tools/release_assurance.py releases/vnext-assurance-candidate.json --repo-root .
+        shell: powershell
+        run: py "-3.12" tools/release_assurance.py releases/vnext-assurance-candidate.json --repo-root .
 
       - name: Validate capability registry
-        shell: bash
+        shell: powershell
         run: |
-          python - <<'PY'
+          @'
           import json
           from pathlib import Path
           data = json.loads(Path('CAPABILITIES.json').read_text(encoding='utf-8'))
@@ -102,4 +119,5 @@ jobs:
           assert len(data['stable_release']['framework_ref']) == 40
           assert data['development_line']['status'] == 'candidate'
           print('PASS capability registry')
-          PY
+          '@ | py "-3.12" -
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
