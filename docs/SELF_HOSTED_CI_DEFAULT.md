@@ -25,6 +25,31 @@ The current default runner contract is explicit and fail-closed:
 
 A different self-hosted operating system or architecture requires an explicit workflow/toolchain migration rather than silently matching the current jobs.
 
+## Validated Windows service mode
+
+The default runner is operationalized as a Windows Service rather than an interactive `run.cmd` session.
+
+Validated service-mode contract:
+
+- runner name: `EREI-Framework-Windows`;
+- service account: `NT AUTHORITY\NETWORK SERVICE`;
+- service start mode: automatic delayed start;
+- service recovery is configured;
+- interactive `run.cmd` startup is not required;
+- machine-wide Python launcher: `C:\Windows\py.exe`;
+- Python 3.11: `C:\Program Files\Python311\python.exe`;
+- Python 3.12: `C:\Program Files\Python312\python.exe`;
+- Windows PowerShell execution policy required by the service runtime: `RemoteSigned` at `LocalMachine` scope.
+
+The service-mode preflight was validated end-to-end through GitHub Actions, including runner identity, Git, Python 3.11, Python 3.12, Node.js, npm, and writable/readable/removable `RUNNER_TEMP` behavior.
+
+Validation evidence:
+
+- Self-Hosted Runner Preflight run: `34168093380`;
+- validated service-mode job: `101913762084`.
+
+The runner remains dependent on the host machine being powered on, awake, network-connected, and able to reach GitHub Actions. Host power-management changes are outside this CI routing decision and require separate governance.
+
 ## Boundary
 
 - CI remains read-only with respect to repository contents unless a workflow explicitly declares a separately governed mutation path.

@@ -12,6 +12,11 @@
     "3.11",
     "3.12"
   ],
+  "python_locations": {
+    "3.11": "C:\\Program Files\\Python311\\python.exe",
+    "3.12": "C:\\Program Files\\Python312\\python.exe",
+    "launcher": "C:\\Windows\\py.exe"
+  },
   "setup_python_action_used": false,
   "converted_workflows": [
     "Framework Assurance Gate",
@@ -22,5 +27,21 @@
   "preflight_workflow": "Self-Hosted Runner Preflight",
   "preflight_required": true,
   "preflight_runtime_verified": true,
+  "windows_service": {
+    "enabled": true,
+    "runtime_verified": true,
+    "account": "NT AUTHORITY\\NETWORK SERVICE",
+    "start_mode": "automatic-delayed",
+    "recovery_configured": true,
+    "interactive_run_cmd_required": false
+  },
+  "powershell_execution_policy": {
+    "scope": "LocalMachine",
+    "policy": "RemoteSigned"
+  },
+  "validation_evidence": {
+    "preflight_run_id": 34168093380,
+    "preflight_job_id": 101913762084
+  },
   "stable_promotion_authorized": false
 }
