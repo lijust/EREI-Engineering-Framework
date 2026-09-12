@@ -5,7 +5,7 @@ description: Identify evidence-backed opportunities to deepen shallow or high-fr
 
 # Architecture Deepening Analysis
 
-**Status:** Candidate V1
+**Status:** Stable V1
 
 ## Objective
 
