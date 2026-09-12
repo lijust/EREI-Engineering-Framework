@@ -38,6 +38,14 @@ jobs:
           }
           Write-Host 'EXACT_APP_CHANGED_CODE_BINDING=PASS'
 
+      - name: Normalize bounded seam fixture to LF
+        shell: powershell
+        run: |
+          $root = Join-Path $env:GITHUB_WORKSPACE '.trial\app-pr129-snapshot\src'
+          node -e "const fs=require('fs'),path=require('path'); for (const name of ['32_SearchService.gs','50_Controller.gs']) { const p=path.join(process.argv[1],name); const s=fs.readFileSync(p,'utf8').replace(/\r\n/g,'\n'); fs.writeFileSync(p,s,'utf8'); }" $root
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Write-Host 'SYNTHETIC_SEAM_FIXTURE_EOL=LF'
+
       - name: Verify local Node
         shell: powershell
         run: |
