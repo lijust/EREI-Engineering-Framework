@@ -1,0 +1,67 @@
+{
+  "schema_version": "1.0",
+  "integration_id": "EREI-INVENTORY-SEARCH-HOST-CANDIDATE-V1",
+  "source": {
+    "repository": "lijust/database",
+    "branch": "main",
+    "commit": "ed8f8f9caf4925c2258b27b6ac130d631c9b0315",
+    "pull_request": 93,
+    "workflow_run_id": 33962517930,
+    "artifact_id": 9968374424,
+    "artifact_name": "erei-apps-script-package-ed8f8f9caf4925c2258b27b6ac130d631c9b0315",
+    "archive_digest": "sha256:d9b053a521d13b6417058e5af81d8a715b750e9fd30f4b6521de41f7bbe50600"
+  },
+  "inventory_bundle": {
+    "filename": "erei-inventory-search-policy.gs",
+    "sha256": "SHA256-677D6CA5B6C54B09F1AF3C9A6314167BF6D8782747C94A1A921A94AD8FC150ED",
+    "manifest_filename": "erei-inventory-search-policy.manifest.json",
+    "manifest_sha256": "SHA256-8C6D8A8E2177D201D3E576150AE15DC09BCAE0137A97AD195B13A01951A13136",
+    "artifact_type": "apps_script_inventory_search_bundle",
+    "bundle_artifact_id": "IPASIS-677D6CA5B6C54B09F1AF3C9A6314167B",
+    "source_entrypoint": "runtime/core/InventorySearchPolicy.js",
+    "source_modules": [
+      "runtime/core/CriteriaEngine.js",
+      "runtime/core/InventorySearchPolicy.js"
+    ],
+    "exposed_global": "EREIInventorySearchPolicy",
+    "runtime_target": "google_apps_script_v8",
+    "module_count": 2,
+    "external_commonjs_requires_not_bundled": [],
+    "node_module_system_required_at_runtime": false,
+    "package_root_only": false,
+    "deep_imports_exposed": false
+  },
+  "policy": {
+    "policy_id": "EREI-INVENTORY-SEARCH-POLICY-V1",
+    "contract_path": "contracts/inventory-search-policy.v1.json",
+    "conformance_path": "contracts/conformance/inventory-search-policy.v1.json",
+    "implementation_path": "runtime/core/InventorySearchPolicy.js",
+    "criteria_engine_path": "runtime/core/CriteriaEngine.js"
+  },
+  "candidate": {
+    "build_outside_src_only": true,
+    "generated_bundle_only": true,
+    "compile_policy_once_per_search": true,
+    "host_alias_resolution_retained": true,
+    "host_partitioning_retained": true,
+    "host_candidate_cache_retained": true,
+    "host_top_k_retained": true,
+    "host_hydration_retained": true,
+    "host_quota_exposure_retained": true,
+    "host_snapshot_retained": true,
+    "controller_contract_unchanged": true,
+    "browser_surface_expanded": false,
+    "customer_visible_behavior_authorized": false
+  },
+  "release_authority": {
+    "source_candidate_only": true,
+    "current_src_mutation": false,
+    "clasp_push": false,
+    "apps_script_head_mutation": false,
+    "script_properties_mutation": false,
+    "version_creation": false,
+    "deployment_repoint": false,
+    "runtime_inventory_search_cutover": false,
+    "production_promotion": false
+  }
+}
