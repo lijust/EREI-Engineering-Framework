@@ -90,3 +90,5 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           if ($changed) { throw "Unexpected src changes: $changed" }
           Write-Host 'APP_SRC_DIFF=NONE'
+
+# bridge-retrigger: 1
