@@ -39,20 +39,44 @@ jobs:
             }
           }
 
+          function Try-LocalSource([string]$Source, [string]$Target, [string]$ExpectedSha) {
+            if (-not (Test-Path (Join-Path $Source '.git'))) { return $false }
+            $remote = ''
+            $saved = $ErrorActionPreference
+            $ErrorActionPreference = 'Continue'
+            try { $remote = (git -C $Source remote get-url origin 2>$null) } finally { $ErrorActionPreference = $saved }
+            if ($LASTEXITCODE -ne 0 -or $remote -notmatch 'lijust[/\\]EREI-App-Google|lijust/EREI-App-Google') { return $false }
+            $code = Invoke-Probe { git -C $Source cat-file -e "$ExpectedSha^{commit}" 2>$null }
+            if ($code -ne 0) { return $false }
+            $code = Invoke-Probe { git clone --no-hardlinks --no-checkout $Source $Target 2>$null }
+            return ($code -eq 0)
+          }
+
           $target = Join-Path $env:RUNNER_TEMP 'erei-app-pr129-validation'
           if (Test-Path $target) { Remove-Item -Recurse -Force $target }
+          $resolved = $false
 
           $workspaceRepoDir = Split-Path $env:GITHUB_WORKSPACE -Parent
           $workRoot = Split-Path $workspaceRepoDir -Parent
-          $localSource = Join-Path (Join-Path $workRoot 'EREI-App-Google') 'EREI-App-Google'
-          $resolved = $false
+          $runnerWorkSource = Join-Path (Join-Path $workRoot 'EREI-App-Google') 'EREI-App-Google'
+          if (Try-LocalSource $runnerWorkSource $target $env:APP_SHA) {
+            Write-Host 'Resolved exact App SHA from an existing runner-work clone.'
+            $resolved = $true
+          }
 
-          if (Test-Path (Join-Path $localSource '.git')) {
-            Write-Host 'Found an existing runner-work App checkout; using a disposable local clone.'
-            $code = Invoke-Probe { git -C $localSource cat-file -e "$env:APP_SHA^{commit}" 2>$null }
-            if ($code -eq 0) {
-              $code = Invoke-Probe { git clone --no-hardlinks --no-checkout $localSource $target 2>$null }
-              if ($code -eq 0) { $resolved = $true }
+          if (-not $resolved) {
+            Write-Host 'Searching Windows user profiles for an existing App clone with the exact commit.'
+            $found = @()
+            if (Test-Path 'C:\Users') {
+              $found = @(Get-ChildItem -Path 'C:\Users' -Directory -Filter 'EREI-App-Google' -Recurse -Depth 5 -ErrorAction SilentlyContinue | Select-Object -First 12)
+            }
+            foreach ($candidate in $found) {
+              if (Try-LocalSource $candidate.FullName $target $env:APP_SHA) {
+                Write-Host 'Resolved exact App SHA from an existing user-profile clone.'
+                $resolved = $true
+                break
+              }
+              if (Test-Path $target) { Remove-Item -Recurse -Force $target }
             }
           }
 
@@ -64,6 +88,13 @@ jobs:
               if ($code -eq 0) { $resolved = $true }
               elseif (Test-Path $target) { Remove-Item -Recurse -Force $target }
             }
+          }
+
+          if (-not $resolved) {
+            Write-Host 'Trying Git Credential Manager non-interactively.'
+            $code = Invoke-Probe { git -c credential.helper=manager -c credential.interactive=never clone --no-checkout "https://github.com/$env:APP_REPO.git" $target 2>$null }
+            if ($code -eq 0) { $resolved = $true }
+            elseif (Test-Path $target) { Remove-Item -Recurse -Force $target }
           }
 
           if (-not $resolved) {
@@ -88,7 +119,7 @@ jobs:
           }
 
           if (-not $resolved) {
-            throw 'APP_PRIVATE_CLONE_UNAVAILABLE: no existing runner-work, workflow-token, SSH, or gh credential can read the private App repo.'
+            throw 'APP_PRIVATE_CLONE_UNAVAILABLE: no exact local clone or existing workflow/GCM/SSH/gh credential can read the private App repo.'
           }
 
           git -C $target checkout --detach $env:APP_SHA
