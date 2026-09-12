@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0",
+  "source_repository": "lijust/EREI-App-Google",
+  "source_commit": "d625e72bec19a6286f469df8deadadff75c91e43",
+  "validation_scope": "targeted_changed_code_plus_inventory_patch_seam_fixture",
+  "merge_authority": false,
+  "exact_files": {
+    "tools/lib/portable-host-candidate-builder.js": "95a52d5d668032be2983328552d260482da232d9",
+    "tools/build-inventory-search-host-candidate.js": "5ea51cf49ddd0caadf829732b5dccded87242dbf",
+    "tests/portable-host-candidate-builder.test.js": "af3a58629db40c37fba7b624d7a6c30d92ff1097",
+    "tests/inventory-search-host-candidate.test.js": "098ed08b761fb9edc01403e458bdd2e7c01eb2da",
+    "integrations/inventory-search/database-artifact.lock.json": "fdda0d260941cf31ebd24989b1d0ad882343a78e"
+  },
+  "synthetic_fixture_files": [
+    "src/32_SearchService.gs",
+    "src/50_Controller.gs"
+  ],
+  "classification_on_green": "TARGETED_GREEN_NOT_FULL_APP_SOURCE_GREEN"
+}
