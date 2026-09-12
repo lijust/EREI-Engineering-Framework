@@ -50,25 +50,25 @@
         "notes": "Prospective feedback-driven guard for missing literal repository-local workflow scripts and local actions; dynamic references remain outside static proof."
       },
       "architecture_deepening_analysis": {
-        "status": "candidate",
+        "status": "stable",
         "version": "v1-evidence-backed-depth-seams",
-        "stable_ref": "69079018606750312344cb3c648952b9ab72d35b",
+        "stable_ref": "565b12051255c426c1f87e9c58036b6f30d534f1",
         "source_inspiration": "mattpocock/skills@3cca18b368ae95cdbdebbff572ccafa662551015",
-        "notes": "EREI-native analysis for evidence-backed deep-module, seam, locality, leverage and test-surface improvement without authorizing speculative refactors."
+        "notes": "Stable V1 capability. Promoted from real brownfield evidence across inventory search, match scoring, and broker CRM; see evidence/ARCHITECTURE_DOMAIN_LANGUAGE_STABLE_PROMOTION_V1.json. Structural changes still require normal architecture approval."
       },
       "behavior_first_testing": {
         "status": "candidate",
         "version": "v1-red-green-vertical-seams",
         "stable_ref": "69079018606750312344cb3c648952b9ab72d35b",
         "source_inspiration": "mattpocock/skills@3cca18b368ae95cdbdebbff572ccafa662551015",
-        "notes": "EREI-native behavior-first red-to-green tracer slices through approved public test seams; complements rather than replaces final verification."
+        "notes": "EREI-native behavior-first red-to-green tracer slices through approved public test seams; complements rather than replaces final verification. Remains Candidate pending one authoritative behavioral RED-to-GREEN execution."
       },
       "domain_language_modeling": {
-        "status": "candidate",
+        "status": "stable",
         "version": "v1-canonical-domain-language",
-        "stable_ref": "69079018606750312344cb3c648952b9ab72d35b",
+        "stable_ref": "565b12051255c426c1f87e9c58036b6f30d534f1",
         "source_inspiration": "mattpocock/skills@3cca18b368ae95cdbdebbff572ccafa662551015",
-        "notes": "EREI-native canonical domain-language discipline using a lazy project glossary to prevent terminology drift across requirements, code, data and tests."
+        "notes": "Stable V1 capability. Promoted after a real EREI-App-Google auth/CRM/idempotency ambiguity produced a canonical glossary verified against current code; see evidence/ARCHITECTURE_DOMAIN_LANGUAGE_STABLE_PROMOTION_V1.json."
       }
     }
   }

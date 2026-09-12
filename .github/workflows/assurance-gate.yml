@@ -113,11 +113,26 @@ jobs:
         run: |
           @'
           import json
+          import re
+          import subprocess
           from pathlib import Path
+
           data = json.loads(Path('CAPABILITIES.json').read_text(encoding='utf-8'))
           assert data['schema_version'] == 1
           assert len(data['stable_release']['framework_ref']) == 40
           assert data['development_line']['status'] == 'candidate'
+
+          stable = []
+          for name, capability in sorted(data['development_line']['capabilities'].items()):
+              if capability['status'] != 'stable':
+                  continue
+              ref = capability.get('stable_ref', '')
+              assert re.fullmatch(r'[a-f0-9]{40}', ref), f'{name}: stable capability requires exact stable_ref'
+              subprocess.run(['git', 'cat-file', '-e', f'{ref}^{{commit}}'], check=True)
+              subprocess.run(['git', 'merge-base', '--is-ancestor', ref, 'HEAD'], check=True)
+              stable.append(f'{name}@{ref}')
+
           print('PASS capability registry')
+          print('STABLE_CAPABILITIES=' + ','.join(stable))
           '@ | py "-3.12" -
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

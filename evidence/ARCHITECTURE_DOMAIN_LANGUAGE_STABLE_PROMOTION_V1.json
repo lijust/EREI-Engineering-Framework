@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "promotion_id": "architecture-domain-language-stable-v1",
+  "promotion_scope": "capability_level",
+  "decision": "approved",
+  "approved_on": "2026-09-12",
+  "framework_repository": "lijust/EREI-Engineering-Framework",
+  "promotion_source_ref": "1bd4fe585bc8d53cc8f761ae8217517ac4e96c07",
+  "stable_framework_release_unchanged": {
+    "baseline": "task-learning-review-v1",
+    "framework_ref": "69079018606750312344cb3c648952b9ab72d35b",
+    "manifest": "releases/task-learning-review-v1.json"
+  },
+  "promoted_capabilities": {
+    "architecture_deepening_analysis": {
+      "version": "v1-evidence-backed-depth-seams",
+      "status": "stable",
+      "framework_skill": "skills/architecture-deepening-analysis/SKILL.md",
+      "framework_eval": "evals/cases/architecture-deepening-analysis.eval.json",
+      "brownfield_repository": "lijust/EREI-App-Google",
+      "evidence": [
+        "PR-129",
+        "CI-34669516572",
+        "PR-130",
+        "CI-34669750904",
+        "PR-131",
+        "CI-34669855690"
+      ],
+      "finding": "Three independent brownfield consumers validated the same deep lifecycle seam; the second and third consumers required no shared-lifecycle modification."
+    },
+    "domain_language_modeling": {
+      "version": "v1-canonical-domain-language",
+      "status": "stable",
+      "framework_skill": "skills/domain-language-modeling/SKILL.md",
+      "framework_eval": "evals/cases/domain-language-modeling.eval.json",
+      "brownfield_repository": "lijust/EREI-App-Google",
+      "evidence": [
+        "PR-132",
+        "CI-34670350809"
+      ],
+      "finding": "A real auth/CRM/idempotency terminology ambiguity produced a canonical project glossary, verified against current code with zero src mutation."
+    }
+  },
+  "not_promoted": {
+    "behavior_first_testing": {
+      "status": "candidate",
+      "reason": "Authoritative behavioral RED-to-GREEN execution is still required before Stable promotion."
+    }
+  },
+  "release_boundary": {
+    "framework_v2_stable_release_created": false,
+    "project_pins_moved": false,
+    "reason": "Capability-level Stable status is permitted by the capability registry while the development line remains Candidate. Full Framework V2 Stable remains governed by its independent release-assurance gates."
+  }
+}

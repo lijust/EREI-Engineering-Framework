@@ -5,7 +5,7 @@ description: Establish and maintain a canonical project domain vocabulary, resol
 
 # Domain Language Modeling
 
-**Status:** Candidate V1
+**Status:** Stable V1
 
 ## Objective
 
