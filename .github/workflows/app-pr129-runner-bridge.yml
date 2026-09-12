@@ -27,6 +27,18 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           $env:GIT_TERMINAL_PROMPT = '0'
+
+          function Invoke-Probe([scriptblock]$Command) {
+            $saved = $ErrorActionPreference
+            $ErrorActionPreference = 'Continue'
+            try {
+              & $Command
+              return [int]$LASTEXITCODE
+            } finally {
+              $ErrorActionPreference = $saved
+            }
+          }
+
           $target = Join-Path $env:RUNNER_TEMP 'erei-app-pr129-validation'
           if (Test-Path $target) { Remove-Item -Recurse -Force $target }
 
@@ -37,10 +49,10 @@ jobs:
 
           if (Test-Path (Join-Path $localSource '.git')) {
             Write-Host 'Found an existing runner-work App checkout; using a disposable local clone.'
-            git -C $localSource cat-file -e "$env:APP_SHA^{commit}" 2>$null
-            if ($LASTEXITCODE -eq 0) {
-              git clone --no-hardlinks --no-checkout $localSource $target
-              if ($LASTEXITCODE -eq 0) { $resolved = $true }
+            $code = Invoke-Probe { git -C $localSource cat-file -e "$env:APP_SHA^{commit}" 2>$null }
+            if ($code -eq 0) {
+              $code = Invoke-Probe { git clone --no-hardlinks --no-checkout $localSource $target 2>$null }
+              if ($code -eq 0) { $resolved = $true }
             }
           }
 
@@ -48,8 +60,8 @@ jobs:
             Write-Host 'Trying the Framework checkout-scoped credential.'
             $extraHeader = (git -C $env:GITHUB_WORKSPACE config --local --get http.https://github.com/.extraheader)
             if ($LASTEXITCODE -eq 0 -and $extraHeader) {
-              git -c "http.https://github.com/.extraheader=$extraHeader" clone --no-checkout "https://github.com/$env:APP_REPO.git" $target 2>$null
-              if ($LASTEXITCODE -eq 0) { $resolved = $true }
+              $code = Invoke-Probe { git -c "http.https://github.com/.extraheader=$extraHeader" clone --no-checkout "https://github.com/$env:APP_REPO.git" $target 2>$null }
+              if ($code -eq 0) { $resolved = $true }
               elseif (Test-Path $target) { Remove-Item -Recurse -Force $target }
             }
           }
@@ -57,8 +69,8 @@ jobs:
           if (-not $resolved) {
             Write-Host 'Trying an existing machine SSH identity in non-interactive mode.'
             $sshCommand = 'ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new'
-            git -c "core.sshCommand=$sshCommand" clone --no-checkout "git@github.com:$env:APP_REPO.git" $target 2>$null
-            if ($LASTEXITCODE -eq 0) { $resolved = $true }
+            $code = Invoke-Probe { git -c "core.sshCommand=$sshCommand" clone --no-checkout "git@github.com:$env:APP_REPO.git" $target 2>$null }
+            if ($code -eq 0) { $resolved = $true }
             elseif (Test-Path $target) { Remove-Item -Recurse -Force $target }
           }
 
@@ -66,10 +78,10 @@ jobs:
             Write-Host 'Trying an existing GitHub CLI login without exposing credentials.'
             $gh = Get-Command gh -ErrorAction SilentlyContinue
             if ($gh) {
-              gh auth status --hostname github.com 1>$null 2>$null
-              if ($LASTEXITCODE -eq 0) {
-                gh repo clone $env:APP_REPO $target -- --no-checkout 2>$null
-                if ($LASTEXITCODE -eq 0) { $resolved = $true }
+              $code = Invoke-Probe { gh auth status --hostname github.com 1>$null 2>$null }
+              if ($code -eq 0) {
+                $code = Invoke-Probe { gh repo clone $env:APP_REPO $target -- --no-checkout 2>$null }
+                if ($code -eq 0) { $resolved = $true }
                 elseif (Test-Path $target) { Remove-Item -Recurse -Force $target }
               }
             }
