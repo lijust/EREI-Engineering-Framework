@@ -58,7 +58,7 @@ jobs:
         shell: powershell
         run: py "-3.12" evals/runner.py validate evals/cases
 
-      - name: Execute all 44 cases at reference-contract level
+      - name: Execute all published cases at reference-contract level
         shell: powershell
         run: py "-3.12" evals/runner.py run evals/cases --adapter "py -3.12 evals/fixtures/reference_oracle_adapter.py"
 
