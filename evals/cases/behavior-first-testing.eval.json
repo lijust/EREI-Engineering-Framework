@@ -1,0 +1,62 @@
+{
+  "schema_version": "1.0",
+  "suite_id": "behavior-first-testing-v1",
+  "artifact": "skills/behavior-first-testing",
+  "cases": [
+    {
+      "id": "T-BFT-001-REGRESSION-SLICE",
+      "tags": ["trigger", "testing", "bug", "regression"],
+      "input": {
+        "prompt": "Fix a stale-request bug. Add a regression test first through the existing public request gate, then make the smallest implementation change."
+      },
+      "expectations": [
+        {
+          "type": "trace_tool_called",
+          "tool": "behavior-first-testing"
+        },
+        {
+          "type": "output_contains_all",
+          "values": ["behavior", "test seam", "red", "green", "regression"]
+        },
+        {
+          "type": "output_contains_none",
+          "values": ["test the private helper", "mock every internal collaborator"]
+        }
+      ]
+    },
+    {
+      "id": "B-BFT-002-TAUTOLOGICAL",
+      "tags": ["behavior", "testing", "tautology"],
+      "input": {
+        "prompt": "The implementation computes fee = price * rate. The proposed test computes expected = price * rate with the same formula. Assess the test design."
+      },
+      "expectations": [
+        {
+          "type": "output_contains_all",
+          "values": ["independent", "expected", "tautological"]
+        },
+        {
+          "type": "output_contains_none",
+          "values": ["the test is sufficient because it repeats the formula"]
+        }
+      ]
+    },
+    {
+      "id": "N-BFT-003-COSMETIC",
+      "tags": ["non-trigger", "L0", "testing"],
+      "input": {
+        "prompt": "Change a static heading from Overview to Summary; no behavior or contract changes."
+      },
+      "expectations": [
+        {
+          "type": "trace_tool_not_called",
+          "tool": "behavior-first-testing"
+        },
+        {
+          "type": "max_trace_steps",
+          "value": 3
+        }
+      ]
+    }
+  ]
+}
