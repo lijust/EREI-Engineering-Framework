@@ -1,0 +1,62 @@
+{
+  "schema_version": "1.0",
+  "suite_id": "architecture-deepening-analysis-v1",
+  "artifact": "skills/architecture-deepening-analysis",
+  "cases": [
+    {
+      "id": "T-ADA-001-REPEATED-HOTSPOT",
+      "tags": ["trigger", "architecture", "rework", "L2"],
+      "input": {
+        "prompt": "The same search orchestration logic has been edited in six recent changes, callers duplicate ordering and retry rules, and tests reach private helpers. Analyze whether the architecture should be improved without implementing a refactor."
+      },
+      "expectations": [
+        {
+          "type": "trace_tool_called",
+          "tool": "architecture-deepening-analysis"
+        },
+        {
+          "type": "output_contains_all",
+          "values": ["hotspot", "interface", "seam", "locality", "leverage", "test"]
+        },
+        {
+          "type": "output_contains_none",
+          "values": ["refactor the whole subsystem immediately", "every dependency needs an adapter"]
+        }
+      ]
+    },
+    {
+      "id": "B-ADA-002-ONE-ADAPTER",
+      "tags": ["behavior", "seam", "adapter", "yagni"],
+      "input": {
+        "prompt": "A module has one concrete provider implementation and no accepted requirement for replacement. Should we introduce another interface and adapter only to make unit mocking easier?"
+      },
+      "expectations": [
+        {
+          "type": "output_contains_all",
+          "values": ["seam", "evidence", "test"]
+        },
+        {
+          "type": "output_contains_none",
+          "values": ["yes, every dependency should have an adapter", "more interfaces are always cleaner"]
+        }
+      ]
+    },
+    {
+      "id": "N-ADA-003-COSMETIC",
+      "tags": ["non-trigger", "L0", "proportionality"],
+      "input": {
+        "prompt": "Change one button label from Search to Find."
+      },
+      "expectations": [
+        {
+          "type": "trace_tool_not_called",
+          "tool": "architecture-deepening-analysis"
+        },
+        {
+          "type": "max_trace_steps",
+          "value": 3
+        }
+      ]
+    }
+  ]
+}

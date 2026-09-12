@@ -48,6 +48,27 @@
         "version": "v1-literal-local-reference-guard",
         "stable_ref": "69079018606750312344cb3c648952b9ab72d35b",
         "notes": "Prospective feedback-driven guard for missing literal repository-local workflow scripts and local actions; dynamic references remain outside static proof."
+      },
+      "architecture_deepening_analysis": {
+        "status": "candidate",
+        "version": "v1-evidence-backed-depth-seams",
+        "stable_ref": "69079018606750312344cb3c648952b9ab72d35b",
+        "source_inspiration": "mattpocock/skills@3cca18b368ae95cdbdebbff572ccafa662551015",
+        "notes": "EREI-native analysis for evidence-backed deep-module, seam, locality, leverage and test-surface improvement without authorizing speculative refactors."
+      },
+      "behavior_first_testing": {
+        "status": "candidate",
+        "version": "v1-red-green-vertical-seams",
+        "stable_ref": "69079018606750312344cb3c648952b9ab72d35b",
+        "source_inspiration": "mattpocock/skills@3cca18b368ae95cdbdebbff572ccafa662551015",
+        "notes": "EREI-native behavior-first red-to-green tracer slices through approved public test seams; complements rather than replaces final verification."
+      },
+      "domain_language_modeling": {
+        "status": "candidate",
+        "version": "v1-canonical-domain-language",
+        "stable_ref": "69079018606750312344cb3c648952b9ab72d35b",
+        "source_inspiration": "mattpocock/skills@3cca18b368ae95cdbdebbff572ccafa662551015",
+        "notes": "EREI-native canonical domain-language discipline using a lazy project glossary to prevent terminology drift across requirements, code, data and tests."
       }
     }
   }
