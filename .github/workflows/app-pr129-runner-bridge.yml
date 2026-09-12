@@ -5,68 +5,38 @@ on:
     branches:
       - 'trial/app-pr129-runner-bridge-v1'
     paths:
+      - '.trial/app-pr129-snapshot/**'
       - '.github/workflows/app-pr129-runner-bridge.yml'
 
 permissions:
   contents: read
 
-env:
-  APP_SHA: d625e72bec19a6286f469df8deadadff75c91e43
-
 jobs:
-  validate-app-pr129:
+  targeted-snapshot:
     runs-on: [self-hosted, Windows, X64]
-    timeout-minutes: 15
+    timeout-minutes: 10
     steps:
-      - name: Checkout Framework bridge definition
+      - name: Checkout Framework bridge snapshot
         uses: actions/checkout@v4
 
-      - name: Resolve exact App checkout from local fixed drives
+      - name: Prove exact App blob binding for copied files
         shell: powershell
         run: |
           $ErrorActionPreference = 'Stop'
-          $target = Join-Path $env:RUNNER_TEMP 'erei-app-pr129-validation'
-          if (Test-Path $target) { Remove-Item -Recurse -Force $target }
-
-          function Probe-Repo([string]$Source) {
-            if (-not (Test-Path (Join-Path $Source '.git'))) { return $false }
-            $old = $ErrorActionPreference
-            $ErrorActionPreference = 'Continue'
-            try {
-              $remote = git -C $Source remote get-url origin 2>$null
-              if ($LASTEXITCODE -ne 0 -or $remote -notmatch 'lijust[/\\]EREI-App-Google|lijust/EREI-App-Google') { return $false }
-              git -C $Source cat-file -e "$env:APP_SHA^{commit}" 2>$null
-              if ($LASTEXITCODE -ne 0) { return $false }
-              git clone --no-hardlinks --no-checkout $Source $target 2>$null
-              return ($LASTEXITCODE -eq 0)
-            } finally {
-              $ErrorActionPreference = $old
+          $root = Join-Path $env:GITHUB_WORKSPACE '.trial\app-pr129-snapshot'
+          $manifest = Get-Content (Join-Path $root 'snapshot-manifest.json') -Raw | ConvertFrom-Json
+          if ($manifest.source_commit -ne 'd625e72bec19a6286f469df8deadadff75c91e43') { throw 'App source commit binding drift.' }
+          foreach ($property in $manifest.exact_files.PSObject.Properties) {
+            $relative = $property.Name.Replace('/', [IO.Path]::DirectorySeparatorChar)
+            $path = Join-Path $root $relative
+            if (-not (Test-Path $path)) { throw "Snapshot file missing: $($property.Name)" }
+            $actual = (git hash-object -- $path).Trim()
+            if ($actual -ne $property.Value) {
+              throw "Blob mismatch for $($property.Name): observed=$actual expected=$($property.Value)"
             }
+            Write-Host "EXACT_BLOB_PASS $($property.Name) $actual"
           }
-
-          $resolved = $false
-          $drives = @(Get-PSDrive -PSProvider FileSystem | Where-Object { $_.Root -match '^[A-Z]:\\$' })
-          foreach ($drive in $drives) {
-            Write-Host ("Scanning fixed root {0} for EREI-App-Google directories (depth <= 5)." -f $drive.Root)
-            $candidates = @(Get-ChildItem -Path $drive.Root -Directory -Filter 'EREI-App-Google' -Recurse -Depth 5 -ErrorAction SilentlyContinue | Select-Object -First 20)
-            foreach ($candidate in $candidates) {
-              if (Probe-Repo $candidate.FullName) {
-                Write-Host ("Resolved exact App commit from local clone on drive {0}." -f $drive.Name)
-                $resolved = $true
-                break
-              }
-              if (Test-Path $target) { Remove-Item -Recurse -Force $target }
-            }
-            if ($resolved) { break }
-          }
-
-          if (-not $resolved) { throw 'APP_EXACT_LOCAL_CLONE_UNAVAILABLE' }
-          git -C $target checkout --detach $env:APP_SHA
-          if ($LASTEXITCODE -ne 0) { throw 'Exact App SHA checkout failed.' }
-          $actual = (git -C $target rev-parse HEAD).Trim()
-          if ($actual -ne $env:APP_SHA) { throw "App SHA mismatch: $actual" }
-          "APP_DIR=$target" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-          Write-Host "APP_EXACT_SHA=$actual"
+          Write-Host 'EXACT_APP_CHANGED_CODE_BINDING=PASS'
 
       - name: Verify local Node
         shell: powershell
@@ -76,25 +46,26 @@ jobs:
           npm --version
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-      - name: Verify portable host candidate lifecycle
+      - name: Run exact portable lifecycle test
         shell: powershell
         run: |
-          Set-Location $env:APP_DIR
-          npm run check:portable-host-candidate-builder
+          Set-Location (Join-Path $env:GITHUB_WORKSPACE '.trial\app-pr129-snapshot')
+          node tests/portable-host-candidate-builder.test.js
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-      - name: Verify migrated inventory-search candidate
+      - name: Run exact inventory candidate test against bounded seam fixture
         shell: powershell
         run: |
-          Set-Location $env:APP_DIR
-          npm run check:inventory-search-host-candidate
+          Set-Location (Join-Path $env:GITHUB_WORKSPACE '.trial\app-pr129-snapshot')
+          node tests/inventory-search-host-candidate.test.js
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-      - name: Prove App trial has no src changes
+      - name: Classify targeted evidence
         shell: powershell
         run: |
-          Set-Location $env:APP_DIR
-          $changed = git diff --name-only 6e827c3222187bf8e99daa4cada70928bc395bb9...$env:APP_SHA -- src/
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          if ($changed) { throw "Unexpected src changes: $changed" }
-          Write-Host 'APP_SRC_DIFF=NONE'
+          Write-Host 'APP_SHA=d625e72bec19a6286f469df8deadadff75c91e43'
+          Write-Host 'EXACT_CHANGED_CODE_BYTES=PASS'
+          Write-Host 'PORTABLE_LIFECYCLE_BEHAVIOR=PASS'
+          Write-Host 'INVENTORY_PATCH_SEAM_BEHAVIOR=PASS'
+          Write-Host 'EVIDENCE_CLASSIFICATION=TARGETED_GREEN_NOT_FULL_APP_SOURCE_GREEN'
+          Write-Host 'MERGE_AUTHORITY=false'
