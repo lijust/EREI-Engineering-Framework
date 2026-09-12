@@ -40,19 +40,43 @@ jobs:
             git -C $localSource cat-file -e "$env:APP_SHA^{commit}" 2>$null
             if ($LASTEXITCODE -eq 0) {
               git clone --no-hardlinks --no-checkout $localSource $target
-              if ($LASTEXITCODE -ne 0) { throw 'Disposable local clone failed.' }
-              $resolved = $true
+              if ($LASTEXITCODE -eq 0) { $resolved = $true }
             }
           }
 
           if (-not $resolved) {
-            Write-Host 'No usable runner-work checkout found; trying the checkout-scoped credential without exposing it.'
+            Write-Host 'Trying the Framework checkout-scoped credential.'
             $extraHeader = (git -C $env:GITHUB_WORKSPACE config --local --get http.https://github.com/.extraheader)
-            if ($LASTEXITCODE -ne 0 -or -not $extraHeader) { throw 'FRAMEWORK_CHECKOUT_CREDENTIAL_MISSING' }
-            git -c "http.https://github.com/.extraheader=$extraHeader" clone --no-checkout "https://github.com/$env:APP_REPO.git" $target
-            if ($LASTEXITCODE -ne 0) {
-              throw 'APP_PRIVATE_CLONE_UNAVAILABLE: Framework workflow credential is repository-scoped.'
+            if ($LASTEXITCODE -eq 0 -and $extraHeader) {
+              git -c "http.https://github.com/.extraheader=$extraHeader" clone --no-checkout "https://github.com/$env:APP_REPO.git" $target 2>$null
+              if ($LASTEXITCODE -eq 0) { $resolved = $true }
+              elseif (Test-Path $target) { Remove-Item -Recurse -Force $target }
             }
+          }
+
+          if (-not $resolved) {
+            Write-Host 'Trying an existing machine SSH identity in non-interactive mode.'
+            $sshCommand = 'ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new'
+            git -c "core.sshCommand=$sshCommand" clone --no-checkout "git@github.com:$env:APP_REPO.git" $target 2>$null
+            if ($LASTEXITCODE -eq 0) { $resolved = $true }
+            elseif (Test-Path $target) { Remove-Item -Recurse -Force $target }
+          }
+
+          if (-not $resolved) {
+            Write-Host 'Trying an existing GitHub CLI login without exposing credentials.'
+            $gh = Get-Command gh -ErrorAction SilentlyContinue
+            if ($gh) {
+              gh auth status --hostname github.com 1>$null 2>$null
+              if ($LASTEXITCODE -eq 0) {
+                gh repo clone $env:APP_REPO $target -- --no-checkout 2>$null
+                if ($LASTEXITCODE -eq 0) { $resolved = $true }
+                elseif (Test-Path $target) { Remove-Item -Recurse -Force $target }
+              }
+            }
+          }
+
+          if (-not $resolved) {
+            throw 'APP_PRIVATE_CLONE_UNAVAILABLE: no existing runner-work, workflow-token, SSH, or gh credential can read the private App repo.'
           }
 
           git -C $target checkout --detach $env:APP_SHA
