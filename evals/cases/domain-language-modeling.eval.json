@@ -1,0 +1,62 @@
+{
+  "schema_version": "1.0",
+  "suite_id": "domain-language-modeling-v1",
+  "artifact": "skills/domain-language-modeling",
+  "cases": [
+    {
+      "id": "T-DLM-001-OVERLOADED-CLIENT",
+      "tags": ["trigger", "domain", "language", "identity"],
+      "input": {
+        "prompt": "In this project Client sometimes means a CRM lead and sometimes means an authenticated account. The distinction affects authorization and tests. Resolve the terminology without silently changing implementation."
+      },
+      "expectations": [
+        {
+          "type": "trace_tool_called",
+          "tool": "domain-language-modeling"
+        },
+        {
+          "type": "output_contains_all",
+          "values": ["canonical", "Client", "User", "authorization", "contradiction"]
+        },
+        {
+          "type": "output_contains_none",
+          "values": ["rename the whole codebase immediately", "the code definition automatically wins"]
+        }
+      ]
+    },
+    {
+      "id": "B-DLM-002-CODE-CONFLICT",
+      "tags": ["behavior", "domain", "drift"],
+      "input": {
+        "prompt": "The approved domain definition says a Request belongs to one Client, but current code allows reassignment to another Client. Explain how to handle the contradiction."
+      },
+      "expectations": [
+        {
+          "type": "output_contains_all",
+          "values": ["contradiction", "implementation", "requirement", "route"]
+        },
+        {
+          "type": "output_contains_none",
+          "values": ["rewrite the glossary to match the code silently"]
+        }
+      ]
+    },
+    {
+      "id": "N-DLM-003-LOCAL-NAME",
+      "tags": ["non-trigger", "proportionality"],
+      "input": {
+        "prompt": "Rename a local loop variable from x to project in one function; the domain meaning is already unambiguous."
+      },
+      "expectations": [
+        {
+          "type": "trace_tool_not_called",
+          "tool": "domain-language-modeling"
+        },
+        {
+          "type": "max_trace_steps",
+          "value": 3
+        }
+      ]
+    }
+  ]
+}
