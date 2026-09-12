@@ -1,0 +1,92 @@
+name: App PR129 Runner Bridge V1
+
+on:
+  push:
+    branches:
+      - 'trial/app-pr129-runner-bridge-v1'
+    paths:
+      - '.github/workflows/app-pr129-runner-bridge.yml'
+
+permissions:
+  contents: read
+
+env:
+  APP_REPO: lijust/EREI-App-Google
+  APP_SHA: d625e72bec19a6286f469df8deadadff75c91e43
+
+jobs:
+  validate-app-pr129:
+    runs-on: [self-hosted, Windows, X64]
+    timeout-minutes: 15
+    steps:
+      - name: Checkout Framework bridge definition
+        uses: actions/checkout@v4
+
+      - name: Resolve exact App checkout without mutating existing workspaces
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $env:GIT_TERMINAL_PROMPT = '0'
+          $target = Join-Path $env:RUNNER_TEMP 'erei-app-pr129-validation'
+          if (Test-Path $target) { Remove-Item -Recurse -Force $target }
+
+          $workspaceRepoDir = Split-Path $env:GITHUB_WORKSPACE -Parent
+          $workRoot = Split-Path $workspaceRepoDir -Parent
+          $localSource = Join-Path (Join-Path $workRoot 'EREI-App-Google') 'EREI-App-Google'
+          $resolved = $false
+
+          if (Test-Path (Join-Path $localSource '.git')) {
+            Write-Host 'Found an existing runner-work App checkout; using a disposable local clone.'
+            git -C $localSource cat-file -e "$env:APP_SHA^{commit}" 2>$null
+            if ($LASTEXITCODE -eq 0) {
+              git clone --no-hardlinks --no-checkout $localSource $target
+              if ($LASTEXITCODE -ne 0) { throw 'Disposable local clone failed.' }
+              $resolved = $true
+            }
+          }
+
+          if (-not $resolved) {
+            Write-Host 'No usable runner-work checkout found; trying authenticated machine clone.'
+            git clone --no-checkout "https://github.com/$env:APP_REPO.git" $target
+            if ($LASTEXITCODE -ne 0) {
+              throw 'APP_PRIVATE_CLONE_UNAVAILABLE: Framework runner has no usable cross-repo Git credential.'
+            }
+          }
+
+          git -C $target checkout --detach $env:APP_SHA
+          if ($LASTEXITCODE -ne 0) { throw 'Exact App SHA checkout failed.' }
+          $actual = (git -C $target rev-parse HEAD).Trim()
+          if ($actual -ne $env:APP_SHA) { throw "App SHA mismatch: $actual" }
+          "APP_DIR=$target" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          Write-Host "APP_EXACT_SHA=$actual"
+
+      - name: Verify local Node
+        shell: powershell
+        run: |
+          node --version
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          npm --version
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Verify portable host candidate lifecycle
+        shell: powershell
+        run: |
+          Set-Location $env:APP_DIR
+          npm run check:portable-host-candidate-builder
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Verify migrated inventory-search candidate
+        shell: powershell
+        run: |
+          Set-Location $env:APP_DIR
+          npm run check:inventory-search-host-candidate
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Prove App trial has no src changes
+        shell: powershell
+        run: |
+          Set-Location $env:APP_DIR
+          $changed = git diff --name-only 6e827c3222187bf8e99daa4cada70928bc395bb9...$env:APP_SHA -- src/
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          if ($changed) { throw "Unexpected src changes: $changed" }
+          Write-Host 'APP_SRC_DIFF=NONE'
