@@ -46,10 +46,12 @@ jobs:
           }
 
           if (-not $resolved) {
-            Write-Host 'No usable runner-work checkout found; trying authenticated machine clone.'
-            git clone --no-checkout "https://github.com/$env:APP_REPO.git" $target
+            Write-Host 'No usable runner-work checkout found; trying the checkout-scoped credential without exposing it.'
+            $extraHeader = (git -C $env:GITHUB_WORKSPACE config --local --get http.https://github.com/.extraheader)
+            if ($LASTEXITCODE -ne 0 -or -not $extraHeader) { throw 'FRAMEWORK_CHECKOUT_CREDENTIAL_MISSING' }
+            git -c "http.https://github.com/.extraheader=$extraHeader" clone --no-checkout "https://github.com/$env:APP_REPO.git" $target
             if ($LASTEXITCODE -ne 0) {
-              throw 'APP_PRIVATE_CLONE_UNAVAILABLE: Framework runner has no usable cross-repo Git credential.'
+              throw 'APP_PRIVATE_CLONE_UNAVAILABLE: Framework workflow credential is repository-scoped.'
             }
           }
 
@@ -90,5 +92,3 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           if ($changed) { throw "Unexpected src changes: $changed" }
           Write-Host 'APP_SRC_DIFF=NONE'
-
-# bridge-retrigger: 1
