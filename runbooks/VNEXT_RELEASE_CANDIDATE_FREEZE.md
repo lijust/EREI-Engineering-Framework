@@ -35,7 +35,11 @@ When `releases/VNEXT_TARGET.json` exists, Stable readiness automatically uses it
 
 ## Exact-target evidence
 
-The frozen `releases/VNEXT_RELEASE_SCOPE.json` defines which behavioral eval suites belong to this release. Stable readiness must require exact-target evidence for **every case in those suites**, without requiring unrelated Candidate eval suites merely because they coexist elsewhere in the Framework tree.
+The frozen `releases/VNEXT_RELEASE_SCOPE.json` defines which behavioral eval suites belong to this release.
+
+**Transition safety:** defining the scope does not by itself narrow any promotion gate. Until scope-aware enforcement is merged into Stable readiness, release assurance, and retained-evidence coverage, the existing all-published-evals gates remain authoritative. Promotion must stay blocked rather than interpret the scope optimistically.
+
+Once scope-aware enforcement is active, Stable readiness must require exact-target evidence for **every case in those suites**, without requiring unrelated Candidate eval suites merely because they coexist elsewhere in the Framework tree.
 
 Check out the frozen `framework_ref` in the execution environment and run `evals/exact_target_run.py` against a genuine independent coding-agent/model runtime for the required scope. Commit the produced run manifest and V2 execution-evidence file to the release branch without modifying the frozen Framework code.
 
