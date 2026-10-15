@@ -303,6 +303,8 @@ def enforcement_gate(repo_root: Path, target_ref: str) -> dict[str, Any]:
             policy=policy,
             target_ref=target_ref,
             require_merged=True,
+            git_repo=repo_root,
+            closure_ref="HEAD",
         )
         verified = assurance_enforcement.load_and_validate(
             path,
@@ -393,6 +395,8 @@ def approval_gate(repo_root: Path, target_ref: str, preapproval_ready: bool) -> 
                 target_ref=target_ref,
                 approval_id=record["approval_id"] if approval_type == "architecture" else None,
                 require_merged=True,
+                git_repo=repo_root,
+                closure_ref="HEAD",
             )
             history = _approval_history_binding(repo_root, target_ref, rel_path, manifest.get(ref_field))
         except (
