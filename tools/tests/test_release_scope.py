@@ -46,7 +46,7 @@ class ReleaseScopeTests(unittest.TestCase):
             "capabilities": [{"name": "prospective_task_learning", "version": "v2"}],
             "release_control_dependencies": [{"name": "capability_activation_governance", "version": "v1"}],
             "required_eval_suites": [
-                {"path": "evals/cases/task-learning-review.eval.json", "suite_id": "task-learning-review-v1"}
+                {"path": "evals/cases/task-learning-review.eval.json", "suite_id": "task-learning-review-v1", "covers": ["prospective_task_learning", "capability_activation_governance"]}
             ],
             "excluded_candidate_capabilities": ["learning_pattern_analysis"],
             "post_promotion_gates": ["project_framework_pin_upgrade"],
@@ -79,6 +79,26 @@ class ReleaseScopeTests(unittest.TestCase):
             value = self.scope()
             value["capabilities"][0]["version"] = "wrong"
             with self.assertRaisesRegex(release_scope.ReleaseScopeError, "version mismatch"):
+                release_scope.validate_scope(root, value)
+        finally:
+            temp.cleanup()
+
+    def test_missing_capability_eval_coverage_fails(self):
+        temp, root = self.setup_root()
+        try:
+            value = self.scope()
+            value["required_eval_suites"][0]["covers"] = ["prospective_task_learning"]
+            with self.assertRaisesRegex(release_scope.ReleaseScopeError, "lack required eval-suite coverage"):
+                release_scope.validate_scope(root, value)
+        finally:
+            temp.cleanup()
+
+    def test_suite_cannot_cover_excluded_or_unknown_capability(self):
+        temp, root = self.setup_root()
+        try:
+            value = self.scope()
+            value["required_eval_suites"][0]["covers"] = ["prospective_task_learning", "learning_pattern_analysis"]
+            with self.assertRaisesRegex(release_scope.ReleaseScopeError, "outside release scope"):
                 release_scope.validate_scope(root, value)
         finally:
             temp.cleanup()
