@@ -2,7 +2,7 @@
 
 Task Learning turns real project execution into structured, reviewable experience data without training or self-modifying an AI model directly.
 
-## Three evidence paths
+## Four evidence paths
 
 ```text
 Prospective path
@@ -31,6 +31,19 @@ Framework Feedback
 Knowledge Promotion
         ↓
 Framework Candidate → Stable
+
+Learning-to-development path
+Pattern Analysis + Learning Review
+        ↓
+Chief Engineer interpretation
+        ↓
+Learning Development Output
+        ↓
+Project action / measurement change / Framework Feedback
+        ↓
+Candidate trial when justified
+        ↓
+Before/after effectiveness measurement
 ```
 
 Prospective Task Learning is the primary calibration dataset. Retrospective backfill exists to recover useful evidence from work completed before Task Learning V1 was enabled, without pretending historical reconstruction has the same evidentiary quality.
@@ -88,3 +101,21 @@ A Learning Review can conclude that:
 - critical specialist follow-up is required.
 
 It cannot directly promote a Framework change. Framework changes remain governed by Feedback → Knowledge Promotion → risk/approval → evals/tests → Candidate → Stable.
+
+
+## Metric interpretation update
+
+Raw `rework_rate` and `verification_failure_rate` are not execution-accuracy metrics.
+
+Use `learning/LEARNING_HEALTH_MODEL.md` and the Learning-to-Development workflow to distinguish:
+
+- material iteration from task restart/final failure,
+- healthy pre-merge verification catches from escaped defects,
+- final failed outcomes from success-with-deferred,
+- raw metric movement from actual Framework effectiveness.
+
+The Chief Engineer owns interpretation; deterministic tooling supplies evidence and pattern signals only.
+
+## Immediate-review debt
+
+Candidate governance now defines a bounded defer contract for unresolved `IMMEDIATE_REVIEW` debt. The default remains: review promptly. A defer is time-limited, task-count-limited and evidence-backed; it never authorizes security/data/release risk.
