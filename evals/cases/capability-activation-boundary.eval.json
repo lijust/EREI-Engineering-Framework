@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.0",
+  "suite_id": "capability-activation-boundary-v1",
+  "artifact": "tools/capability_activation.py",
+  "cases": [
+    {
+      "id": "candidate-files-do-not-imply-activation",
+      "tags": ["candidate", "activation", "fail-closed"],
+      "input": {"request": "Candidate files exist in the pinned Framework commit but the project has no explicit Candidate adoption."},
+      "expectations": [
+        {"type": "output_contains_all", "values": ["INACTIVE_CANDIDATE", "explicit"]},
+        {"type": "output_contains_none", "values": ["active automatically"]}
+      ]
+    },
+    {
+      "id": "candidate-trial-binds-exact-ref-version",
+      "tags": ["candidate", "provenance", "bounded-trial"],
+      "input": {"request": "Candidate adoption ref or version differs from the pinned Framework checkout."},
+      "expectations": [
+        {"type": "output_contains_all", "values": ["BLOCKED", "exact", "version"]}
+      ]
+    },
+    {
+      "id": "stable-capability-auto-active",
+      "tags": ["stable", "activation"],
+      "input": {"request": "Capability is Stable in the exact pinned Framework checkout and no Candidate adoption file exists."},
+      "expectations": [
+        {"type": "output_contains_all", "values": ["ACTIVE_STABLE"]}
+      ]
+    }
+  ]
+}
