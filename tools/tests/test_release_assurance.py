@@ -130,7 +130,11 @@ class ReleaseAssuranceTests(unittest.TestCase):
 
     def approval(self, approval_type: str):
         suffix = "A1B2C3D4" if approval_type == "architecture" else "E5F6A7B8"
-        role = "system-architect" if approval_type == "architecture" else "security-engineer"
+        reviewer = (
+            {"kind": "github_user", "id": "lijust"}
+            if approval_type == "architecture"
+            else {"kind": "external_reviewer", "id": "chatgpt-codex-connector"}
+        )
         return {
             "schema_version": 2,
             "approval_id": f"EAPP-20260907T123000Z-{suffix}",
@@ -139,7 +143,7 @@ class ReleaseAssuranceTests(unittest.TestCase):
             "target_tree": self.TARGET_TREE,
             "decision": "approved",
             "recorded_at": "2026-09-07T12:30:00Z",
-            "reviewer": {"kind": "framework_role", "id": role},
+            "reviewer": reviewer,
             "evidence": ["test-evidence", "release-target:vnext-rc9"],
             "rationale": f"{approval_type} approval for immutable test target.",
             "provenance": {
