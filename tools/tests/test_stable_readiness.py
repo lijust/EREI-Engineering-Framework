@@ -293,6 +293,14 @@ class StructuredApprovalReadinessTests(unittest.TestCase):
         self._git("config", "user.email", "test@example.invalid")
         self._git("config", "user.name", "EREI Test")
         self._write("README.md", "target\n")
+        self._write("security/RELEASE_REVIEW_POLICY.json", {
+            "schema_version": 1,
+            "repository": "lijust/EREI-Engineering-Framework",
+            "release_branch_prefix": "release/",
+            "codex_reviewer_login": "chatgpt-codex-connector",
+            "architecture_approver_login": "lijust",
+            "require_verified_merge_commit": True,
+        })
         self.target = self._commit("target")
         self.target_tree = self._git("rev-parse", f"{self.target}^{{tree}}")
 
@@ -323,7 +331,7 @@ class StructuredApprovalReadinessTests(unittest.TestCase):
     def _approval(self, approval_type, *, decision="approved", rationale_suffix=""):
         architecture = approval_type == "architecture"
         return {
-            "schema_version": 1,
+            "schema_version": 2,
             "approval_id": "EAPP-20260907T130000Z-A1B2C3D4" if architecture else "EAPP-20260907T130100Z-E5F6A7B8",
             "approval_type": approval_type,
             "target_framework_ref": self.target,
@@ -336,7 +344,19 @@ class StructuredApprovalReadinessTests(unittest.TestCase):
             },
             "evidence": ["github-actions:123", "release-target:vnext-rc1"],
             "rationale": f"Reviewed immutable target for {approval_type} Stable promotion{rationale_suffix}.",
+            "provenance": {
+                "kind": "github_owner_approval_comment" if architecture else "github_codex_clean_review",
+                "pr_number": 61 if architecture else 62,
+                "actor_login": "lijust" if architecture else "chatgpt-codex-connector",
+            },
         }
+
+    def gate(self, preapproval_ready):
+        with mock.patch(
+            "tools.stable_readiness.github_release_provenance.verify_reviewed_file",
+            return_value={"status": "authenticated"},
+        ):
+            return approval_gate(self.repo, self.target, preapproval_ready)
 
     def _build(self, *, rejected_security=False, wrong_arch_ref=False, rewrite_architecture=False):
         self._write("releases/approvals/architecture.json", self._approval("architecture"))
@@ -371,7 +391,7 @@ class StructuredApprovalReadinessTests(unittest.TestCase):
 
     def test_structured_approved_records_pass_readiness_gate(self):
         architecture_ref, security_ref = self._build()
-        result = approval_gate(self.repo, self.target, True)
+        result = self.gate(True)
         self.assertEqual(result["status"], "pass")
         self.assertEqual(result["validated_records"], 2)
         self.assertEqual(result["approvals"]["architecture"]["bound_ref"], architecture_ref)
@@ -383,31 +403,31 @@ class StructuredApprovalReadinessTests(unittest.TestCase):
             "tools.stable_readiness.release_scope.load_target_bound_scope",
             side_effect=release_scope.ReleaseScopeError("scope drift"),
         ):
-            result = approval_gate(self.repo, self.target, True)
+            result = self.gate(True)
         self.assertEqual(result["status"], "blocked")
         self.assertIn("target-bound release scope", result["reason"])
 
     def test_rejected_security_record_blocks(self):
         self._build(rejected_security=True)
-        result = approval_gate(self.repo, self.target, True)
+        result = self.gate(True)
         self.assertEqual(result["status"], "blocked")
         self.assertIn("security approval invalid", result["reason"])
 
     def test_sha_shaped_but_wrong_approval_ref_blocks(self):
         self._build(wrong_arch_ref=True)
-        result = approval_gate(self.repo, self.target, True)
+        result = self.gate(True)
         self.assertEqual(result["status"], "blocked")
         self.assertIn("must equal first post-target write", result["reason"])
 
     def test_rewritten_approval_record_blocks(self):
         self._build(rewrite_architecture=True)
-        result = approval_gate(self.repo, self.target, True)
+        result = self.gate(True)
         self.assertEqual(result["status"], "blocked")
         self.assertIn("changed after its bound approval ref", result["reason"])
 
     def test_no_manifest_remains_pending_only_after_preapproval(self):
-        self.assertEqual(approval_gate(self.repo, self.target, True)["status"], "pending")
-        self.assertEqual(approval_gate(self.repo, self.target, False)["status"], "deferred")
+        self.assertEqual(self.gate(True)["status"], "pending")
+        self.assertEqual(self.gate(False)["status"], "deferred")
 
 
 if __name__ == "__main__":
