@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 import re
 import subprocess
@@ -12,6 +13,7 @@ from pathlib import Path
 
 SCOPE_PATH = Path("releases/VNEXT_RELEASE_SCOPE.json")
 CAPABILITIES_PATH = Path("CAPABILITIES.json")
+EVAL_RUNNER_PATH = Path("evals/runner.py")
 SCOPE_ID_RE = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 EVAL_PATH_RE = re.compile(r"^evals/cases/[A-Za-z0-9._-]+\.eval\.json$")
 SHA40_RE = re.compile(r"^[a-f0-9]{40}$")
@@ -29,6 +31,23 @@ def _load(path: Path, label: str) -> dict:
     if not isinstance(value, dict):
         raise ReleaseScopeError(f"{label} must be a JSON object")
     return value
+
+
+def _load_eval_runner(repo_root: Path):
+    path = repo_root / EVAL_RUNNER_PATH
+    if not path.exists():
+        raise ReleaseScopeError(f"missing eval runner required for release-scope validation: {path}")
+    spec = importlib.util.spec_from_file_location("erei_release_scope_eval_runner", path)
+    if spec is None or spec.loader is None:
+        raise ReleaseScopeError("unable to load eval runner for release-scope validation")
+    module = importlib.util.module_from_spec(spec)
+    try:
+        spec.loader.exec_module(module)
+    except Exception as exc:
+        raise ReleaseScopeError(f"unable to import eval runner: {exc}") from exc
+    if not callable(getattr(module, "validate_suite", None)):
+        raise ReleaseScopeError("eval runner does not expose validate_suite")
+    return module
 
 
 def _unique_text_list(value, label: str, *, minimum: int = 0) -> list[str]:
@@ -116,6 +135,7 @@ def validate_scope(repo_root: Path, value: dict) -> dict:
     suites = value["required_eval_suites"]
     if not isinstance(suites, list) or not suites:
         raise ReleaseScopeError("required_eval_suites must be non-empty")
+    eval_runner = _load_eval_runner(repo_root)
     seen_paths: set[str] = set()
     seen_ids: set[str] = set()
     covered_capabilities: set[str] = set()
@@ -143,6 +163,11 @@ def validate_scope(repo_root: Path, value: dict) -> dict:
         covered_capabilities.update(covers)
         suite_path = repo_root / path
         suite = _load(suite_path, "eval suite")
+        errors = eval_runner.validate_suite(suite, str(suite_path))
+        if errors:
+            raise ReleaseScopeError(
+                f"eval suite contract invalid for {path}: " + "; ".join(errors)
+            )
         if suite.get("suite_id") != suite_id:
             raise ReleaseScopeError(
                 f"eval suite identity mismatch for {path}: scope={suite_id!r} file={suite.get('suite_id')!r}"
@@ -248,14 +273,14 @@ def load_target_bound_scope(
     if target_scope_blob is None or closure_scope_blob is None:
         raise ReleaseScopeError("VNext release scope presence changed after target freeze")
     if target_scope_blob != closure_scope_blob:
-        raise ReleaseScopeError("VNext release scope changed after target freeze")
+        raise ReleaseScopeError("VNext release scope drifted after target freeze")
 
     scope = _git_json(repo_root, target_ref, scope_path, "release scope")
     raw_suites = scope.get("required_eval_suites")
     if not isinstance(raw_suites, list) or not raw_suites:
         raise ReleaseScopeError("frozen release scope required_eval_suites must be non-empty")
 
-    dependencies = [scope_path, CAPABILITIES_PATH.as_posix()]
+    dependencies = [scope_path, CAPABILITIES_PATH.as_posix(), EVAL_RUNNER_PATH.as_posix()]
     for index, item in enumerate(raw_suites):
         path = item.get("path") if isinstance(item, dict) else None
         if not isinstance(path, str) or not EVAL_PATH_RE.fullmatch(path):
