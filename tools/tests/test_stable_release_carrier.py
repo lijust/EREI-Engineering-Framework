@@ -198,9 +198,9 @@ class StableReleaseCarrierTests(unittest.TestCase):
         self.assertIn(mod.V2_STABLE_MANIFEST, result["closure_changed_paths"])
         validate.assert_called_once()
         _, kwargs = validate.call_args
-        self.assertEqual(kwargs["scope_git_repo"], self.repo)
+        self.assertTrue(Path(kwargs["scope_git_repo"]).samefile(self.repo))
         self.assertEqual(kwargs["scope_closure_ref"], carrier)
-        self.assertNotEqual(kwargs["repo_root"], self.repo)
+        self.assertNotEqual(kwargs["repo_root"], kwargs["scope_git_repo"])
 
     def test_scope_excluded_capability_blocks_before_release_assurance(self):
         carrier = self._build_v2_carrier(extra_excluded_capability=True)
