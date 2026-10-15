@@ -34,7 +34,16 @@ def event(task_id, schema=2, **overrides):
     if schema == 2:
         value.update({
             "occurrence_id": task_id.replace("ETASK-", "EOCC-"),
-            "signal_assessment": {},
+            "signal_assessment": {
+                "rework_cycles": "measured",
+                "verification_failures": "measured",
+                "verification_escape": "measured",
+                "framework_feedback_created": "measured",
+                "manual_workaround": "measured",
+                "context_gap": "measured",
+                "unexpected_scope_growth": "measured",
+                "security_or_data_critical_event": "measured",
+            },
             "failure_stage": "none",
         })
     value.update(overrides)
@@ -83,14 +92,47 @@ assert report["current_epoch"]["verification_failure_rate"] == 0.6667
 assert report["current_epoch"]["verification_clean_task_rate"] == 0.3333
 assert report["current_epoch"]["verification_escape_task_rate"] == 0.6667
 assert report["current_epoch"]["final_failed_task_rate"] == 0.0
+assert report["current_epoch"]["rework_assessment_coverage_rate"] == 1.0
+assert report["current_epoch"]["verification_assessment_coverage_rate"] == 1.0
+assert report["current_epoch"]["verification_escape_assessment_coverage_rate"] == 1.0
 assert "execution accuracy" in report["metric_semantics"]["rework_rate"]
 assert "REVIEW_DEBT" in codes
 assert "VERIFICATION_ESCAPE_CLUSTER" in codes
 assert "FEEDBACK_CONVERSION_GAP" in codes
 assert "MIXED_LEARNING_SCHEMA_EPOCH" in codes
 
-reviews = [{
-    "schema_version": 1,
+unassessed = event(
+    "ETASK-20261015T000004Z-AAAABBBE",
+    schema=2,
+    signal_assessment={
+        "rework_cycles": "not_assessed",
+        "verification_failures": "not_assessed",
+        "verification_escape": "not_assessed",
+        "framework_feedback_created": "not_assessed",
+        "manual_workaround": "not_assessed",
+        "context_gap": "not_assessed",
+        "unexpected_scope_growth": "not_assessed",
+        "security_or_data_critical_event": "not_assessed",
+    },
+)
+nonmaterial_escape = event(
+    "ETASK-20261015T000005Z-AAAABBBF",
+    schema=2,
+    material=False,
+    verification_escape=True,
+)
+coverage_report = mod.analyze([events[0], unassessed, nonmaterial_escape], [], {"epoch_id":"EPOCH-003","trigger":{"level":"LEARNING_HEALTHY","reasons":[]}})
+assert coverage_report["current_epoch"]["material_tasks"] == 2
+assert coverage_report["current_epoch"]["rework_assessment_coverage_rate"] == 0.5
+assert coverage_report["current_epoch"]["verification_assessment_coverage_rate"] == 0.5
+assert coverage_report["current_epoch"]["rework_free_task_rate"] == 1.0
+assert coverage_report["current_epoch"]["verification_clean_task_rate"] == 1.0
+assert coverage_report["current_epoch"]["verification_escape_task_rate"] == 0.0
+assert coverage_report["current_epoch"]["verification_escapes"] == 0
+assert coverage_report["current_epoch"]["rework_cycles_per_material_task"] is None
+assert coverage_report["current_epoch"]["verification_failures_per_material_task"] is None
+
+reviews = [{    "schema_version": 1,
     "through_event_count": 1,
 }]
 report_after_cutoff = mod.analyze(events, reviews, state)
