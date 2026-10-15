@@ -16,6 +16,23 @@ class StableReleaseCarrierTests(unittest.TestCase):
         self._git("config", "user.email", "test@example.invalid")
         self._git("config", "user.name", "EREI Test")
         self._write("README.md", "target\n")
+        self._write(mod.RELEASE_SCOPE_MANIFEST, {
+            "schema_version": 1,
+            "scope_id": "test-v2-scope",
+            "status": "approved",
+            "release_family": "test-v2",
+            "target_baseline": "vnext-assurance-v2",
+            "capabilities": [{"name": "assurance", "version": "stable-v2"}],
+            "release_control_dependencies": [],
+            "required_eval_suites": [{
+                "path": "evals/cases/test.eval.json",
+                "suite_id": "test-v1",
+                "covers": ["assurance"],
+            }],
+            "excluded_candidate_capabilities": ["learning_to_development"],
+            "post_promotion_gates": ["project_framework_pin_upgrade"],
+            "rationale": "Test scope bound into the immutable target before release closure.",
+        })
         self.target = self._commit("target")
         self.target_tree = self._git("rev-parse", f"{self.target}^{{tree}}")
 
@@ -91,6 +108,8 @@ class StableReleaseCarrierTests(unittest.TestCase):
         rewrite_architecture=False,
         rejected_security=False,
         wrong_architecture_ref=False,
+        extra_excluded_capability=False,
+        wrong_baseline=False,
     ):
         self._write(mod.TARGET_MANIFEST, self._target_manifest())
         self._commit("freeze target")
@@ -119,11 +138,14 @@ class StableReleaseCarrierTests(unittest.TestCase):
             "schema_version": 1,
             "assurance_contract_version": 2,
             "release_id": "vnext-assurance-v2",
-            "baseline": "vnext-assurance-v2",
+            "baseline": "wrong-baseline" if wrong_baseline else "vnext-assurance-v2",
             "status": "stable",
             "framework_ref": self.target,
             "released_at": "2026-09-07T12:03:00Z",
-            "capabilities": {"assurance": "stable-v2"},
+            "capabilities": {
+                "assurance": "stable-v2",
+                **({"learning_to_development": "candidate-v1"} if extra_excluded_capability else {}),
+            },
             "notes": "test carrier",
             "approval_ref": security_ref if wrong_architecture_ref else approval_ref,
             "security_review_ref": security_ref,
@@ -175,6 +197,24 @@ class StableReleaseCarrierTests(unittest.TestCase):
         self.assertIn(mod.TARGET_MANIFEST, result["closure_changed_paths"])
         self.assertIn(mod.V2_STABLE_MANIFEST, result["closure_changed_paths"])
         validate.assert_called_once()
+        _, kwargs = validate.call_args
+        self.assertEqual(kwargs["scope_git_repo"], self.repo)
+        self.assertEqual(kwargs["scope_closure_ref"], carrier)
+        self.assertNotEqual(kwargs["repo_root"], self.repo)
+
+    def test_scope_excluded_capability_blocks_before_release_assurance(self):
+        carrier = self._build_v2_carrier(extra_excluded_capability=True)
+        with mock.patch.object(mod.release_assurance, "validate_manifest") as validate:
+            with self.assertRaisesRegex(mod.StableCarrierError, "violates frozen release scope"):
+                mod.verify_stable_release_carrier(self.repo, self.target, carrier)
+        validate.assert_not_called()
+
+    def test_scope_baseline_mismatch_blocks_before_release_assurance(self):
+        carrier = self._build_v2_carrier(wrong_baseline=True)
+        with mock.patch.object(mod.release_assurance, "validate_manifest") as validate:
+            with self.assertRaisesRegex(mod.StableCarrierError, "violates frozen release scope"):
+                mod.verify_stable_release_carrier(self.repo, self.target, carrier)
+        validate.assert_not_called()
 
     def test_behavior_drift_in_v2_carrier_fails_before_assurance(self):
         carrier = self._build_v2_carrier(behavior_drift=True)

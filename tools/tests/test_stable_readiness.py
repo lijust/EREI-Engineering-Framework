@@ -3,10 +3,14 @@ import subprocess
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
+
+from tools import release_scope
 
 from tools.stable_readiness import (
     StableReadinessError,
     _event_target_revision,
+    _expected_cases_for_release,
     approval_gate,
     derive_readiness,
 )
@@ -80,6 +84,174 @@ class StableReadinessTests(unittest.TestCase):
             path.write_text(json.dumps({"pull_request": {"head": {"sha": "main"}}}), encoding="utf-8")
             with self.assertRaises(StableReadinessError):
                 _event_target_revision(path)
+
+
+class ReleaseScopeReadinessTests(unittest.TestCase):
+    class Runner:
+        @staticmethod
+        def _expected_cases(paths):
+            result = set()
+            for raw in paths:
+                path = Path(raw)
+                candidates = sorted(path.rglob("*.eval.json")) if path.is_dir() else [path]
+                for candidate in candidates:
+                    value = json.loads(candidate.read_text(encoding="utf-8"))
+                    for case in value["cases"]:
+                        result.add((value["suite_id"], case["id"]))
+            return result
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.repo = Path(self.tmp.name)
+        self.git("init", "-q")
+        self.git("config", "user.email", "test@example.invalid")
+        self.git("config", "user.name", "EREI Test")
+        (self.repo / "evals" / "cases").mkdir(parents=True)
+        (self.repo / "releases").mkdir()
+        registry = {
+            "schema_version": 1,
+            "development_line": {
+                "status": "candidate",
+                "capabilities": {
+                    "prospective_task_learning": {"status": "candidate", "version": "v2"},
+                    "capability_activation_governance": {"status": "candidate", "version": "v1"},
+                    "learning_pattern_analysis": {"status": "candidate", "version": "v1"},
+                },
+            },
+        }
+        self.write("CAPABILITIES.json", registry)
+        self.write("evals/cases/task-learning-review.eval.json", {
+            "schema_version": "1.0",
+            "suite_id": "task-learning-review-v1",
+            "artifact": "task-learning",
+            "cases": [
+                {"id": "TLR-001", "input": {"prompt": "x"}, "expectations": [{"type": "output_contains_all", "values": ["x"]}]},
+                {"id": "TLR-002", "input": {"prompt": "y"}, "expectations": [{"type": "output_contains_all", "values": ["y"]}]},
+            ],
+        })
+        self.write("evals/cases/candidate-capability-activation.eval.json", {
+            "schema_version": "1.0",
+            "suite_id": "candidate-capability-activation-v1",
+            "artifact": "capability-activation",
+            "cases": [
+                {"id": "CCA-001", "input": {"prompt": "a"}, "expectations": [{"type": "output_contains_all", "values": ["a"]}]},
+            ],
+        })
+        self.write("evals/cases/unrelated.eval.json", {
+            "schema_version": "1.0",
+            "suite_id": "unrelated-v1",
+            "artifact": "other",
+            "cases": [
+                {"id": "OTH-001", "input": {"prompt": "z"}, "expectations": [{"type": "output_contains_all", "values": ["z"]}]},
+            ],
+        })
+        self.write("releases/VNEXT_RELEASE_SCOPE.json", {
+            "schema_version": 1,
+            "scope_id": "task-learning-v2-core",
+            "status": "approved",
+            "release_family": "task-learning-v2-core",
+            "target_baseline": "task-learning-review-v2",
+            "capabilities": [{"name": "prospective_task_learning", "version": "v2"}],
+            "release_control_dependencies": [{"name": "capability_activation_governance", "version": "v1"}],
+            "required_eval_suites": [
+                {
+                    "path": "evals/cases/task-learning-review.eval.json",
+                    "suite_id": "task-learning-review-v1",
+                    "covers": ["prospective_task_learning"],
+                },
+                {
+                    "path": "evals/cases/candidate-capability-activation.eval.json",
+                    "suite_id": "candidate-capability-activation-v1",
+                    "covers": ["capability_activation_governance"],
+                },
+            ],
+            "excluded_candidate_capabilities": ["learning_pattern_analysis"],
+            "post_promotion_gates": ["project_framework_pin_upgrade"],
+            "rationale": "Bound the Stable release to Task Learning V2 Core without unrelated Candidate evals.",
+        })
+        self.git("add", "-A")
+        self.git("commit", "-q", "-m", "target")
+        self.target = self.git("rev-parse", "HEAD")
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def git(self, *args):
+        process = subprocess.run(
+            ["git", "-C", str(self.repo), *args],
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        if process.returncode != 0:
+            self.fail(f"git {' '.join(args)} failed: {process.stderr}")
+        return process.stdout.strip()
+
+    def write(self, path, value):
+        full = self.repo / path
+        full.parent.mkdir(parents=True, exist_ok=True)
+        full.write_text(json.dumps(value, indent=2) + "\n", encoding="utf-8")
+
+    def test_frozen_scope_selects_only_declared_eval_suite(self):
+        expected, meta = _expected_cases_for_release(self.repo, self.Runner(), self.target)
+        self.assertEqual(expected, {
+            ("task-learning-review-v1", "TLR-001"),
+            ("task-learning-review-v1", "TLR-002"),
+            ("candidate-capability-activation-v1", "CCA-001"),
+        })
+        self.assertEqual(meta["mode"], "frozen_release_scope")
+        self.assertEqual(meta["required_eval_case_count"], 3)
+
+    def test_scope_drift_after_target_fails_closed(self):
+        value = json.loads((self.repo / "releases/VNEXT_RELEASE_SCOPE.json").read_text(encoding="utf-8"))
+        value["rationale"] = "Changed after freeze and therefore must require a new release candidate target."
+        self.write("releases/VNEXT_RELEASE_SCOPE.json", value)
+        self.git("add", "-A")
+        self.git("commit", "-q", "-m", "scope drift")
+        with self.assertRaisesRegex(StableReadinessError, "drifted after target freeze"):
+            _expected_cases_for_release(self.repo, self.Runner(), self.target)
+
+    def test_scope_deleted_after_target_fails_closed_instead_of_legacy_fallback(self):
+        (self.repo / "releases/VNEXT_RELEASE_SCOPE.json").unlink()
+        self.git("add", "-A")
+        self.git("commit", "-q", "-m", "delete frozen scope")
+        with self.assertRaisesRegex(StableReadinessError, "scope presence changed after target freeze"):
+            _expected_cases_for_release(self.repo, self.Runner(), self.target)
+
+    def test_uncommitted_scope_edit_cannot_reduce_expected_cases(self):
+        scope_path = self.repo / "releases/VNEXT_RELEASE_SCOPE.json"
+        value = json.loads(scope_path.read_text(encoding="utf-8"))
+        value["required_eval_suites"] = [value["required_eval_suites"][0]]
+        scope_path.write_text(json.dumps(value, indent=2) + "\n", encoding="utf-8")
+        expected, meta = _expected_cases_for_release(self.repo, self.Runner(), self.target)
+        self.assertEqual(expected, {
+            ("task-learning-review-v1", "TLR-001"),
+            ("task-learning-review-v1", "TLR-002"),
+            ("candidate-capability-activation-v1", "CCA-001"),
+        })
+        self.assertEqual(meta["required_eval_case_count"], 3)
+
+    def test_required_eval_suite_drift_after_target_fails_closed(self):
+        value = json.loads((self.repo / "evals/cases/task-learning-review.eval.json").read_text(encoding="utf-8"))
+        value["cases"].append({
+            "id": "TLR-003",
+            "input": {"prompt": "later"},
+            "expectations": [{"type": "output_contains_all", "values": ["later"]}],
+        })
+        self.write("evals/cases/task-learning-review.eval.json", value)
+        self.git("add", "-A")
+        self.git("commit", "-q", "-m", "suite drift")
+        with self.assertRaisesRegex(StableReadinessError, "drifted after target freeze"):
+            _expected_cases_for_release(self.repo, self.Runner(), self.target)
+
+    def test_no_scope_preserves_legacy_all_evals_behavior(self):
+        (self.repo / "releases/VNEXT_RELEASE_SCOPE.json").unlink()
+        self.git("add", "-A")
+        self.git("commit", "-q", "-m", "no scope")
+        expected, meta = _expected_cases_for_release(self.repo, self.Runner(), self.git("rev-parse", "HEAD"))
+        self.assertIn(("task-learning-review-v1", "TLR-001"), expected)
+        self.assertIn(("unrelated-v1", "OTH-001"), expected)
+        self.assertEqual(meta["mode"], "all_published_evals")
 
 
 class StructuredApprovalReadinessTests(unittest.TestCase):
@@ -173,6 +345,16 @@ class StructuredApprovalReadinessTests(unittest.TestCase):
         self.assertEqual(result["validated_records"], 2)
         self.assertEqual(result["approvals"]["architecture"]["bound_ref"], architecture_ref)
         self.assertEqual(result["approvals"]["security"]["bound_ref"], security_ref)
+
+    def test_target_bound_scope_drift_blocks_approval_gate(self):
+        self._build()
+        with mock.patch(
+            "tools.stable_readiness.release_scope.load_target_bound_scope",
+            side_effect=release_scope.ReleaseScopeError("scope drift"),
+        ):
+            result = approval_gate(self.repo, self.target, True)
+        self.assertEqual(result["status"], "blocked")
+        self.assertIn("target-bound release scope", result["reason"])
 
     def test_rejected_security_record_blocks(self):
         self._build(rejected_security=True)

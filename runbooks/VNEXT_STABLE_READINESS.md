@@ -11,7 +11,7 @@ python tools/stable_readiness.py --repo-root .
 The report has four gates:
 
 1. **Prospective cycle** — must be `complete` in `learning/PROSPECTIVE_CYCLE_STATUS.json`.
-2. **Exact-target runtime evidence** — all published eval cases must pass at `exact_target_runtime`, be bound to exact-target run manifests, and target the selected immutable Framework revision.
+2. **Exact-target runtime evidence** — when `releases/VNEXT_RELEASE_SCOPE.json` is present, every case in its required eval suites must pass at `exact_target_runtime`, be bound to exact-target run manifests, and target the selected immutable Framework revision. The scope file, CAPABILITIES registry, and required suite blobs must match the frozen target. If no release scope exists, readiness preserves the legacy all-published-evals behavior.
 3. **Release enforcement** — server enforcement or an independently verified equivalent fallback must satisfy `security/ASSURANCE_ENFORCEMENT.json`.
 4. **Final architecture/security approvals** — exact approval refs are intentionally deferred until the first three gates pass and then must bind the final immutable Stable candidate revision.
 
@@ -31,7 +31,7 @@ The target must resolve to a fetched Git commit.
 
 `ready_for_final_approvals=true` means gates 1–3 pass. It does **not** mean Stable.
 
-`stable_ready=true` means all four gates pass. The release manifest must still pass `tools/release_assurance.py`.
+`stable_ready=true` means all four gates pass. The final release manifest must also match the frozen release scope baseline/capability versions exactly and pass `tools/release_assurance.py`; the Stable carrier independently rechecks the target-bound scope.
 
 For a release branch, use the frozen target revision and make readiness fail closed:
 

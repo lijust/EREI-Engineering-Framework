@@ -13,12 +13,13 @@ from pathlib import Path
 from typing import Any
 
 try:
-    from . import assurance_enforcement, exact_target_evidence, prospective_cycle_status, release_approval, release_target
+    from . import assurance_enforcement, exact_target_evidence, prospective_cycle_status, release_approval, release_scope, release_target
 except ImportError:
     import assurance_enforcement
     import exact_target_evidence
     import prospective_cycle_status
     import release_approval
+    import release_scope
     import release_target
 
 SHA40_RE = re.compile(r"^[a-f0-9]{40}$")
@@ -124,6 +125,50 @@ def _target_revision(repo_root: Path, explicit: str | None = None) -> str:
     return _git_head(repo_root)
 
 
+def _expected_cases_for_release(repo_root: Path, runner, target_ref: str) -> tuple[set[tuple[str, str]], dict[str, Any]]:
+    try:
+        scope, summary = release_scope.load_target_bound_scope(
+            repo_root,
+            target_ref,
+            closure_ref="HEAD",
+        )
+    except release_scope.ReleaseScopeError as exc:
+        raise StableReadinessError(f"invalid target-bound VNext release scope: {exc}") from exc
+
+    if scope is None or summary is None:
+        expected = runner._expected_cases([str(repo_root / "evals" / "cases")])
+        return expected, {
+            "mode": "all_published_evals",
+            "scope_path": None,
+            "scope_id": None,
+            "required_eval_suite_count": None,
+            "required_eval_case_count": len(expected),
+        }
+
+    expected = {
+        (item["suite_id"], item["case_id"])
+        for item in summary["required_eval_case_pairs"]
+    }
+    if len(expected) != summary["required_eval_case_count"]:
+        raise StableReadinessError(
+            "release-scope eval case count differs from validated scope summary"
+        )
+
+    return expected, {
+        "mode": "frozen_release_scope",
+        "scope_path": release_scope.SCOPE_PATH.as_posix(),
+        "scope_id": summary["scope_id"],
+        "release_family": summary["release_family"],
+        "target_baseline": summary["target_baseline"],
+        "capabilities": summary["capabilities"],
+        "release_control_dependencies": summary["release_control_dependencies"],
+        "required_eval_suite_count": summary["required_eval_suite_count"],
+        "required_eval_case_count": summary["required_eval_case_count"],
+        "covered_capabilities": summary["covered_capabilities"],
+    }
+
+
+
 def _evaluate_evidence_file(repo_root: Path, runner, expected: set[tuple[str, str]], path: Path, target_ref: str) -> dict[str, Any]:
     evidence = runner.validate_execution_evidence(_load_json(path))
     observed = {(item["suite_id"], item["case_id"]): item for item in evidence["executions"]}
@@ -180,7 +225,7 @@ def _evaluate_evidence_file(repo_root: Path, runner, expected: set[tuple[str, st
 
 def eval_gate(repo_root: Path, target_ref: str) -> dict[str, Any]:
     runner = _load_runner(repo_root)
-    expected = runner._expected_cases([str(repo_root / "evals" / "cases")])
+    expected, scope = _expected_cases_for_release(repo_root, runner, target_ref)
     paths = sorted((repo_root / "evals").glob("EXECUTION_EVIDENCE*.json"))
     if not paths:
         raise StableReadinessError("no execution-evidence files found")
@@ -189,6 +234,8 @@ def eval_gate(repo_root: Path, target_ref: str) -> dict[str, Any]:
     return {
         "status": "pass" if len(complete) == 1 else "blocked",
         "target_framework_revision": target_ref,
+        "release_scope": scope,
+        "expected_case_count": len(expected),
         "evidence_file_count": len(reports),
         "complete_evidence_file_count": len(complete),
         "selected_evidence_path": complete[0]["evidence_path"] if len(complete) == 1 else None,
@@ -239,6 +286,20 @@ def approval_gate(repo_root: Path, target_ref: str, preapproval_ready: bool) -> 
         return {"status": "blocked", "reason": "multiple V2 Stable manifests target selected Framework revision"}
 
     manifest_path, manifest = matches[0]
+    try:
+        scope, _ = release_scope.load_target_bound_scope(
+            repo_root,
+            target_ref,
+            closure_ref="HEAD",
+        )
+        if scope is not None:
+            release_scope.validate_stable_manifest_against_scope(manifest, scope)
+    except release_scope.ReleaseScopeError as exc:
+        return {
+            "status": "blocked",
+            "reason": f"Stable manifest does not match target-bound release scope: {exc}",
+            "manifest_path": manifest_path.relative_to(repo_root).as_posix(),
+        }
     target_tree = _tree_for(repo_root, target_ref)
     details: dict[str, Any] = {}
     pairs = (

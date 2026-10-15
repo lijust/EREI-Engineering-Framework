@@ -29,6 +29,11 @@ class ReleaseAssuranceTests(unittest.TestCase):
     def stable(self, **overrides):
         value = self.base(
             status="stable",
+            baseline="task-learning-review-v2",
+            capabilities={
+                "prospective_task_learning": "v2",
+                "capability_activation_governance": "v1",
+            },
             approval_ref="b" * 40,
             security_review_ref="c" * 40,
             minimum_eval_assurance_level="exact_target_runtime",
@@ -144,10 +149,95 @@ class ReleaseAssuranceTests(unittest.TestCase):
         def execution_assurance_level(execution, schema_version):
             return execution["assurance_level"]
 
+    def frozen_scope(self):
+        return {
+            "schema_version": 1,
+            "scope_id": "task-learning-v2-core",
+            "status": "approved",
+            "release_family": "task-learning-v2-core",
+            "target_baseline": "task-learning-review-v2",
+            "capabilities": [{"name": "prospective_task_learning", "version": "v2"}],
+            "release_control_dependencies": [{"name": "capability_activation_governance", "version": "v1"}],
+            "required_eval_suites": [{
+                "path": "evals/cases/scope.eval.json",
+                "suite_id": "suite",
+                "covers": ["prospective_task_learning", "capability_activation_governance"],
+            }],
+            "excluded_candidate_capabilities": [],
+            "post_promotion_gates": ["project_framework_pin_upgrade"],
+            "rationale": "Test frozen release scope for V2 Stable assurance validation.",
+        }
+
+    def frozen_scope_summary(self):
+        return {
+            "status": "VALID",
+            "scope_id": "task-learning-v2-core",
+            "release_family": "task-learning-v2-core",
+            "target_baseline": "task-learning-review-v2",
+            "capabilities": [{"name": "prospective_task_learning", "version": "v2"}],
+            "release_control_dependencies": [{"name": "capability_activation_governance", "version": "v1"}],
+            "excluded_candidate_capabilities": [],
+            "required_eval_suite_count": 1,
+            "required_eval_case_count": 1,
+            "covered_capabilities": ["capability_activation_governance", "prospective_task_learning"],
+            "required_eval_paths": ["evals/cases/scope.eval.json"],
+            "required_eval_cases": ["suite/case"],
+            "required_eval_case_pairs": [{"suite_id": "suite", "case_id": "case"}],
+        }
+
+    def scope_patch(self):
+        return mock.patch.object(
+            release_assurance.release_scope,
+            "load_target_bound_scope",
+            return_value=(self.frozen_scope(), self.frozen_scope_summary()),
+        )
+
+    def write_scope_root(self, root: Path):
+        (root / "evals" / "cases").mkdir(parents=True, exist_ok=True)
+        (root / "releases").mkdir(parents=True, exist_ok=True)
+        (root / "CAPABILITIES.json").write_text(json.dumps({
+            "schema_version": 1,
+            "development_line": {
+                "status": "candidate",
+                "capabilities": {
+                    "prospective_task_learning": {"status": "candidate", "version": "v2"},
+                    "capability_activation_governance": {"status": "candidate", "version": "v1"},
+                },
+            },
+        }), encoding="utf-8")
+        (root / "evals" / "cases" / "scope.eval.json").write_text(json.dumps({
+            "schema_version": "1.0",
+            "suite_id": "suite",
+            "artifact": "task-learning",
+            "cases": [{
+                "id": "case",
+                "input": {"prompt": "test"},
+                "expectations": [{"type": "output_contains_all", "values": ["test"]}],
+            }],
+        }), encoding="utf-8")
+        (root / "releases" / "VNEXT_RELEASE_SCOPE.json").write_text(json.dumps({
+            "schema_version": 1,
+            "scope_id": "task-learning-v2-core",
+            "status": "approved",
+            "release_family": "task-learning-v2-core",
+            "target_baseline": "task-learning-review-v2",
+            "capabilities": [{"name": "prospective_task_learning", "version": "v2"}],
+            "release_control_dependencies": [{"name": "capability_activation_governance", "version": "v1"}],
+            "required_eval_suites": [{
+                "path": "evals/cases/scope.eval.json",
+                "suite_id": "suite",
+                "covers": ["prospective_task_learning", "capability_activation_governance"],
+            }],
+            "excluded_candidate_capabilities": [],
+            "post_promotion_gates": ["project_framework_pin_upgrade"],
+            "rationale": "Test frozen release scope for V2 Stable assurance validation.",
+        }), encoding="utf-8")
+
     def write_stable_root(self, root: Path):
-        (root / "security").mkdir(parents=True)
-        (root / "evals").mkdir(parents=True)
-        (root / "releases" / "approvals").mkdir(parents=True)
+        self.write_scope_root(root)
+        (root / "security").mkdir(parents=True, exist_ok=True)
+        (root / "evals").mkdir(parents=True, exist_ok=True)
+        (root / "releases" / "approvals").mkdir(parents=True, exist_ok=True)
         (root / "security" / "ASSURANCE_ENFORCEMENT.json").write_text(
             json.dumps(self.enforcement(equivalent=True)), encoding="utf-8"
         )
@@ -182,28 +272,75 @@ class ReleaseAssuranceTests(unittest.TestCase):
     def test_v2_stable_fails_before_eval_when_enforcement_is_not_satisfied(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            (root / "security").mkdir()
+            self.write_scope_root(root)
+            (root / "security").mkdir(exist_ok=True)
             (root / "security" / "ASSURANCE_ENFORCEMENT.json").write_text(
                 json.dumps(self.enforcement(equivalent=False)), encoding="utf-8"
             )
-            with self.assertRaisesRegex(release_assurance.ReleaseError, "server branch/status-check enforcement"):
+            with self.scope_patch(), \
+                 self.assertRaisesRegex(release_assurance.ReleaseError, "server branch/status-check enforcement"):
                 release_assurance.validate_manifest(self.stable(), repo_root=root)
 
     def test_v2_stable_reaches_eval_gate_when_equivalent_enforcement_is_verified(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            (root / "security").mkdir()
+            self.write_scope_root(root)
+            (root / "security").mkdir(exist_ok=True)
             (root / "security" / "ASSURANCE_ENFORCEMENT.json").write_text(
                 json.dumps(self.enforcement(equivalent=True)), encoding="utf-8"
             )
-            with self.assertRaises((FileNotFoundError, release_assurance.ReleaseError)):
+            with self.scope_patch(), \
+                 self.assertRaises((FileNotFoundError, release_assurance.ReleaseError)):
                 release_assurance.validate_manifest(self.stable(), repo_root=root)
+
+    def test_v2_stable_baseline_must_match_frozen_scope(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.write_stable_root(root)
+            with self.scope_patch(), \
+                 mock.patch.object(release_assurance, "_load_runner", return_value=self.FakeRunner):
+                with self.assertRaisesRegex(release_assurance.ReleaseError, "baseline"):
+                    release_assurance.validate_manifest(
+                        self.stable(baseline="wrong-baseline"),
+                        repo_root=root,
+                    )
+
+    def test_v2_stable_capabilities_must_match_frozen_scope_exactly(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.write_stable_root(root)
+            capabilities = {
+                "prospective_task_learning": "v2",
+                "capability_activation_governance": "v1",
+                "learning_to_development": "candidate-v1",
+            }
+            with self.scope_patch(), \
+                 mock.patch.object(release_assurance, "_load_runner", return_value=self.FakeRunner):
+                with self.assertRaisesRegex(release_assurance.ReleaseError, "capabilities"):
+                    release_assurance.validate_manifest(
+                        self.stable(capabilities=capabilities),
+                        repo_root=root,
+                    )
+
+    def test_v2_stable_scope_loader_is_bound_to_manifest_framework_ref(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.write_scope_root(root)
+            with mock.patch.object(
+                release_assurance.release_scope,
+                "load_target_bound_scope",
+                side_effect=release_assurance.release_scope.ReleaseScopeError("scope drift"),
+            ) as loader:
+                with self.assertRaisesRegex(release_assurance.ReleaseError, "target-bound release scope"):
+                    release_assurance.validate_manifest(self.stable(), repo_root=root)
+            loader.assert_called_once_with(root, "a" * 40, closure_ref="HEAD")
 
     def test_v2_stable_requires_bound_exact_target_manifest(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             self.write_stable_root(root)
-            with mock.patch.object(release_assurance, "_load_runner", return_value=self.FakeRunner), \
+            with self.scope_patch(), \
+                 mock.patch.object(release_assurance, "_load_runner", return_value=self.FakeRunner), \
                  mock.patch.object(
                      release_assurance.exact_target_evidence,
                      "validate_binding",
@@ -219,7 +356,8 @@ class ReleaseAssuranceTests(unittest.TestCase):
             security = self.approval("security")
             security["decision"] = "rejected"
             (root / "releases" / "approvals" / "security.json").write_text(json.dumps(security), encoding="utf-8")
-            with mock.patch.object(release_assurance, "_load_runner", return_value=self.FakeRunner):
+            with self.scope_patch(), \
+                 mock.patch.object(release_assurance, "_load_runner", return_value=self.FakeRunner):
                 with self.assertRaisesRegex(release_assurance.ReleaseError, "security release approval"):
                     release_assurance.validate_manifest(self.stable(), repo_root=root)
 
@@ -230,7 +368,8 @@ class ReleaseAssuranceTests(unittest.TestCase):
             architecture = self.approval("architecture")
             architecture["target_tree"] = "9" * 40
             (root / "releases" / "approvals" / "architecture.json").write_text(json.dumps(architecture), encoding="utf-8")
-            with mock.patch.object(release_assurance, "_load_runner", return_value=self.FakeRunner):
+            with self.scope_patch(), \
+                 mock.patch.object(release_assurance, "_load_runner", return_value=self.FakeRunner):
                 with self.assertRaisesRegex(release_assurance.ReleaseError, "architecture release approval"):
                     release_assurance.validate_manifest(self.stable(), repo_root=root)
 
@@ -238,11 +377,13 @@ class ReleaseAssuranceTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             self.write_stable_root(root)
-            with mock.patch.object(release_assurance, "_load_runner", return_value=self.FakeRunner), \
+            with self.scope_patch(), \
+                 mock.patch.object(release_assurance, "_load_runner", return_value=self.FakeRunner), \
                  mock.patch.object(release_assurance.exact_target_evidence, "validate_binding", return_value={}):
                 result = release_assurance.validate_manifest(self.stable(), repo_root=root)
             self.assertEqual(result["exact_target_bindings_validated"], 1)
             self.assertEqual(result["approval_records_validated"], 2)
+            self.assertEqual(result["release_scope_id"], "task-learning-v2-core")
 
 
 if __name__ == "__main__":

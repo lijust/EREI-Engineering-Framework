@@ -103,6 +103,35 @@ class ReleaseScopeTests(unittest.TestCase):
         finally:
             temp.cleanup()
 
+    def test_stable_manifest_binding_requires_exact_baseline_and_capability_versions(self):
+        temp, root = self.setup_root()
+        try:
+            scope = self.scope()
+            manifest = {
+                "baseline": "task-learning-review-v2",
+                "capabilities": {
+                    "prospective_task_learning": "v2",
+                    "capability_activation_governance": "v1",
+                },
+            }
+            result = release_scope.validate_stable_manifest_against_scope(manifest, scope)
+            self.assertEqual(result["baseline"], "task-learning-review-v2")
+
+            wrong = dict(manifest)
+            wrong["baseline"] = "other"
+            with self.assertRaisesRegex(release_scope.ReleaseScopeError, "baseline"):
+                release_scope.validate_stable_manifest_against_scope(wrong, scope)
+
+            leaked = dict(manifest)
+            leaked["capabilities"] = {
+                **manifest["capabilities"],
+                "learning_pattern_analysis": "v1",
+            }
+            with self.assertRaisesRegex(release_scope.ReleaseScopeError, "excluded"):
+                release_scope.validate_stable_manifest_against_scope(leaked, scope)
+        finally:
+            temp.cleanup()
+
     def test_suite_identity_mismatch_fails(self):
         temp, root = self.setup_root()
         try:

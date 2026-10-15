@@ -10,11 +10,12 @@ import sys
 from pathlib import Path
 
 try:
-    from . import assurance_enforcement, exact_target_evidence, release_approval, release_target
+    from . import assurance_enforcement, exact_target_evidence, release_approval, release_scope, release_target
 except ImportError:
     import assurance_enforcement
     import exact_target_evidence
     import release_approval
+    import release_scope
     import release_target
 
 SHA40_RE = re.compile(r"^[a-f0-9]{40}$")
@@ -84,7 +85,13 @@ def _validate_structured_approvals(manifest: dict, repo_root: Path) -> int:
     return validated
 
 
-def validate_manifest(manifest: dict, *, repo_root: Path | None = None) -> dict:
+def validate_manifest(
+    manifest: dict,
+    *,
+    repo_root: Path | None = None,
+    scope_git_repo: Path | None = None,
+    scope_closure_ref: str = "HEAD",
+) -> dict:
     required = {
         "schema_version", "assurance_contract_version", "release_id", "baseline", "status",
         "framework_ref", "released_at", "capabilities", "notes",
@@ -115,6 +122,7 @@ def validate_manifest(manifest: dict, *, repo_root: Path | None = None) -> dict:
         "stable_enforcement_satisfied": None,
         "exact_target_bindings_validated": 0,
         "approval_records_validated": 0,
+        "release_scope_id": None,
     }
     if manifest["status"] == "stable" and manifest["assurance_contract_version"] >= 2:
         result["next_stable_gate_applied"] = True
@@ -137,6 +145,22 @@ def validate_manifest(manifest: dict, *, repo_root: Path | None = None) -> dict:
         if repo_root is None:
             raise ReleaseError("repo_root is required to validate a V2 Stable release")
 
+        scope_repo = scope_git_repo.resolve() if scope_git_repo is not None else repo_root
+        try:
+            scope, scope_summary = release_scope.load_target_bound_scope(
+                scope_repo,
+                manifest["framework_ref"],
+                closure_ref=scope_closure_ref,
+            )
+            if scope is None or scope_summary is None:
+                raise release_scope.ReleaseScopeError(
+                    "V2 Stable requires VNEXT_RELEASE_SCOPE.json in the frozen target"
+                )
+            scope_binding = release_scope.validate_stable_manifest_against_scope(manifest, scope)
+        except release_scope.ReleaseScopeError as exc:
+            raise ReleaseError(f"invalid or mismatched target-bound release scope: {exc}") from exc
+        result["release_scope_id"] = scope_binding["scope_id"]
+
         try:
             enforcement = assurance_enforcement.load_and_validate(
                 repo_root / "security" / "ASSURANCE_ENFORCEMENT.json"
@@ -156,7 +180,12 @@ def validate_manifest(manifest: dict, *, repo_root: Path | None = None) -> dict:
         validated = runner.validate_execution_evidence(evidence)
         if validated.get("schema_version") != 2:
             raise ReleaseError("V2 Stable requires V2 execution evidence with explicit assurance levels")
-        expected = runner._expected_cases([str(repo_root / "evals" / "cases")])
+        expected = {
+            (item["suite_id"], item["case_id"])
+            for item in scope_summary["required_eval_case_pairs"]
+        }
+        if len(expected) != scope_summary["required_eval_case_count"]:
+            raise ReleaseError("scoped eval case count differs from validated target-bound release scope")
         observed = {(item["suite_id"], item["case_id"]): item for item in validated["executions"]}
         missing = expected - set(observed)
         nonpass = {key for key in expected & set(observed) if observed[key]["status"] != "pass"}
