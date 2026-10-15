@@ -51,6 +51,7 @@ on:
       - "workflows/learning-review/**"
       - "workflows/learning-to-development/**"
       - "learning/PATTERN_TAXONOMY.json"
+      - "learning/development-outputs/**"
       - "templates/project-bootstrap/.erei/learning/**"
       - "workflows/router/WORKFLOW.md"
       - "agents/chief-engineer/AGENT.md"
