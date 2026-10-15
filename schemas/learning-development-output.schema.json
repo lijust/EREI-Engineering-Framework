@@ -1,0 +1,118 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://erei-framework.local/schemas/learning-development-output.schema.json",
+  "title": "EREI Learning Development Output V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "output_id",
+    "created_at",
+    "source",
+    "pattern",
+    "interpretation",
+    "classification",
+    "development_route",
+    "evidence",
+    "expected_effect",
+    "success_metrics",
+    "promotion_boundary"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "output_id": {"type": "string", "pattern": "^LDO-[0-9]{8}T[0-9]{6}Z-[A-F0-9]{8}$"},
+    "created_at": {"type": "string", "format": "date-time"},
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["project_repository", "epoch_id"],
+      "properties": {
+        "project_repository": {"type": "string", "minLength": 1},
+        "epoch_id": {"type": "string", "minLength": 1},
+        "review_id": {"type": "string", "minLength": 1},
+        "framework_ref": {"type": "string", "minLength": 1}
+      }
+    },
+    "pattern": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pattern_id", "pattern_class", "signal_summary"],
+      "properties": {
+        "pattern_id": {"type": "string", "minLength": 1},
+        "pattern_class": {
+          "enum": [
+            "healthy_assurance_catch",
+            "verification_escape",
+            "execution_environment_conformance",
+            "provider_runtime_conformance",
+            "exclusive_claim_concurrency",
+            "stale_contract_or_reference",
+            "identity_or_authority_binding",
+            "measurement_model_gap",
+            "context_routing_gap",
+            "review_debt",
+            "project_local_defect",
+            "unknown"
+          ]
+        },
+        "signal_summary": {"type": "string", "minLength": 1}
+      }
+    },
+    "interpretation": {"type": "string", "minLength": 1},
+    "classification": {
+      "enum": [
+        "HEALTHY_PATTERN",
+        "PROJECT_LOCAL_ACTION",
+        "FRAMEWORK_FEEDBACK",
+        "MEASUREMENT_ADJUSTMENT",
+        "NEEDS_MORE_EVIDENCE",
+        "CRITICAL_FOLLOWUP"
+      ]
+    },
+    "development_route": {
+      "enum": [
+        "no_change",
+        "project_change",
+        "framework_feedback",
+        "framework_candidate",
+        "measurement_change",
+        "workflow_change",
+        "tooling_change",
+        "specialist_review",
+        "evidence_collection"
+      ]
+    },
+    "evidence": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "expected_effect": {"type": "string", "minLength": 1},
+    "success_metrics": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["metric", "direction"],
+        "properties": {
+          "metric": {"type": "string", "minLength": 1},
+          "direction": {"enum": ["increase", "decrease", "hold", "observe"]},
+          "baseline": {"type": ["number", "string", "null"]},
+          "target": {"type": ["number", "string", "null"]},
+          "notes": {"type": "string"}
+        }
+      }
+    },
+    "promotion_boundary": {
+      "enum": [
+        "project_only",
+        "candidate_only",
+        "stable_review_required",
+        "cross_project_evidence_required"
+      ]
+    },
+    "notes": {"type": "string"}
+  }
+}
