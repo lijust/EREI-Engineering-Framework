@@ -44,11 +44,7 @@ def _positive_int(value: Any, label: str) -> int:
     return value
 
 
-def load_policy(path: Path) -> dict[str, Any]:
-    try:
-        value = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
-        raise GitHubProvenanceError(f"unable to load release review policy: {exc}") from exc
+def validate_policy(value: Any) -> dict[str, Any]:
     required = {
         "schema_version", "repository", "release_branch_prefix",
         "codex_reviewer_login", "architecture_approver_login",
@@ -67,6 +63,69 @@ def load_policy(path: Path) -> dict[str, Any]:
     if value["require_verified_merge_commit"] is not True:
         raise GitHubProvenanceError("release review policy must require verified merge commits")
     return value
+
+
+def load_policy(path: Path) -> dict[str, Any]:
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise GitHubProvenanceError(f"unable to load release review policy: {exc}") from exc
+    return validate_policy(value)
+
+
+def _git(repo_root: Path, *args: str) -> str:
+    process = subprocess.run(
+        ["git", "-C", str(repo_root), *args],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if process.returncode != 0:
+        raise GitHubProvenanceError(f"git {' '.join(args)} failed: {process.stderr.strip()}")
+    return process.stdout.strip()
+
+
+def _git_blob_if_present(repo_root: Path, revision: str, path: str) -> str | None:
+    process = subprocess.run(
+        ["git", "-C", str(repo_root), "rev-parse", f"{revision}:{path}"],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if process.returncode != 0:
+        return None
+    value = process.stdout.strip()
+    if not SHA40_RE.fullmatch(value):
+        raise GitHubProvenanceError(f"invalid blob identity for {revision}:{path}")
+    return value
+
+
+def _git_json(repo_root: Path, revision: str, path: str) -> dict[str, Any]:
+    raw = _git(repo_root, "show", f"{revision}:{path}")
+    try:
+        value = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise GitHubProvenanceError(f"invalid JSON in {revision}:{path}: {exc}") from exc
+    if not isinstance(value, dict):
+        raise GitHubProvenanceError(f"{revision}:{path} must be a JSON object")
+    return value
+
+
+def load_target_bound_policy(
+    repo_root: Path,
+    target_ref: str,
+    *,
+    closure_ref: str = "HEAD",
+) -> dict[str, Any]:
+    target_ref = _sha40(target_ref, "target_ref")
+    path = POLICY_PATH.as_posix()
+    target_blob = _git_blob_if_present(repo_root, target_ref, path)
+    closure_blob = _git_blob_if_present(repo_root, closure_ref, path)
+    if target_blob is None:
+        raise GitHubProvenanceError("frozen target does not contain release review policy")
+    if closure_blob is None or closure_blob != target_blob:
+        raise GitHubProvenanceError("release review policy changed after target freeze")
+    return validate_policy(_git_json(repo_root, target_ref, path))
 
 
 def validate_provenance_shape(value: Any) -> dict[str, Any]:
