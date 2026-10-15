@@ -209,20 +209,30 @@ def resolve_activation(
     now: datetime | None = None,
 ) -> dict:
     framework = _validate_manifest(manifest)
+
+    # Establish exact project/checkout identity before trusting capability registry status.
     ref_type = framework["ref_type"]
     if ref_type == "branch":
-        return {"status": "BLOCK_NON_COMMIT_PROJECT_PIN", "capability": capability, "version": version}
+        return {"status": "BLOCK_NON_COMMIT_PROJECT_PIN", "capability": capability}
     if ref_type == "commit":
         if not SHA1_RE.fullmatch(framework["ref"]):
-            return {"status": "BLOCK_NON_COMMIT_PROJECT_PIN", "capability": capability, "version": version}
+            return {"status": "BLOCK_NON_COMMIT_PROJECT_PIN", "capability": capability}
         project_ref = framework["ref"].lower()
     else:
         if resolved_project_ref is None or not SHA1_RE.fullmatch(resolved_project_ref.lower()):
-            return {"status": "BLOCK_FRAMEWORK_CHECKOUT_UNRESOLVED", "capability": capability, "project_ref": project_ref}
+            return {
+                "status": "BLOCK_FRAMEWORK_CHECKOUT_UNRESOLVED",
+                "capability": capability,
+                "project_ref_type": ref_type,
+            }
         project_ref = resolved_project_ref.lower()
 
     if loaded_framework_ref is None or not SHA1_RE.fullmatch(loaded_framework_ref.lower()):
-        return {"status": "BLOCK_FRAMEWORK_CHECKOUT_UNRESOLVED", "capability": capability, "version": version}
+        return {
+            "status": "BLOCK_FRAMEWORK_CHECKOUT_UNRESOLVED",
+            "capability": capability,
+            "project_ref": project_ref,
+        }
     loaded_ref = loaded_framework_ref.lower()
     if loaded_ref != project_ref:
         return {
@@ -232,6 +242,18 @@ def resolve_activation(
             "loaded_framework_ref": loaded_ref,
         }
 
+    capabilities = _validate_registry(registry)
+    if capability not in capabilities:
+        return {"status": "BLOCK_UNKNOWN_CAPABILITY", "capability": capability}
+
+    record = capabilities[capability]
+    if not isinstance(record, dict):
+        return {"status": "BLOCK_INVALID_CAPABILITY_REGISTRY", "capability": capability}
+    status = record.get("status")
+    version = record.get("version")
+    if status not in {"stable", "candidate"} or not isinstance(version, str) or not version:
+        return {"status": "BLOCK_INVALID_CAPABILITY_REGISTRY", "capability": capability}
+
     if status == "stable":
         return {
             "status": "ACTIVE_STABLE",
@@ -240,6 +262,7 @@ def resolve_activation(
             "framework_ref": project_ref,
         }
 
+    # Candidate trials are stricter than Stable consumption: exact commit pins only.
     if ref_type != "commit":
         return {"status": "BLOCK_NON_COMMIT_PROJECT_PIN", "capability": capability, "version": version}
 
