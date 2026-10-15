@@ -48,6 +48,7 @@ class BootstrapProjectTests(unittest.TestCase):
             expected = [
                 "AGENTS.md",
                 ".erei/framework.json",
+                ".erei/CANDIDATE_CAPABILITIES.json",
                 ".erei/PROJECT_PROFILE.md",
                 ".erei/ARCHITECTURE.md",
                 ".erei/SECURITY_MODEL.md",
@@ -71,6 +72,11 @@ class BootstrapProjectTests(unittest.TestCase):
             self.assertEqual(manifest["framework"]["ref"], PIN)
             self.assertEqual(manifest["overlays"], ["google-apps-script"])
             self.assertEqual(manifest["runtime_adapters"], ["chatgpt-codex"])
+            candidate_adoptions = json.loads(
+                (target / ".erei/CANDIDATE_CAPABILITIES.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(candidate_adoptions["framework_ref"], PIN)
+            self.assertEqual(candidate_adoptions["adoptions"], [])
             feedback_md = (target / ".erei/feedback/FRAMEWORK_FEEDBACK.md").read_text(encoding="utf-8")
             self.assertIn("No feedback events recorded yet", feedback_md)
             self.assertFalse((target / ".erei/feedback/FRAMEWORK_FEEDBACK.jsonl").exists())
@@ -79,6 +85,23 @@ class BootstrapProjectTests(unittest.TestCase):
             self.assertFalse((target / ".erei/learning/TASK_EVENTS.jsonl").exists())
             development_readme = (target / ".erei/learning/development-outputs/README.md").read_text(encoding="utf-8")
             self.assertIn("Learning Development Outputs", development_readme)
+
+    def test_branch_experiment_bootstrap_keeps_candidate_adoptions_empty(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp)
+            result = run_bootstrap(
+                target,
+                "--framework-ref-type",
+                "branch",
+                "--framework-ref",
+                "candidate-branch",
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            candidate = json.loads(
+                (target / ".erei/CANDIDATE_CAPABILITIES.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(candidate["framework_ref"], "candidate-branch")
+            self.assertEqual(candidate["adoptions"], [])
 
     def test_dry_run_writes_nothing(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -122,6 +145,33 @@ class BootstrapProjectTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertNotEqual(agents.read_text(encoding="utf-8"), "old")
             self.assertIn("Demo Project", agents.read_text(encoding="utf-8"))
+
+    def test_force_preserves_existing_candidate_adoption_authority(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp)
+            first = run_bootstrap(target)
+            self.assertEqual(first.returncode, 0, first.stderr)
+            path = target / ".erei/CANDIDATE_CAPABILITIES.json"
+            protected = {
+                "schema_version": 1,
+                "framework_ref": PIN,
+                "adoptions": [{
+                    "adoption_id": "CAD-20261015T200000Z-A1B2C3D4",
+                    "capability": "candidate_capability",
+                    "version": "v1",
+                    "approved_at": "2026-10-15T20:00:00Z",
+                    "expires_at": "2026-10-20T20:00:00Z",
+                    "approved_by_role": "chief-engineer",
+                    "risk": "L2",
+                    "purpose": "Preserve explicit project Candidate adoption authority.",
+                    "evidence": ["approval:test"],
+                }],
+            }
+            path.write_text(json.dumps(protected), encoding="utf-8")
+            forced = run_bootstrap(target, "--force")
+            self.assertEqual(forced.returncode, 0, forced.stderr)
+            self.assertEqual(json.loads(path.read_text(encoding="utf-8")), protected)
+            self.assertIn("PRESERVE PROJECT AUTHORITY", forced.stdout)
 
     def test_missing_target_fails_without_side_effects(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

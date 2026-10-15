@@ -122,6 +122,12 @@
           "EFF-20261015T181724Z-E320C171"
         ],
         "notes": "Multi-project corroborated Candidate. EREI-App-Google and EREI 3.2 independently exposed stale predecessor/successor assurance applicability; Stable promotion still requires bounded real-trial effectiveness evidence showing reduced harness friction without weaker escape/invariant protection."
+      },
+      "capability_activation_governance": {
+        "status": "candidate",
+        "version": "v1-explicit-project-adoption",
+        "stable_ref": "69079018606750312344cb3c648952b9ab72d35b",
+        "notes": "Separates capability presence from project activation. Candidate capabilities are dormant by default and require a bounded project-local adoption record bound to exact Framework commit and capability version."
       }
     }
   }

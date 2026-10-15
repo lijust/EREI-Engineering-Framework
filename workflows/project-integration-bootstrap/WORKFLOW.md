@@ -92,6 +92,7 @@ Canonical V1 target:
 AGENTS.md
 .erei/
 ├── framework.json
+├── CANDIDATE_CAPABILITIES.json
 ├── PROJECT_PROFILE.md
 ├── ARCHITECTURE.md
 ├── SECURITY_MODEL.md
@@ -135,7 +136,8 @@ Confirm:
 - auth/tenant/data boundaries are represented where relevant,
 - performance budgets are project-specific and measurable where possible,
 - project feedback is stored locally and cannot silently mutate Framework Core or the Framework pin,
-- task-learning evidence is stored locally, excludes private reasoning/secrets, and cannot silently mutate Framework Core or the Framework pin.
+- task-learning evidence is stored locally, excludes private reasoning/secrets, and cannot silently mutate Framework Core or the Framework pin;
+- Candidate capability adoption is project-local, bounded, and dormant by default; an empty or absent adoption record activates nothing.
 
 ### 10. Verify integration
 Minimum deterministic checks:
@@ -147,7 +149,8 @@ Minimum deterministic checks:
 - `AGENTS.md` points to project and Framework truth rather than duplicating it,
 - enabled overlays match evidenced stack,
 - `.erei/feedback/README.md` and `.erei/feedback/FRAMEWORK_FEEDBACK.md` exist for feedback-aware integrations,
-- `.erei/learning/README.md` and `.erei/learning/LEARNING_SUMMARY.md` exist for task-learning-aware integrations.
+- `.erei/learning/README.md` and `.erei/learning/LEARNING_SUMMARY.md` exist for task-learning-aware integrations;
+- `.erei/CANDIDATE_CAPABILITIES.json` exists for new integrations, is bound to the Framework ref, and defaults to an empty `adoptions` array.
 
 ### 11. Brownfield convergence
 For existing codebases, compare generated context against inspected reality.

@@ -20,6 +20,7 @@ TEMPLATE_ROOT = Path(__file__).resolve().parents[1] / "templates" / "project-boo
 TEMPLATE_MAP = {
     "AGENTS.md.template": "AGENTS.md",
     ".erei/framework.json.template": ".erei/framework.json",
+    ".erei/CANDIDATE_CAPABILITIES.json.template": ".erei/CANDIDATE_CAPABILITIES.json",
     ".erei/PROJECT_PROFILE.md.template": ".erei/PROJECT_PROFILE.md",
     ".erei/ARCHITECTURE.md.template": ".erei/ARCHITECTURE.md",
     ".erei/SECURITY_MODEL.md.template": ".erei/SECURITY_MODEL.md",
@@ -124,12 +125,15 @@ def plan(target: Path, values: dict[str, str]) -> list[tuple[Path, str, bool]]:
         raise BootstrapError(f"Target does not exist or is not a directory: {target}")
     planned: list[tuple[Path, str, bool]] = []
     for template_rel, destination_rel in TEMPLATE_MAP.items():
+        destination = target / destination_rel
+        if destination_rel == ".erei/CANDIDATE_CAPABILITIES.json" and destination.exists():
+            print(f"PRESERVE PROJECT AUTHORITY: {destination}")
+            continue
         template_path = TEMPLATE_ROOT / template_rel
         if not template_path.exists():
             raise BootstrapError(f"Missing Framework template: {template_path}")
-        destination = target / destination_rel
         content = render(template_path.read_text(encoding="utf-8"), values)
-        if destination_rel == ".erei/framework.json":
+        if destination_rel in {".erei/framework.json", ".erei/CANDIDATE_CAPABILITIES.json"}:
             json.loads(content)
         planned.append((destination, content, destination.exists()))
     return planned

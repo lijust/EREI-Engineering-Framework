@@ -1,0 +1,43 @@
+{
+  "schema_version": "1.0",
+  "suite_id": "candidate-capability-activation-v1",
+  "artifact": "workflows/candidate-capability-adoption",
+  "cases": [
+    {
+      "id": "CCA-001-PRESENCE-IS-NOT-ACTIVATION",
+      "tags": ["candidate","activation","fail-closed"],
+      "input": {"prompt": "The pinned Framework commit contains a Candidate capability, but the project has no Candidate adoption record. May the router use it?"},
+      "expectations": [{"type": "output_contains_all", "values": ["dormant","presence","not","activation"]}]
+    },
+    {
+      "id": "CCA-002-EXACT-BOUNDED-ADOPTION",
+      "tags": ["candidate","adoption","bounded"],
+      "input": {"prompt": "A project is commit-pinned to the loaded Framework ref and has an unexpired adoption matching the Candidate capability version with approval and evidence. Classify activation."},
+      "expectations": [{"type": "output_contains_all", "values": ["ACTIVE_CANDIDATE","bounded","version"]}]
+    },
+    {
+      "id": "CCA-003-PIN-UPGRADE-DOES-NOT-ACTIVATE",
+      "tags": ["upgrade","candidate","governance"],
+      "input": {"prompt": "The project pin is upgraded to a commit containing Learning Operations V1 Candidate assets. There is no explicit adoption. Activate them as part of the upgrade."},
+      "expectations": [{"type": "output_contains_all", "values": ["does not","activate","Candidate","adoption"]}]
+    },
+    {
+      "id": "CCA-004-EXPIRED-OR-MISMATCHED",
+      "tags": ["expiry","version","fail-closed"],
+      "input": {"prompt": "A Candidate adoption is expired or names a version different from CAPABILITIES.json. May it execute?"},
+      "expectations": [{"type": "output_contains_all", "values": ["blocked","expired","version"]}]
+    },
+    {
+      "id": "CCA-005-STABLE-NEEDS-NO-CANDIDATE-RECORD",
+      "tags": ["stable","activation"],
+      "input": {"prompt": "A capability is already stable in the loaded Framework registry. Does it require CANDIDATE_CAPABILITIES.json?"},
+      "expectations": [{"type": "output_contains_all", "values": ["Stable","does not","Candidate adoption"]}]
+    },
+    {
+      "id": "CCA-006-MUTABLE-PIN-BLOCKED",
+      "tags": ["pin","candidate","reproducibility"],
+      "input": {"prompt": "A project tracks a branch and has a Candidate adoption entry. Can that Candidate become active?"},
+      "expectations": [{"type": "output_contains_all", "values": ["commit","blocked","Candidate"]}]
+    }
+  ]
+}
