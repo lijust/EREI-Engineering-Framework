@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://erei-framework.local/schemas/release-review-policy.schema.json",
+  "title": "EREI Release Review Policy V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "repository",
+    "release_branch_prefix",
+    "codex_reviewer_login",
+    "architecture_approver_login",
+    "require_verified_merge_commit"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "repository": {"const": "lijust/EREI-Engineering-Framework"},
+    "release_branch_prefix": {"const": "release/"},
+    "codex_reviewer_login": {"type": "string", "minLength": 1},
+    "architecture_approver_login": {"type": "string", "minLength": 1},
+    "require_verified_merge_commit": {"const": true}
+  }
+}
