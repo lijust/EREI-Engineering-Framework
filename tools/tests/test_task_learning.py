@@ -211,6 +211,35 @@ class TaskLearningTests(unittest.TestCase):
         finally:
             temp.cleanup()
 
+    def test_boolean_schema_version_projection_is_rejected(self):
+        temp, target = self.make_project()
+        try:
+            event = task_learning.build_event(self.event_args())
+            task_learning.capture(target, event)
+            learning = target / ".erei" / "learning"
+            projection = json.loads((learning / "TASK_EVENTS.jsonl").read_text(encoding="utf-8").strip())
+            projection["schema_version"] = True
+            (learning / "TASK_EVENTS.jsonl").write_text(json.dumps(projection) + "\n", encoding="utf-8")
+            with self.assertRaisesRegex(task_learning.LearningError, "schema_version must be an integer"):
+                task_learning.status(target)
+        finally:
+            temp.cleanup()
+
+    def test_boolean_schema_version_review_projection_is_rejected(self):
+        temp, target = self.make_project()
+        try:
+            event = task_learning.build_event(self.event_args())
+            task_learning.capture(target, event)
+            review, _ = task_learning.close_review(target, self.review_args())
+            learning = target / ".erei" / "learning"
+            projection = json.loads((learning / "LEARNING_REVIEWS.jsonl").read_text(encoding="utf-8").strip())
+            projection["schema_version"] = True
+            (learning / "LEARNING_REVIEWS.jsonl").write_text(json.dumps(projection) + "\n", encoding="utf-8")
+            with self.assertRaisesRegex(task_learning.LearningError, "schema_version must be an integer"):
+                task_learning.status(target)
+        finally:
+            temp.cleanup()
+
     def test_empty_epoch_cannot_be_closed(self):
         temp, target = self.make_project()
         try:

@@ -13,6 +13,11 @@ import json
 from collections import Counter
 from pathlib import Path
 
+try:
+    from tools import task_learning as authoritative_task_learning
+except ImportError:
+    import task_learning as authoritative_task_learning
+
 
 class LearningPatternError(RuntimeError):
     pass
@@ -355,6 +360,10 @@ def _render_markdown(report: dict) -> str:
 
 def analyze_target(target: Path) -> dict:
     learning = target / ".erei" / "learning"
+    try:
+        authoritative_task_learning.status(target)
+    except authoritative_task_learning.LearningError as exc:
+        raise LearningPatternError(f"authoritative Task Learning rebuild failed: {exc}") from exc
     events = _read_jsonl(learning / "TASK_EVENTS.jsonl")
     reviews = _read_jsonl(learning / "LEARNING_REVIEWS.jsonl")
     state = _read_json(learning / "LEARNING_STATE.json")

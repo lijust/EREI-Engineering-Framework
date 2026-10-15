@@ -258,6 +258,8 @@ def _merge_legacy_projection_with_immutable(
     legacy: list[dict] = []
     for item in projection:
         version = item.get("schema_version")
+        if type(version) is not int:
+            raise LearningError(f"{label} schema_version must be an integer")
         if version == 1:
             legacy.append(item)
             continue

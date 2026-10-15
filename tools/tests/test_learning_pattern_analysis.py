@@ -150,16 +150,91 @@ report_v2_review = mod.analyze(events, v2_review, state)
 assert report_v2_review["current_epoch"]["unreviewed_events"] == 2
 
 with tempfile.TemporaryDirectory() as tmp:
+    import argparse
+
     target = pathlib.Path(tmp)
+    (target / ".erei").mkdir(parents=True)
+    (target / ".erei" / "framework.json").write_text("{}", encoding="utf-8")
+
+    args = argparse.Namespace(
+        task_id=None,
+        occurrence_id=None,
+        task_group="pattern-analysis-authority",
+        project_repository="example/repo",
+        project_name="Demo",
+        framework_ref="a" * 40,
+        workflow="feature-development",
+        risk="L2",
+        terminal_state="COMPLETE_VERIFIED",
+        outcome_class="verified_success",
+        material=True,
+        rework_cycles=1,
+        verification_failures=1,
+        verification_escape=True,
+        framework_feedback_created=False,
+        manual_workaround=False,
+        context_gap=False,
+        unexpected_scope_growth=False,
+        security_or_data_critical_event=False,
+        duration_class="medium",
+        failure_stage="runtime",
+        failure_subject="authoritative immutable event",
+        feedback_id=[],
+        feedback_fingerprint=[],
+        tag=["pattern-analysis-authority"],
+    )
+    authoritative = mod.authoritative_task_learning.build_event(args)
+    mod.authoritative_task_learning.capture(target, authoritative)
+
     learning = target / ".erei" / "learning"
-    learning.mkdir(parents=True)
-    (learning / "TASK_EVENTS.jsonl").write_text(
-        "".join(json.dumps(item) + "\n" for item in events),
+    (learning / "TASK_EVENTS.jsonl").write_text("", encoding="utf-8")
+    (learning / "LEARNING_STATE.json").write_text(
+        json.dumps({
+            "schema_version": 2,
+            "epoch_id": "EPOCH-001",
+            "updated_at": "2026-10-15T00:00:00Z",
+            "last_review_id": None,
+            "last_review_at": None,
+            "legacy_event_cutoff": 0,
+            "reviewed_occurrence_count": 0,
+            "total_events": 0,
+            "metrics_since_last_review": {
+                "tasks": 0,
+                "material_tasks": 0,
+                "verified_successes": 0,
+                "blocked_tasks": 0,
+                "failed_tasks": 0,
+                "rework_assessed_material_tasks": 0,
+                "verification_assessed_material_tasks": 0,
+                "unassessed_signal_values": 0,
+                "rework_tasks": 0,
+                "total_rework_cycles": 0,
+                "verification_failure_tasks": 0,
+                "verification_failures": 0,
+                "verification_escapes": 0,
+                "framework_feedback_tasks": 0,
+                "manual_workarounds": 0,
+                "context_gaps": 0,
+                "unexpected_scope_growth_tasks": 0,
+                "security_or_data_critical_events": 0,
+                "max_feedback_fingerprint_occurrences": 0,
+                "rework_rate": None,
+                "verification_failure_rate": None,
+                "failure_stages": {},
+                "failure_subjects": {},
+                "cohorts": {"by_risk": {}, "by_workflow": {}},
+            },
+            "trigger": {"level": "LEARNING_HEALTHY", "reasons": []},
+        }),
         encoding="utf-8",
     )
-    (learning / "LEARNING_REVIEWS.jsonl").write_text("", encoding="utf-8")
-    (learning / "LEARNING_STATE.json").write_text(json.dumps(state), encoding="utf-8")
     loaded = mod.analyze_target(target)
-    assert loaded["current_epoch"]["verification_escapes"] == 2
+    assert loaded["current_epoch"]["verification_escapes"] == 1
+    rebuilt = [
+        json.loads(line)
+        for line in (learning / "TASK_EVENTS.jsonl").read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    assert [item["occurrence_id"] for item in rebuilt] == [authoritative["occurrence_id"]]
 
 print("PASS: learning pattern analysis detects review debt, mixed evidence and escape clusters.")
