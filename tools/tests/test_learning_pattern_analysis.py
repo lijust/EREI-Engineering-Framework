@@ -131,6 +131,10 @@ assert coverage_report["current_epoch"]["verification_escape_task_rate"] == 0.0
 assert coverage_report["current_epoch"]["verification_escapes"] == 0
 assert coverage_report["current_epoch"]["rework_cycles_per_material_task"] is None
 assert coverage_report["current_epoch"]["verification_failures_per_material_task"] is None
+coverage_markdown = mod._render_markdown(coverage_report)
+assert "Rework-free task rate: **1.0** (assessment coverage: **0.5**)" in coverage_markdown
+assert "Verification-clean task rate: **1.0** (assessment coverage: **0.5**)" in coverage_markdown
+assert "Verification escape rate: **0.0** (assessment coverage: **0.5**)" in coverage_markdown
 
 reviews = [{    "schema_version": 1,
     "through_event_count": 1,

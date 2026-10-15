@@ -27,11 +27,17 @@ L0 conversational explanation-only requests do not require the router unless the
 
 Before starting a **new material engineering execution** in an integrated project, inspect the current project-local Learning State when available.
 
-If the existing state is `IMMEDIATE_REVIEW`:
+When a Learning State exists, invoke `tools/learning_review_debt_gate.py` (or equivalent contract-validating implementation) **unconditionally before trusting the stored trigger level**. The Learning State is a derived projection and may be stale or corrupted; the gate cross-checks safety-critical metrics and derives the effective immediate-review requirement from evidence.
 
-1. check whether the triggering epoch has already been closed;
-2. otherwise validate a bounded defer using `tools/learning_review_debt_gate.py` or equivalent;
-3. if neither a closed review nor a valid bounded defer exists, route to `learning-review` before new material Framework-dependent execution and return `BLOCKED_LEARNING_REVIEW` for the new request.
+Route by gate result:
+
+1. `PASS_NO_IMMEDIATE_REVIEW` — continue normal routing.
+2. `PASS_BOUNDED_REVIEW_DEFER` — continue only within the exact defer expiry/task-count boundary and preserve the defer evidence in the router record.
+3. `BLOCK_IMMEDIATE_REVIEW_DEBT` — route to `learning-review` before new material Framework-dependent execution and return `BLOCKED_LEARNING_REVIEW`.
+4. `BLOCK_CRITICAL_SECURITY_OR_DATA_REVIEW` — stop new material execution and route through Learning Review plus the normal security/data blocking governance; no bounded defer is valid.
+5. `BLOCK_INVALID_REVIEW_DEFER` or any state/defer contract-validation error — fail closed as `BLOCKED_LEARNING_REVIEW`; repair/rebuild the learning state before continuing.
+
+Do not pre-filter the gate call by `trigger.level`. A stored `LEARNING_HEALTHY` value does not override verification-escape or critical security/data evidence present in the metrics.
 
 This preflight does **not** retroactively change the terminal state of the task that created the trigger. It prevents unresolved immediate-review debt from growing without bound.
 
