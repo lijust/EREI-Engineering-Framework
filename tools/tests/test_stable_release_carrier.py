@@ -85,7 +85,7 @@ class StableReleaseCarrierTests(unittest.TestCase):
     def _approval(self, approval_type, *, decision="approved", rationale_suffix=""):
         architecture = approval_type == "architecture"
         return {
-            "schema_version": 1,
+            "schema_version": 2,
             "approval_id": "EAPP-20260907T120100Z-A1B2C3D4" if architecture else "EAPP-20260907T120200Z-E5F6A7B8",
             "approval_type": approval_type,
             "target_framework_ref": self.target,
@@ -98,6 +98,11 @@ class StableReleaseCarrierTests(unittest.TestCase):
             },
             "evidence": ["github-actions:123", "release-target:vnext-rc9"],
             "rationale": f"Reviewed immutable target for {approval_type} Stable promotion{rationale_suffix}.",
+            "provenance": {
+                "kind": "github_owner_approval_comment" if architecture else "github_codex_clean_review",
+                "pr_number": 61 if architecture else 62,
+                "actor_login": "lijust" if architecture else "chatgpt-codex-connector",
+            },
         }
 
     def _build_v2_carrier(
