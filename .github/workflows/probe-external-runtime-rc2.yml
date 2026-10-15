@@ -1,0 +1,34 @@
+name: Probe external runtime for RC2
+
+on:
+  push:
+    branches:
+      - ops/probe-external-runtime-rc2-20261015
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: self-hosted
+    timeout-minutes: 5
+    steps:
+      - name: Probe independent model and agent CLIs
+        shell: powershell
+        run: |
+          $names = @('codex','claude','gemini','aider','opencode','gh')
+          foreach ($name in $names) {
+            $cmd = Get-Command $name -ErrorAction SilentlyContinue
+            if ($null -eq $cmd) {
+              Write-Host "$name=missing"
+            } else {
+              Write-Host "$name=present path=$($cmd.Source)"
+              try {
+                & $name --version 2>&1 | Select-Object -First 3
+              } catch {
+                Write-Host "$name-version=unavailable"
+              }
+            }
+          }
+          Write-Host "python="
+          py "-3.12" --version
