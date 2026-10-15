@@ -1,0 +1,25 @@
+name: Probe Copilot runtime
+
+on:
+  push:
+    branches:
+      - ops/probe-copilot-runtime-20261016
+
+permissions:
+  contents: read
+  copilot-requests: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Install Copilot CLI
+        run: npm install -g @github/copilot
+      - name: Probe independent model runtime
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          echo "COPILOT_VERSION=$(copilot --version | tr '\n' ' ')"
+          copilot -p "Return exactly this token and nothing else: COPILOT_RUNTIME_OK" -s
