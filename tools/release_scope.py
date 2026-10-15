@@ -115,19 +115,29 @@ def validate_scope(repo_root: Path, value: dict) -> dict:
         raise ReleaseScopeError("required_eval_suites must be non-empty")
     seen_paths: set[str] = set()
     seen_ids: set[str] = set()
+    covered_capabilities: set[str] = set()
     expected_cases: list[tuple[str, str]] = []
     for index, item in enumerate(suites):
-        if not isinstance(item, dict) or set(item) != {"path", "suite_id"}:
-            raise ReleaseScopeError(f"required_eval_suites[{index}] must contain exactly path and suite_id")
+        if not isinstance(item, dict) or set(item) != {"path", "suite_id", "covers"}:
+            raise ReleaseScopeError(
+                f"required_eval_suites[{index}] must contain exactly path, suite_id and covers"
+            )
         path = item["path"]
         suite_id = item["suite_id"]
+        covers = _unique_text_list(item["covers"], f"required_eval_suites[{index}].covers", minimum=1)
         if not isinstance(path, str) or not EVAL_PATH_RE.fullmatch(path):
             raise ReleaseScopeError(f"required_eval_suites[{index}].path is invalid")
         if not isinstance(suite_id, str) or not suite_id:
             raise ReleaseScopeError(f"required_eval_suites[{index}].suite_id is invalid")
         if path in seen_paths or suite_id in seen_ids:
             raise ReleaseScopeError("required eval suite paths and suite_ids must be unique")
+        unknown_covered = sorted(set(covers) - included_names)
+        if unknown_covered:
+            raise ReleaseScopeError(
+                "required eval suite covers capabilities outside release scope: " + ", ".join(unknown_covered)
+            )
         seen_paths.add(path); seen_ids.add(suite_id)
+        covered_capabilities.update(covers)
         suite_path = repo_root / path
         suite = _load(suite_path, "eval suite")
         if suite.get("suite_id") != suite_id:
@@ -147,6 +157,12 @@ def validate_scope(repo_root: Path, value: dict) -> dict:
             case_ids.add(case_id)
             expected_cases.append((suite_id, case_id))
 
+    missing_coverage = sorted(included_names - covered_capabilities)
+    if missing_coverage:
+        raise ReleaseScopeError(
+            "release scope capabilities lack required eval-suite coverage: " + ", ".join(missing_coverage)
+        )
+
     return {
         "status": "VALID",
         "scope_id": value["scope_id"],
@@ -157,6 +173,7 @@ def validate_scope(repo_root: Path, value: dict) -> dict:
         "excluded_candidate_capabilities": excluded,
         "required_eval_suite_count": len(suites),
         "required_eval_case_count": len(expected_cases),
+        "covered_capabilities": sorted(covered_capabilities),
         "required_eval_cases": sorted([f"{suite}/{case}" for suite, case in expected_cases]),
     }
 
