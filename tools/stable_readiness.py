@@ -13,10 +13,11 @@ from pathlib import Path
 from typing import Any
 
 try:
-    from . import assurance_enforcement, exact_target_evidence, prospective_cycle_status, release_approval, release_scope, release_target
+    from . import assurance_enforcement, exact_target_evidence, github_release_provenance, prospective_cycle_status, release_approval, release_scope, release_target
 except ImportError:
     import assurance_enforcement
     import exact_target_evidence
+    import github_release_provenance
     import prospective_cycle_status
     import release_approval
     import release_scope
@@ -267,6 +268,60 @@ def _approval_history_binding(repo_root: Path, target_ref: str, approval_path: s
     return {"bound_ref": bound_ref, "first_write_ref": first_ref, "immutable": True}
 
 
+def enforcement_gate(repo_root: Path, target_ref: str) -> dict[str, Any]:
+    target_tree = _tree_for(repo_root, target_ref)
+    path = repo_root / "security" / "ASSURANCE_ENFORCEMENT.json"
+    try:
+        static = assurance_enforcement.load_and_validate(
+            path,
+            expected_target_ref=target_ref,
+            expected_target_tree=target_tree,
+        )
+    except assurance_enforcement.EnforcementError as exc:
+        return {"status": "blocked", "reason": f"invalid assurance enforcement: {exc}"}
+
+    if static["server_enforcement_satisfied"]:
+        return {"status": "pass", **static}
+    if not static["fallback_equivalence_claimed"]:
+        return {
+            "status": "blocked",
+            "reason": "no server enforcement and no target-bound fallback equivalence review",
+            **static,
+        }
+
+    try:
+        policy = github_release_provenance.load_target_bound_policy(
+            repo_root,
+            target_ref,
+            closure_ref="HEAD",
+        )
+        review = static["equivalence_review"]
+        provenance = github_release_provenance.verify_reviewed_file(
+            repo_root,
+            "security/ASSURANCE_ENFORCEMENT.json",
+            review["provenance"],
+            policy=policy,
+            target_ref=target_ref,
+            require_merged=True,
+        )
+        verified = assurance_enforcement.load_and_validate(
+            path,
+            expected_target_ref=target_ref,
+            expected_target_tree=target_tree,
+            authenticated_fallback=True,
+        )
+    except (
+        github_release_provenance.GitHubProvenanceError,
+        assurance_enforcement.EnforcementError,
+    ) as exc:
+        return {
+            "status": "blocked",
+            "reason": f"fallback equivalence provenance is not authenticated: {exc}",
+            **static,
+        }
+    return {"status": "pass", "authenticated_provenance": provenance, **verified}
+
+
 def approval_gate(repo_root: Path, target_ref: str, preapproval_ready: bool) -> dict[str, Any]:
     matches: list[tuple[Path, dict[str, Any]]] = []
     for path in sorted((repo_root / "releases").glob("*.json")):
@@ -301,6 +356,19 @@ def approval_gate(repo_root: Path, target_ref: str, preapproval_ready: bool) -> 
             "manifest_path": manifest_path.relative_to(repo_root).as_posix(),
         }
     target_tree = _tree_for(repo_root, target_ref)
+    try:
+        policy = github_release_provenance.load_target_bound_policy(
+            repo_root,
+            target_ref,
+            closure_ref="HEAD",
+        )
+    except github_release_provenance.GitHubProvenanceError as exc:
+        return {
+            "status": "blocked",
+            "reason": f"release review policy invalid: {exc}",
+            "manifest_path": manifest_path.relative_to(repo_root).as_posix(),
+        }
+
     details: dict[str, Any] = {}
     pairs = (
         ("architecture", "approval_ref"),
@@ -315,9 +383,23 @@ def approval_gate(repo_root: Path, target_ref: str, preapproval_ready: bool) -> 
                 expected_target=target_ref,
                 expected_tree=target_tree,
                 require_approved=True,
+                require_authenticated_provenance=True,
+            )
+            provenance = github_release_provenance.verify_reviewed_file(
+                repo_root,
+                rel_path,
+                record["provenance"],
+                policy=policy,
+                target_ref=target_ref,
+                approval_id=record["approval_id"] if approval_type == "architecture" else None,
+                require_merged=True,
             )
             history = _approval_history_binding(repo_root, target_ref, rel_path, manifest.get(ref_field))
-        except (release_approval.ReleaseApprovalError, StableReadinessError) as exc:
+        except (
+            release_approval.ReleaseApprovalError,
+            github_release_provenance.GitHubProvenanceError,
+            StableReadinessError,
+        ) as exc:
             return {
                 "status": "blocked",
                 "reason": f"{approval_type} approval invalid: {exc}",
@@ -327,6 +409,7 @@ def approval_gate(repo_root: Path, target_ref: str, preapproval_ready: bool) -> 
             "approval_id": record["approval_id"],
             "decision": record["decision"],
             "recorded_at": record["recorded_at"],
+            "authenticated_provenance": provenance,
             **history,
         }
     return {
@@ -364,14 +447,11 @@ def report(repo_root: Path, *, target_ref: str | None = None) -> dict[str, Any]:
         cycle = prospective_cycle_status.load_and_validate(repo_root / "learning" / "PROSPECTIVE_CYCLE_STATUS.json")
     except prospective_cycle_status.CycleStatusError as exc:
         raise StableReadinessError(f"invalid prospective cycle status: {exc}") from exc
-    try:
-        enforcement = assurance_enforcement.load_and_validate(repo_root / "security" / "ASSURANCE_ENFORCEMENT.json")
-    except assurance_enforcement.EnforcementError as exc:
-        raise StableReadinessError(f"invalid assurance enforcement: {exc}") from exc
+    enforcement = enforcement_gate(repo_root, selected_target)
     eval_result = eval_gate(repo_root, selected_target)
     cycle_pass = cycle["status"] == "complete"
     eval_pass = eval_result["status"] == "pass"
-    enforcement_pass = enforcement["stable_enforcement_satisfied"]
+    enforcement_pass = enforcement["status"] == "pass"
     preapproval = cycle_pass and eval_pass and enforcement_pass
     approvals = approval_gate(repo_root, selected_target, preapproval)
     derived = derive_readiness(
@@ -386,7 +466,7 @@ def report(repo_root: Path, *, target_ref: str | None = None) -> dict[str, Any]:
         "gates": {
             "prospective_cycle": {"status": "pass" if cycle_pass else "blocked", "cycle_id": cycle["cycle_id"], "completed_steps": cycle["completed_steps"]},
             "exact_target_runtime": eval_result,
-            "release_enforcement": {"status": "pass" if enforcement_pass else "blocked", **enforcement},
+            "release_enforcement": enforcement,
             "final_architecture_security_approvals": approvals,
         },
         **derived,
