@@ -54,13 +54,15 @@ The following previously listed actions are now closed by durable evidence:
 
 These closures reduce uncertainty around the learning architecture, but they do not authorize Stable promotion.
 
-### 1. Authoritative project adoption
+### 1. Post-promotion project adoption
 
 EREI-App-Google still pins Stable `task-learning-review-v1 @ 690790...`.
 
-V2 semantics have been exercised in project-local/Candidate-compatible evidence, but the project has not completed a governed Stable-pin upgrade to a V2 release.
+That is **not a blocker to creating the V2 Stable release**. A project cannot complete a governed Stable-pin upgrade until an immutable V2 Stable carrier exists.
 
-**Status:** OPEN.
+Project adoption is a **post-promotion gate**: after V2 Stable exists, each project moves its pin only through Framework Upgrade Workflow with rollback/regression evidence.
+
+**Status:** NOT A PRE-PROMOTION BLOCKER / POST-PROMOTION GATE.
 
 ### 2. Mixed evidence migration semantics
 
@@ -85,29 +87,39 @@ Candidate capabilities still need final architecture/security/release approval o
 
 **Status:** OPEN.
 
-### 5. Review-debt and effectiveness extensions
+### 5. Release packaging decision
 
-The current October candidate line adds:
+The packaging decision is frozen in `releases/VNEXT_RELEASE_SCOPE.json`.
+
+**Task Learning V2 Core** is the Stable-promotion scope. It contains prospective Task Learning V2 semantics and depends on Candidate activation governance as a release-control boundary.
+
+**Learning Operations V1** remains outside this Stable scope:
 - Learning Pattern Analysis,
 - Learning-to-Development translation,
 - bounded review-debt guard,
-- causation-safe effectiveness comparison.
+- causation-safe effectiveness comparison / Learning Health.
 
-Promotion review should decide whether these are bundled with V2 or remain independent Candidates.
+Those Candidate capabilities remain dormant by default and require explicit project-local bounded adoption under `.erei/CANDIDATE_CAPABILITIES.json`.
 
-**Status:** OPEN DESIGN/PACKAGING DECISION.
+**Status:** CONTRACT CLOSED — SEPARATE RELEASE TRACKS.
+
+**Promotion authority note:** the scope contract is not itself sufficient to promote Stable. Until scoped enforcement is merged into Stable readiness, release assurance, and retained-evidence coverage, the existing all-published-evals gates remain authoritative and promotion remains blocked.
 
 ## Recommendation
 
 `NOT_READY_FOR_STABLE_PROMOTION_YET`.
 
 The remaining problem is no longer lack of real-project learning volume. The remaining work is:
-1. complete CI/assurance on the October learning candidates;
-2. run a bounded EPOCH-024 cohort with the corrected metric interpretation;
-3. decide whether Learning Pattern Analysis / Learning-to-Development / Review Debt / Effectiveness ship in the same V2 release or as separate Candidates;
-4. prepare an immutable V2 release candidate and exact promotion evidence;
-5. verify legacy V1/V2 compatibility and assessment-coverage semantics on the frozen release candidate;
-6. move a project pin only through Framework Upgrade Workflow after Stable promotion.
+1. merge and verify the Candidate capability-activation boundary;
+2. freeze an immutable Task Learning V2 Core release candidate whose target tree contains `releases/VNEXT_RELEASE_SCOPE.json`;
+3. merge scope-enforcement tooling so Stable readiness, release assurance, and retained-evidence coverage all consume the frozen scope;
+4. verify V1/V2 compatibility and assessment-coverage semantics on that frozen target;
+5. retain exact-target evidence for every eval case named by the frozen release scope;
+6. satisfy release enforcement and then bind final architecture/security approvals to the immutable RC;
+7. promote only through the normal Stable release carrier;
+8. move project pins only after Stable promotion through Framework Upgrade Workflow.
+
+Learning Operations V1 proceeds independently through bounded Candidate trials and effectiveness evidence; it is not a blocker to Task Learning V2 Core Stable promotion.
 
 ## Current recommendation
 

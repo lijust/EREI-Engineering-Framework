@@ -1,6 +1,8 @@
 # Learning-to-Development Workflow V1
 
 **Status:** Candidate V1  
+**Activation:** Dormant unless explicitly active under Candidate Capability Activation Governance; project trials use `.erei/CANDIDATE_CAPABILITIES.json`.  
+**Release boundary:** Outside Task Learning V2 Core Stable scope.  
 **Purpose:** Turn Task Learning evidence into bounded engineering-development outputs without letting metrics self-modify the Framework.
 
 ## Ownership

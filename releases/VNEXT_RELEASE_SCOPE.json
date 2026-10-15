@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "scope_id": "task-learning-v2-core",
+  "status": "approved",
+  "release_family": "task-learning-v2-core",
+  "target_baseline": "task-learning-review-v2",
+  "capabilities": [
+    {
+      "name": "prospective_task_learning",
+      "version": "v2-assurance-hardening"
+    }
+  ],
+  "release_control_dependencies": [
+    {
+      "name": "capability_activation_governance",
+      "version": "v1-explicit-project-adoption"
+    }
+  ],
+  "required_eval_suites": [
+    {
+      "path": "evals/cases/task-learning-review.eval.json",
+      "suite_id": "task-learning-review-v1",
+      "covers": [
+        "prospective_task_learning"
+      ]
+    },
+    {
+      "path": "evals/cases/candidate-capability-activation.eval.json",
+      "suite_id": "candidate-capability-activation-v1",
+      "covers": [
+        "capability_activation_governance"
+      ]
+    }
+  ],
+  "excluded_candidate_capabilities": [
+    "learning_pattern_analysis",
+    "learning_to_development",
+    "learning_review_debt_guard",
+    "framework_effectiveness_measurement"
+  ],
+  "post_promotion_gates": [
+    "project_framework_pin_upgrade",
+    "project_regression_verification",
+    "project_convergence"
+  ],
+  "rationale": "Promote Task Learning V2 Core independently while Learning Operations V1 remains a separately governed Candidate trial surface."
+}

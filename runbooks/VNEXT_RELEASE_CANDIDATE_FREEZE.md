@@ -5,10 +5,11 @@ A VNext release target is frozen on a dedicated `release/**` branch. `main` rema
 ## Selection
 
 1. Merge all release-control tooling before selecting the target.
-2. Select an exact `main` commit that has a successful push-side **Framework Assurance Gate**.
-3. Create `release/vnext-rcN` from that exact commit.
-4. Add `releases/VNEXT_TARGET.json` on the release branch with the exact commit, exact target tree, successful push assurance run ID, current Stable baseline, and `promotion_authorized=false`.
-5. Never rewrite the target file. If the target is wrong or behavior must change, abandon that RC and select a new `vnext-rcN+1`.
+2. Validate `releases/VNEXT_RELEASE_SCOPE.json` with `python tools/release_scope.py --repo-root .`. The scope must be part of the target tree before freeze; changing scope after freeze requires a new RC.
+3. Select an exact `main` commit that has a successful push-side **Framework Assurance Gate**.
+4. Create `release/vnext-rcN` from that exact commit.
+5. Add `releases/VNEXT_TARGET.json` on the release branch with the exact commit, exact target tree, successful push assurance run ID, current Stable baseline, and `promotion_authorized=false`.
+6. Never rewrite the target file. If the target is wrong or behavior must change, abandon that RC and select a new `vnext-rcN+1`.
 
 ## Fixed evidence closure
 
@@ -34,7 +35,15 @@ When `releases/VNEXT_TARGET.json` exists, Stable readiness automatically uses it
 
 ## Exact-target evidence
 
-Check out the frozen `framework_ref` in the execution environment and run `evals/exact_target_run.py` against a genuine independent coding-agent/model runtime. Commit the produced run manifest and V2 execution-evidence file to the release branch without modifying the frozen Framework code.
+The frozen `releases/VNEXT_RELEASE_SCOPE.json` defines which behavioral eval suites belong to this release.
+
+**Transition safety:** defining the scope does not by itself narrow any promotion gate. Until scope-aware enforcement is merged into Stable readiness, release assurance, and retained-evidence coverage, the existing all-published-evals gates remain authoritative. Promotion must stay blocked rather than interpret the scope optimistically.
+
+Once scope-aware enforcement is active, Stable readiness must require exact-target evidence for **every case in those suites**, without requiring unrelated Candidate eval suites merely because they coexist elsewhere in the Framework tree.
+
+Check out the frozen `framework_ref` in the execution environment and run `evals/exact_target_run.py` against a genuine independent coding-agent/model runtime for the required scope. Commit the produced run manifest and V2 execution-evidence file to the release branch without modifying the frozen Framework code.
+
+This scoping may reduce unrelated evidence burden, but it may never weaken the assurance level, exact target binding, independent-runtime requirement, pass requirement, or immutable evidence rules for in-scope cases.
 
 ## Enforcement and approvals
 

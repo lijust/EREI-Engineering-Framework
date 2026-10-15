@@ -84,6 +84,10 @@ jobs:
         shell: powershell
         run: py "-3.12" tools/assurance_enforcement.py security/ASSURANCE_ENFORCEMENT.json
 
+      - name: Validate VNext release scope
+        shell: powershell
+        run: py "-3.12" tools/release_scope.py --repo-root .
+
       - name: Validate frozen release-target closure when selected
         shell: powershell
         run: py "-3.12" tools/release_target.py --repo-root . --if-present --validate-closure
