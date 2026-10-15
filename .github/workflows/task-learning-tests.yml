@@ -13,10 +13,12 @@ on:
       - "tools/learning_review_debt_gate.py"
       - "tools/learning_effectiveness.py"
       - "tools/learning_development_output.py"
+      - "tools/learning_health_dashboard.py"
       - "tools/tests/test_task_learning.py"
       - "tools/tests/test_learning_pattern_analysis.py"
       - "tools/tests/test_learning_governance_extensions.py"
-      - "tools/tests/test_learning_development_output.py"
+      - "tools/tests/test_learning_development_output.py tools/tests/test_learning_health_dashboard.py"
+      - "tools/tests/test_learning_health_dashboard.py"
       - "skills/task-learning-capture/**"
       - "workflows/learning-review/**"
       - "workflows/learning-to-development/**"
@@ -38,10 +40,12 @@ on:
       - "tools/learning_review_debt_gate.py"
       - "tools/learning_effectiveness.py"
       - "tools/learning_development_output.py"
+      - "tools/learning_health_dashboard.py"
       - "tools/tests/test_task_learning.py"
       - "tools/tests/test_learning_pattern_analysis.py"
       - "tools/tests/test_learning_governance_extensions.py"
       - "tools/tests/test_learning_development_output.py"
+      - "tools/tests/test_learning_health_dashboard.py"
       - "skills/task-learning-capture/**"
       - "workflows/learning-review/**"
       - "workflows/learning-to-development/**"
@@ -71,7 +75,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Compile task learning tooling
-        run: python -m py_compile tools/task_learning.py tools/learning_pattern_analysis.py tools/learning_review_debt_gate.py tools/learning_effectiveness.py tools/learning_development_output.py tools/tests/test_task_learning.py tools/tests/test_learning_pattern_analysis.py tools/tests/test_learning_governance_extensions.py tools/tests/test_learning_development_output.py
+        run: python -m py_compile tools/task_learning.py tools/learning_pattern_analysis.py tools/learning_review_debt_gate.py tools/learning_effectiveness.py tools/learning_development_output.py tools/learning_health_dashboard.py tools/tests/test_task_learning.py tools/tests/test_learning_pattern_analysis.py tools/tests/test_learning_governance_extensions.py tools/tests/test_learning_development_output.py
 
       - name: Validate JSON schemas parse
         run: |
@@ -93,3 +97,6 @@ jobs:
 
       - name: Run learning development output tests
         run: python tools/tests/test_learning_development_output.py
+
+      - name: Run learning health dashboard tests
+        run: python tools/tests/test_learning_health_dashboard.py
