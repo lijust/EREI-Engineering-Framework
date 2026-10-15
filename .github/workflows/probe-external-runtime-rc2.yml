@@ -15,6 +15,8 @@ jobs:
     steps:
       - name: Probe independent model and agent CLIs
         shell: powershell
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           $names = @('codex','claude','gemini','aider','opencode','copilot','ollama','llama-cli','llama-server','lmstudio','gh')
           foreach ($name in $names) {
@@ -33,8 +35,8 @@ jobs:
           Write-Host "gh-extensions="
           gh extension list 2>&1
           Write-Host "gh-copilot-probe="
-          gh copilot --help 2>&1 | Select-Object -First 8
+          gh copilot --help 2>&1 | Select-Object -First 12
           Write-Host "gh-models-probe="
-          gh models --help 2>&1 | Select-Object -First 8
+          gh models --help 2>&1 | Select-Object -First 12
           Write-Host "python="
           py "-3.12" --version
