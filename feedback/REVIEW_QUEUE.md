@@ -142,12 +142,32 @@
   - `framework-candidate:f1f9d4966f085868caa08829800c8955436eb6e4`
 - Review note: Repeated pre-runtime catches protected real invariants but recurring stale bindings, allowlists, incidental source-text assertions and process/provenance mechanics show avoidable harness friction. Candidate work must reduce this cost without reducing escape protection.
 
+
+### EFF-20261015T181724Z-E320C171 — independent second-project corroboration
+
+- Source project: `lijust/EREI-3.2`
+- Source project ref: `87d730ddc3547f863de2a6895e91f9b83e9c6e72`
+- Decision revision: `4716966d5eb492a3c4489ac4e2917597539c81db`
+- Review state: `CANDIDATE`
+- Promotion state: `CANDIDATE`
+- Decision ID: `EFD-20261015T182100Z-E320C171`
+- Candidate: `skills/semantic-assurance-design/`
+- Evidence:
+  - `github-pr:171`
+  - `github-pr:172`
+  - `github-actions:38784603725`
+  - `task:ETASK-20261015T181724Z-E320C171`
+  - `erei32-merge:87d730ddc3547f863de2a6895e91f9b83e9c6e72`
+  - `app-feedback:EFF-20261015T180800Z-A29B7B59`
+  - `framework-candidate:f1f9d4966f085868caa08829800c8955436eb6e4`
+- Review note: EREI 3.2 independently reproduced the predecessor/successor applicability problem when a bootstrap-only no-ledger invariant would have rejected the first legitimate post-integration Task Learning event. The safe correction preserved assurance by changing lifecycle applicability and successor validation rather than deleting the rule. This upgrades the pattern from one-project process friction to multi-project corroborated Candidate evidence.
+
 ## Intake summary
 
-- Source projects represented with feedback: `1`
-- Feedback events ingested: `7`
+- Source projects represented with feedback: `2`
+- Feedback events ingested: `8`
 - Clusters represented: `5`
-- Candidate feedback decisions: `4`
+- Candidate feedback decisions: `5`
 - Promoted decisions: `0`
 - Source observations mutated by central intake: `0`
-- Second brownfield integration pending/active: `lijust/EREI-3.2` (no synthetic feedback/events)
+- Multi-project corroborated cluster: `FCL-SEMANTIC-ASSURANCE-FRICTION-001`
