@@ -53,8 +53,8 @@ def _review(value: Any) -> dict[str, Any]:
     tree = _sha(value["target_tree"], "fallback.equivalence_review.target_tree")
     provenance = value["provenance"]
     _exact_fields(provenance, {"kind", "pr_number", "actor_login"}, "fallback.equivalence_review.provenance")
-    if provenance["kind"] != "github_codex_clean_review":
-        raise EnforcementError("fallback equivalence provenance must use github_codex_clean_review")
+    if provenance["kind"] != "github_codex_clean_security_review":
+        raise EnforcementError("fallback equivalence provenance must use github_codex_clean_security_review")
     if type(provenance["pr_number"]) is not int or provenance["pr_number"] < 1:
         raise EnforcementError("fallback equivalence provenance.pr_number must be integer >= 1")
     _text(provenance["actor_login"], "fallback equivalence provenance.actor_login")
