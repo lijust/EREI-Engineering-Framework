@@ -5,15 +5,17 @@ from __future__ import annotations
 import argparse
 import importlib.util
 import json
+import os
 import re
 import sys
 from pathlib import Path
 
 try:
-    from . import assurance_enforcement, exact_target_evidence, release_approval, release_scope, release_target
+    from . import assurance_enforcement, exact_target_evidence, github_release_provenance, release_approval, release_scope, release_target
 except ImportError:
     import assurance_enforcement
     import exact_target_evidence
+    import github_release_provenance
     import release_approval
     import release_scope
     import release_target
@@ -58,7 +60,7 @@ def _load_runner(repo_root: Path):
     return runner
 
 
-def _validate_structured_approvals(manifest: dict, repo_root: Path) -> int:
+def _load_target_manifest(manifest: dict, repo_root: Path) -> dict:
     target_path = repo_root / release_target.DEFAULT_TARGET
     try:
         target_manifest = _load(target_path)
@@ -67,19 +69,42 @@ def _validate_structured_approvals(manifest: dict, repo_root: Path) -> int:
         raise ReleaseError(f"invalid or missing frozen release target: {exc}") from exc
     if target_manifest["framework_ref"] != manifest["framework_ref"]:
         raise ReleaseError("frozen release target framework_ref does not match release framework_ref")
+    return target_manifest
+
+
+def _validate_structured_approvals(
+    manifest: dict,
+    repo_root: Path,
+    *,
+    policy: dict,
+) -> int:
+    target_manifest = _load_target_manifest(manifest, repo_root)
     target_tree = target_manifest["target_tree"]
 
     validated = 0
     for approval_type, relative_path in release_approval.APPROVAL_PATHS.items():
         try:
-            release_approval.load_and_validate(
+            record = release_approval.load_and_validate(
                 repo_root / relative_path,
                 expected_type=approval_type,
                 expected_target=manifest["framework_ref"],
                 expected_tree=target_tree,
                 require_approved=True,
+                require_authenticated_provenance=True,
             )
-        except release_approval.ReleaseApprovalError as exc:
+            github_release_provenance.verify_reviewed_file(
+                repo_root,
+                relative_path,
+                record["provenance"],
+                policy=policy,
+                target_ref=manifest["framework_ref"],
+                approval_id=record["approval_id"] if approval_type == "architecture" else None,
+                require_merged=True,
+            )
+        except (
+            release_approval.ReleaseApprovalError,
+            github_release_provenance.GitHubProvenanceError,
+        ) as exc:
             raise ReleaseError(f"invalid {approval_type} release approval: {exc}") from exc
         validated += 1
     return validated
@@ -162,15 +187,53 @@ def validate_manifest(
         result["release_scope_id"] = scope_binding["scope_id"]
 
         try:
-            enforcement = assurance_enforcement.load_and_validate(
-                repo_root / "security" / "ASSURANCE_ENFORCEMENT.json"
+            policy = github_release_provenance.load_target_bound_policy(
+                scope_repo,
+                manifest["framework_ref"],
+                closure_ref=scope_closure_ref,
             )
-        except assurance_enforcement.EnforcementError as exc:
-            raise ReleaseError(f"invalid assurance enforcement record: {exc}") from exc
+        except github_release_provenance.GitHubProvenanceError as exc:
+            raise ReleaseError(f"invalid target-bound release review policy: {exc}") from exc
+
+        target_manifest = _load_target_manifest(manifest, repo_root)
+        target_tree = target_manifest["target_tree"]
+        enforcement_path = repo_root / "security" / "ASSURANCE_ENFORCEMENT.json"
+        try:
+            enforcement = assurance_enforcement.load_and_validate(
+                enforcement_path,
+                expected_target_ref=manifest["framework_ref"],
+                expected_target_tree=target_tree,
+            )
+            authenticated = False
+            if (
+                not enforcement["server_enforcement_satisfied"]
+                and enforcement["fallback_equivalence_claimed"]
+            ):
+                review = enforcement["equivalence_review"]
+                github_release_provenance.verify_reviewed_file(
+                    repo_root,
+                    "security/ASSURANCE_ENFORCEMENT.json",
+                    review["provenance"],
+                    policy=policy,
+                    target_ref=manifest["framework_ref"],
+                    require_merged=True,
+                )
+                authenticated = True
+                enforcement = assurance_enforcement.load_and_validate(
+                    enforcement_path,
+                    expected_target_ref=manifest["framework_ref"],
+                    expected_target_tree=target_tree,
+                    authenticated_fallback=True,
+                )
+        except (
+            assurance_enforcement.EnforcementError,
+            github_release_provenance.GitHubProvenanceError,
+        ) as exc:
+            raise ReleaseError(f"invalid assurance enforcement record/provenance: {exc}") from exc
         result["stable_enforcement_satisfied"] = enforcement["stable_enforcement_satisfied"]
         if not enforcement["stable_enforcement_satisfied"]:
             raise ReleaseError(
-                "V2 Stable requires server branch/status-check enforcement or an independently verified equivalent fallback"
+                "V2 Stable requires server branch/status-check enforcement or a target-bound GitHub-authenticated equivalent fallback"
             )
 
         evidence = _load(repo_root / evidence_path)
@@ -200,7 +263,11 @@ def validate_manifest(
                 f"missing={len(missing)} nonpass={len(nonpass)} lower_assurance={len(lower)} unexpected={len(extras)}"
             )
 
-        result["approval_records_validated"] = _validate_structured_approvals(manifest, repo_root)
+        result["approval_records_validated"] = _validate_structured_approvals(
+            manifest,
+            repo_root,
+            policy=policy,
+        )
 
         for key in sorted(expected):
             try:
