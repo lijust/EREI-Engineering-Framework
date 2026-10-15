@@ -1,0 +1,35 @@
+{
+  "schema_version": "1.0",
+  "suite_id": "semantic-assurance-design-v1",
+  "artifact": "skills/semantic-assurance-design",
+  "cases": [
+    {
+      "id": "T-SAD-001-REPEATED-HARNESS-FRICTION",
+      "tags": ["trigger", "rework", "verification", "assurance"],
+      "input": {"prompt": "Six high-risk source-only tasks repeatedly reworked stale predecessor bindings, copied allowlists, source-layout regex assertions and duplicate exact-head checks. The checks usually fail before runtime and protect valid invariants. Reduce the cost without weakening verification."},
+      "expectations": [
+        {"type": "trace_tool_called", "tool": "semantic-assurance-design"},
+        {"type": "output_contains_all", "values": ["invariant", "semantic", "fail-closed", "rework", "escape"]},
+        {"type": "output_contains_none", "values": ["delete the failing tests", "skip verification"]}
+      ]
+    },
+    {
+      "id": "B-SAD-002-REAL-DEFECT",
+      "tags": ["behavior", "do-not-weaken"],
+      "input": {"prompt": "A security test repeatedly catches a real cross-tenant authorization defect in changed product code. Should we replace the test merely because it increases rework rate?"},
+      "expectations": [
+        {"type": "output_contains_all", "values": ["invariant", "defect", "verification"]},
+        {"type": "output_contains_none", "values": ["remove the test to improve the metric"]}
+      ]
+    },
+    {
+      "id": "N-SAD-003-ONE-OFF",
+      "tags": ["non-trigger", "proportionality"],
+      "input": {"prompt": "One new unit test has a typo in its expected string and is corrected immediately."},
+      "expectations": [
+        {"type": "trace_tool_not_called", "tool": "semantic-assurance-design"},
+        {"type": "max_trace_steps", "value": 3}
+      ]
+    }
+  ]
+}
