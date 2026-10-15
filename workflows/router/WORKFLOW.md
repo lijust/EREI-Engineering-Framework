@@ -23,9 +23,27 @@ L0 conversational explanation-only requests do not require the router unless the
 - Risk Contract.
 - Available roles, skills, workflows, overlays, and tools.
 
+## Stage -1 — Capability activation boundary
+
+Before using development-line behavior from the pinned Framework revision, resolve the relevant capability with `tools/capability_activation.py` or equivalent.
+
+Rules:
+
+- a capability whose registry status is `stable` is active from the exact pinned Framework checkout;
+- `candidate` or `experimental` capability behavior is **dormant by default**;
+- Candidate behavior requires a valid, bounded project-local `.erei/candidate-capabilities.json` adoption tied to the exact Framework commit and exact capability version;
+- a Candidate capability does not become active merely because its files coexist in the same Framework commit as Stable code;
+- an invalid, expired, mismatched or mutable-ref Candidate adoption fails closed.
+
+If a Candidate capability is inactive, use the behavior of the project's pinned Stable baseline rather than silently substituting development-line behavior.
+
 ## Stage 0 — Learning-debt preflight
 
-Before starting a **new material engineering execution** in an integrated project, reconstruct the current Learning State from the authoritative Task Learning ledgers.
+First resolve `learning_review_debt_guard`.
+
+If it is not active, do **not** apply Candidate review-debt behavior; continue with the Task Learning/review behavior defined by the project's pinned Stable baseline.
+
+If `learning_review_debt_guard` is active, before starting a **new material engineering execution** in an integrated project, reconstruct the current Learning State from the authoritative Task Learning ledgers.
 
 1. Run `tools/task_learning.py status --target <project>` (or an equivalent locked derivation) first.
    - It must load and validate the authoritative immutable event/review records.
@@ -231,7 +249,11 @@ If the new state is `IMMEDIATE_REVIEW`, record that the **next material executio
 
 ## Stage 12.5 — Translate closed learning into development
 
-When the routed execution is a Learning Review, or when a Learning Review has just closed and produced reusable/measurement-relevant findings:
+This stage applies only when `learning_to_development` is active under Stage -1.
+
+When inactive, retain the project's pinned Stable Learning Review behavior and do not create Learning Development Outputs merely because Candidate tooling exists in the checkout.
+
+When active and the routed execution is a Learning Review, or when a Learning Review has just closed and produced reusable/measurement-relevant findings:
 
 - invoke `workflows/learning-to-development/WORKFLOW.md`;
 - require the Chief Engineer to interpret each material finding;
@@ -259,6 +281,7 @@ A generic `DONE` is not an accepted terminal state for material workflows.
 ## Required router record for L2+
 
 ```text
+Capability activation: <stable capabilities + explicit candidate trials used>
 Change class:
 Affected layers:
 Risk level:
