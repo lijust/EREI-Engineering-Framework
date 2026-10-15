@@ -96,7 +96,7 @@
       "properties": {
         "kind": {
           "enum": [
-            "github_codex_clean_review",
+            "github_codex_clean_security_review",
             "github_owner_approval_comment"
           ]
         },
