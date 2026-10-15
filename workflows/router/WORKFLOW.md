@@ -25,9 +25,16 @@ L0 conversational explanation-only requests do not require the router unless the
 
 ## Stage 0 — Learning-debt preflight
 
-Before starting a **new material engineering execution** in an integrated project, inspect the current project-local Learning State when available.
+Before starting a **new material engineering execution** in an integrated project, reconstruct the current Learning State from the authoritative Task Learning ledgers.
 
-When a Learning State exists, invoke `tools/learning_review_debt_gate.py` (or equivalent contract-validating implementation) **unconditionally before trusting the stored trigger level**. The Learning State is a derived projection and may be stale or corrupted; the gate cross-checks safety-critical metrics and derives the effective immediate-review requirement from evidence.
+1. Run `tools/task_learning.py status --target <project>` (or an equivalent locked derivation) first.
+   - It must load and validate the authoritative immutable event/review records.
+   - It must derive the current state from those records.
+   - It may refresh the rebuildable JSONL/state/summary projections.
+   - If derivation or ledger validation fails, fail closed as `BLOCKED_LEARNING_REVIEW`; do not fall back to an existing projection.
+2. Only after successful derivation, invoke `tools/learning_review_debt_gate.py` (or equivalent contract-validating implementation) **unconditionally before trusting the stored trigger level**.
+
+`LEARNING_STATE.json` is a rebuildable projection, not the learning source of truth. A missing/stale/healthy projection never authorizes execution when authoritative ledgers contain newer escape or critical evidence.
 
 Route by gate result:
 
@@ -37,7 +44,7 @@ Route by gate result:
 4. `BLOCK_CRITICAL_SECURITY_OR_DATA_REVIEW` — stop new material execution and route through Learning Review plus the normal security/data blocking governance; no bounded defer is valid.
 5. `BLOCK_INVALID_REVIEW_DEFER` or any state/defer contract-validation error — fail closed as `BLOCKED_LEARNING_REVIEW`; repair/rebuild the learning state before continuing.
 
-Do not pre-filter the gate call by `trigger.level`. A stored `LEARNING_HEALTHY` value does not override verification-escape or critical security/data evidence present in the metrics.
+Do not pre-filter state reconstruction or the gate call by `trigger.level`, and do not skip reconstruction because `LEARNING_STATE.json` is absent. A stored `LEARNING_HEALTHY` value does not override authoritative ledger evidence or derived verification-escape/critical security-data metrics.
 
 This preflight does **not** retroactively change the terminal state of the task that created the trigger. It prevents unresolved immediate-review debt from growing without bound.
 
@@ -266,6 +273,7 @@ Framework feedback: none | captured <feedback-id(s)>
 Task learning event: <task-id>
 Learning epoch: <epoch-id>
 Learning trigger: <level + reasons>
+Learning state derivation: authoritative-ledgers-pass | blocked
 Learning review debt gate: not-applicable | pass | bounded-defer | blocked
 Learning development outputs: none | <output-id(s) + route>
 Exit state:

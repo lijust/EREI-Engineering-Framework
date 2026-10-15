@@ -167,6 +167,37 @@
           ]
         }
       ]
+    },
+    {
+      "id": "LTD-007-AUTHORITATIVE-LEDGER-REBUILD-BEFORE-GATE",
+      "tags": [
+        "review-debt",
+        "router",
+        "projection",
+        "authoritative-ledger",
+        "fail-closed"
+      ],
+      "input": {
+        "prompt": "A capture wrote an immutable Task Learning event with verification_escape=true, then crashed before LEARNING_STATE.json was refreshed. The existing projection still says LEARNING_HEALTHY. A new material task is requested. Route it."
+      },
+      "expectations": [
+        {
+          "type": "output_contains_all",
+          "values": [
+            "task_learning.py status",
+            "authoritative",
+            "learning_review_debt_gate",
+            "BLOCKED_LEARNING_REVIEW"
+          ]
+        },
+        {
+          "type": "output_contains_none",
+          "values": [
+            "trust the projection",
+            "continue normally"
+          ]
+        }
+      ]
     }
   ]
 }

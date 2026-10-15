@@ -165,7 +165,9 @@ Only normal Knowledge Promotion and Stable release governance may promote a Fram
 
 ## Review-debt rule
 
-If the project reaches `IMMEDIATE_REVIEW`, the default is to close the Learning Review before accumulating a large new material cohort.
+Before applying review-debt policy, derive the current Learning State from the authoritative Task Learning event/review ledgers using `tools/task_learning.py status --target <project>` or equivalent locked derivation. Never trust a stale or absent `LEARNING_STATE.json` projection as evidence that review debt is clear.
+
+If authoritative derivation reaches `IMMEDIATE_REVIEW` — or the debt gate derives an effective immediate-review requirement from escape/critical metrics — the default is to close the Learning Review before accumulating a large new material cohort.
 
 Continuation is allowed only through a bounded defer record with:
 - exact epoch,
