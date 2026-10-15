@@ -20,6 +20,12 @@ value={
  "promotion_boundary":"stable_review_required"
 }
 assert mod.validate(value)["status"]=="VALID"
+bool_schema=dict(value);bool_schema["schema_version"]=True
+try:
+    mod.validate(bool_schema)
+    raise AssertionError("expected boolean schema_version failure")
+except mod.OutputError:
+    pass
 bad=dict(value);bad["development_route"]="framework_candidate"
 try:
     mod.validate(bad)

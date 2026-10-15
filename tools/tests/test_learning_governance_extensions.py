@@ -35,6 +35,13 @@ try:
     raise AssertionError("expected malformed state failure")
 except gate.ReviewDebtError:
     pass
+bool_state=dict(state)
+bool_state["schema_version"]=True
+try:
+    gate.evaluate(bool_state,None,datetime(2026,10,15,tzinfo=timezone.utc))
+    raise AssertionError("expected boolean schema version failure")
+except gate.ReviewDebtError:
+    pass
 truncated={
  "schema_version":2,"epoch_id":"EPOCH-garbage","updated_at":"2026-10-15T00:00:00Z",
  "last_review_id":None,"last_review_at":None,"legacy_event_cutoff":0,"reviewed_occurrence_count":0,
@@ -69,6 +76,30 @@ future["fingerprint"]=gate.defer_fingerprint(future)
 try:
     gate.validate_defer(future,state,datetime(2026,10,15,12,tzinfo=timezone.utc))
     raise AssertionError("expected future-dated defer failure")
+except gate.ReviewDebtError:
+    pass
+bad_evidence=dict(defer)
+bad_evidence["evidence"]=[1]
+bad_evidence["fingerprint"]=gate.defer_fingerprint(bad_evidence)
+try:
+    gate.validate_defer(bad_evidence,state,datetime(2026,10,15,12,tzinfo=timezone.utc))
+    raise AssertionError("expected non-string defer evidence failure")
+except gate.ReviewDebtError:
+    pass
+bool_budget=dict(defer)
+bool_budget["max_additional_material_tasks"]=True
+bool_budget["fingerprint"]=gate.defer_fingerprint(bool_budget)
+try:
+    gate.validate_defer(bool_budget,state,datetime(2026,10,15,12,tzinfo=timezone.utc))
+    raise AssertionError("expected boolean defer budget failure")
+except gate.ReviewDebtError:
+    pass
+bad_id=dict(defer)
+bad_id["defer_id"]="ELD-NOT-VALID"
+bad_id["fingerprint"]=gate.defer_fingerprint(bad_id)
+try:
+    gate.validate_defer(bad_id,state,datetime(2026,10,15,12,tzinfo=timezone.utc))
+    raise AssertionError("expected invalid defer id failure")
 except gate.ReviewDebtError:
     pass
 expires_now=dict(defer)

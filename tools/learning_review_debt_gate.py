@@ -57,6 +57,8 @@ def _validate_state(state: dict) -> None:
     if not isinstance(state, dict):
         raise ReviewDebtError("learning state must be an object")
     version = state.get("schema_version")
+    if type(version) is not int:
+        raise ReviewDebtError("learning state schema_version must be an integer")
     if version == 1:
         required = {
             "schema_version", "epoch_id", "updated_at", "last_review_id", "last_review_at",
@@ -177,8 +179,10 @@ def validate_defer(defer: dict, state: dict, now: datetime) -> dict:
     }
     if set(defer) != required:
         raise ReviewDebtError("defer record fields must exactly match the V1 contract")
-    if defer["schema_version"] != 1:
-        raise ReviewDebtError("defer schema_version must be 1")
+    if type(defer["schema_version"]) is not int or defer["schema_version"] != 1:
+        raise ReviewDebtError("defer schema_version must be integer 1")
+    if not isinstance(defer["defer_id"], str) or not __import__("re").fullmatch(r"ELD-[0-9]{8}T[0-9]{6}Z-[A-F0-9]{8}", defer["defer_id"]):
+        raise ReviewDebtError("defer_id is invalid")
     if defer["epoch_id"] != state.get("epoch_id"):
         raise ReviewDebtError("defer epoch_id does not match current learning epoch")
     recorded = _parse_time(defer["recorded_at"])
@@ -191,17 +195,24 @@ def validate_defer(defer: dict, state: dict, now: datetime) -> dict:
         raise ReviewDebtError("defer recorded_at cannot be in the future")
     if now >= expires:
         raise ReviewDebtError("defer is expired")
-    if not isinstance(defer["baseline_material_tasks"], int) or defer["baseline_material_tasks"] < 0:
-        raise ReviewDebtError("baseline_material_tasks must be non-negative")
-    if not isinstance(defer["max_additional_material_tasks"], int) or not 0 <= defer["max_additional_material_tasks"] <= 10:
-        raise ReviewDebtError("max_additional_material_tasks must be between 0 and 10")
+    if type(defer["baseline_material_tasks"]) is not int or defer["baseline_material_tasks"] < 0:
+        raise ReviewDebtError("baseline_material_tasks must be a non-negative integer")
+    if type(defer["max_additional_material_tasks"]) is not int or not 0 <= defer["max_additional_material_tasks"] <= 10:
+        raise ReviewDebtError("max_additional_material_tasks must be an integer between 0 and 10")
     if not isinstance(defer["reason"], str) or len(defer["reason"].strip()) < 20:
         raise ReviewDebtError("defer reason is too short")
     if not isinstance(defer["reviewed_by_role"], str) or len(defer["reviewed_by_role"].strip()) < 3:
         raise ReviewDebtError("reviewed_by_role is required")
     evidence = defer["evidence"]
-    if not isinstance(evidence, list) or not evidence or len(evidence) != len(set(evidence)):
-        raise ReviewDebtError("defer evidence must be a non-empty unique list")
+    if (
+        not isinstance(evidence, list)
+        or not evidence
+        or any(not isinstance(item, str) or not item.strip() for item in evidence)
+        or len(evidence) != len(set(evidence))
+    ):
+        raise ReviewDebtError("defer evidence must be a non-empty unique list of non-empty strings")
+    if not isinstance(defer["fingerprint"], str) or not __import__("re").fullmatch(r"[a-f0-9]{64}", defer["fingerprint"]):
+        raise ReviewDebtError("defer fingerprint must be lowercase sha256")
     if defer["fingerprint"] != defer_fingerprint(defer):
         raise ReviewDebtError("defer fingerprint mismatch")
 

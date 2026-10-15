@@ -56,7 +56,7 @@ def validate(value:dict)->dict:
       "promotion_boundary"
     }
     _exact(value,required,required|{"notes"},"output")
-    if value["schema_version"]!=1: raise OutputError("schema_version must be 1")
+    if type(value["schema_version"]) is not int or value["schema_version"]!=1: raise OutputError("schema_version must be integer 1")
     if not isinstance(value["output_id"],str) or not OUTPUT_ID.fullmatch(value["output_id"]): raise OutputError("invalid output_id")
     _datetime(value["created_at"],"created_at")
 
