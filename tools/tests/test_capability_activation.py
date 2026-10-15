@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import unittest
 from datetime import datetime, timezone
+from unittest import mock
 
 from tools import capability_activation as activation
 
@@ -69,6 +70,12 @@ class CapabilityActivationTests(unittest.TestCase):
     def test_stable_is_active_without_candidate_adoption(self):
         self.assertEqual(self.resolve("stable_capability")["status"], "ACTIVE_STABLE")
 
+    def test_stable_requires_loaded_framework_to_match_project_pin(self):
+        self.assertEqual(
+            self.resolve("stable_capability", loaded=OTHER_PIN)["status"],
+            "BLOCK_FRAMEWORK_REF_MISMATCH",
+        )
+
     def test_candidate_is_dormant_without_adoption(self):
         self.assertEqual(self.resolve()["status"], "DORMANT_CANDIDATE")
 
@@ -127,6 +134,17 @@ class CapabilityActivationTests(unittest.TestCase):
         duplicate["adoption_id"] = "CAD-20261015T200001Z-A1B2C3D5"
         doc["adoptions"].append(duplicate)
         self.assertEqual(self.resolve(doc=doc)["status"], "BLOCK_INVALID_CANDIDATE_ADOPTION")
+
+    def test_dirty_framework_checkout_is_blocked(self):
+        dirty = mock.Mock(stdout=" M CAPABILITIES.json\n")
+        with mock.patch.object(activation.subprocess, "run", return_value=dirty):
+            with self.assertRaisesRegex(activation.ActivationError, "dirty"):
+                activation.assert_clean_framework_checkout()
+
+    def test_clean_framework_checkout_passes(self):
+        clean = mock.Mock(stdout="")
+        with mock.patch.object(activation.subprocess, "run", return_value=clean):
+            activation.assert_clean_framework_checkout()
 
     def test_unknown_capability_is_blocked(self):
         self.assertEqual(self.resolve("missing")["status"], "BLOCK_UNKNOWN_CAPABILITY")
