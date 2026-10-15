@@ -162,7 +162,7 @@ def _validate_adoptions(value: dict) -> list[dict]:
 def assert_clean_framework_checkout(root: Path = ROOT) -> None:
     try:
         proc = subprocess.run(
-            ["git", "status", "--porcelain"],
+            ["git", "status", "--porcelain=v1", "--untracked-files=all"],
             cwd=root,
             check=True,
             capture_output=True,
@@ -203,20 +203,8 @@ def resolve_activation(
     now: datetime | None = None,
 ) -> dict:
     framework = _validate_manifest(manifest)
-    capabilities = _validate_registry(registry)
-    if capability not in capabilities:
-        return {"status": "BLOCK_UNKNOWN_CAPABILITY", "capability": capability}
-
-    record = capabilities[capability]
-    if not isinstance(record, dict):
-        return {"status": "BLOCK_INVALID_CAPABILITY_REGISTRY", "capability": capability}
-    status = record.get("status")
-    version = record.get("version")
-    if status not in {"stable", "candidate"} or not isinstance(version, str) or not version:
-        return {"status": "BLOCK_INVALID_CAPABILITY_REGISTRY", "capability": capability}
-
     if framework["ref_type"] != "commit" or not SHA1_RE.fullmatch(framework["ref"]):
-        return {"status": "BLOCK_NON_COMMIT_PROJECT_PIN", "capability": capability, "version": version}
+        return {"status": "BLOCK_NON_COMMIT_PROJECT_PIN", "capability": capability}
 
     project_ref = framework["ref"].lower()
     if loaded_framework_ref is None or not SHA1_RE.fullmatch(loaded_framework_ref.lower()):
@@ -230,6 +218,18 @@ def resolve_activation(
             "project_ref": project_ref,
             "loaded_framework_ref": loaded_ref,
         }
+
+    capabilities = _validate_registry(registry)
+    if capability not in capabilities:
+        return {"status": "BLOCK_UNKNOWN_CAPABILITY", "capability": capability}
+
+    record = capabilities[capability]
+    if not isinstance(record, dict):
+        return {"status": "BLOCK_INVALID_CAPABILITY_REGISTRY", "capability": capability}
+    status = record.get("status")
+    version = record.get("version")
+    if status not in {"stable", "candidate"} or not isinstance(version, str) or not version:
+        return {"status": "BLOCK_INVALID_CAPABILITY_REGISTRY", "capability": capability}
 
     if status == "stable":
         return {
@@ -317,18 +317,22 @@ def resolve_activation(
 
 def resolve_target(target: Path, capability: str) -> dict:
     assert_clean_framework_checkout()
+    loaded_before = detect_loaded_framework_ref()
     manifest = _read_json(target / MANIFEST_PATH, "project Framework manifest")
     registry = _read_json(REGISTRY_PATH, "Framework capability registry")
     adoption_path = target / ADOPTION_PATH
     adoption = _read_json(adoption_path, "candidate capability adoption document") if adoption_path.exists() else None
+    assert_clean_framework_checkout()
+    loaded_after = detect_loaded_framework_ref()
+    if loaded_after != loaded_before:
+        raise ActivationError("loaded Framework checkout changed during activation resolution")
     return resolve_activation(
         manifest,
         registry,
         capability,
         adoption_document=adoption,
-        loaded_framework_ref=detect_loaded_framework_ref(),
+        loaded_framework_ref=loaded_after,
     )
-
 
 def parse_args(argv=None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Resolve EREI Framework capability activation.")

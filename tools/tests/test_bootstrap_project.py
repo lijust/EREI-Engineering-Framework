@@ -146,6 +146,33 @@ class BootstrapProjectTests(unittest.TestCase):
             self.assertNotEqual(agents.read_text(encoding="utf-8"), "old")
             self.assertIn("Demo Project", agents.read_text(encoding="utf-8"))
 
+    def test_force_preserves_existing_candidate_adoption_authority(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp)
+            first = run_bootstrap(target)
+            self.assertEqual(first.returncode, 0, first.stderr)
+            path = target / ".erei/CANDIDATE_CAPABILITIES.json"
+            protected = {
+                "schema_version": 1,
+                "framework_ref": PIN,
+                "adoptions": [{
+                    "adoption_id": "CAD-20261015T200000Z-A1B2C3D4",
+                    "capability": "candidate_capability",
+                    "version": "v1",
+                    "approved_at": "2026-10-15T20:00:00Z",
+                    "expires_at": "2026-10-20T20:00:00Z",
+                    "approved_by_role": "chief-engineer",
+                    "risk": "L2",
+                    "purpose": "Preserve explicit project Candidate adoption authority.",
+                    "evidence": ["approval:test"],
+                }],
+            }
+            path.write_text(json.dumps(protected), encoding="utf-8")
+            forced = run_bootstrap(target, "--force")
+            self.assertEqual(forced.returncode, 0, forced.stderr)
+            self.assertEqual(json.loads(path.read_text(encoding="utf-8")), protected)
+            self.assertIn("PRESERVE PROJECT AUTHORITY", forced.stdout)
+
     def test_missing_target_fails_without_side_effects(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             target = Path(tmp) / "missing"

@@ -29,7 +29,7 @@ Default: **L2**. Raise to **L3** when the Candidate affects architecture, securi
 ## Procedure
 
 1. Confirm the project is pinned by exact immutable commit SHA.
-2. Confirm the loaded Framework checkout is that exact project pin.
+2. Confirm the loaded Framework checkout is **clean** (including untracked files) and is that exact project pin.
 3. Read `CAPABILITIES.json`; freeze the Candidate name/version.
 4. Define purpose, expected effect, success metrics, rollback/removal path, and trial cohort.
 5. Obtain approval appropriate to the risk.
@@ -41,7 +41,7 @@ Default: **L2**. Raise to **L3** when the Candidate affects architecture, securi
 
 ## Fail-closed conditions
 
-Do not activate when the project pin is not an exact commit, the loaded checkout differs from the project pin, the adoption is missing/invalid, no matching adoption exists, the version differs, approval is future-dated, adoption is expired, trial exceeds 30 days, duplicate adoptions exist, or evidence is missing.
+Do not activate when the project pin is not an exact commit, the loaded checkout is dirty or differs from the project pin, the adoption is missing/invalid, no matching adoption exists, the version differs, approval is future-dated, adoption is expired, trial exceeds 30 days, duplicate adoptions exist, or evidence is missing.
 
 ## Upgrade boundary
 

@@ -125,10 +125,13 @@ def plan(target: Path, values: dict[str, str]) -> list[tuple[Path, str, bool]]:
         raise BootstrapError(f"Target does not exist or is not a directory: {target}")
     planned: list[tuple[Path, str, bool]] = []
     for template_rel, destination_rel in TEMPLATE_MAP.items():
+        destination = target / destination_rel
+        if destination_rel == ".erei/CANDIDATE_CAPABILITIES.json" and destination.exists():
+            print(f"PRESERVE PROJECT AUTHORITY: {destination}")
+            continue
         template_path = TEMPLATE_ROOT / template_rel
         if not template_path.exists():
             raise BootstrapError(f"Missing Framework template: {template_path}")
-        destination = target / destination_rel
         content = render(template_path.read_text(encoding="utf-8"), values)
         if destination_rel in {".erei/framework.json", ".erei/CANDIDATE_CAPABILITIES.json"}:
             json.loads(content)

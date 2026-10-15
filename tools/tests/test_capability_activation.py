@@ -136,10 +136,13 @@ class CapabilityActivationTests(unittest.TestCase):
         self.assertEqual(self.resolve(doc=doc)["status"], "BLOCK_INVALID_CANDIDATE_ADOPTION")
 
     def test_dirty_framework_checkout_is_blocked(self):
-        dirty = mock.Mock(stdout=" M CAPABILITIES.json\n")
-        with mock.patch.object(activation.subprocess, "run", return_value=dirty):
+        dirty = mock.Mock(stdout="?? untracked.txt\n")
+        with mock.patch.object(activation.subprocess, "run", return_value=dirty) as run:
             with self.assertRaisesRegex(activation.ActivationError, "dirty"):
                 activation.assert_clean_framework_checkout()
+            command = run.call_args.args[0]
+            self.assertIn("--porcelain=v1", command)
+            self.assertIn("--untracked-files=all", command)
 
     def test_clean_framework_checkout_passes(self):
         clean = mock.Mock(stdout="")
