@@ -62,11 +62,40 @@ defer={
 }
 defer["fingerprint"]=gate.defer_fingerprint(defer)
 assert gate.evaluate(state,defer,datetime(2026,10,15,12,tzinfo=timezone.utc))["status"]=="PASS_BOUNDED_REVIEW_DEFER"
+critical_state={
+    **state,
+    "metrics_since_last_review":{
+        **state["metrics_since_last_review"],
+        "security_or_data_critical_events":1,
+    },
+    "trigger":{
+        "level":"IMMEDIATE_REVIEW",
+        "reasons":["security_or_data_critical_event_observed"],
+    },
+}
+critical_result=gate.evaluate(critical_state,defer,datetime(2026,10,15,12,tzinfo=timezone.utc))
+assert critical_result["status"]=="BLOCK_CRITICAL_SECURITY_OR_DATA_REVIEW"
+assert critical_result["critical_events"]==1
 bad=dict(defer);bad["max_additional_material_tasks"]=0
 bad["fingerprint"]=gate.defer_fingerprint(bad)
 try:
     gate.validate_defer(bad,state,datetime(2026,10,15,12,tzinfo=timezone.utc))
     raise AssertionError("expected bounded allowance failure")
+except gate.ReviewDebtError:
+    pass
+bad_timestamp=dict(defer)
+bad_timestamp["recorded_at"]="2026-10-15 00:00:00+00:00"
+bad_timestamp["fingerprint"]=gate.defer_fingerprint(bad_timestamp)
+try:
+    gate.validate_defer(bad_timestamp,state,datetime(2026,10,15,12,tzinfo=timezone.utc))
+    raise AssertionError("expected non-RFC3339 timestamp failure")
+except gate.ReviewDebtError:
+    pass
+bad_state_timestamp=dict(state)
+bad_state_timestamp["updated_at"]="2026-10-15 00:00:00+00:00"
+try:
+    gate.evaluate(bad_state_timestamp,None,datetime(2026,10,15,12,tzinfo=timezone.utc))
+    raise AssertionError("expected non-RFC3339 state timestamp failure")
 except gate.ReviewDebtError:
     pass
 future=dict(defer)

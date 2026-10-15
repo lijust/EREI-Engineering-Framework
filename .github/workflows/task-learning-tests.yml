@@ -17,6 +17,7 @@ on:
       - "tools/tests/test_task_learning.py"
       - "tools/tests/test_learning_pattern_analysis.py"
       - "tools/tests/test_learning_governance_extensions.py"
+      - "tools/tests/test_learning_development_output.py"
       - "tools/tests/test_learning_health_dashboard.py"
       - "skills/task-learning-capture/**"
       - "workflows/learning-review/**"

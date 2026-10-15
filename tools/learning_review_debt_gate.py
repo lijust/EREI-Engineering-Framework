@@ -22,6 +22,10 @@ TRIGGER_LEVELS = {
     "IMMEDIATE_REVIEW",
 }
 EPOCH_ID_RE = __import__("re").compile(r"^EPOCH-[0-9]{3,}$")
+RFC3339_RE = __import__("re").compile(
+    r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}"
+    r"(?:\.[0-9]+)?(?:Z|[+-][0-9]{2}:[0-9]{2})$"
+)
 V1_METRICS = {
     "tasks", "material_tasks", "verified_successes", "blocked_tasks", "failed_tasks",
     "rework_tasks", "total_rework_cycles", "verification_failure_tasks",
@@ -144,6 +148,8 @@ def _read(path: Path) -> dict:
 def _parse_time(value: str) -> datetime:
     if not isinstance(value, str) or not value:
         raise ReviewDebtError("timestamp must be non-empty")
+    if not RFC3339_RE.fullmatch(value):
+        raise ReviewDebtError(f"invalid RFC3339 timestamp: {value}")
     text = value[:-1] + "+00:00" if value.endswith("Z") else value
     try:
         result = datetime.fromisoformat(text)
@@ -231,6 +237,15 @@ def evaluate(state: dict, defer: dict | None, now: datetime) -> dict:
     level = trigger.get("level")
     if level != "IMMEDIATE_REVIEW":
         return {"status": "PASS_NO_IMMEDIATE_REVIEW", "epoch_id": state.get("epoch_id"), "trigger": level}
+    critical_events = state["metrics_since_last_review"]["security_or_data_critical_events"]
+    if critical_events > 0:
+        return {
+            "status": "BLOCK_CRITICAL_SECURITY_OR_DATA_REVIEW",
+            "epoch_id": state.get("epoch_id"),
+            "trigger": level,
+            "critical_events": critical_events,
+            "reason": "security/data critical evidence requires review closure and cannot be bypassed by a bounded defer",
+        }
     if defer is None:
         return {
             "status": "BLOCK_IMMEDIATE_REVIEW_DEBT",
