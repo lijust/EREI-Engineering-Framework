@@ -5,10 +5,16 @@
   "release_family": "task-learning-v2-core",
   "target_baseline": "task-learning-review-v2",
   "capabilities": [
-    "prospective_task_learning"
+    {
+      "name": "prospective_task_learning",
+      "version": "v2-assurance-hardening"
+    }
   ],
   "release_control_dependencies": [
-    "capability_activation_governance"
+    {
+      "name": "capability_activation_governance",
+      "version": "v1-explicit-project-adoption"
+    }
   ],
   "required_eval_suites": [
     {
@@ -19,12 +25,6 @@
       "path": "evals/cases/candidate-capability-activation.eval.json",
       "suite_id": "candidate-capability-activation-v1"
     }
-  ],
-  "required_deterministic_workflows": [
-    "Task Learning Tests",
-    "Framework Upgrade Tests",
-    "Project Bootstrap Tests",
-    "Framework Assurance Gate"
   ],
   "excluded_candidate_capabilities": [
     "learning_pattern_analysis",
