@@ -19,11 +19,17 @@
   "required_eval_suites": [
     {
       "path": "evals/cases/task-learning-review.eval.json",
-      "suite_id": "task-learning-review-v1"
+      "suite_id": "task-learning-review-v1",
+      "covers": [
+        "prospective_task_learning"
+      ]
     },
     {
       "path": "evals/cases/candidate-capability-activation.eval.json",
-      "suite_id": "candidate-capability-activation-v1"
+      "suite_id": "candidate-capability-activation-v1",
+      "covers": [
+        "capability_activation_governance"
+      ]
     }
   ],
   "excluded_candidate_capabilities": [
