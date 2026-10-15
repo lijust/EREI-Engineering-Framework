@@ -77,6 +77,8 @@ def _validate_structured_approvals(
     repo_root: Path,
     *,
     policy: dict,
+    git_repo: Path,
+    closure_ref: str,
 ) -> int:
     target_manifest = _load_target_manifest(manifest, repo_root)
     target_tree = target_manifest["target_tree"]
@@ -100,6 +102,8 @@ def _validate_structured_approvals(
                 target_ref=manifest["framework_ref"],
                 approval_id=record["approval_id"] if approval_type == "architecture" else None,
                 require_merged=True,
+                git_repo=git_repo,
+                closure_ref=closure_ref,
             )
         except (
             release_approval.ReleaseApprovalError,
@@ -217,6 +221,8 @@ def validate_manifest(
                     policy=policy,
                     target_ref=manifest["framework_ref"],
                     require_merged=True,
+                    git_repo=scope_repo,
+                    closure_ref=scope_closure_ref,
                 )
                 authenticated = True
                 enforcement = assurance_enforcement.load_and_validate(
@@ -267,6 +273,8 @@ def validate_manifest(
             manifest,
             repo_root,
             policy=policy,
+            git_repo=scope_repo,
+            closure_ref=scope_closure_ref,
         )
 
         for key in sorted(expected):
