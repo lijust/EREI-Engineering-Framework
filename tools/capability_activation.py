@@ -159,6 +159,22 @@ def _validate_adoptions(value: dict) -> list[dict]:
     return normalized
 
 
+def assert_clean_framework_checkout(root: Path = ROOT) -> None:
+    try:
+        proc = subprocess.run(
+            ["git", "status", "--porcelain"],
+            cwd=root,
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        raise ActivationError("cannot verify Framework checkout cleanliness") from exc
+    if proc.stdout.strip():
+        raise ActivationError("loaded Framework checkout is dirty; exact capability activation is blocked")
+
+
 def detect_loaded_framework_ref(root: Path = ROOT) -> str:
     try:
         proc = subprocess.run(
@@ -199,14 +215,6 @@ def resolve_activation(
     if status not in {"stable", "candidate"} or not isinstance(version, str) or not version:
         return {"status": "BLOCK_INVALID_CAPABILITY_REGISTRY", "capability": capability}
 
-    if status == "stable":
-        return {
-            "status": "ACTIVE_STABLE",
-            "capability": capability,
-            "version": version,
-            "framework_ref": framework["ref"],
-        }
-
     if framework["ref_type"] != "commit" or not SHA1_RE.fullmatch(framework["ref"]):
         return {"status": "BLOCK_NON_COMMIT_PROJECT_PIN", "capability": capability, "version": version}
 
@@ -221,6 +229,14 @@ def resolve_activation(
             "version": version,
             "project_ref": project_ref,
             "loaded_framework_ref": loaded_ref,
+        }
+
+    if status == "stable":
+        return {
+            "status": "ACTIVE_STABLE",
+            "capability": capability,
+            "version": version,
+            "framework_ref": project_ref,
         }
 
     if adoption_document is None:
@@ -300,6 +316,7 @@ def resolve_activation(
 
 
 def resolve_target(target: Path, capability: str) -> dict:
+    assert_clean_framework_checkout()
     manifest = _read_json(target / MANIFEST_PATH, "project Framework manifest")
     registry = _read_json(REGISTRY_PATH, "Framework capability registry")
     adoption_path = target / ADOPTION_PATH
