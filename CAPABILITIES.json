@@ -69,6 +69,12 @@
         "stable_ref": "565b12051255c426c1f87e9c58036b6f30d534f1",
         "source_inspiration": "mattpocock/skills@3cca18b368ae95cdbdebbff572ccafa662551015",
         "notes": "Stable V1 capability. Promoted after a real EREI-App-Google auth/CRM/idempotency ambiguity produced a canonical glossary verified against current code; see evidence/ARCHITECTURE_DOMAIN_LANGUAGE_STABLE_PROMOTION_V1.json."
+      },
+      "learning_pattern_analysis": {
+        "status": "candidate",
+        "version": "v1-review-debt-and-escape-clustering",
+        "stable_ref": "69079018606750312344cb3c648952b9ab72d35b",
+        "notes": "Adds deterministic review-debt detection, verification-escape clustering, mixed V1/V2 evidence warnings, verification-stage coverage checks and hotspot summaries without automatic Framework mutation or feedback creation."
       }
     }
   }
