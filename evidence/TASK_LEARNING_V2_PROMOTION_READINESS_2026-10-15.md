@@ -54,13 +54,15 @@ The following previously listed actions are now closed by durable evidence:
 
 These closures reduce uncertainty around the learning architecture, but they do not authorize Stable promotion.
 
-### 1. Authoritative project adoption
+### 1. Post-promotion project adoption
 
 EREI-App-Google still pins Stable `task-learning-review-v1 @ 690790...`.
 
-V2 semantics have been exercised in project-local/Candidate-compatible evidence, but the project has not completed a governed Stable-pin upgrade to a V2 release.
+That is **not a blocker to creating the V2 Stable release**. A project cannot complete a governed Stable-pin upgrade until an immutable V2 Stable carrier exists.
 
-**Status:** OPEN.
+Project adoption is therefore a **post-promotion adoption gate**: after V2 Stable exists, each project moves its pin only through Framework Upgrade Workflow with rollback evidence.
+
+**Status:** NOT A PRE-PROMOTION BLOCKER / POST-PROMOTION GATE.
 
 ### 2. Mixed evidence migration semantics
 
@@ -85,29 +87,35 @@ Candidate capabilities still need final architecture/security/release approval o
 
 **Status:** OPEN.
 
-### 5. Review-debt and effectiveness extensions
+### 5. Release packaging decision
 
-The current October candidate line adds:
+The packaging decision is closed by `releases/task-learning-v2-release-scope.json`.
+
+**Task Learning V2 Core** is the Stable-promotion track for occurrence identity, immutable authority, explicit review membership, assessment/stage semantics, idempotent retry and legacy-read compatibility.
+
+**Learning Operations V1** remains an independent Candidate track:
 - Learning Pattern Analysis,
 - Learning-to-Development translation,
 - bounded review-debt guard,
-- causation-safe effectiveness comparison.
+- causation-safe effectiveness comparison / Learning Health tooling.
 
-Promotion review should decide whether these are bundled with V2 or remain independent Candidates.
+Candidate operations are dormant unless Stable or explicitly adopted by a bounded exact-commit project trial.
 
-**Status:** OPEN DESIGN/PACKAGING DECISION.
+**Status:** CLOSED — SEPARATE RELEASE TRACKS.
 
 ## Recommendation
 
 `NOT_READY_FOR_STABLE_PROMOTION_YET`.
 
 The remaining problem is no longer lack of real-project learning volume. The remaining work is:
-1. complete CI/assurance on the October learning candidates;
-2. run a bounded EPOCH-024 cohort with the corrected metric interpretation;
-3. decide whether Learning Pattern Analysis / Learning-to-Development / Review Debt / Effectiveness ship in the same V2 release or as separate Candidates;
-4. prepare an immutable V2 release candidate and exact promotion evidence;
-5. verify legacy V1/V2 compatibility and assessment-coverage semantics on the frozen release candidate;
-6. move a project pin only through Framework Upgrade Workflow after Stable promotion.
+1. prepare an immutable Task Learning V2 Core release candidate;
+2. verify legacy V1/V2 compatibility and assessment-coverage semantics on the frozen release candidate;
+3. retain exact-target execution/eval evidence required by the frozen release scope;
+4. satisfy release enforcement and bind final architecture/security approvals to the immutable RC;
+5. promote V2 only through the normal Stable release carrier;
+6. move project pins only after Stable promotion through Framework Upgrade Workflow.
+
+Learning Operations V1 proceeds independently through bounded Candidate trials and effectiveness evidence; it is not a blocker to Task Learning V2 Core Stable promotion.
 
 ## Current recommendation
 
