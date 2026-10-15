@@ -1,0 +1,29 @@
+import importlib.util
+import pathlib
+
+ROOT=pathlib.Path(__file__).resolve().parents[1]
+spec=importlib.util.spec_from_file_location("learning_development_output",ROOT/"learning_development_output.py")
+mod=importlib.util.module_from_spec(spec);spec.loader.exec_module(mod)
+
+value={
+ "schema_version":1,
+ "output_id":"LDO-20261015T180000Z-ABCDEF12",
+ "created_at":"2026-10-15T18:00:00Z",
+ "source":{"project_repository":"example/repo","epoch_id":"EPOCH-023","review_id":"ELR-X","framework_ref":"a"*40},
+ "pattern":{"pattern_id":"LP-EXAMPLE-001","pattern_class":"verification_escape","signal_summary":"A prior proof was contradicted later."},
+ "interpretation":"The escape indicates a reusable conformance gap, not a final product failure.",
+ "classification":"FRAMEWORK_FEEDBACK",
+ "development_route":"framework_feedback",
+ "evidence":["task:1","review:1"],
+ "expected_effect":"Reduce recurrence of the same verification escape.",
+ "success_metrics":[{"metric":"verification_escape_task_rate","direction":"decrease","baseline":0.1,"target":0.0}],
+ "promotion_boundary":"stable_review_required"
+}
+assert mod.validate(value)["status"]=="VALID"
+bad=dict(value);bad["development_route"]="framework_candidate"
+try:
+    mod.validate(bad)
+    raise AssertionError("expected feedback route boundary failure")
+except mod.OutputError:
+    pass
+print("PASS: Learning Development Output validation preserves promotion boundary.")
