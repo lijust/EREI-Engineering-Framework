@@ -10,6 +10,11 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+try:
+    from . import github_release_provenance
+except ImportError:
+    import github_release_provenance
+
 SHA40_RE = re.compile(r"^[a-f0-9]{40}$")
 APPROVAL_ID_RE = re.compile(r"^EAPP-[0-9]{8}T[0-9]{6}Z-[A-F0-9]{8}$")
 APPROVAL_PATHS = {
@@ -64,21 +69,25 @@ def validate_record(
     expected_target: str | None = None,
     expected_tree: str | None = None,
     require_approved: bool = False,
+    require_authenticated_provenance: bool = False,
 ) -> dict[str, Any]:
     if not isinstance(value, dict):
         raise ReleaseApprovalError("release approval must be an object")
+    version = value.get("schema_version")
+    if type(version) is not int or version not in {1, 2}:
+        raise ReleaseApprovalError("unsupported release approval schema_version")
     fields = {
         "schema_version", "approval_id", "approval_type", "target_framework_ref", "target_tree",
         "decision", "recorded_at", "reviewer", "evidence", "rationale",
     }
+    if version == 2:
+        fields.add("provenance")
     missing = sorted(fields - set(value))
     unknown = sorted(set(value) - fields)
     if missing:
         raise ReleaseApprovalError("release approval missing fields: " + ", ".join(missing))
     if unknown:
         raise ReleaseApprovalError("release approval unknown fields: " + ", ".join(unknown))
-    if value["schema_version"] != 1:
-        raise ReleaseApprovalError("unsupported release approval schema_version")
     if not isinstance(value["approval_id"], str) or not APPROVAL_ID_RE.fullmatch(value["approval_id"]):
         raise ReleaseApprovalError("invalid approval_id")
     if value["approval_type"] not in APPROVAL_PATHS:
@@ -96,6 +105,18 @@ def validate_record(
     _text(reviewer["id"], "reviewer.id")
     _unique_texts(value["evidence"], "evidence")
     _text(value["rationale"], "rationale")
+
+    if version == 2:
+        try:
+            provenance = github_release_provenance.validate_provenance_shape(value["provenance"])
+        except github_release_provenance.GitHubProvenanceError as exc:
+            raise ReleaseApprovalError(f"invalid authenticated provenance shape: {exc}") from exc
+        if value["approval_type"] == "architecture" and provenance["kind"] != "github_owner_approval_comment":
+            raise ReleaseApprovalError("architecture approval V2 requires github_owner_approval_comment provenance")
+        if value["approval_type"] == "security" and provenance["kind"] != "github_codex_clean_review":
+            raise ReleaseApprovalError("security approval V2 requires github_codex_clean_review provenance")
+    elif require_authenticated_provenance:
+        raise ReleaseApprovalError("V2 Stable requires schema_version=2 authenticated approval provenance")
 
     if expected_type is not None and value["approval_type"] != expected_type:
         raise ReleaseApprovalError(
@@ -117,6 +138,7 @@ def load_and_validate(
     expected_target: str | None = None,
     expected_tree: str | None = None,
     require_approved: bool = False,
+    require_authenticated_provenance: bool = False,
 ) -> dict[str, Any]:
     try:
         value = json.loads(path.read_text(encoding="utf-8"))
@@ -128,6 +150,7 @@ def load_and_validate(
         expected_target=expected_target,
         expected_tree=expected_tree,
         require_approved=require_approved,
+        require_authenticated_provenance=require_authenticated_provenance,
     )
 
 
@@ -138,6 +161,7 @@ def main(argv=None) -> int:
     parser.add_argument("--target-ref")
     parser.add_argument("--target-tree")
     parser.add_argument("--require-approved", action="store_true")
+    parser.add_argument("--require-authenticated-provenance", action="store_true")
     args = parser.parse_args(argv)
     try:
         value = load_and_validate(
@@ -146,6 +170,7 @@ def main(argv=None) -> int:
             expected_target=args.target_ref,
             expected_tree=args.target_tree,
             require_approved=args.require_approved,
+            require_authenticated_provenance=args.require_authenticated_provenance,
         )
     except ReleaseApprovalError as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
