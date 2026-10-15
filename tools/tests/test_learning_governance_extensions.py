@@ -76,6 +76,23 @@ critical_state={
 critical_result=gate.evaluate(critical_state,defer,datetime(2026,10,15,12,tzinfo=timezone.utc))
 assert critical_result["status"]=="BLOCK_CRITICAL_SECURITY_OR_DATA_REVIEW"
 assert critical_result["critical_events"]==1
+stale_critical_state={
+    **critical_state,
+    "trigger":{"level":"LEARNING_HEALTHY","reasons":[]},
+}
+stale_critical_result=gate.evaluate(stale_critical_state,defer,datetime(2026,10,15,12,tzinfo=timezone.utc))
+assert stale_critical_result["status"]=="BLOCK_CRITICAL_SECURITY_OR_DATA_REVIEW"
+assert stale_critical_result["effective_trigger"]=="IMMEDIATE_REVIEW"
+stale_escape_state={
+    **state,
+    "trigger":{"level":"LEARNING_HEALTHY","reasons":[]},
+}
+stale_escape_without_defer=gate.evaluate(stale_escape_state,None,datetime(2026,10,15,12,tzinfo=timezone.utc))
+assert stale_escape_without_defer["status"]=="BLOCK_IMMEDIATE_REVIEW_DEBT"
+assert stale_escape_without_defer["effective_trigger"]=="IMMEDIATE_REVIEW"
+stale_escape_with_defer=gate.evaluate(stale_escape_state,defer,datetime(2026,10,15,12,tzinfo=timezone.utc))
+assert stale_escape_with_defer["status"]=="PASS_BOUNDED_REVIEW_DEFER"
+assert stale_escape_with_defer["effective_trigger"]=="IMMEDIATE_REVIEW"
 bad=dict(defer);bad["max_additional_material_tasks"]=0
 bad["fingerprint"]=gate.defer_fingerprint(bad)
 try:

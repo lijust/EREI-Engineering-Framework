@@ -234,30 +234,47 @@ def validate_defer(defer: dict, state: dict, now: datetime) -> dict:
 def evaluate(state: dict, defer: dict | None, now: datetime) -> dict:
     _validate_state(state)
     trigger = state["trigger"]
-    level = trigger.get("level")
-    if level != "IMMEDIATE_REVIEW":
-        return {"status": "PASS_NO_IMMEDIATE_REVIEW", "epoch_id": state.get("epoch_id"), "trigger": level}
-    critical_events = state["metrics_since_last_review"]["security_or_data_critical_events"]
+    reported_level = trigger.get("level")
+    metrics = state["metrics_since_last_review"]
+    critical_events = metrics["security_or_data_critical_events"]
+    verification_escapes = metrics["verification_escapes"]
+
     if critical_events > 0:
         return {
             "status": "BLOCK_CRITICAL_SECURITY_OR_DATA_REVIEW",
             "epoch_id": state.get("epoch_id"),
-            "trigger": level,
+            "trigger": reported_level,
+            "effective_trigger": "IMMEDIATE_REVIEW",
             "critical_events": critical_events,
             "reason": "security/data critical evidence requires review closure and cannot be bypassed by a bounded defer",
         }
+
+    evidence_requires_immediate = verification_escapes > 0
+    effective_immediate = reported_level == "IMMEDIATE_REVIEW" or evidence_requires_immediate
+    if not effective_immediate:
+        return {
+            "status": "PASS_NO_IMMEDIATE_REVIEW",
+            "epoch_id": state.get("epoch_id"),
+            "trigger": reported_level,
+            "effective_trigger": reported_level,
+        }
+
     if defer is None:
         return {
             "status": "BLOCK_IMMEDIATE_REVIEW_DEBT",
             "epoch_id": state.get("epoch_id"),
-            "trigger": level,
-            "reason": "IMMEDIATE_REVIEW requires review closure or a bounded defer record",
+            "trigger": reported_level,
+            "effective_trigger": "IMMEDIATE_REVIEW",
+            "verification_escapes": verification_escapes,
+            "reason": "IMMEDIATE_REVIEW evidence requires review closure or a bounded defer record",
         }
     details = validate_defer(defer, state, now)
     return {
         "status": "PASS_BOUNDED_REVIEW_DEFER",
         "epoch_id": state.get("epoch_id"),
-        "trigger": level,
+        "trigger": reported_level,
+        "effective_trigger": "IMMEDIATE_REVIEW",
+        "verification_escapes": verification_escapes,
         "defer_id": defer["defer_id"],
         **details,
     }
