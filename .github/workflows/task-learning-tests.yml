@@ -8,7 +8,9 @@ on:
       - "schemas/learning-review.schema.json"
       - "schemas/learning-development-output.schema.json"
       - "schemas/learning-review-defer.schema.json"
+      - "schemas/candidate-capability-adoptions.schema.json"
       - "tools/task_learning.py"
+      - "tools/capability_activation.py"
       - "tools/learning_pattern_analysis.py"
       - "tools/learning_review_debt_gate.py"
       - "tools/learning_effectiveness.py"
@@ -19,11 +21,13 @@ on:
       - "tools/tests/test_learning_governance_extensions.py"
       - "tools/tests/test_learning_development_output.py"
       - "tools/tests/test_learning_health_dashboard.py"
+      - "tools/tests/test_capability_activation.py"
       - "skills/task-learning-capture/**"
       - "workflows/learning-review/**"
       - "workflows/learning-to-development/**"
       - "learning/PATTERN_TAXONOMY.json"
       - "learning/development-outputs/**"
+      - "releases/task-learning-v2-release-scope.json"
       - "templates/project-bootstrap/.erei/learning/**"
       - "workflows/router/WORKFLOW.md"
       - "agents/chief-engineer/AGENT.md"
@@ -36,7 +40,9 @@ on:
       - "schemas/learning-review.schema.json"
       - "schemas/learning-development-output.schema.json"
       - "schemas/learning-review-defer.schema.json"
+      - "schemas/candidate-capability-adoptions.schema.json"
       - "tools/task_learning.py"
+      - "tools/capability_activation.py"
       - "tools/learning_pattern_analysis.py"
       - "tools/learning_review_debt_gate.py"
       - "tools/learning_effectiveness.py"
@@ -47,11 +53,13 @@ on:
       - "tools/tests/test_learning_governance_extensions.py"
       - "tools/tests/test_learning_development_output.py"
       - "tools/tests/test_learning_health_dashboard.py"
+      - "tools/tests/test_capability_activation.py"
       - "skills/task-learning-capture/**"
       - "workflows/learning-review/**"
       - "workflows/learning-to-development/**"
       - "learning/PATTERN_TAXONOMY.json"
       - "learning/development-outputs/**"
+      - "releases/task-learning-v2-release-scope.json"
       - "templates/project-bootstrap/.erei/learning/**"
       - "workflows/router/WORKFLOW.md"
       - "agents/chief-engineer/AGENT.md"
@@ -77,7 +85,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Compile task learning tooling
-        run: python -m py_compile tools/task_learning.py tools/learning_pattern_analysis.py tools/learning_review_debt_gate.py tools/learning_effectiveness.py tools/learning_development_output.py tools/learning_health_dashboard.py tools/tests/test_task_learning.py tools/tests/test_learning_pattern_analysis.py tools/tests/test_learning_governance_extensions.py tools/tests/test_learning_development_output.py tools/tests/test_learning_health_dashboard.py
+        run: python -m py_compile tools/task_learning.py tools/capability_activation.py tools/learning_pattern_analysis.py tools/learning_review_debt_gate.py tools/learning_effectiveness.py tools/learning_development_output.py tools/learning_health_dashboard.py tools/tests/test_task_learning.py tools/tests/test_capability_activation.py tools/tests/test_learning_pattern_analysis.py tools/tests/test_learning_governance_extensions.py tools/tests/test_learning_development_output.py tools/tests/test_learning_health_dashboard.py
 
       - name: Validate JSON schemas parse
         run: |
@@ -86,10 +94,15 @@ jobs:
           python -m json.tool schemas/learning-review.schema.json > /dev/null
           python -m json.tool schemas/learning-development-output.schema.json > /dev/null
           python -m json.tool schemas/learning-review-defer.schema.json > /dev/null
+          python -m json.tool schemas/candidate-capability-adoptions.schema.json > /dev/null
+          python -m json.tool releases/task-learning-v2-release-scope.json > /dev/null
           python -m json.tool learning/PATTERN_TAXONOMY.json > /dev/null
 
       - name: Run task learning unit tests
         run: python -m unittest tools.tests.test_task_learning -v
+
+      - name: Run capability activation tests
+        run: python -m unittest tools.tests.test_capability_activation -v
 
       - name: Run learning pattern analysis tests
         run: python tools/tests/test_learning_pattern_analysis.py
