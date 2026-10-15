@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "target_id": "vnext-rc2",
+  "status": "frozen_candidate",
+  "framework_ref": "e95ac24693ba937b14f22a350547a71a0f6fd846",
+  "target_tree": "801a0c4b09d97cae72f249cac2dcf927b1032b09",
+  "selected_at": "2026-10-15T21:40:54Z",
+  "source_branch": "main",
+  "assurance": {
+    "workflow": "Framework Assurance Gate",
+    "run_id": 38811388542,
+    "event": "push",
+    "conclusion": "success"
+  },
+  "stable_baseline": {
+    "baseline": "task-learning-review-v1",
+    "framework_ref": "69079018606750312344cb3c648952b9ab72d35b"
+  },
+  "promotion_authorized": false
+}
