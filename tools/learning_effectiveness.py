@@ -59,6 +59,7 @@ def compare(before: dict, after: dict) -> dict:
     a = after["current_epoch"]
     bm, am = int(b.get("material_tasks",0)), int(a.get("material_tasks",0))
     risk_distance = _tvd(_dist(before,"risks"), _dist(after,"risks"))
+    workflow_distance = _tvd(_dist(before,"workflows"), _dist(after,"workflows"))
     outcome_distance = _tvd(_dist(before,"outcomes"), _dist(after,"outcomes"))
     comparability_reasons = []
     if bm < 5 or am < 5:
@@ -67,6 +68,10 @@ def compare(before: dict, after: dict) -> dict:
         comparability_reasons.append("risk_mix_unavailable")
     elif risk_distance > 0.25:
         comparability_reasons.append("risk_mix_changed_materially")
+    if workflow_distance is None:
+        comparability_reasons.append("workflow_mix_unavailable")
+    elif workflow_distance > 0.25:
+        comparability_reasons.append("workflow_mix_changed_materially")
     if outcome_distance is None:
         comparability_reasons.append("outcome_mix_unavailable")
 
@@ -93,6 +98,7 @@ def compare(before: dict, after: dict) -> dict:
         "samples": {"before_material_tasks":bm,"after_material_tasks":am},
         "comparability": {
             "risk_mix_total_variation": risk_distance,
+            "workflow_mix_total_variation": workflow_distance,
             "outcome_mix_total_variation": outcome_distance,
             "reasons": comparability_reasons,
         },
