@@ -1,6 +1,7 @@
 import json
 import tempfile
 import unittest
+from contextlib import contextmanager
 from pathlib import Path
 from unittest import mock
 
@@ -53,7 +54,7 @@ class ReleaseAssuranceTests(unittest.TestCase):
 
     def enforcement(self, *, equivalent=False):
         return {
-            "schema_version": 1,
+            "schema_version": 2,
             "repository": "lijust/EREI-Engineering-Framework",
             "main_branch": "main",
             "status": "enforced" if equivalent else "candidate_control",
@@ -72,12 +73,21 @@ class ReleaseAssuranceTests(unittest.TestCase):
                 "security_approval_required": True,
                 "exact_target_runtime_evidence_required": True,
                 "complete_prospective_cycle_required": True,
-                "equivalent_enforcement_verified": equivalent,
+                "equivalence_review": {
+                    "target_framework_ref": "a" * 40,
+                    "target_tree": self.TARGET_TREE,
+                    "provenance": {
+                        "kind": "github_codex_clean_review",
+                        "pr_number": 55,
+                        "actor_login": "chatgpt-codex-connector",
+                    },
+                } if equivalent else None,
                 "stable_promotion_policy": "blocked_until_server_or_equivalent_enforcement",
             },
             "evidence": ["test-evidence"],
             "limitations": ["test limitation"],
         }
+
 
     def exact_evidence(self):
         return {
@@ -122,7 +132,7 @@ class ReleaseAssuranceTests(unittest.TestCase):
         suffix = "A1B2C3D4" if approval_type == "architecture" else "E5F6A7B8"
         role = "system-architect" if approval_type == "architecture" else "security-engineer"
         return {
-            "schema_version": 1,
+            "schema_version": 2,
             "approval_id": f"EAPP-20260907T123000Z-{suffix}",
             "approval_type": approval_type,
             "target_framework_ref": "a" * 40,
@@ -132,6 +142,11 @@ class ReleaseAssuranceTests(unittest.TestCase):
             "reviewer": {"kind": "framework_role", "id": role},
             "evidence": ["test-evidence", "release-target:vnext-rc9"],
             "rationale": f"{approval_type} approval for immutable test target.",
+            "provenance": {
+                "kind": "github_owner_approval_comment" if approval_type == "architecture" else "github_codex_clean_review",
+                "pr_number": 61 if approval_type == "architecture" else 62,
+                "actor_login": "lijust" if approval_type == "architecture" else "chatgpt-codex-connector",
+            },
         }
 
     class FakeRunner:
@@ -185,12 +200,30 @@ class ReleaseAssuranceTests(unittest.TestCase):
             "required_eval_case_pairs": [{"suite_id": "suite", "case_id": "case"}],
         }
 
+    @contextmanager
     def scope_patch(self):
-        return mock.patch.object(
+        policy = {
+            "schema_version": 1,
+            "repository": "lijust/EREI-Engineering-Framework",
+            "release_branch_prefix": "release/",
+            "codex_reviewer_login": "chatgpt-codex-connector",
+            "architecture_approver_login": "lijust",
+            "require_verified_merge_commit": True,
+        }
+        with mock.patch.object(
             release_assurance.release_scope,
             "load_target_bound_scope",
             return_value=(self.frozen_scope(), self.frozen_scope_summary()),
-        )
+        ), mock.patch.object(
+            release_assurance.github_release_provenance,
+            "load_target_bound_policy",
+            return_value=policy,
+        ), mock.patch.object(
+            release_assurance.github_release_provenance,
+            "verify_reviewed_file",
+            return_value={"status": "authenticated"},
+        ):
+            yield
 
     def write_scope_root(self, root: Path):
         (root / "evals" / "cases").mkdir(parents=True, exist_ok=True)
@@ -278,7 +311,7 @@ class ReleaseAssuranceTests(unittest.TestCase):
                 json.dumps(self.enforcement(equivalent=False)), encoding="utf-8"
             )
             with self.scope_patch(), \
-                 self.assertRaisesRegex(release_assurance.ReleaseError, "server branch/status-check enforcement"):
+                 self.assertRaisesRegex(release_assurance.ReleaseError, "server branch/status-check enforcement|GitHub-authenticated"):
                 release_assurance.validate_manifest(self.stable(), repo_root=root)
 
     def test_v2_stable_reaches_eval_gate_when_equivalent_enforcement_is_verified(self):
