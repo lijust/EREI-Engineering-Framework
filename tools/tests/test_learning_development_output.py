@@ -34,4 +34,25 @@ try:
     raise AssertionError("expected pattern taxonomy failure")
 except mod.OutputError:
     pass
-print("PASS: Learning Development Output validation preserves promotion boundary and taxonomy.")
+for mutate in (
+    lambda x: x.__setitem__("created_at","T"),
+    lambda x: x.__setitem__("source",{"project_repository":123,"epoch_id":"EPOCH-023"}),
+    lambda x: x.__setitem__("source",{"project_repository":"example/repo","epoch_id":True}),
+    lambda x: x.__setitem__("source",{"project_repository":"example/repo","epoch_id":"EPOCH-023","unknown":"x"}),
+):
+    candidate=dict(value)
+    candidate["source"]=dict(value["source"])
+    mutate(candidate)
+    try:
+        mod.validate(candidate)
+        raise AssertionError("expected nested schema parity failure")
+    except mod.OutputError:
+        pass
+bad_metric=dict(value)
+bad_metric["success_metrics"]=[{"metric":"verification_escape_task_rate","direction":"decrease","unexpected":1}]
+try:
+    mod.validate(bad_metric)
+    raise AssertionError("expected success metric additionalProperties failure")
+except mod.OutputError:
+    pass
+print("PASS: Learning Development Output validation preserves schema, promotion boundary and taxonomy.")

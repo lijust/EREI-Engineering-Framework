@@ -21,23 +21,112 @@ TRIGGER_LEVELS = {
     "REVIEW_DUE",
     "IMMEDIATE_REVIEW",
 }
+EPOCH_ID_RE = __import__("re").compile(r"^EPOCH-[0-9]{3,}$")
+V1_METRICS = {
+    "tasks", "material_tasks", "verified_successes", "blocked_tasks", "failed_tasks",
+    "rework_tasks", "total_rework_cycles", "verification_failure_tasks",
+    "verification_failures", "verification_escapes", "framework_feedback_tasks",
+    "manual_workarounds", "context_gaps", "unexpected_scope_growth_tasks",
+    "security_or_data_critical_events", "max_feedback_fingerprint_occurrences",
+    "rework_rate", "verification_failure_rate",
+}
+V2_REQUIRED_METRICS = V1_METRICS | {
+    "rework_assessed_material_tasks", "verification_assessed_material_tasks",
+    "unassessed_signal_values", "failure_stages", "failure_subjects", "cohorts",
+}
+
+
+def _nonnegative_int(value, label: str) -> None:
+    if type(value) is not int or value < 0:
+        raise ReviewDebtError(f"{label} must be a non-negative integer")
+
+
+def _rate(value, label: str, *, nullable: bool) -> None:
+    if value is None and nullable:
+        return
+    if type(value) not in {int, float} or not 0 <= value <= 1:
+        raise ReviewDebtError(f"{label} must be a number between 0 and 1" + (" or null" if nullable else ""))
+
+
+def _optional_text(value, label: str) -> None:
+    if value is not None and (not isinstance(value, str) or not value.strip()):
+        raise ReviewDebtError(f"{label} must be null or a non-empty string")
 
 
 def _validate_state(state: dict) -> None:
-    if state.get("schema_version") not in {1, 2}:
+    if not isinstance(state, dict):
+        raise ReviewDebtError("learning state must be an object")
+    version = state.get("schema_version")
+    if version == 1:
+        required = {
+            "schema_version", "epoch_id", "updated_at", "last_review_id", "last_review_at",
+            "event_cutoff", "total_events", "metrics_since_last_review", "trigger",
+        }
+        allowed = required
+    elif version == 2:
+        required = {
+            "schema_version", "epoch_id", "updated_at", "last_review_id", "last_review_at",
+            "legacy_event_cutoff", "reviewed_occurrence_count", "total_events",
+            "metrics_since_last_review", "trigger",
+        }
+        allowed = required
+    else:
         raise ReviewDebtError("learning state schema_version must be 1 or 2")
-    epoch_id = state.get("epoch_id")
-    if not isinstance(epoch_id, str) or not epoch_id.startswith("EPOCH-"):
+    missing = sorted(required - set(state))
+    unknown = sorted(set(state) - allowed)
+    if missing:
+        raise ReviewDebtError("learning state missing fields: " + ", ".join(missing))
+    if unknown:
+        raise ReviewDebtError("learning state unknown fields: " + ", ".join(unknown))
+    if not isinstance(state["epoch_id"], str) or not EPOCH_ID_RE.fullmatch(state["epoch_id"]):
         raise ReviewDebtError("learning state epoch_id is invalid")
-    trigger = state.get("trigger")
-    if not isinstance(trigger, dict) or trigger.get("level") not in TRIGGER_LEVELS:
-        raise ReviewDebtError("learning state trigger.level is missing or invalid")
-    metrics = state.get("metrics_since_last_review")
+    _parse_time(state["updated_at"])
+    _optional_text(state["last_review_id"], "last_review_id")
+    if state["last_review_at"] is not None:
+        _parse_time(state["last_review_at"])
+    if version == 1:
+        _nonnegative_int(state["event_cutoff"], "event_cutoff")
+    else:
+        _nonnegative_int(state["legacy_event_cutoff"], "legacy_event_cutoff")
+        _nonnegative_int(state["reviewed_occurrence_count"], "reviewed_occurrence_count")
+    _nonnegative_int(state["total_events"], "total_events")
+
+    metrics = state["metrics_since_last_review"]
     if not isinstance(metrics, dict):
-        raise ReviewDebtError("learning state metrics_since_last_review is required")
-    material_tasks = metrics.get("material_tasks")
-    if not isinstance(material_tasks, int) or material_tasks < 0:
-        raise ReviewDebtError("learning state material_tasks must be a non-negative integer")
+        raise ReviewDebtError("learning state metrics_since_last_review must be an object")
+    required_metrics = V1_METRICS if version == 1 else V2_REQUIRED_METRICS
+    missing_metrics = sorted(required_metrics - set(metrics))
+    if missing_metrics:
+        raise ReviewDebtError("learning state metrics missing fields: " + ", ".join(missing_metrics))
+    if version == 1:
+        unknown_metrics = sorted(set(metrics) - V1_METRICS)
+        if unknown_metrics:
+            raise ReviewDebtError("learning state metrics unknown fields: " + ", ".join(unknown_metrics))
+    integer_metrics = required_metrics - {
+        "rework_rate", "verification_failure_rate", "failure_stages", "failure_subjects", "cohorts",
+    }
+    for key in integer_metrics:
+        _nonnegative_int(metrics[key], f"metrics_since_last_review.{key}")
+    _rate(metrics["rework_rate"], "metrics_since_last_review.rework_rate", nullable=version == 2)
+    _rate(metrics["verification_failure_rate"], "metrics_since_last_review.verification_failure_rate", nullable=version == 2)
+    if version == 2:
+        for key in ("failure_stages", "failure_subjects", "cohorts"):
+            if not isinstance(metrics[key], dict):
+                raise ReviewDebtError(f"metrics_since_last_review.{key} must be an object")
+
+    trigger = state["trigger"]
+    if not isinstance(trigger, dict) or set(trigger) != {"level", "reasons"}:
+        raise ReviewDebtError("learning state trigger must contain exactly level and reasons")
+    allowed_levels = set(TRIGGER_LEVELS)
+    if version == 1:
+        allowed_levels.discard("INSUFFICIENT_EVIDENCE")
+    if trigger.get("level") not in allowed_levels:
+        raise ReviewDebtError("learning state trigger.level is missing or invalid")
+    reasons = trigger.get("reasons")
+    if not isinstance(reasons, list) or any(not isinstance(item, str) or not item.strip() for item in reasons):
+        raise ReviewDebtError("learning state trigger.reasons must be an array of non-empty strings")
+    if len(reasons) != len(set(reasons)):
+        raise ReviewDebtError("learning state trigger.reasons must be unique")
 
 
 def _read(path: Path) -> dict:

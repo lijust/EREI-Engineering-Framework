@@ -23,6 +23,15 @@ SECONDARY = (
     "success_with_deferred_rate",
     "verified_success_rate",
 )
+COVERAGE_BY_METRIC = {
+    "verification_escape_task_rate": "verification_escape_assessment_coverage_rate",
+    "rework_rate": "rework_assessment_coverage_rate",
+    "rework_free_task_rate": "rework_assessment_coverage_rate",
+    "verification_failure_rate": "verification_assessment_coverage_rate",
+    "verification_clean_task_rate": "verification_assessment_coverage_rate",
+}
+MIN_ASSESSMENT_COVERAGE = 0.80
+MAX_COVERAGE_DELTA = 0.10
 
 
 def _load(path: Path) -> dict:
@@ -75,6 +84,26 @@ def compare(before: dict, after: dict) -> dict:
     if outcome_distance is None:
         comparability_reasons.append("outcome_mix_unavailable")
 
+    coverage = {}
+    for key in sorted(set(COVERAGE_BY_METRIC.values())):
+        bv, av = b.get(key), a.get(key)
+        comparable = True
+        reasons = []
+        if type(bv) not in {int, float} or type(av) not in {int, float} or not (0 <= bv <= 1 and 0 <= av <= 1):
+            comparable = False
+            reasons.append("coverage_unavailable")
+            comparability_reasons.append(key + "_unavailable")
+        else:
+            if min(bv, av) < MIN_ASSESSMENT_COVERAGE:
+                comparable = False
+                reasons.append("coverage_below_80_percent")
+                comparability_reasons.append(key + "_below_80_percent")
+            if abs(av - bv) > MAX_COVERAGE_DELTA:
+                comparable = False
+                reasons.append("coverage_changed_materially")
+                comparability_reasons.append(key + "_changed_materially")
+        coverage[key] = {"before": bv, "after": av, "comparable": comparable, "reasons": reasons}
+
     metrics = {}
     for key in PRIMARY + SECONDARY:
         bv, av = b.get(key), a.get(key)
@@ -88,8 +117,12 @@ def compare(before: dict, after: dict) -> dict:
     primary_direction = {}
     for key in PRIMARY:
         if key in metrics:
-            delta = metrics[key]["delta"]
-            primary_direction[key] = "improved" if delta < 0 else "worsened" if delta > 0 else "held"
+            coverage_key = COVERAGE_BY_METRIC.get(key)
+            if coverage_key and not coverage.get(coverage_key, {}).get("comparable", False):
+                primary_direction[key] = "not_comparable"
+            else:
+                delta = metrics[key]["delta"]
+                primary_direction[key] = "improved" if delta < 0 else "worsened" if delta > 0 else "held"
 
     return {
         "schema_version": 1,
@@ -100,7 +133,8 @@ def compare(before: dict, after: dict) -> dict:
             "risk_mix_total_variation": risk_distance,
             "workflow_mix_total_variation": workflow_distance,
             "outcome_mix_total_variation": outcome_distance,
-            "reasons": comparability_reasons,
+            "assessment_coverage": coverage,
+            "reasons": list(dict.fromkeys(comparability_reasons)),
         },
         "primary_quality_signals": primary_direction,
         "metric_deltas": metrics,

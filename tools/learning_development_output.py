@@ -5,9 +5,11 @@ from __future__ import annotations
 import argparse
 import json
 import re
+from datetime import datetime
 from pathlib import Path
 
 OUTPUT_ID=re.compile(r"^LDO-[0-9]{8}T[0-9]{6}Z-[A-F0-9]{8}$")
+RFC3339=re.compile(r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\.[0-9]+)?(?:Z|[+-][0-9]{2}:[0-9]{2})$")
 CLASSES={
  "HEALTHY_PATTERN","PROJECT_LOCAL_ACTION","FRAMEWORK_FEEDBACK",
  "MEASUREMENT_ADJUSTMENT","NEEDS_MORE_EVIDENCE","CRITICAL_FOLLOWUP"
@@ -27,38 +29,71 @@ PATTERN_CLASSES={
 
 class OutputError(RuntimeError): pass
 
+def _exact(value:dict,required:set[str],allowed:set[str],label:str)->None:
+    if not isinstance(value,dict): raise OutputError(f"{label} must be an object")
+    missing=required-set(value);unknown=set(value)-allowed
+    if missing: raise OutputError(f"{label} missing fields: "+",".join(sorted(missing)))
+    if unknown: raise OutputError(f"{label} unknown fields: "+",".join(sorted(unknown)))
+
+def _text(value,label,*,nonempty=True)->None:
+    if not isinstance(value,str) or (nonempty and not value.strip()): raise OutputError(f"{label} must be a string"+(" and non-empty" if nonempty else ""))
+
+def _datetime(value,label)->None:
+    _text(value,label)
+    if not RFC3339.fullmatch(value): raise OutputError(f"{label} must be RFC3339 with timezone")
+    try: parsed=datetime.fromisoformat(value.replace("Z","+00:00"))
+    except ValueError as exc: raise OutputError(f"{label} is invalid") from exc
+    if parsed.tzinfo is None: raise OutputError(f"{label} must include timezone")
+
+def _scalar_or_null(value,label)->None:
+    if value is None:return
+    if isinstance(value,bool) or not isinstance(value,(str,int,float)): raise OutputError(f"{label} must be string, number or null")
+
 def validate(value:dict)->dict:
     required={
       "schema_version","output_id","created_at","source","pattern","interpretation",
       "classification","development_route","evidence","expected_effect","success_metrics",
       "promotion_boundary"
     }
-    optional={"notes"}
-    if not isinstance(value,dict): raise OutputError("output must be an object")
-    unknown=set(value)-required-optional
-    missing=required-set(value)
-    if missing: raise OutputError("missing fields: "+",".join(sorted(missing)))
-    if unknown: raise OutputError("unknown fields: "+",".join(sorted(unknown)))
+    _exact(value,required,required|{"notes"},"output")
     if value["schema_version"]!=1: raise OutputError("schema_version must be 1")
-    if not isinstance(value["output_id"],str) or not OUTPUT_ID.match(value["output_id"]): raise OutputError("invalid output_id")
-    if not isinstance(value["created_at"],str) or "T" not in value["created_at"]: raise OutputError("invalid created_at")
+    if not isinstance(value["output_id"],str) or not OUTPUT_ID.fullmatch(value["output_id"]): raise OutputError("invalid output_id")
+    _datetime(value["created_at"],"created_at")
+
     source=value["source"]
-    if not isinstance(source,dict) or not source.get("project_repository") or not source.get("epoch_id"): raise OutputError("source project_repository and epoch_id required")
+    _exact(source,{"project_repository","epoch_id"},{"project_repository","epoch_id","review_id","framework_ref"},"source")
+    _text(source["project_repository"],"source.project_repository")
+    _text(source["epoch_id"],"source.epoch_id")
+    for key in ("review_id","framework_ref"):
+        if key in source:_text(source[key],f"source.{key}")
+
     pattern=value["pattern"]
-    if not isinstance(pattern,dict) or not pattern.get("pattern_id") or not pattern.get("pattern_class") or not pattern.get("signal_summary"): raise OutputError("pattern fields required")
-    if pattern.get("pattern_class") not in PATTERN_CLASSES: raise OutputError("invalid pattern_class")
-    if not isinstance(value["interpretation"],str) or not value["interpretation"].strip(): raise OutputError("interpretation required")
+    _exact(pattern,{"pattern_id","pattern_class","signal_summary"},{"pattern_id","pattern_class","signal_summary"},"pattern")
+    _text(pattern["pattern_id"],"pattern.pattern_id")
+    if pattern["pattern_class"] not in PATTERN_CLASSES: raise OutputError("invalid pattern_class")
+    _text(pattern["signal_summary"],"pattern.signal_summary")
+
+    _text(value["interpretation"],"interpretation")
     if value["classification"] not in CLASSES: raise OutputError("invalid classification")
     if value["development_route"] not in ROUTES: raise OutputError("invalid development_route")
     evidence=value["evidence"]
-    if not isinstance(evidence,list) or not evidence or len(evidence)!=len(set(evidence)): raise OutputError("evidence must be non-empty and unique")
-    if not isinstance(value["expected_effect"],str) or not value["expected_effect"].strip(): raise OutputError("expected_effect required")
+    if not isinstance(evidence,list) or not evidence: raise OutputError("evidence must be non-empty")
+    for item in evidence:_text(item,"evidence item")
+    if len(evidence)!=len(set(evidence)): raise OutputError("evidence must be unique")
+    _text(value["expected_effect"],"expected_effect")
+
     metrics=value["success_metrics"]
     if not isinstance(metrics,list) or not metrics: raise OutputError("success_metrics required")
-    for metric in metrics:
-        if not isinstance(metric,dict) or not metric.get("metric") or metric.get("direction") not in DIRECTIONS:
-            raise OutputError("invalid success metric")
+    for index,metric in enumerate(metrics):
+        _exact(metric,{"metric","direction"},{"metric","direction","baseline","target","notes"},f"success_metrics[{index}]")
+        _text(metric["metric"],f"success_metrics[{index}].metric")
+        if metric["direction"] not in DIRECTIONS: raise OutputError("invalid success metric direction")
+        for key in ("baseline","target"):
+            if key in metric:_scalar_or_null(metric[key],f"success_metrics[{index}].{key}")
+        if "notes" in metric:_text(metric["notes"],f"success_metrics[{index}].notes",nonempty=False)
+
     if value["promotion_boundary"] not in BOUNDARIES: raise OutputError("invalid promotion_boundary")
+    if "notes" in value:_text(value["notes"],"notes",nonempty=False)
     if value["classification"]=="FRAMEWORK_FEEDBACK" and value["development_route"] not in {"framework_feedback","evidence_collection"}:
         raise OutputError("FRAMEWORK_FEEDBACK must route to framework_feedback or evidence_collection before candidate promotion")
     if value["development_route"]=="framework_candidate" and value["promotion_boundary"]=="project_only":
@@ -66,12 +101,9 @@ def validate(value:dict)->dict:
     return {"status":"VALID","output_id":value["output_id"]}
 
 def main(argv=None)->int:
-    p=argparse.ArgumentParser()
-    p.add_argument("--input",required=True)
-    args=p.parse_args(argv)
+    p=argparse.ArgumentParser();p.add_argument("--input",required=True);args=p.parse_args(argv)
     try:
-        value=json.loads(Path(args.input).read_text(encoding="utf-8"))
-        result=validate(value)
+        value=json.loads(Path(args.input).read_text(encoding="utf-8"));result=validate(value)
     except (OSError,json.JSONDecodeError,OutputError) as exc:
         print(json.dumps({"status":"INVALID","error":str(exc)},sort_keys=True));return 2
     print(json.dumps(result,sort_keys=True));return 0

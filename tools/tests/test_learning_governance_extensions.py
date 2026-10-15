@@ -14,13 +14,36 @@ eff=load("learning_effectiveness","learning_effectiveness.py")
 state={
  "schema_version":1,
  "epoch_id":"EPOCH-023",
- "trigger":{"level":"IMMEDIATE_REVIEW","reasons":["verification_escape_observed"]},
- "metrics_since_last_review":{"material_tasks":29}
+ "updated_at":"2026-10-15T00:00:00Z",
+ "last_review_id":"ELR-20261005T143400Z-A15C4062",
+ "last_review_at":"2026-10-05T14:34:00Z",
+ "event_cutoff":126,
+ "total_events":155,
+ "metrics_since_last_review":{
+   "tasks":29,"material_tasks":29,"verified_successes":11,"blocked_tasks":0,"failed_tasks":0,
+   "rework_tasks":22,"total_rework_cycles":47,"verification_failure_tasks":17,
+   "verification_failures":38,"verification_escapes":2,"framework_feedback_tasks":0,
+   "manual_workarounds":0,"context_gaps":0,"unexpected_scope_growth_tasks":0,
+   "security_or_data_critical_events":0,"max_feedback_fingerprint_occurrences":0,
+   "rework_rate":0.7586,"verification_failure_rate":0.5862
+ },
+ "trigger":{"level":"IMMEDIATE_REVIEW","reasons":["verification_escape_observed"]}
 }
 assert gate.evaluate(state,None,datetime(2026,10,15,tzinfo=timezone.utc))["status"]=="BLOCK_IMMEDIATE_REVIEW_DEBT"
 try:
     gate.evaluate({},None,datetime(2026,10,15,tzinfo=timezone.utc))
     raise AssertionError("expected malformed state failure")
+except gate.ReviewDebtError:
+    pass
+truncated={
+ "schema_version":2,"epoch_id":"EPOCH-garbage","updated_at":"2026-10-15T00:00:00Z",
+ "last_review_id":None,"last_review_at":None,"legacy_event_cutoff":0,"reviewed_occurrence_count":0,
+ "total_events":0,"metrics_since_last_review":{"material_tasks":0},
+ "trigger":{"level":"LEARNING_HEALTHY","reasons":[]}
+}
+try:
+    gate.evaluate(truncated,None,datetime(2026,10,15,tzinfo=timezone.utc))
+    raise AssertionError("expected schema-invalid state failure")
 except gate.ReviewDebtError:
     pass
 defer={
@@ -62,14 +85,18 @@ before={"current_epoch":{
  "verification_escape_task_rate":0.2,"final_failed_task_rate":0.1,
  "rework_rate":0.7,"rework_free_task_rate":0.3,
  "verification_failure_rate":0.6,"verification_clean_task_rate":0.4,
- "success_with_deferred_rate":0.2,"verified_success_rate":0.8
+ "success_with_deferred_rate":0.2,"verified_success_rate":0.8,
+ "rework_assessment_coverage_rate":1.0,"verification_assessment_coverage_rate":1.0,
+ "verification_escape_assessment_coverage_rate":1.0
 }}
 after={"current_epoch":{
  "material_tasks":10,"risks":{"L3":9,"L2":1},"workflows":{"feature-development":9,"bug-fix":1},"outcomes":{"verified_success":9,"success_with_deferred":1},
  "verification_escape_task_rate":0.0,"final_failed_task_rate":0.0,
  "rework_rate":0.6,"rework_free_task_rate":0.4,
  "verification_failure_rate":0.7,"verification_clean_task_rate":0.3,
- "success_with_deferred_rate":0.1,"verified_success_rate":0.9
+ "success_with_deferred_rate":0.1,"verified_success_rate":0.9,
+ "rework_assessment_coverage_rate":1.0,"verification_assessment_coverage_rate":1.0,
+ "verification_escape_assessment_coverage_rate":1.0
 }}
 report=eff.compare(before,after)
 assert report["status"]=="COMPARABLE_DIRECTIONAL_ONLY"
@@ -81,4 +108,11 @@ changed_workflow["current_epoch"]["workflows"]={"security-critical-change":10}
 workflow_report=eff.compare(before,changed_workflow)
 assert workflow_report["status"]=="NEEDS_COMPARABILITY_REVIEW"
 assert "workflow_mix_changed_materially" in workflow_report["comparability"]["reasons"]
+coverage_shift={"current_epoch":dict(after["current_epoch"])}
+coverage_shift["current_epoch"]["verification_escape_assessment_coverage_rate"]=0.5
+coverage_report=eff.compare(before,coverage_shift)
+assert coverage_report["status"]=="NEEDS_COMPARABILITY_REVIEW"
+assert coverage_report["primary_quality_signals"]["verification_escape_task_rate"]=="not_comparable"
+assert "verification_escape_assessment_coverage_rate_below_80_percent" in coverage_report["comparability"]["reasons"]
+assert "verification_escape_assessment_coverage_rate_changed_materially" in coverage_report["comparability"]["reasons"]
 print("PASS: review-debt and effectiveness semantics are fail-closed and causation-safe.")
