@@ -43,7 +43,7 @@ def validate_scope(repo_root: Path, value: dict) -> dict:
     fields = {
         "schema_version", "scope_id", "status", "release_family", "target_baseline",
         "capabilities", "release_control_dependencies", "required_eval_suites",
-        "required_deterministic_workflows", "excluded_candidate_capabilities",
+        "excluded_candidate_capabilities",
         "post_promotion_gates", "rationale",
     }
     if set(value) != fields:
@@ -63,13 +63,30 @@ def validate_scope(repo_root: Path, value: dict) -> dict:
     if len(value["rationale"].strip()) < 20:
         raise ReleaseScopeError("rationale must contain at least 20 characters")
 
-    capabilities = _unique_text_list(value["capabilities"], "capabilities", minimum=1)
-    dependencies = _unique_text_list(value["release_control_dependencies"], "release_control_dependencies")
+    def capability_bindings(raw, label: str, *, minimum: int = 0) -> list[dict]:
+        if not isinstance(raw, list) or len(raw) < minimum:
+            raise ReleaseScopeError(f"{label} must contain at least {minimum} item(s)")
+        result = []
+        seen = set()
+        for index, item in enumerate(raw):
+            if not isinstance(item, dict) or set(item) != {"name", "version"}:
+                raise ReleaseScopeError(f"{label}[{index}] must contain exactly name and version")
+            name, version = item["name"], item["version"]
+            if not isinstance(name, str) or not name.strip() or not isinstance(version, str) or not version.strip():
+                raise ReleaseScopeError(f"{label}[{index}] name/version must be non-empty strings")
+            if name in seen:
+                raise ReleaseScopeError(f"{label} contains duplicate capability: {name}")
+            seen.add(name)
+            result.append({"name": name, "version": version})
+        return result
+
+    capabilities = capability_bindings(value["capabilities"], "capabilities", minimum=1)
+    dependencies = capability_bindings(value["release_control_dependencies"], "release_control_dependencies")
     excluded = _unique_text_list(value["excluded_candidate_capabilities"], "excluded_candidate_capabilities")
-    workflows = _unique_text_list(value["required_deterministic_workflows"], "required_deterministic_workflows", minimum=1)
     _unique_text_list(value["post_promotion_gates"], "post_promotion_gates")
 
-    overlap = (set(capabilities) | set(dependencies)) & set(excluded)
+    included_names = {item["name"] for item in capabilities + dependencies}
+    overlap = included_names & set(excluded)
     if overlap:
         raise ReleaseScopeError("included and excluded capabilities overlap: " + ", ".join(sorted(overlap)))
 
@@ -78,9 +95,20 @@ def validate_scope(repo_root: Path, value: dict) -> dict:
     registered = development.get("capabilities") if isinstance(development, dict) else None
     if not isinstance(registered, dict):
         raise ReleaseScopeError("CAPABILITIES.json has no development_line.capabilities")
-    missing_caps = sorted((set(capabilities) | set(dependencies) | set(excluded)) - set(registered))
+    missing_caps = sorted((included_names | set(excluded)) - set(registered))
     if missing_caps:
         raise ReleaseScopeError("release scope references unknown capabilities: " + ", ".join(missing_caps))
+    for binding in capabilities + dependencies:
+        registered_version = registered[binding["name"]].get("version") if isinstance(registered[binding["name"]], dict) else None
+        if registered_version != binding["version"]:
+            raise ReleaseScopeError(
+                f"release scope version mismatch for {binding['name']}: "
+                f"scope={binding['version']!r} registry={registered_version!r}"
+            )
+    for name in excluded:
+        record = registered[name]
+        if not isinstance(record, dict) or record.get("status") != "candidate":
+            raise ReleaseScopeError(f"excluded capability must currently be Candidate: {name}")
 
     suites = value["required_eval_suites"]
     if not isinstance(suites, list) or not suites:
@@ -127,7 +155,6 @@ def validate_scope(repo_root: Path, value: dict) -> dict:
         "capabilities": capabilities,
         "release_control_dependencies": dependencies,
         "excluded_candidate_capabilities": excluded,
-        "required_workflows": workflows,
         "required_eval_suite_count": len(suites),
         "required_eval_case_count": len(expected_cases),
         "required_eval_cases": sorted([f"{suite}/{case}" for suite, case in expected_cases]),
