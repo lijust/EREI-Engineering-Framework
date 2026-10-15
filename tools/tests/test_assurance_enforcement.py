@@ -62,7 +62,7 @@ class AssuranceEnforcementTests(unittest.TestCase):
             "target_framework_ref": "a" * 40,
             "target_tree": "b" * 40,
             "provenance": {
-                "kind": "github_codex_clean_review",
+                "kind": "github_codex_clean_security_review",
                 "pr_number": 55,
                 "actor_login": "chatgpt-codex-connector",
             },
@@ -93,7 +93,7 @@ class AssuranceEnforcementTests(unittest.TestCase):
             "target_framework_ref": "a" * 40,
             "target_tree": "b" * 40,
             "provenance": {
-                "kind": "github_codex_clean_review",
+                "kind": "github_codex_clean_security_review",
                 "pr_number": 55,
                 "actor_login": "chatgpt-codex-connector",
             },
