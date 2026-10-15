@@ -29,6 +29,32 @@ class ReleaseApprovalTests(unittest.TestCase):
         )
         self.assertEqual(value["decision"], "approved")
 
+    def test_v2_architecture_requires_owner_comment_provenance(self):
+        value = self.valid("architecture")
+        value["schema_version"] = 2
+        value["provenance"] = {
+            "kind": "github_owner_approval_comment",
+            "pr_number": 61,
+            "actor_login": "lijust",
+        }
+        result = mod.validate_record(value, require_authenticated_provenance=True)
+        self.assertEqual(result["schema_version"], 2)
+
+    def test_v2_security_requires_clean_codex_provenance(self):
+        value = self.valid("security")
+        value["schema_version"] = 2
+        value["provenance"] = {
+            "kind": "github_codex_clean_review",
+            "pr_number": 62,
+            "actor_login": "chatgpt-codex-connector",
+        }
+        result = mod.validate_record(value, require_authenticated_provenance=True)
+        self.assertEqual(result["schema_version"], 2)
+
+    def test_v1_cannot_satisfy_authenticated_stable_approval(self):
+        with self.assertRaisesRegex(mod.ReleaseApprovalError, "schema_version=2"):
+            mod.validate_record(self.valid(), require_authenticated_provenance=True)
+
     def test_unknown_field_fails_closed(self):
         value = self.valid()
         value["extra"] = True
