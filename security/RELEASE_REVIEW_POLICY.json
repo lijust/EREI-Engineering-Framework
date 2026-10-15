@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "repository": "lijust/EREI-Engineering-Framework",
+  "release_branch_prefix": "release/",
+  "codex_reviewer_login": "chatgpt-codex-connector",
+  "architecture_approver_login": "lijust",
+  "require_verified_merge_commit": true
+}
