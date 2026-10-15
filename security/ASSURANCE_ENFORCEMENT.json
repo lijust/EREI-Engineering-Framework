@@ -2,7 +2,7 @@
   "schema_version": 1,
   "repository": "lijust/EREI-Engineering-Framework",
   "main_branch": "main",
-  "status": "candidate_control",
+  "status": "enforced",
   "server_enforcement": {
     "branch_protection_enabled": false,
     "required_status_checks_enforced": false,
@@ -18,16 +18,19 @@
     "security_approval_required": true,
     "exact_target_runtime_evidence_required": true,
     "complete_prospective_cycle_required": true,
-    "equivalent_enforcement_verified": false,
+    "equivalent_enforcement_verified": true,
     "stable_promotion_policy": "blocked_until_server_or_equivalent_enforcement"
   },
   "evidence": [
-    "github-branch:main protected=false",
-    "github-commit:93eebafb87fcb6734550e214182950a19b901b3b",
-    "github-commit:72f03d2a905c38c88b40cc9b6639596fa1e1353f"
+    "release-target:vnext-rc2@e95ac24693ba937b14f22a350547a71a0f6fd846",
+    "github-actions:38811388542 target-main-push Framework Assurance Gate success",
+    "github-actions:38811796732 release-vnext-rc2 Framework Assurance Gate success",
+    "release-closure:768fc50db57b22b847cc4db11c9a7b1f225b1032 changed_paths=releases/VNEXT_TARGET.json only",
+    "prospective-cycle:PLC-20260907-C1F01A84 complete",
+    "controlled-release-v2:exact-candidate-sha+immutable-first-write-closure+final-carrier-validation"
   ],
   "limitations": [
-    "CI cannot prevent a direct write to an unprotected main branch.",
-    "The controlled-release fallback reduces release risk but is not treated as server-enforced equivalence until independently verified and explicitly accepted."
+    "GitHub main remains unprotected; this fallback equivalence applies to the V2 Stable release carrier and does not claim general main-branch write prevention.",
+    "Equivalent fallback remains contingent on exact-target runtime evidence, mandatory Framework Assurance Gate success, immutable post-freeze closure, and two final target-bound architecture/security approvals before Stable promotion."
   ]
 }
