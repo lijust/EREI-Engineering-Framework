@@ -1,0 +1,39 @@
+name: Discover independent runtime
+
+on:
+  push:
+    branches:
+      - ops/discover-independent-runtime-20261016
+
+permissions:
+  contents: read
+
+jobs:
+  discover:
+    runs-on: [self-hosted, Windows, X64]
+    timeout-minutes: 5
+    steps:
+      - name: Inspect runtime commands without reading secrets
+        shell: powershell
+        run: |
+          $names = @('codex','claude','opencode','ollama','lmstudio','aider','gemini','chatgpt','python','node','docker')
+          foreach ($name in $names) {
+            $cmd = get-command $name -erroraction silentlycontinue
+            if ($null -eq $cmd) {
+              write-output "runtime_command=$name status=missing"
+            } else {
+              write-output "runtime_command=$name status=present source=$($cmd.source)"
+            }
+          }
+          $ollama = get-command ollama -erroraction silentlycontinue
+          if ($null -ne $ollama) {
+            write-output '--- ollama version ---'
+            ollama --version
+            write-output '--- ollama models ---'
+            ollama list
+          }
+          $docker = get-command docker -erroraction silentlycontinue
+          if ($null -ne $docker) {
+            write-output '--- docker running images ---'
+            docker ps --format 'table {{.Image}}	{{.Names}}'
+          }
