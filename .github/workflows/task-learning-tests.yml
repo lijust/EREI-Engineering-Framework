@@ -15,7 +15,6 @@ on:
       - "tools/learning_development_output.py"
       - "tools/tests/test_task_learning.py"
       - "tools/tests/test_learning_pattern_analysis.py"
-      - "tools/tests/test_learning_governance_extensions.py tools/tests/test_learning_development_output.py"
       - "tools/tests/test_learning_development_output.py"
       - "skills/task-learning-capture/**"
       - "workflows/learning-review/**"
@@ -71,7 +70,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Compile task learning tooling
-        run: python -m py_compile tools/task_learning.py tools/learning_pattern_analysis.py tools/learning_review_debt_gate.py tools/learning_effectiveness.py tools/learning_development_output.py tools/tests/test_task_learning.py tools/tests/test_learning_pattern_analysis.py tools/tests/test_learning_governance_extensions.py
+        run: python -m py_compile tools/task_learning.py tools/learning_pattern_analysis.py tools/learning_review_debt_gate.py tools/learning_effectiveness.py tools/learning_development_output.py tools/tests/test_task_learning.py tools/tests/test_learning_pattern_analysis.py tools/tests/test_learning_governance_extensions.py tools/tests/test_learning_development_output.py
 
       - name: Validate JSON schemas parse
         run: |
