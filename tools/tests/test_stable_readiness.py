@@ -107,6 +107,37 @@ class ReleaseScopeReadinessTests(unittest.TestCase):
         self.git("config", "user.email", "test@example.invalid")
         self.git("config", "user.name", "EREI Test")
         (self.repo / "evals" / "cases").mkdir(parents=True)
+        (self.repo / "evals" / "runner.py").write_text(
+            """
+def validate_suite(data, path):
+    errors = []
+    if not isinstance(data, dict):
+        return [f"{path}: root must be object"]
+    if not isinstance(data.get("suite_id"), str) or not data.get("suite_id"):
+        errors.append(f"{path}: suite_id must be non-empty")
+    cases = data.get("cases")
+    if not isinstance(cases, list) or not cases:
+        errors.append(f"{path}: cases must be non-empty")
+        return errors
+    for index, case in enumerate(cases):
+        if not isinstance(case, dict):
+            errors.append(f"{path}: cases[{index}] must be object")
+            continue
+        if not isinstance(case.get("id"), str) or not case.get("id"):
+            errors.append(f"{path}: cases[{index}].id missing")
+        if not isinstance(case.get("input"), dict):
+            errors.append(f"{path}: cases[{index}].input must be object")
+        expectations = case.get("expectations")
+        if not isinstance(expectations, list) or not expectations:
+            errors.append(f"{path}: cases[{index}].expectations must be non-empty")
+            continue
+        for exp_index, expectation in enumerate(expectations):
+            if not isinstance(expectation, dict) or expectation.get("type") != "output_contains_all":
+                errors.append(f"{path}: cases[{index}].expectations[{exp_index}] unsupported")
+    return errors
+""".strip() + "\n",
+            encoding="utf-8",
+        )
         (self.repo / "releases").mkdir()
         registry = {
             "schema_version": 1,
