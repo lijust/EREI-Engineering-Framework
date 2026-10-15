@@ -43,6 +43,17 @@ This validates the need for V2 fields such as:
 
 ## Promotion blockers that remain
 
+### Closed since the first 2026-10-15 draft
+
+The following previously listed actions are now closed by durable evidence:
+
+- EREI-App-Google EPOCH-023 was closed at event 155 in PR #497 and advanced to EPOCH-024.
+- the two reusable October observations were ingested centrally and converted to structured decisions and Learning Development Outputs;
+- exact-execution-environment conformance and exclusive-claim analysis now have native Framework Candidate skills/evals;
+- semantic-assurance friction is independently corroborated by a second materially different brownfield project, EREI-3.2, through merged PRs #170-#172 and first real post-bootstrap Task Learning/Framework Feedback evidence.
+
+These closures reduce uncertainty around the learning architecture, but they do not authorize Stable promotion.
+
 ### 1. Authoritative project adoption
 
 EREI-App-Google still pins Stable `task-learning-review-v1 @ 690790...`.
@@ -91,11 +102,17 @@ Promotion review should decide whether these are bundled with V2 or remain indep
 `NOT_READY_FOR_STABLE_PROMOTION_YET`.
 
 The remaining problem is no longer lack of real-project learning volume. The remaining work is:
-1. close and merge the current EPOCH-023 review;
-2. central-intake the two new reusable feedback items;
-3. complete CI/assurance on the October learning candidates;
-4. run a bounded EPOCH-024 cohort with the corrected metric interpretation;
-5. prepare an immutable V2 release candidate and exact promotion evidence;
-6. move a project pin only through Framework Upgrade Workflow.
+1. complete CI/assurance on the October learning candidates;
+2. run a bounded EPOCH-024 cohort with the corrected metric interpretation;
+3. decide whether Learning Pattern Analysis / Learning-to-Development / Review Debt / Effectiveness ship in the same V2 release or as separate Candidates;
+4. prepare an immutable V2 release candidate and exact promotion evidence;
+5. verify legacy V1/V2 compatibility and assessment-coverage semantics on the frozen release candidate;
+6. move a project pin only through Framework Upgrade Workflow after Stable promotion.
+
+## Current recommendation
+
+`NOT_READY_FOR_STABLE_PROMOTION_YET`.
+
+The remaining blockers are now **release/evidence blockers**, not lack-of-learning-volume blockers. Do not reopen closed historical blockers unless new evidence invalidates the closure.
 
 No blocker should be carried forward merely because it appeared in an older Candidate manifest; every blocker must be revalidated against current evidence.
