@@ -111,10 +111,20 @@ def validate_record(
             provenance = github_release_provenance.validate_provenance_shape(value["provenance"])
         except github_release_provenance.GitHubProvenanceError as exc:
             raise ReleaseApprovalError(f"invalid authenticated provenance shape: {exc}") from exc
-        if value["approval_type"] == "architecture" and provenance["kind"] != "github_owner_approval_comment":
-            raise ReleaseApprovalError("architecture approval V2 requires github_owner_approval_comment provenance")
-        if value["approval_type"] == "security" and provenance["kind"] != "github_codex_clean_review":
-            raise ReleaseApprovalError("security approval V2 requires github_codex_clean_review provenance")
+        if value["approval_type"] == "architecture":
+            if provenance["kind"] != "github_owner_approval_comment":
+                raise ReleaseApprovalError("architecture approval V2 requires github_owner_approval_comment provenance")
+            if reviewer["kind"] != "github_user" or reviewer["id"] != provenance["actor_login"]:
+                raise ReleaseApprovalError(
+                    "architecture approval reviewer must be the authenticated GitHub provenance actor"
+                )
+        if value["approval_type"] == "security":
+            if provenance["kind"] != "github_codex_clean_review":
+                raise ReleaseApprovalError("security approval V2 requires github_codex_clean_review provenance")
+            if reviewer["kind"] != "external_reviewer" or reviewer["id"] != provenance["actor_login"]:
+                raise ReleaseApprovalError(
+                    "security approval reviewer must be the authenticated external provenance actor"
+                )
     elif require_authenticated_provenance:
         raise ReleaseApprovalError("V2 Stable requires schema_version=2 authenticated approval provenance")
 
