@@ -44,12 +44,67 @@ class AssuranceEnforcementTests(unittest.TestCase):
         with self.assertRaisesRegex(assurance_enforcement.EnforcementError, "status=enforced"):
             assurance_enforcement.validate_enforcement(self.base(status="enforced"))
 
-    def test_verified_equivalent_fallback_can_satisfy_stable_enforcement(self):
+    def test_legacy_self_asserted_equivalence_cannot_satisfy_stable_enforcement(self):
         value = self.base(status="enforced")
         value["fallback"] = {**value["fallback"], "equivalent_enforcement_verified": True}
         result = assurance_enforcement.validate_enforcement(value)
-        self.assertTrue(result["stable_enforcement_satisfied"])
-        self.assertTrue(result["fallback_equivalent_verified"])
+        self.assertTrue(result["fallback_equivalence_claimed"])
+        self.assertFalse(result["stable_enforcement_satisfied"])
+        with self.assertRaisesRegex(assurance_enforcement.EnforcementError, "not target-bound"):
+            assurance_enforcement.validate_enforcement(value, authenticated_fallback=True)
+
+    def test_v2_target_bound_equivalence_requires_authenticated_verifier_result(self):
+        value = self.base(status="enforced")
+        value["schema_version"] = 2
+        fallback = dict(value["fallback"])
+        fallback.pop("equivalent_enforcement_verified")
+        fallback["equivalence_review"] = {
+            "target_framework_ref": "a" * 40,
+            "target_tree": "b" * 40,
+            "provenance": {
+                "kind": "github_codex_clean_review",
+                "pr_number": 55,
+                "actor_login": "chatgpt-codex-connector",
+            },
+        }
+        value["fallback"] = fallback
+        static = assurance_enforcement.validate_enforcement(
+            value,
+            expected_target_ref="a" * 40,
+            expected_target_tree="b" * 40,
+        )
+        self.assertTrue(static["fallback_equivalence_claimed"])
+        self.assertFalse(static["stable_enforcement_satisfied"])
+        verified = assurance_enforcement.validate_enforcement(
+            value,
+            expected_target_ref="a" * 40,
+            expected_target_tree="b" * 40,
+            authenticated_fallback=True,
+        )
+        self.assertTrue(verified["stable_enforcement_satisfied"])
+        self.assertTrue(verified["fallback_equivalent_verified"])
+
+    def test_v2_equivalence_cannot_be_reused_for_another_target(self):
+        value = self.base(status="enforced")
+        value["schema_version"] = 2
+        fallback = dict(value["fallback"])
+        fallback.pop("equivalent_enforcement_verified")
+        fallback["equivalence_review"] = {
+            "target_framework_ref": "a" * 40,
+            "target_tree": "b" * 40,
+            "provenance": {
+                "kind": "github_codex_clean_review",
+                "pr_number": 55,
+                "actor_login": "chatgpt-codex-connector",
+            },
+        }
+        value["fallback"] = fallback
+        with self.assertRaisesRegex(assurance_enforcement.EnforcementError, "target ref"):
+            assurance_enforcement.validate_enforcement(
+                value,
+                expected_target_ref="c" * 40,
+                expected_target_tree="b" * 40,
+            )
 
     def test_boolean_fields_reject_integer_aliases(self):
         value = self.base()
