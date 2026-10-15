@@ -7,6 +7,7 @@ MODULE = pathlib.Path(__file__).resolve().parents[1] / "learning_pattern_analysi
 spec = importlib.util.spec_from_file_location("learning_pattern_analysis", MODULE)
 mod = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(mod)
+assert pathlib.Path(mod.authoritative_task_learning.__file__).resolve() == MODULE.parent / "task_learning.py"
 
 
 def event(task_id, schema=2, **overrides):
@@ -228,13 +229,11 @@ with tempfile.TemporaryDirectory() as tmp:
         }),
         encoding="utf-8",
     )
+    projection_before = (learning / "TASK_EVENTS.jsonl").read_bytes()
+    state_before = (learning / "LEARNING_STATE.json").read_bytes()
     loaded = mod.analyze_target(target)
     assert loaded["current_epoch"]["verification_escapes"] == 1
-    rebuilt = [
-        json.loads(line)
-        for line in (learning / "TASK_EVENTS.jsonl").read_text(encoding="utf-8").splitlines()
-        if line.strip()
-    ]
-    assert [item["occurrence_id"] for item in rebuilt] == [authoritative["occurrence_id"]]
+    assert (learning / "TASK_EVENTS.jsonl").read_bytes() == projection_before == b""
+    assert (learning / "LEARNING_STATE.json").read_bytes() == state_before
 
 print("PASS: learning pattern analysis detects review debt, mixed evidence and escape clusters.")

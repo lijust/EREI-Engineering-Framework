@@ -9,17 +9,30 @@ state; its output is review input only.
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 import sys
 from collections import Counter
 from pathlib import Path
 
 TOOLS_DIR = Path(__file__).resolve().parent
-if str(TOOLS_DIR) not in sys.path:
-    sys.path.insert(0, str(TOOLS_DIR))
 
-import task_learning as authoritative_task_learning
 
+def _load_exact_sibling(name: str, path: Path):
+    spec = importlib.util.spec_from_file_location(name, path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"cannot load sibling module: {path}")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+_load_exact_sibling("validation_contract", TOOLS_DIR / "validation_contract.py")
+authoritative_task_learning = _load_exact_sibling(
+    "_erei_authoritative_task_learning",
+    TOOLS_DIR / "task_learning.py",
+)
 
 class LearningPatternError(RuntimeError):
     pass
@@ -361,18 +374,16 @@ def _render_markdown(report: dict) -> str:
 
 
 def analyze_target(target: Path) -> dict:
-    learning = target / ".erei" / "learning"
     try:
-        authoritative_task_learning.status(target)
+        snapshot = authoritative_task_learning.authoritative_snapshot(target)
     except authoritative_task_learning.LearningError as exc:
-        raise LearningPatternError(f"authoritative Task Learning rebuild failed: {exc}") from exc
-    events = _read_jsonl(learning / "TASK_EVENTS.jsonl")
-    reviews = _read_jsonl(learning / "LEARNING_REVIEWS.jsonl")
-    state = _read_json(learning / "LEARNING_STATE.json")
+        raise LearningPatternError(f"authoritative Task Learning snapshot failed: {exc}") from exc
+    events = snapshot["events"]
+    reviews = snapshot["reviews"]
+    state = snapshot["state"]
     if not events:
         raise LearningPatternError("no prospective Task Learning events found")
     return analyze(events, reviews, state)
-
 
 def parse_args(argv=None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Analyze EREI Task Learning patterns without mutating project state.")

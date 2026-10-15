@@ -240,6 +240,27 @@ class TaskLearningTests(unittest.TestCase):
         finally:
             temp.cleanup()
 
+    def test_authoritative_snapshot_is_read_only(self):
+        temp, target = self.make_project()
+        try:
+            event = task_learning.build_event(self.event_args(verification_escape=True))
+            task_learning.capture(target, event)
+            learning = target / ".erei" / "learning"
+            watched = [
+                learning / "TASK_EVENTS.jsonl",
+                learning / "LEARNING_REVIEWS.jsonl",
+                learning / "LEARNING_STATE.json",
+                learning / "LEARNING_SUMMARY.md",
+            ]
+            before = {str(path): path.read_bytes() if path.exists() else None for path in watched}
+            snapshot = task_learning.authoritative_snapshot(target)
+            after = {str(path): path.read_bytes() if path.exists() else None for path in watched}
+            self.assertEqual(before, after)
+            self.assertEqual(snapshot["events"], [event])
+            self.assertEqual(snapshot["state"]["trigger"]["level"], "IMMEDIATE_REVIEW")
+        finally:
+            temp.cleanup()
+
     def test_empty_epoch_cannot_be_closed(self):
         temp, target = self.make_project()
         try:

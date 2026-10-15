@@ -641,6 +641,19 @@ def capture(target: Path, event: dict) -> tuple[dict, bool]:
     return state, False
 
 
+def authoritative_snapshot(target: Path) -> dict:
+    """Read and validate authoritative learning records without mutating the project."""
+    paths = _paths(target)
+    events = _load_events(paths)
+    reviews = _load_reviews(paths)
+    state = derive_state(events, reviews)
+    return {
+        "events": events,
+        "reviews": reviews,
+        "state": state,
+    }
+
+
 def status(target: Path) -> dict:
     paths = _paths(target)
     with _lock(paths["root"]):
