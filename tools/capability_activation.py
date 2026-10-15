@@ -218,7 +218,7 @@ def resolve_activation(
         project_ref = framework["ref"].lower()
     else:
         if resolved_project_ref is None or not SHA1_RE.fullmatch(resolved_project_ref.lower()):
-            return {"status": "BLOCK_FRAMEWORK_CHECKOUT_UNRESOLVED", "capability": capability, "version": version}
+            return {"status": "BLOCK_FRAMEWORK_CHECKOUT_UNRESOLVED", "capability": capability, "project_ref": project_ref}
         project_ref = resolved_project_ref.lower()
 
     if loaded_framework_ref is None or not SHA1_RE.fullmatch(loaded_framework_ref.lower()):
@@ -228,7 +228,6 @@ def resolve_activation(
         return {
             "status": "BLOCK_FRAMEWORK_REF_MISMATCH",
             "capability": capability,
-            "version": version,
             "project_ref": project_ref,
             "loaded_framework_ref": loaded_ref,
         }

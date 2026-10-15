@@ -97,6 +97,13 @@ class CapabilityActivationTests(unittest.TestCase):
             "BLOCK_FRAMEWORK_REF_MISMATCH",
         )
 
+    def test_unresolved_loaded_ref_blocks_before_registry_status(self):
+        self.assertEqual(
+            self.resolve("stable_capability", loaded=None)["status"],
+            "BLOCK_FRAMEWORK_CHECKOUT_UNRESOLVED",
+        )
+
+
     def test_repository_identity_mismatch_is_rejected(self):
         project = manifest()
         project["framework"]["repository"] = "example/other-framework"
