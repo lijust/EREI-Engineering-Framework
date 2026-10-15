@@ -7,7 +7,9 @@ on:
       - "schemas/learning-state.schema.json"
       - "schemas/learning-review.schema.json"
       - "tools/task_learning.py"
+      - "tools/learning_pattern_analysis.py"
       - "tools/tests/test_task_learning.py"
+      - "tools/tests/test_learning_pattern_analysis.py"
       - "skills/task-learning-capture/**"
       - "workflows/learning-review/**"
       - "templates/project-bootstrap/.erei/learning/**"
@@ -21,7 +23,9 @@ on:
       - "schemas/learning-state.schema.json"
       - "schemas/learning-review.schema.json"
       - "tools/task_learning.py"
+      - "tools/learning_pattern_analysis.py"
       - "tools/tests/test_task_learning.py"
+      - "tools/tests/test_learning_pattern_analysis.py"
       - "skills/task-learning-capture/**"
       - "workflows/learning-review/**"
       - "templates/project-bootstrap/.erei/learning/**"
@@ -49,7 +53,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Compile task learning tooling
-        run: python -m py_compile tools/task_learning.py tools/tests/test_task_learning.py
+        run: python -m py_compile tools/task_learning.py tools/learning_pattern_analysis.py tools/tests/test_task_learning.py tools/tests/test_learning_pattern_analysis.py
 
       - name: Validate JSON schemas parse
         run: |
@@ -59,3 +63,6 @@ jobs:
 
       - name: Run task learning unit tests
         run: python -m unittest tools.tests.test_task_learning -v
+
+      - name: Run learning pattern analysis tests
+        run: python tools/tests/test_learning_pattern_analysis.py

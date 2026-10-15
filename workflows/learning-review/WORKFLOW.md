@@ -79,6 +79,21 @@ Analyze as applicable by:
 
 Look for both strengths and weaknesses. A workflow with 40 clean executions is learning evidence too.
 
+### 4.1 Run deterministic pattern analysis when available
+
+Run `tools/learning_pattern_analysis.py --target <project>` or equivalent Candidate behavior before assigning root cause.
+
+Use the report to surface:
+
+- review debt after a deterministic review trigger fired,
+- repeated verification escapes that deserve explicit comparison,
+- mixed V1/V2 evidence that weakens metric comparability,
+- verification failures whose lifecycle stage is unknown,
+- high-rework/high-verification-catch cohorts,
+- repeated task groups/workflows that merit focused evidence review.
+
+The analyzer is triage evidence only. It must not create Framework Feedback, change the project pin, or treat correlation as Framework causation.
+
 ### 5. Validate notable patterns
 
 For each candidate pattern, distinguish:
@@ -135,7 +150,7 @@ A closed review starts the next project-local epoch without deleting historical 
 
 ## Immediate-review handling
 
-`IMMEDIATE_REVIEW` means the learning review should happen promptly, but release/blocking behavior comes from the underlying evidence:
+`IMMEDIATE_REVIEW` means the learning review should happen promptly. Avoid accumulating a large new material cohort while immediate-review debt remains open unless continuation is explicitly justified by an independent release/security/data need. Release/blocking behavior still comes from the underlying evidence:
 
 - a critical security finding follows Security governance,
 - material data risk follows Data governance,
