@@ -251,6 +251,7 @@ def _validate_approval_ref(
             expected_target=target_ref,
             expected_tree=target_tree,
             require_approved=True,
+            require_authenticated_provenance=True,
         )
     except release_approval.ReleaseApprovalError as exc:
         raise StableCarrierError(f"invalid {approval_type} approval record at {ref}: {exc}") from exc
