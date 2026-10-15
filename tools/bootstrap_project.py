@@ -130,7 +130,7 @@ def plan(target: Path, values: dict[str, str]) -> list[tuple[Path, str, bool]]:
             raise BootstrapError(f"Missing Framework template: {template_path}")
         destination = target / destination_rel
         content = render(template_path.read_text(encoding="utf-8"), values)
-        if destination_rel == ".erei/framework.json":
+        if destination_rel in {".erei/framework.json", ".erei/CANDIDATE_CAPABILITIES.json"}:
             json.loads(content)
         planned.append((destination, content, destination.exists()))
     return planned

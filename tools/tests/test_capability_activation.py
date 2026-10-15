@@ -83,7 +83,18 @@ class CapabilityActivationTests(unittest.TestCase):
 
     def test_candidate_requires_commit_pin(self):
         project = manifest(ref="candidate-branch", ref_type="branch")
-        self.assertEqual(self.resolve(doc=adoption(), project=project)["status"], "BLOCK_NON_COMMIT_PROJECT_PIN")
+        safe_default = {"schema_version": 1, "framework_ref": "candidate-branch", "adoptions": []}
+        self.assertEqual(self.resolve(doc=safe_default, project=project)["status"], "BLOCK_NON_COMMIT_PROJECT_PIN")
+
+    def test_empty_adoption_document_may_mirror_noncommit_experimental_ref(self):
+        value = {"schema_version": 1, "framework_ref": "candidate-branch", "adoptions": []}
+        self.assertEqual(activation._validate_adoptions(value), [])
+
+    def test_nonempty_adoption_document_requires_commit_sha(self):
+        value = adoption()
+        value["framework_ref"] = "candidate-branch"
+        with self.assertRaisesRegex(activation.ActivationError, "40-character commit SHA"):
+            activation._validate_adoptions(value)
 
     def test_loaded_framework_must_match_project_pin(self):
         self.assertEqual(self.resolve(doc=adoption(), loaded=OTHER_PIN)["status"], "BLOCK_FRAMEWORK_REF_MISMATCH")

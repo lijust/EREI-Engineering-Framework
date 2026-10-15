@@ -115,10 +115,11 @@ def _validate_adoptions(value: dict) -> list[dict]:
     _exact_fields(value, required, required, "candidate capability adoption document")
     if type(value["schema_version"]) is not int or value["schema_version"] != 1:
         raise ActivationError("candidate adoption schema_version must be integer 1")
-    if not isinstance(value["framework_ref"], str) or not SHA1_RE.fullmatch(value["framework_ref"]):
-        raise ActivationError("candidate adoption framework_ref must be a 40-character commit SHA")
+    framework_ref = _text(value["framework_ref"], "candidate adoption framework_ref")
     if not isinstance(value["adoptions"], list):
         raise ActivationError("candidate adoptions must be an array")
+    if value["adoptions"] and not SHA1_RE.fullmatch(framework_ref):
+        raise ActivationError("non-empty candidate adoption requires a 40-character commit SHA")
 
     required_item = {"adoption_id","capability","version","approved_at","expires_at","approved_by_role","risk","purpose","evidence"}
     seen: set[str] = set()

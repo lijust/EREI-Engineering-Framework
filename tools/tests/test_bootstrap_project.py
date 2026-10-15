@@ -86,6 +86,23 @@ class BootstrapProjectTests(unittest.TestCase):
             development_readme = (target / ".erei/learning/development-outputs/README.md").read_text(encoding="utf-8")
             self.assertIn("Learning Development Outputs", development_readme)
 
+    def test_branch_experiment_bootstrap_keeps_candidate_adoptions_empty(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp)
+            result = run_bootstrap(
+                target,
+                "--framework-ref-type",
+                "branch",
+                "--framework-ref",
+                "candidate-branch",
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            candidate = json.loads(
+                (target / ".erei/CANDIDATE_CAPABILITIES.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(candidate["framework_ref"], "candidate-branch")
+            self.assertEqual(candidate["adoptions"], [])
+
     def test_dry_run_writes_nothing(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             target = Path(tmp)
