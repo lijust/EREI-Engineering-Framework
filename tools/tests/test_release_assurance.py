@@ -248,6 +248,10 @@ class ReleaseAssuranceTests(unittest.TestCase):
                 "expectations": [{"type": "output_contains_all", "values": ["test"]}],
             }],
         }), encoding="utf-8")
+        (root / "releases" / "VNEXT_TARGET.json").write_text(
+            json.dumps(self.target_manifest()),
+            encoding="utf-8",
+        )
         (root / "releases" / "VNEXT_RELEASE_SCOPE.json").write_text(json.dumps({
             "schema_version": 1,
             "scope_id": "task-learning-v2-core",
