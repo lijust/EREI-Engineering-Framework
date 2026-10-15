@@ -79,11 +79,16 @@ jobs:
               return "\n\n".join(chunks)
 
           request = json.load(sys.stdin)
-          prompt = f"""You are an independent runtime evaluating the frozen EREI Engineering Framework.
-          Apply the provided target artifacts faithfully to the user's request.
-          Give a concise direct answer. Preserve canonical policy/status names when relevant.
-          Do not mention this evaluation, scorers, expected tokens, or hidden reasoning.
-          Do not expose chain-of-thought. Do not use external tools.
+          prompt = f"""You are an independent runtime applying the frozen EREI Engineering Framework.
+          Answer only from the provided target artifacts.
+
+          Response rules:
+          - Start with the exact governing invariant, classification, or status label from the artifact when one exists.
+          - Preserve canonical policy names and status labels exactly, and also render enum-style identifiers in human-readable words when useful.
+          - Then give one concise sentence explaining the governing constraints (exact ref/version, approval/evidence, expiry/trial boundary, promotion route, or review trigger as applicable).
+          - If the artifact forbids the requested action, say so directly and state the correct route.
+          - Do not mention evaluation, scorers, expected tokens, or hidden reasoning.
+          - Do not expose chain-of-thought. Do not use external tools.
 
           TARGET ARTIFACT CONTEXT:
           {artifact_context(request.get('artifact', ''))}
@@ -102,7 +107,14 @@ jobs:
           if proc.returncode != 0:
               sys.stderr.write(proc.stderr)
               raise SystemExit(proc.returncode)
-          print(json.dumps({"output": proc.stdout.strip()}, ensure_ascii=False))
+          output = proc.stdout.strip()
+          with open("/tmp/copilot_outputs.jsonl", "a", encoding="utf-8") as handle:
+              handle.write(json.dumps({
+                  "suite_id": request.get("suite_id"),
+                  "case_id": request.get("case_id"),
+                  "output": output,
+              }, ensure_ascii=False) + "\n")
+          print(json.dumps({"output": output}, ensure_ascii=False))
           PY
 
       - name: Run frozen scoped exact-target evals
@@ -122,6 +134,10 @@ jobs:
 
           python evals/runner.py coverage             evals/cases/task-learning-review.eval.json             evals/cases/candidate-capability-activation.eval.json             --evidence "$evidence_path"             --minimum-level exact_target_runtime             --require-complete
           coverage_code=$?
+
+          echo "BEGIN_MODEL_OUTPUTS"
+          cat /tmp/copilot_outputs.jsonl || true
+          echo "END_MODEL_OUTPUTS"
 
           echo "BEGIN_MANIFEST_BASE64"
           base64 -w 0 "$manifest_path"
