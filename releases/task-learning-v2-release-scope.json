@@ -5,7 +5,9 @@
   "decision": "separate_release_tracks",
   "task_learning_v2_core": {
     "release_track": "stable_promotion_candidate",
-    "capabilities": ["prospective_task_learning"],
+    "capabilities": [
+      "prospective_task_learning"
+    ],
     "behavior_scope": [
       "occurrence_identity",
       "immutable_v2_event_and_review_authority",
@@ -14,6 +16,9 @@
       "failure_stage_and_subject",
       "idempotent_capture_retry",
       "legacy_v1_read_compatibility"
+    ],
+    "release_control_dependencies": [
+      "capability_activation_boundary"
     ]
   },
   "learning_operations_v1": {
@@ -24,7 +29,9 @@
       "learning_review_debt_guard",
       "framework_effectiveness_measurement"
     ],
-    "tooling": ["tools/learning_health_dashboard.py"],
+    "tooling": [
+      "tools/learning_health_dashboard.py"
+    ],
     "default_activation": "inactive_unless_stable_or_explicit_bounded_project_candidate_adoption"
   },
   "activation_contract": {
