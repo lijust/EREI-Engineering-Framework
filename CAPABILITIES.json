@@ -118,9 +118,10 @@
         "version": "v1-invariant-first-assurance-seams",
         "stable_ref": "69079018606750312344cb3c648952b9ab72d35b",
         "source_feedback": [
-          "EFF-20261015T180800Z-A29B7B59"
+          "EFF-20261015T180800Z-A29B7B59",
+          "EFF-20261015T181724Z-E320C171"
         ],
-        "notes": "Targets repeated assurance-harness friction with semantic invariant checks and reusable assurance seams while explicitly forbidding metric improvement by weakening verification."
+        "notes": "Multi-project corroborated Candidate. EREI-App-Google and EREI 3.2 independently exposed stale predecessor/successor assurance applicability; Stable promotion still requires bounded real-trial effectiveness evidence showing reduced harness friction without weaker escape/invariant protection."
       }
     }
   }
