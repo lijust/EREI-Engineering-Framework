@@ -61,4 +61,17 @@ try:
     raise AssertionError("expected success metric additionalProperties failure")
 except mod.OutputError:
     pass
-print("PASS: Learning Development Output validation preserves schema, promotion boundary and taxonomy.")
+for nonfinite in (float("nan"), float("inf"), float("-inf")):
+    bad_number=dict(value)
+    bad_number["success_metrics"]=[{
+        "metric":"verification_escape_task_rate",
+        "direction":"decrease",
+        "baseline":nonfinite,
+        "target":0.0,
+    }]
+    try:
+        mod.validate(bad_number)
+        raise AssertionError("expected non-finite success metric failure")
+    except mod.OutputError:
+        pass
+print("PASS: Learning Development Output validation preserves finite JSON schema, promotion boundary and taxonomy.")

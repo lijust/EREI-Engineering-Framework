@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import re
 from datetime import datetime
 from pathlib import Path
@@ -47,7 +48,10 @@ def _datetime(value,label)->None:
 
 def _scalar_or_null(value,label)->None:
     if value is None:return
-    if isinstance(value,bool) or not isinstance(value,(str,int,float)): raise OutputError(f"{label} must be string, number or null")
+    if isinstance(value,bool) or not isinstance(value,(str,int,float)):
+        raise OutputError(f"{label} must be string, finite number or null")
+    if isinstance(value,float) and not math.isfinite(value):
+        raise OutputError(f"{label} must be a finite JSON number")
 
 def validate(value:dict)->dict:
     required={
