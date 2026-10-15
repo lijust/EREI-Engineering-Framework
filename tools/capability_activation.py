@@ -19,6 +19,7 @@ ROOT = Path(__file__).resolve().parents[1]
 REGISTRY_PATH = ROOT / "CAPABILITIES.json"
 MANIFEST_PATH = Path(".erei") / "framework.json"
 ADOPTION_PATH = Path(".erei") / "CANDIDATE_CAPABILITIES.json"
+FRAMEWORK_REPOSITORY = "lijust/EREI-Engineering-Framework"
 
 SHA1_RE = re.compile(r"^[a-f0-9]{40}$")
 ADOPTION_ID_RE = re.compile(r"^CAD-[0-9]{8}T[0-9]{6}Z-[A-F0-9]{8}$")
@@ -86,7 +87,11 @@ def _validate_manifest(value: dict) -> dict:
         raise ActivationError("framework must be an object")
     fw_required = {"repository", "baseline", "ref_type", "ref"}
     _exact_fields(framework, fw_required, fw_required, "framework")
-    _text(framework["repository"], "framework.repository", 3)
+    repository = _text(framework["repository"], "framework.repository", 3)
+    if repository != FRAMEWORK_REPOSITORY:
+        raise ActivationError(
+            f"framework.repository {repository!r} does not match {FRAMEWORK_REPOSITORY!r}"
+        )
     _text(framework["baseline"], "framework.baseline")
     if framework["ref_type"] not in {"commit", "tag", "branch"}:
         raise ActivationError("invalid framework.ref_type")
@@ -200,13 +205,22 @@ def resolve_activation(
     *,
     adoption_document: dict | None,
     loaded_framework_ref: str | None,
+    resolved_project_ref: str | None = None,
     now: datetime | None = None,
 ) -> dict:
     framework = _validate_manifest(manifest)
-    if framework["ref_type"] != "commit" or not SHA1_RE.fullmatch(framework["ref"]):
-        return {"status": "BLOCK_NON_COMMIT_PROJECT_PIN", "capability": capability}
+    ref_type = framework["ref_type"]
+    if ref_type == "branch":
+        return {"status": "BLOCK_NON_COMMIT_PROJECT_PIN", "capability": capability, "version": version}
+    if ref_type == "commit":
+        if not SHA1_RE.fullmatch(framework["ref"]):
+            return {"status": "BLOCK_NON_COMMIT_PROJECT_PIN", "capability": capability, "version": version}
+        project_ref = framework["ref"].lower()
+    else:
+        if resolved_project_ref is None or not SHA1_RE.fullmatch(resolved_project_ref.lower()):
+            return {"status": "BLOCK_FRAMEWORK_CHECKOUT_UNRESOLVED", "capability": capability, "version": version}
+        project_ref = resolved_project_ref.lower()
 
-    project_ref = framework["ref"].lower()
     if loaded_framework_ref is None or not SHA1_RE.fullmatch(loaded_framework_ref.lower()):
         return {"status": "BLOCK_FRAMEWORK_CHECKOUT_UNRESOLVED", "capability": capability, "version": version}
     loaded_ref = loaded_framework_ref.lower()
@@ -219,18 +233,6 @@ def resolve_activation(
             "loaded_framework_ref": loaded_ref,
         }
 
-    capabilities = _validate_registry(registry)
-    if capability not in capabilities:
-        return {"status": "BLOCK_UNKNOWN_CAPABILITY", "capability": capability}
-
-    record = capabilities[capability]
-    if not isinstance(record, dict):
-        return {"status": "BLOCK_INVALID_CAPABILITY_REGISTRY", "capability": capability}
-    status = record.get("status")
-    version = record.get("version")
-    if status not in {"stable", "candidate"} or not isinstance(version, str) or not version:
-        return {"status": "BLOCK_INVALID_CAPABILITY_REGISTRY", "capability": capability}
-
     if status == "stable":
         return {
             "status": "ACTIVE_STABLE",
@@ -238,6 +240,9 @@ def resolve_activation(
             "version": version,
             "framework_ref": project_ref,
         }
+
+    if ref_type != "commit":
+        return {"status": "BLOCK_NON_COMMIT_PROJECT_PIN", "capability": capability, "version": version}
 
     if adoption_document is None:
         return {
@@ -315,24 +320,45 @@ def resolve_activation(
     }
 
 
+def resolve_project_tag_ref(ref: str, root: Path = ROOT) -> str:
+    try:
+        proc = subprocess.run(
+            ["git", "rev-parse", "--verify", f"{ref}^{{commit}}"],
+            cwd=root,
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        raise ActivationError(f"cannot resolve project Framework tag: {ref}") from exc
+    value = proc.stdout.strip().lower()
+    if not SHA1_RE.fullmatch(value):
+        raise ActivationError("project Framework tag did not resolve to an exact commit")
+    return value
+
+
 def resolve_target(target: Path, capability: str) -> dict:
     assert_clean_framework_checkout()
-    loaded_before = detect_loaded_framework_ref()
     manifest = _read_json(target / MANIFEST_PATH, "project Framework manifest")
+    framework = _validate_manifest(manifest)
     registry = _read_json(REGISTRY_PATH, "Framework capability registry")
     adoption_path = target / ADOPTION_PATH
     adoption = _read_json(adoption_path, "candidate capability adoption document") if adoption_path.exists() else None
-    assert_clean_framework_checkout()
-    loaded_after = detect_loaded_framework_ref()
-    if loaded_after != loaded_before:
-        raise ActivationError("loaded Framework checkout changed during activation resolution")
+    resolved_project_ref = (
+        resolve_project_tag_ref(framework["ref"])
+        if framework["ref_type"] == "tag"
+        else None
+    )
     return resolve_activation(
         manifest,
         registry,
         capability,
         adoption_document=adoption,
-        loaded_framework_ref=loaded_after,
+        loaded_framework_ref=detect_loaded_framework_ref(),
+        resolved_project_ref=resolved_project_ref,
     )
+
 
 def parse_args(argv=None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Resolve EREI Framework capability activation.")
