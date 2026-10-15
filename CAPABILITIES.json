@@ -75,6 +75,24 @@
         "version": "v1-review-debt-and-escape-clustering",
         "stable_ref": "69079018606750312344cb3c648952b9ab72d35b",
         "notes": "Adds deterministic review-debt detection, verification-escape clustering, mixed V1/V2 evidence warnings, verification-stage coverage checks and hotspot summaries without automatic Framework mutation or feedback creation."
+      },
+      "learning_to_development": {
+        "status": "candidate",
+        "version": "v1-translation-contract",
+        "stable_ref": "69079018606750312344cb3c648952b9ab72d35b",
+        "notes": "Defines Chief-Engineer-owned interpretation from Task Learning signals to durable Learning Development Outputs with explicit development routes, expected effects and promotion boundaries."
+      },
+      "learning_review_debt_guard": {
+        "status": "candidate",
+        "version": "v1-bounded-immediate-review-defer",
+        "stable_ref": "69079018606750312344cb3c648952b9ab72d35b",
+        "notes": "Fail-closed guard for unresolved IMMEDIATE_REVIEW debt with bounded, expiring, evidence-backed defer semantics; it never overrides security/data/release blocking evidence."
+      },
+      "framework_effectiveness_measurement": {
+        "status": "candidate",
+        "version": "v1-causation-safe-before-after",
+        "stable_ref": "69079018606750312344cb3c648952b9ab72d35b",
+        "notes": "Compares learning cohorts before/after Framework changes using escape/final-failure signals as primary and rework/verification-catch signals as secondary, while refusing causal claims from raw deltas."
       }
     }
   }
