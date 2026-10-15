@@ -13,6 +13,33 @@ class ReviewDebtError(RuntimeError):
     pass
 
 
+TRIGGER_LEVELS = {
+    "INSUFFICIENT_EVIDENCE",
+    "LEARNING_HEALTHY",
+    "LEARNING_WATCH",
+    "REVIEW_RECOMMENDED",
+    "REVIEW_DUE",
+    "IMMEDIATE_REVIEW",
+}
+
+
+def _validate_state(state: dict) -> None:
+    if state.get("schema_version") not in {1, 2}:
+        raise ReviewDebtError("learning state schema_version must be 1 or 2")
+    epoch_id = state.get("epoch_id")
+    if not isinstance(epoch_id, str) or not epoch_id.startswith("EPOCH-"):
+        raise ReviewDebtError("learning state epoch_id is invalid")
+    trigger = state.get("trigger")
+    if not isinstance(trigger, dict) or trigger.get("level") not in TRIGGER_LEVELS:
+        raise ReviewDebtError("learning state trigger.level is missing or invalid")
+    metrics = state.get("metrics_since_last_review")
+    if not isinstance(metrics, dict):
+        raise ReviewDebtError("learning state metrics_since_last_review is required")
+    material_tasks = metrics.get("material_tasks")
+    if not isinstance(material_tasks, int) or material_tasks < 0:
+        raise ReviewDebtError("learning state material_tasks must be a non-negative integer")
+
+
 def _read(path: Path) -> dict:
     try:
         value = json.loads(path.read_text(encoding="utf-8"))
@@ -71,7 +98,9 @@ def validate_defer(defer: dict, state: dict, now: datetime) -> dict:
         raise ReviewDebtError("defer expiry must be after recorded_at")
     if expires - recorded > __import__("datetime").timedelta(days=7):
         raise ReviewDebtError("defer may not exceed seven days")
-    if now > expires:
+    if recorded > now:
+        raise ReviewDebtError("defer recorded_at cannot be in the future")
+    if now >= expires:
         raise ReviewDebtError("defer is expired")
     if not isinstance(defer["baseline_material_tasks"], int) or defer["baseline_material_tasks"] < 0:
         raise ReviewDebtError("baseline_material_tasks must be non-negative")
@@ -97,7 +126,8 @@ def validate_defer(defer: dict, state: dict, now: datetime) -> dict:
 
 
 def evaluate(state: dict, defer: dict | None, now: datetime) -> dict:
-    trigger = state.get("trigger", {})
+    _validate_state(state)
+    trigger = state["trigger"]
     level = trigger.get("level")
     if level != "IMMEDIATE_REVIEW":
         return {"status": "PASS_NO_IMMEDIATE_REVIEW", "epoch_id": state.get("epoch_id"), "trigger": level}
