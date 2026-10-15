@@ -148,6 +148,28 @@ Use `tools/task_learning.py review-close` or equivalent.
 
 A closed review starts the next project-local epoch without deleting historical evidence.
 
+### 10. Translate findings into Learning Development Outputs
+
+After the review has a durable `review_id`, invoke `workflows/learning-to-development/WORKFLOW.md` for every finding classified as:
+
+- `PROJECT_LOCAL_ACTION`,
+- `FRAMEWORK_FEEDBACK`,
+- `MEASUREMENT_ADJUSTMENT`,
+- `NEEDS_MORE_EVIDENCE`,
+- `CRITICAL_FOLLOWUP`,
+
+and for any `HEALTHY_PATTERN` that should become a reusable positive engineering pattern.
+
+Persist project-local outputs under:
+
+```text
+.erei/learning/development-outputs/<LDO-ID>.json
+```
+
+Validate each output against `schemas/learning-development-output.schema.json` or equivalent deterministic validation.
+
+A Framework-relevant output may later be generalized/copied into the Framework repository during central intake, but the project-local source remains the provenance authority.
+
 ## Immediate-review handling
 
 `IMMEDIATE_REVIEW` means the learning review should happen promptly. Avoid accumulating a large new material cohort while immediate-review debt remains open unless continuation is explicitly justified by an independent release/security/data need. Release/blocking behavior still comes from the underlying evidence:
@@ -184,4 +206,5 @@ Next epoch:
 - causation not overstated,
 - Framework findings routed through feedback/Knowledge Promotion,
 - review closure recorded with evidence,
-- next epoch initialized deterministically.
+- next epoch initialized deterministically,
+- every material nontrivial finding has an explicit Learning Development Output or a documented reason why no output is needed.
