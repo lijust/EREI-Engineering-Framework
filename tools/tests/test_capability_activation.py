@@ -57,24 +57,51 @@ def adoption(**overrides):
 
 
 class CapabilityActivationTests(unittest.TestCase):
-    def resolve(self, capability="candidate_capability", *, doc=None, project=None, loaded=PIN):
+    def resolve(
+        self,
+        capability="candidate_capability",
+        *,
+        doc=None,
+        project=None,
+        loaded=PIN,
+        resolved_project_ref=None,
+    ):
         return activation.resolve_activation(
             project or manifest(),
             registry(),
             capability,
             adoption_document=doc,
             loaded_framework_ref=loaded,
+            resolved_project_ref=resolved_project_ref,
             now=NOW,
         )
 
     def test_stable_is_active_without_candidate_adoption(self):
         self.assertEqual(self.resolve("stable_capability")["status"], "ACTIVE_STABLE")
 
+    def test_stable_tag_is_active_when_tag_resolves_to_loaded_commit(self):
+        project = manifest(ref="task-learning-review-v1", ref_type="tag")
+        self.assertEqual(
+            self.resolve(
+                "stable_capability",
+                project=project,
+                loaded=PIN,
+                resolved_project_ref=PIN,
+            )["status"],
+            "ACTIVE_STABLE",
+        )
+
     def test_stable_requires_loaded_framework_to_match_project_pin(self):
         self.assertEqual(
             self.resolve("stable_capability", loaded=OTHER_PIN)["status"],
             "BLOCK_FRAMEWORK_REF_MISMATCH",
         )
+
+    def test_repository_identity_mismatch_is_rejected(self):
+        project = manifest()
+        project["framework"]["repository"] = "example/other-framework"
+        with self.assertRaisesRegex(activation.ActivationError, "does not match"):
+            self.resolve(project=project)
 
     def test_candidate_is_dormant_without_adoption(self):
         self.assertEqual(self.resolve()["status"], "DORMANT_CANDIDATE")
@@ -92,6 +119,17 @@ class CapabilityActivationTests(unittest.TestCase):
         project = manifest(ref="candidate-branch", ref_type="branch")
         safe_default = {"schema_version": 1, "framework_ref": "candidate-branch", "adoptions": []}
         self.assertEqual(self.resolve(doc=safe_default, project=project)["status"], "BLOCK_NON_COMMIT_PROJECT_PIN")
+
+    def test_candidate_tag_is_not_eligible_even_when_resolved(self):
+        project = manifest(ref="candidate-tag", ref_type="tag")
+        self.assertEqual(
+            self.resolve(
+                doc=adoption(),
+                project=project,
+                resolved_project_ref=PIN,
+            )["status"],
+            "BLOCK_NON_COMMIT_PROJECT_PIN",
+        )
 
     def test_empty_adoption_document_may_mirror_noncommit_experimental_ref(self):
         value = {"schema_version": 1, "framework_ref": "candidate-branch", "adoptions": []}
