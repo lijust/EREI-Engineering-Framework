@@ -48,7 +48,7 @@ jobs:
           import sys
           from pathlib import Path
 
-          def artifact_context(raw):
+          def artifact_context(raw, suite_id):
               parts = [part.strip() for part in raw.split(" + ") if part.strip()]
               chunks = []
               for item in parts:
@@ -69,6 +69,18 @@ jobs:
                           + candidate.read_text(encoding="utf-8")
                           + f"\n--- END {candidate.as_posix()} ---"
                       )
+              related = []
+              if suite_id == "task-learning-review-v1":
+                  related = [Path("tools/task_learning.py")]
+              elif suite_id == "candidate-capability-activation-v1":
+                  related = [Path("tools/capability_activation.py")]
+              for candidate in related:
+                  if candidate.is_file():
+                      chunks.append(
+                          f"--- BEGIN {candidate.as_posix()} ---\n"
+                          + candidate.read_text(encoding="utf-8")
+                          + f"\n--- END {candidate.as_posix()} ---"
+                      )
               cap = Path("CAPABILITIES.json")
               if cap.is_file():
                   chunks.append(
@@ -80,18 +92,26 @@ jobs:
 
           request = json.load(sys.stdin)
           prompt = f"""You are an independent runtime applying the frozen EREI Engineering Framework.
-          Answer only from the provided target artifacts.
+          Answer only from the provided target artifacts and implementation source. Do not invent missing failure facts.
 
-          Response rules:
-          - Start with the exact governing invariant, classification, or status label from the artifact when one exists.
-          - Preserve canonical policy names and status labels exactly, and also render enum-style identifiers in human-readable words when useful.
-          - Then give one concise sentence explaining the governing constraints (exact ref/version, approval/evidence, expiry/trial boundary, promotion route, or review trigger as applicable).
-          - If the artifact forbids the requested action, say so directly and state the correct route.
+          Use this concise response structure:
+          Artifact: <exact relevant artifact title and Status line when present>
+          Decision: <direct yes/no, trigger, or canonical activation classification>
+          Governing rule: <the exact or near-verbatim governing rule from the target>
+          Constraints: <one short sentence with the applicable exact-ref/version, bounded expiry/trial, approval/evidence, fail-closed, review/promotion route>
+
+          Decision rules:
+          - For a satisfied Candidate adoption scenario, classify it with the canonical activation status from implementation and state that the trial is bounded by expiry/version.
+          - For a fail-closed condition, explicitly say the Candidate is blocked and/or dormant.
+          - For a Stable capability question, answer in singular form: a Stable capability does not require a Candidate adoption record.
+          - For routed successful engineering work, name the canonical Task Learning Capture procedure.
+          - For Framework-learning findings, preserve the artifact's Candidate status and the Framework Feedback / Knowledge Promotion route.
+          - Preserve canonical trigger/status identifiers exactly when they exist.
           - Do not mention evaluation, scorers, expected tokens, or hidden reasoning.
           - Do not expose chain-of-thought. Do not use external tools.
 
           TARGET ARTIFACT CONTEXT:
-          {artifact_context(request.get('artifact', ''))}
+          {artifact_context(request.get('artifact', ''), request.get('suite_id', ''))}
 
           REQUEST:
           {json.dumps(request, ensure_ascii=False, sort_keys=True)}
