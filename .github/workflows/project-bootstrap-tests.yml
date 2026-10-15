@@ -7,6 +7,13 @@ on:
       - 'tools/tests/**'
       - 'templates/project-bootstrap/**'
       - 'schemas/project-framework.schema.json'
+      - 'schemas/project-candidate-capabilities.schema.json'
+      - 'tools/capability_activation.py'
+      - 'workflows/candidate-capability-adoption/**'
+      - 'workflows/framework-upgrade/**'
+      - 'workflows/router/WORKFLOW.md'
+      - 'adr/ADR-0006-CANDIDATE-CAPABILITY-ACTIVATION.md'
+      - 'CAPABILITIES.json'
       - 'workflows/project-integration-bootstrap/**'
       - 'adr/ADR-0002-PROJECT-INTEGRATION-CONTRACT.md'
       - '.github/workflows/project-bootstrap-tests.yml'
@@ -17,6 +24,13 @@ on:
       - 'tools/tests/**'
       - 'templates/project-bootstrap/**'
       - 'schemas/project-framework.schema.json'
+      - 'schemas/project-candidate-capabilities.schema.json'
+      - 'tools/capability_activation.py'
+      - 'workflows/candidate-capability-adoption/**'
+      - 'workflows/framework-upgrade/**'
+      - 'workflows/router/WORKFLOW.md'
+      - 'adr/ADR-0006-CANDIDATE-CAPABILITY-ACTIVATION.md'
+      - 'CAPABILITIES.json'
       - 'workflows/project-integration-bootstrap/**'
       - 'adr/ADR-0002-PROJECT-INTEGRATION-CONTRACT.md'
 
@@ -37,12 +51,16 @@ jobs:
         run: |
           py "-${{ matrix.python-version }}" -c "import sys, encodings, ssl; print(sys.version); print(sys.executable)"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-      - name: Compile bootstrap tool
+      - name: Compile bootstrap and capability activation tools
         shell: powershell
-        run: py "-${{ matrix.python-version }}" -m py_compile tools/bootstrap_project.py
-      - name: Parse integration schema
+        run: py "-${{ matrix.python-version }}" -m py_compile tools/bootstrap_project.py tools/capability_activation.py
+      - name: Parse integration schemas
         shell: powershell
-        run: py "-${{ matrix.python-version }}" -m json.tool schemas/project-framework.schema.json
+        run: |
+          py "-${{ matrix.python-version }}" -m json.tool schemas/project-framework.schema.json
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          py "-${{ matrix.python-version }}" -m json.tool schemas/project-candidate-capabilities.schema.json
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Run bootstrap unit tests
         shell: powershell
         run: py "-${{ matrix.python-version }}" -m unittest discover -s tools/tests -p 'test_*.py' -v

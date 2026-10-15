@@ -48,6 +48,7 @@ class BootstrapProjectTests(unittest.TestCase):
             expected = [
                 "AGENTS.md",
                 ".erei/framework.json",
+                ".erei/CANDIDATE_CAPABILITIES.json",
                 ".erei/PROJECT_PROFILE.md",
                 ".erei/ARCHITECTURE.md",
                 ".erei/SECURITY_MODEL.md",
@@ -71,6 +72,11 @@ class BootstrapProjectTests(unittest.TestCase):
             self.assertEqual(manifest["framework"]["ref"], PIN)
             self.assertEqual(manifest["overlays"], ["google-apps-script"])
             self.assertEqual(manifest["runtime_adapters"], ["chatgpt-codex"])
+            candidate_adoptions = json.loads(
+                (target / ".erei/CANDIDATE_CAPABILITIES.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(candidate_adoptions["framework_ref"], PIN)
+            self.assertEqual(candidate_adoptions["adoptions"], [])
             feedback_md = (target / ".erei/feedback/FRAMEWORK_FEEDBACK.md").read_text(encoding="utf-8")
             self.assertIn("No feedback events recorded yet", feedback_md)
             self.assertFalse((target / ".erei/feedback/FRAMEWORK_FEEDBACK.jsonl").exists())

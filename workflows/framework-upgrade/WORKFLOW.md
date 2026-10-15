@@ -120,6 +120,8 @@ Confirm:
 
 Do not infer Stable from a branch name.
 
+**Candidate activation boundary:** the target Framework commit may contain Development-line Candidate assets. Their presence does not activate them for the project. Candidate use is governed separately by `.erei/CANDIDATE_CAPABILITIES.json` and `candidate-capability-adoption`.
+
 ### 3. Compare Framework revisions
 
 Compare current → target and classify changes at minimum across:
@@ -171,6 +173,8 @@ Change only the intended project integration state first:
 - immutable target ref,
 - overlays/adapters only when separately justified.
 
+Do not add or roll forward Candidate capability adoptions merely because the target commit contains newer Candidate versions. Candidate adoption is a separate project-local decision.
+
 Do not bundle unrelated project implementation changes into the pin update unless compatibility requires them and the change plan makes that explicit.
 
 ### 8. Integration validation
@@ -182,7 +186,9 @@ Verify:
 - target Framework ref exists,
 - enabled overlays/adapters exist at target ref,
 - no project truth was overwritten,
-- no secret/runtime identifier was introduced.
+- no secret/runtime identifier was introduced;
+- every existing Candidate adoption is revalidated against the target exact ref/version;
+- stale, expired, or mismatched Candidate adoptions remain blocked until explicitly reviewed; they never silently roll forward.
 
 ### 9. Project regression/verification
 
@@ -247,7 +253,8 @@ Stop when:
 - protected governance changes lack approval,
 - security/data veto is active,
 - project regression evidence fails,
-- convergence finds unexplained drift.
+- convergence finds unexplained drift;
+- Candidate adoption evidence is stale/mismatched but the upgrade plan assumes that Candidate remains active.
 
 ## Rollback / exit behavior
 

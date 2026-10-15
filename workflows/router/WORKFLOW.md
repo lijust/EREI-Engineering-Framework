@@ -156,6 +156,18 @@ Select procedures, not personas. Typical skills:
 
 Avoid activating overlapping skills without a distinct purpose.
 
+## Stage 7.5 — Candidate capability activation gate
+
+Before invoking any role/skill/workflow/tool whose capability registry status is not `stable`:
+
+1. treat asset presence in the Framework tree as **dormant by default**;
+2. run `tools/capability_activation.py --target <project> --capability <name>` or equivalent;
+3. invoke the Candidate only on `ACTIVE_CANDIDATE`;
+4. on `DORMANT_CANDIDATE`, use Stable behavior when available or block if the requested outcome explicitly depends on the Candidate;
+5. on any `BLOCK_*` result, fail closed and repair the adoption/ref/version evidence before Candidate use.
+
+Framework pin movement alone never activates a Candidate. Stable registry capabilities do not require Candidate adoption records.
+
 ## Stage 8 — Approval gate
 
 Before structural execution:
@@ -276,6 +288,7 @@ Learning trigger: <level + reasons>
 Learning state derivation: authoritative-ledgers-pass | blocked
 Learning review debt gate: not-applicable | pass | bounded-defer | blocked
 Learning development outputs: none | <output-id(s) + route>
+Candidate capability activation: none | <capability + ACTIVE_CANDIDATE / dormant / blocked>
 Exit state:
 ```
 

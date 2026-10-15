@@ -20,6 +20,7 @@ TEMPLATE_ROOT = Path(__file__).resolve().parents[1] / "templates" / "project-boo
 TEMPLATE_MAP = {
     "AGENTS.md.template": "AGENTS.md",
     ".erei/framework.json.template": ".erei/framework.json",
+    ".erei/CANDIDATE_CAPABILITIES.json.template": ".erei/CANDIDATE_CAPABILITIES.json",
     ".erei/PROJECT_PROFILE.md.template": ".erei/PROJECT_PROFILE.md",
     ".erei/ARCHITECTURE.md.template": ".erei/ARCHITECTURE.md",
     ".erei/SECURITY_MODEL.md.template": ".erei/SECURITY_MODEL.md",
