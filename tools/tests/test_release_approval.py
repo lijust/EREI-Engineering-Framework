@@ -32,6 +32,7 @@ class ReleaseApprovalTests(unittest.TestCase):
     def test_v2_architecture_requires_owner_comment_provenance(self):
         value = self.valid("architecture")
         value["schema_version"] = 2
+        value["reviewer"] = {"kind": "github_user", "id": "lijust"}
         value["provenance"] = {
             "kind": "github_owner_approval_comment",
             "pr_number": 61,
@@ -43,6 +44,7 @@ class ReleaseApprovalTests(unittest.TestCase):
     def test_v2_security_requires_clean_codex_provenance(self):
         value = self.valid("security")
         value["schema_version"] = 2
+        value["reviewer"] = {"kind": "external_reviewer", "id": "chatgpt-codex-connector"}
         value["provenance"] = {
             "kind": "github_codex_clean_review",
             "pr_number": 62,
