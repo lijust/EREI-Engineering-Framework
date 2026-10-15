@@ -135,7 +135,8 @@ Confirm:
 - auth/tenant/data boundaries are represented where relevant,
 - performance budgets are project-specific and measurable where possible,
 - project feedback is stored locally and cannot silently mutate Framework Core or the Framework pin,
-- task-learning evidence is stored locally, excludes private reasoning/secrets, and cannot silently mutate Framework Core or the Framework pin.
+- task-learning evidence is stored locally, excludes private reasoning/secrets, and cannot silently mutate Framework Core or the Framework pin;
+- Candidate/Experimental capabilities remain dormant unless separately adopted with an exact-commit, bounded project-local candidate-capability record.
 
 ### 10. Verify integration
 Minimum deterministic checks:
@@ -147,7 +148,8 @@ Minimum deterministic checks:
 - `AGENTS.md` points to project and Framework truth rather than duplicating it,
 - enabled overlays match evidenced stack,
 - `.erei/feedback/README.md` and `.erei/feedback/FRAMEWORK_FEEDBACK.md` exist for feedback-aware integrations,
-- `.erei/learning/README.md` and `.erei/learning/LEARNING_SUMMARY.md` exist for task-learning-aware integrations.
+- `.erei/learning/README.md` and `.erei/learning/LEARNING_SUMMARY.md` exist for task-learning-aware integrations;
+- bootstrap does **not** create a Candidate capability adoption record by default.
 
 ### 11. Brownfield convergence
 For existing codebases, compare generated context against inspected reality.
