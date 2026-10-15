@@ -1,6 +1,7 @@
 # Learning-to-Development Workflow V1
 
 **Status:** Candidate V1  
+**Activation:** Dormant unless Stable or explicitly adopted by a bounded exact-commit project Candidate trial.  
 **Purpose:** Turn Task Learning evidence into bounded engineering-development outputs without letting metrics self-modify the Framework.
 
 ## Ownership
