@@ -250,6 +250,8 @@ def verify_reviewed_file(
     approval_id: str | None = None,
     require_merged: bool = True,
     token: str | None = None,
+    git_repo: Path | None = None,
+    closure_ref: str = "HEAD",
 ) -> dict[str, Any]:
     provenance = validate_provenance_shape(provenance)
     token = token or os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")
@@ -314,6 +316,17 @@ def verify_reviewed_file(
             and (not isinstance(verification, dict) or verification.get("verified") is not True)
         ):
             raise GitHubProvenanceError("review provenance merge commit is not GitHub-verified")
+        if git_repo is not None:
+            process = subprocess.run(
+                ["git", "-C", str(git_repo), "merge-base", "--is-ancestor", merge_sha, closure_ref],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            if process.returncode != 0:
+                raise GitHubProvenanceError(
+                    "review provenance merge commit is not an ancestor of the validated release carrier"
+                )
     return {
         "status": "authenticated",
         "repository": repository,
