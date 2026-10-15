@@ -93,6 +93,34 @@
         "version": "v1-causation-safe-before-after",
         "stable_ref": "69079018606750312344cb3c648952b9ab72d35b",
         "notes": "Compares learning cohorts before/after Framework changes using escape/final-failure signals as primary and rework/verification-catch signals as secondary, while refusing causal claims from raw deltas."
+      },
+      "execution_conformance_ladder": {
+        "status": "candidate",
+        "version": "v1-exact-environment-provider-ladder",
+        "stable_ref": "69079018606750312344cb3c648952b9ab72d35b",
+        "source_feedback": [
+          "EFF-20260907T010601Z-41B9942F",
+          "EFF-20261015T175500Z-7477B0A5"
+        ],
+        "notes": "Extends the existing conformance-ladder evidence with an explicit exact-execution-environment rung between generic runtime and managed provider/target runtime; prevents weaker evidence from satisfying stronger claims."
+      },
+      "exclusive_claim_analysis": {
+        "status": "candidate",
+        "version": "v1-canonical-atomic-claim",
+        "stable_ref": "69079018606750312344cb3c648952b9ab72d35b",
+        "source_feedback": [
+          "EFF-20261015T175500Z-8110D1B7"
+        ],
+        "notes": "Separates per-attempt identity from canonical atomic mutual exclusion, including owner/fencing, protected resource binding, recovery and release semantics."
+      },
+      "semantic_assurance_design": {
+        "status": "candidate",
+        "version": "v1-invariant-first-assurance-seams",
+        "stable_ref": "69079018606750312344cb3c648952b9ab72d35b",
+        "source_feedback": [
+          "EFF-20261015T180800Z-A29B7B59"
+        ],
+        "notes": "Targets repeated assurance-harness friction with semantic invariant checks and reusable assurance seams while explicitly forbidding metric improvement by weakening verification."
       }
     }
   }
