@@ -46,7 +46,7 @@ class ReleaseApprovalTests(unittest.TestCase):
         value["schema_version"] = 2
         value["reviewer"] = {"kind": "external_reviewer", "id": "chatgpt-codex-connector"}
         value["provenance"] = {
-            "kind": "github_codex_clean_review",
+            "kind": "github_codex_clean_security_review",
             "pr_number": 62,
             "actor_login": "chatgpt-codex-connector",
         }
