@@ -261,6 +261,63 @@ class TaskLearningTests(unittest.TestCase):
         finally:
             temp.cleanup()
 
+    def test_authoritative_snapshot_retries_when_generation_changes(self):
+        temp, target = self.make_project()
+        try:
+            event = task_learning.build_event(self.event_args())
+            task_learning.capture(target, event)
+
+            original_generation = task_learning._ledger_generation
+            original_load_events = task_learning._load_events
+            generations = iter(["g1", "g2", "g3", "g3"])
+            calls = {"events": 0}
+
+            def fake_generation(_paths):
+                return next(generations)
+
+            def counting_load_events(paths):
+                calls["events"] += 1
+                return original_load_events(paths)
+
+            task_learning._ledger_generation = fake_generation
+            task_learning._load_events = counting_load_events
+            try:
+                snapshot = task_learning.authoritative_snapshot(target, max_attempts=2)
+            finally:
+                task_learning._ledger_generation = original_generation
+                task_learning._load_events = original_load_events
+
+            self.assertEqual(calls["events"], 2)
+            self.assertEqual(snapshot["generation"], "g3")
+            self.assertEqual(snapshot["events"], [event])
+        finally:
+            temp.cleanup()
+
+    def test_authoritative_snapshot_fails_closed_when_generation_never_stabilizes(self):
+        temp, target = self.make_project()
+        try:
+            event = task_learning.build_event(self.event_args())
+            task_learning.capture(target, event)
+
+            original_generation = task_learning._ledger_generation
+            counter = {"value": 0}
+
+            def always_change(_paths):
+                counter["value"] += 1
+                return f"g{counter['value']}"
+
+            task_learning._ledger_generation = always_change
+            try:
+                with self.assertRaisesRegex(
+                    task_learning.LearningError,
+                    "changed during read-only snapshot",
+                ):
+                    task_learning.authoritative_snapshot(target, max_attempts=2)
+            finally:
+                task_learning._ledger_generation = original_generation
+        finally:
+            temp.cleanup()
+
     def test_empty_epoch_cannot_be_closed(self):
         temp, target = self.make_project()
         try:

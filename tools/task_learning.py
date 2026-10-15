@@ -213,6 +213,43 @@ def _paths(target: Path) -> dict[str, Path]:
     }
 
 
+def _ledger_generation(paths: dict[str, Path]) -> str:
+    """Hash the complete read-only learning-ledger surface to detect concurrent changes."""
+    digest = hashlib.sha256()
+
+    def add_file(label: str, path: Path) -> None:
+        digest.update(label.encode("utf-8"))
+        digest.update(b"\0")
+        try:
+            data = path.read_bytes()
+        except FileNotFoundError:
+            digest.update(b"<missing>")
+        else:
+            digest.update(data)
+        digest.update(b"\0")
+
+    add_file("events-projection", paths["events"])
+    add_file("reviews-projection", paths["reviews"])
+
+    for label, directory in (("event", paths["event_dir"]), ("review", paths["review_dir"])):
+        digest.update(label.encode("utf-8"))
+        digest.update(b"\0")
+        if not directory.exists():
+            digest.update(b"<missing-dir>\0")
+            continue
+        for path in sorted(directory.glob("*.json")):
+            digest.update(path.name.encode("utf-8"))
+            digest.update(b"\0")
+            try:
+                digest.update(path.read_bytes())
+            except FileNotFoundError:
+                # A concurrent filesystem change will also change the post-read generation.
+                digest.update(b"<changed-during-read>")
+            digest.update(b"\0")
+
+    return digest.hexdigest()
+
+
 def validate_event(event: dict) -> None:
     try:
         validate_task_event_shape(event)
@@ -641,18 +678,39 @@ def capture(target: Path, event: dict) -> tuple[dict, bool]:
     return state, False
 
 
-def authoritative_snapshot(target: Path) -> dict:
-    """Read and validate authoritative learning records without mutating the project."""
+def authoritative_snapshot(target: Path, max_attempts: int = 4) -> dict:
+    """Read a stable authoritative learning snapshot without mutating the project."""
+    if type(max_attempts) is not int or max_attempts < 1:
+        raise LearningError("max_attempts must be a positive integer")
     paths = _paths(target)
-    events = _load_events(paths)
-    reviews = _load_reviews(paths)
-    state = derive_state(events, reviews)
-    return {
-        "events": events,
-        "reviews": reviews,
-        "state": state,
-    }
+    last_error: LearningError | None = None
 
+    for _ in range(max_attempts):
+        before = _ledger_generation(paths)
+        try:
+            events = _load_events(paths)
+            reviews = _load_reviews(paths)
+            state = derive_state(events, reviews)
+        except LearningError as exc:
+            last_error = exc
+            after_error = _ledger_generation(paths)
+            if after_error != before:
+                continue
+            raise
+
+        after = _ledger_generation(paths)
+        if after == before:
+            return {
+                "events": events,
+                "reviews": reviews,
+                "state": state,
+                "generation": after,
+            }
+
+    message = "learning ledgers changed during read-only snapshot"
+    if last_error is not None:
+        message += f": {last_error}"
+    raise LearningError(message)
 
 def status(target: Path) -> dict:
     paths = _paths(target)
@@ -706,16 +764,17 @@ def close_review(target: Path, args: argparse.Namespace, now: datetime | None = 
 
 
 def validate_ledgers(target: Path) -> dict:
-    paths = _paths(target)
-    events = _load_events(paths)
-    reviews = _load_reviews(paths)
-    state = derive_state(events, reviews)
+    snapshot = authoritative_snapshot(target)
+    events = snapshot["events"]
+    reviews = snapshot["reviews"]
+    state = snapshot["state"]
     return {
         "valid": True,
         "events": len(events),
         "reviews": len(reviews),
         "epoch_id": state["epoch_id"],
         "trigger": state["trigger"],
+        "generation": snapshot["generation"],
     }
 
 
