@@ -77,7 +77,7 @@ class ReleaseAssuranceTests(unittest.TestCase):
                     "target_framework_ref": "a" * 40,
                     "target_tree": self.TARGET_TREE,
                     "provenance": {
-                        "kind": "github_codex_clean_review",
+                        "kind": "github_codex_clean_security_review",
                         "pr_number": 55,
                         "actor_login": "chatgpt-codex-connector",
                     },
@@ -147,7 +147,7 @@ class ReleaseAssuranceTests(unittest.TestCase):
             "evidence": ["test-evidence", "release-target:vnext-rc9"],
             "rationale": f"{approval_type} approval for immutable test target.",
             "provenance": {
-                "kind": "github_owner_approval_comment" if approval_type == "architecture" else "github_codex_clean_review",
+                "kind": "github_owner_approval_comment" if approval_type == "architecture" else "github_codex_clean_security_review",
                 "pr_number": 61 if approval_type == "architecture" else 62,
                 "actor_login": "lijust" if approval_type == "architecture" else "chatgpt-codex-connector",
             },
