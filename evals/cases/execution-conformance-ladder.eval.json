@@ -1,0 +1,35 @@
+{
+  "schema_version": "1.0",
+  "suite_id": "execution-conformance-ladder-v1",
+  "artifact": "skills/execution-conformance-ladder",
+  "cases": [
+    {
+      "id": "T-ECL-001-EXACT-SHELL",
+      "tags": ["trigger", "runtime", "conformance", "verification-escape"],
+      "input": {"prompt": "A PowerShell script passed source checks and PowerShell 7 CI, but the owner runs Windows PowerShell 5.1 and native stderr affects fail-closed control flow. What evidence is required before accepting the runtime claim?"},
+      "expectations": [
+        {"type": "trace_tool_called", "tool": "execution-conformance-ladder"},
+        {"type": "output_contains_all", "values": ["exact execution", "PowerShell", "stderr", "exit"]},
+        {"type": "output_contains_none", "values": ["PowerShell 7 proves 5.1", "source checks are enough"]}
+      ]
+    },
+    {
+      "id": "B-ECL-002-PROVIDER",
+      "tags": ["behavior", "provider", "managed-runtime"],
+      "input": {"prompt": "PostgreSQL DDL works locally, but the target managed provider uses restricted non-superuser roles. Can local engine success be accepted as provider conformance?"},
+      "expectations": [
+        {"type": "output_contains_all", "values": ["managed provider", "identity", "evidence"]},
+        {"type": "output_contains_none", "values": ["local success proves provider compatibility"]}
+      ]
+    },
+    {
+      "id": "N-ECL-003-COSMETIC",
+      "tags": ["non-trigger", "L0"],
+      "input": {"prompt": "Change a static button label in a local HTML template."},
+      "expectations": [
+        {"type": "trace_tool_not_called", "tool": "execution-conformance-ladder"},
+        {"type": "max_trace_steps", "value": 3}
+      ]
+    }
+  ]
+}

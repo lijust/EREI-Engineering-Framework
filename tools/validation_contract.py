@@ -130,6 +130,8 @@ def validate_project(project: Any) -> None:
 def validate_task_event_shape(event: Any) -> None:
     value = require_object(event, "task event")
     version = value.get("schema_version")
+    if type(version) is not int:
+        raise ContractValidationError("task event schema_version must be an integer")
     common_required = {
         "schema_version", "task_id", "recorded_at", "project", "framework_ref", "workflow",
         "risk", "terminal_state", "outcome_class", "material", "rework_cycles",
@@ -196,6 +198,8 @@ def validate_task_event_shape(event: Any) -> None:
 def validate_learning_review_shape(review: Any) -> None:
     value = require_object(review, "learning review")
     version = value.get("schema_version")
+    if type(version) is not int:
+        raise ContractValidationError("learning review schema_version must be an integer")
     if version == 1:
         required = {
             "schema_version", "review_id", "closed_at", "epoch_id", "through_event_count",

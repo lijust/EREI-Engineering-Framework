@@ -1,0 +1,15 @@
+# Learning Development Outputs
+
+This directory stores project-local, human-interpreted outputs produced after Learning Review.
+
+Each `LDO-*.json` record should:
+- bind the exact source epoch/review and Framework ref,
+- classify the observed engineering pattern,
+- explain the evidence-backed interpretation,
+- select a development route,
+- define expected effect and success metrics,
+- state the promotion boundary.
+
+These records are **not** automatic Framework changes. Framework-relevant outputs still require Framework Feedback / Knowledge Promotion / Candidate / Stable governance.
+
+Do not store private chain-of-thought, credentials, customer payloads, or unnecessary proprietary logs here.

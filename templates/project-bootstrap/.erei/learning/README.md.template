@@ -9,6 +9,7 @@ TASK_EVENTS.jsonl       append-only task learning events
 LEARNING_REVIEWS.jsonl  append-only closed learning reviews
 LEARNING_STATE.json     derived current epoch/metrics/trigger
 LEARNING_SUMMARY.md     derived human-readable state
+development-outputs/    human-interpreted Learning Development Outputs after review
 ```
 
 Every routed engineering execution should create one terminal Task Learning Event, including successful, blocked and failed work. Explanation-only conversation that never enters engineering execution is not recorded.
@@ -18,3 +19,5 @@ Task learning is not Framework Feedback. Most successful task events will have n
 Do not store chain-of-thought, credentials, customer payloads or unrelated conversation content here. Store structured engineering signals and durable evidence references.
 
 Review triggers are deterministic and do not authorize Framework self-modification. Framework-changing findings must follow Framework Feedback → Knowledge Promotion → normal Candidate/Stable governance.
+
+Learning Development Outputs are project-owned provenance records. They translate reviewed learning into explicit project action, measurement adjustment, Framework Feedback, or further evidence collection; they do not authorize automatic Framework mutation.

@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "output_id": "LDO-20261015T182200Z-A29B7B59",
+  "created_at": "2026-10-15T18:22:00Z",
+  "source": {
+    "project_repository": "lijust/EREI-App-Google",
+    "epoch_id": "EPOCH-023",
+    "review_id": "ELR-20261015T175500Z-23A155E1",
+    "framework_ref": "69079018606750312344cb3c648952b9ab72d35b"
+  },
+  "pattern": {
+    "pattern_id": "LP-ASSURANCE-HARNESS-FRICTION-001",
+    "pattern_class": "stale_contract_or_reference",
+    "signal_summary": "Repeated pre-runtime rework came from stale predecessor/successor bindings, copied allowlists, incidental source assertions, native-process semantics and duplicated exact-head/provenance mechanics."
+  },
+  "interpretation": "The high rework/catch density contains a real efficiency problem, but much of it is assurance-harness friction rather than failed end outcomes. The correct optimization is invariant-first semantic assurance and lifecycle applicability, not weaker gates.",
+  "classification": "FRAMEWORK_FEEDBACK",
+  "development_route": "framework_feedback",
+  "evidence": [
+    "feedback:EFF-20261015T180800Z-A29B7B59",
+    "feedback:EFF-20261015T181724Z-E320C171",
+    "app-review:ELR-20261015T175500Z-23A155E1",
+    "erei32-merge:87d730ddc3547f863de2a6895e91f9b83e9c6e72"
+  ],
+  "expected_effect": "Reduce avoidable assurance rework and repeated stale-successor catches while preserving or improving escape protection and invariant coverage.",
+  "success_metrics": [
+    {
+      "metric": "rework_cycles_per_material_task",
+      "direction": "decrease",
+      "baseline": 1.62,
+      "target": "directional decrease in comparable bounded cohort",
+      "notes": "Secondary efficiency signal only."
+    },
+    {
+      "metric": "target_mechanism_premerge_recurrence_count",
+      "direction": "decrease",
+      "baseline": "repeated across App EPOCH-023 plus second-project successor case",
+      "target": 0,
+      "notes": "Track stale applicability/binding/allowlist mechanism specifically."
+    },
+    {
+      "metric": "verification_escape_task_rate",
+      "direction": "hold",
+      "baseline": 0.069,
+      "target": "no increase",
+      "notes": "Primary guard against gaming."
+    },
+    {
+      "metric": "final_failed_task_rate",
+      "direction": "hold",
+      "baseline": 0,
+      "target": 0,
+      "notes": "Do not buy efficiency with worse outcomes."
+    }
+  ],
+  "promotion_boundary": "stable_review_required",
+  "notes": "Multi-project corroborated Candidate. Cross-project evidence exists; next missing proof is bounded before/after effectiveness without weaker assurance."
+}

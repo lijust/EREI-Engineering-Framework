@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "purpose": "Canonical initial taxonomy for translating Task Learning signals into reviewable engineering patterns. Categories are evidence labels, not automatic root-cause proof.",
+  "patterns": {
+    "healthy_assurance_catch": {
+      "meaning": "Deterministic review or verification caught a defect before acceptance/runtime impact.",
+      "default_route": "no_change"
+    },
+    "verification_escape": {
+      "meaning": "A prior verification/completion assumption was later contradicted by evidence.",
+      "default_route": "specialist_review"
+    },
+    "execution_environment_conformance": {
+      "meaning": "Behavior depends on exact shell, OS, runtime family/version, process-stream or toolchain semantics not represented by earlier proof.",
+      "default_route": "framework_feedback"
+    },
+    "provider_runtime_conformance": {
+      "meaning": "Generic/static proof diverges from managed provider or exact target-runtime semantics.",
+      "default_route": "framework_feedback"
+    },
+    "exclusive_claim_concurrency": {
+      "meaning": "Attempt identity, lease identity or uniqueness was mistaken for mutual exclusion/singleton authority.",
+      "default_route": "framework_feedback"
+    },
+    "stale_contract_or_reference": {
+      "meaning": "Verification or workflow truth referenced stale, phantom or successor-inapplicable artifacts/contracts.",
+      "default_route": "framework_feedback"
+    },
+    "identity_or_authority_binding": {
+      "meaning": "Identity evidence was insufficiently bound to the authority, resource, version or scope being exercised.",
+      "default_route": "specialist_review"
+    },
+    "measurement_model_gap": {
+      "meaning": "The metric or acceptance model can misclassify healthy catches, variable work or actual defects.",
+      "default_route": "measurement_change"
+    },
+    "context_routing_gap": {
+      "meaning": "Missing, stale or misrouted context materially changed execution or review.",
+      "default_route": "framework_feedback"
+    },
+    "review_debt": {
+      "meaning": "A deterministic review trigger fired but evidence continued accumulating without timely review or a bounded defer decision.",
+      "default_route": "workflow_change"
+    },
+    "project_local_defect": {
+      "meaning": "Evidence supports a local implementation/tooling defect without a reusable Framework limitation.",
+      "default_route": "project_change"
+    },
+    "unknown": {
+      "meaning": "Evidence is insufficient for a safer classification.",
+      "default_route": "evidence_collection"
+    }
+  }
+}

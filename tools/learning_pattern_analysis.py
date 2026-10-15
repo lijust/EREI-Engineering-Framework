@@ -9,10 +9,30 @@ state; its output is review input only.
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
+import sys
 from collections import Counter
 from pathlib import Path
 
+TOOLS_DIR = Path(__file__).resolve().parent
+
+
+def _load_exact_sibling(name: str, path: Path):
+    spec = importlib.util.spec_from_file_location(name, path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"cannot load sibling module: {path}")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+_load_exact_sibling("validation_contract", TOOLS_DIR / "validation_contract.py")
+authoritative_task_learning = _load_exact_sibling(
+    "_erei_authoritative_task_learning",
+    TOOLS_DIR / "task_learning.py",
+)
 
 class LearningPatternError(RuntimeError):
     pass
@@ -86,26 +106,52 @@ def _top(counter: Counter, limit: int = 8) -> list[dict]:
     return [{"value": key, "count": value} for key, value in counter.most_common(limit)]
 
 
+def _is_measured(event: dict, signal: str) -> bool:
+    if event.get("schema_version", 1) == 1:
+        return True
+    assessment = event.get("signal_assessment")
+    return isinstance(assessment, dict) and assessment.get(signal) == "measured"
+
+
 def analyze(events: list[dict], reviews: list[dict], state: dict) -> dict:
     reviewed = _reviewed_occurrences(events, reviews)
     current = [event for event in events if _occurrence(event) not in reviewed]
     material = [event for event in current if event.get("material") is True]
 
     schema_counts = Counter(str(event.get("schema_version", "unknown")) for event in current)
-    workflow_counts = Counter(str(event.get("workflow", "unknown")) for event in current)
+    workflow_counts = Counter(str(event.get("workflow", "unknown")) for event in material)
+    outcome_counts = Counter(str(event.get("outcome_class", "unknown")) for event in material)
+    risk_counts = Counter(str(event.get("risk", "unknown")) for event in material)
     task_group_counts = Counter(
-        str(event["task_group"]) for event in current
+        str(event["task_group"]) for event in material
         if isinstance(event.get("task_group"), str) and event["task_group"]
     )
 
-    rework_events = [event for event in material if isinstance(event.get("rework_cycles"), int)]
-    verification_events = [event for event in material if isinstance(event.get("verification_failures"), int)]
+    rework_events = [
+        event for event in material
+        if isinstance(event.get("rework_cycles"), int) and _is_measured(event, "rework_cycles")
+    ]
+    verification_events = [
+        event for event in material
+        if isinstance(event.get("verification_failures"), int) and _is_measured(event, "verification_failures")
+    ]
     rework_tasks = [event for event in rework_events if event.get("rework_cycles", 0) > 0]
     verification_failure_tasks = [
         event for event in verification_events if event.get("verification_failures", 0) > 0
     ]
-    escapes = [event for event in current if event.get("verification_escape") is True]
-    feedback_events = [event for event in current if event.get("framework_feedback_created") is True]
+    escapes = [
+        event for event in current
+        if event.get("verification_escape") is True and _is_measured(event, "verification_escape")
+    ]
+    material_escape_events = [
+        event for event in material
+        if event.get("verification_escape") is True and _is_measured(event, "verification_escape")
+    ]
+    escape_assessed_material = [event for event in material if _is_measured(event, "verification_escape")]
+    feedback_events = [
+        event for event in current
+        if event.get("framework_feedback_created") is True and _is_measured(event, "framework_feedback_created")
+    ]
 
     failure_stage_counts: Counter = Counter()
     unknown_stage_failures = 0
@@ -185,6 +231,30 @@ def analyze(events: list[dict], reviews: list[dict], state: dict) -> dict:
 
     rework_rate = _rate(len(rework_tasks), len(rework_events))
     verification_rate = _rate(len(verification_failure_tasks), len(verification_events))
+    rework_free_rate = _rate(len(rework_events) - len(rework_tasks), len(rework_events))
+    rework_cycles_total = sum(event.get("rework_cycles", 0) for event in rework_events)
+    rework_assessment_coverage_rate = _rate(len(rework_events), len(material))
+    rework_cycles_per_material_task = (
+        round(rework_cycles_total / len(material), 4)
+        if material and len(rework_events) == len(material)
+        else None
+    )
+    rework_cycles_per_reworked_task = round(rework_cycles_total / len(rework_tasks), 4) if rework_tasks else None
+    verification_clean_rate = _rate(len(verification_events) - len(verification_failure_tasks), len(verification_events))
+    verification_failures_total = sum(event.get("verification_failures", 0) for event in verification_events)
+    verification_assessment_coverage_rate = _rate(len(verification_events), len(material))
+    verification_failures_per_material_task = (
+        round(verification_failures_total / len(material), 4)
+        if material and len(verification_events) == len(material)
+        else None
+    )
+    verification_escape_assessment_coverage_rate = _rate(len(escape_assessed_material), len(material))
+    verification_escape_rate = _rate(len(material_escape_events), len(escape_assessed_material))
+    final_failed_task_rate = _rate(sum(event.get("outcome_class") == "failed" for event in material), len(material))
+    verified_success_rate = _rate(sum(event.get("outcome_class") == "verified_success" for event in material), len(material))
+    success_with_deferred_rate = _rate(sum(event.get("outcome_class") == "success_with_deferred" for event in material), len(material))
+    known_stage_failure_tasks = len(verification_failure_tasks) - unknown_stage_failures
+    stage_coverage_rate = _rate(known_stage_failure_tasks, len(verification_failure_tasks))
 
     if len(rework_events) >= 8 and rework_rate is not None and rework_rate >= 0.50:
         add(
@@ -228,18 +298,42 @@ def analyze(events: list[dict], reviews: list[dict], state: dict) -> dict:
             "unreviewed_events": len(current),
             "material_tasks": len(material),
             "schema_versions": dict(sorted(schema_counts.items())),
+            "outcomes": dict(sorted(outcome_counts.items())),
+            "risks": dict(sorted(risk_counts.items())),
+            "workflows": dict(sorted(workflow_counts.items())),
             "rework_tasks": len(rework_tasks),
-            "total_rework_cycles": sum(event.get("rework_cycles", 0) for event in rework_events),
+            "total_rework_cycles": rework_cycles_total,
             "rework_rate": rework_rate,
+            "rework_free_task_rate": rework_free_rate,
+            "rework_assessment_coverage_rate": rework_assessment_coverage_rate,
+            "rework_cycles_per_material_task": rework_cycles_per_material_task,
+            "rework_cycles_per_reworked_task": rework_cycles_per_reworked_task,
             "verification_failure_tasks": len(verification_failure_tasks),
-            "verification_failures": sum(event.get("verification_failures", 0) for event in verification_events),
+            "verification_failures": verification_failures_total,
             "verification_failure_rate": verification_rate,
-            "verification_escapes": len(escapes),
+            "verification_clean_task_rate": verification_clean_rate,
+            "verification_assessment_coverage_rate": verification_assessment_coverage_rate,
+            "verification_failures_per_material_task": verification_failures_per_material_task,
+            "verification_escapes": len(material_escape_events),
+            "verification_escape_task_rate": verification_escape_rate,
+            "verification_escape_assessment_coverage_rate": verification_escape_assessment_coverage_rate,
+            "verification_stage_coverage_rate": stage_coverage_rate,
+            "final_failed_task_rate": final_failed_task_rate,
+            "verified_success_rate": verified_success_rate,
+            "success_with_deferred_rate": success_with_deferred_rate,
             "framework_feedback_tasks": len(feedback_events),
             "failure_stages": dict(sorted(failure_stage_counts.items())),
             "top_workflows": _top(workflow_counts),
             "top_task_groups": _top(task_group_counts),
             "top_failure_subjects": _top(failure_subject_counts, 5),
+        },
+        "metric_semantics": {
+            "rework_rate": "Share of assessed material tasks with at least one material iteration after the first candidate. It is not task restart rate, final failure rate, or execution accuracy.",
+            "verification_failure_rate": "Share of assessed material tasks with at least one failed deterministic verification attempt during execution. It is a catch-density signal, not final task failure rate.",
+            "verification_escape_task_rate": "Share of assessed material tasks where a prior verification/completion assumption was later contradicted. This is a stronger negative quality signal than raw verification-failure rate.",
+            "final_failed_task_rate": "Share of material tasks whose terminal outcome is failed.",
+            "rework_free_task_rate": "Share of assessed material tasks that required no recorded material rework cycle.",
+            "verification_clean_task_rate": "Share of assessed material tasks with no recorded failed verification attempt."
         },
         "signals": signals,
         "recommendations": [
@@ -259,9 +353,12 @@ def _render_markdown(report: dict) -> str:
         "",
         f"- Unreviewed events: **{epoch['unreviewed_events']}**",
         f"- Material tasks: **{epoch['material_tasks']}**",
-        f"- Rework rate: **{epoch['rework_rate']}**",
-        f"- Verification-failure rate: **{epoch['verification_failure_rate']}**",
-        f"- Verification escapes: **{epoch['verification_escapes']}**",
+        f"- Rework rate: **{epoch['rework_rate']}** (assessment coverage: **{epoch['rework_assessment_coverage_rate']}**; iteration density, not accuracy)",
+        f"- Rework-free task rate: **{epoch['rework_free_task_rate']}** (assessment coverage: **{epoch['rework_assessment_coverage_rate']}**)",
+        f"- Verification-failure rate: **{epoch['verification_failure_rate']}** (assessment coverage: **{epoch['verification_assessment_coverage_rate']}**; catch density, not final failure)",
+        f"- Verification-clean task rate: **{epoch['verification_clean_task_rate']}** (assessment coverage: **{epoch['verification_assessment_coverage_rate']}**)",
+        f"- Verification escape rate: **{epoch['verification_escape_task_rate']}** (assessment coverage: **{epoch['verification_escape_assessment_coverage_rate']}**)",
+        f"- Final failed-task rate: **{epoch['final_failed_task_rate']}**",
         f"- Framework-feedback tasks: **{epoch['framework_feedback_tasks']}**",
         "",
         "## Signals",
@@ -277,14 +374,16 @@ def _render_markdown(report: dict) -> str:
 
 
 def analyze_target(target: Path) -> dict:
-    learning = target / ".erei" / "learning"
-    events = _read_jsonl(learning / "TASK_EVENTS.jsonl")
-    reviews = _read_jsonl(learning / "LEARNING_REVIEWS.jsonl")
-    state = _read_json(learning / "LEARNING_STATE.json")
+    try:
+        snapshot = authoritative_task_learning.authoritative_snapshot(target)
+    except authoritative_task_learning.LearningError as exc:
+        raise LearningPatternError(f"authoritative Task Learning snapshot failed: {exc}") from exc
+    events = snapshot["events"]
+    reviews = snapshot["reviews"]
+    state = snapshot["state"]
     if not events:
         raise LearningPatternError("no prospective Task Learning events found")
     return analyze(events, reviews, state)
-
 
 def parse_args(argv=None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Analyze EREI Task Learning patterns without mutating project state.")

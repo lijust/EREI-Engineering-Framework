@@ -213,6 +213,43 @@ def _paths(target: Path) -> dict[str, Path]:
     }
 
 
+def _ledger_generation(paths: dict[str, Path]) -> str:
+    """Hash the complete read-only learning-ledger surface to detect concurrent changes."""
+    digest = hashlib.sha256()
+
+    def add_file(label: str, path: Path) -> None:
+        digest.update(label.encode("utf-8"))
+        digest.update(b"\0")
+        try:
+            data = path.read_bytes()
+        except FileNotFoundError:
+            digest.update(b"<missing>")
+        else:
+            digest.update(data)
+        digest.update(b"\0")
+
+    add_file("events-projection", paths["events"])
+    add_file("reviews-projection", paths["reviews"])
+
+    for label, directory in (("event", paths["event_dir"]), ("review", paths["review_dir"])):
+        digest.update(label.encode("utf-8"))
+        digest.update(b"\0")
+        if not directory.exists():
+            digest.update(b"<missing-dir>\0")
+            continue
+        for path in sorted(directory.glob("*.json")):
+            digest.update(path.name.encode("utf-8"))
+            digest.update(b"\0")
+            try:
+                digest.update(path.read_bytes())
+            except FileNotFoundError:
+                # A concurrent filesystem change will also change the post-read generation.
+                digest.update(b"<changed-during-read>")
+            digest.update(b"\0")
+
+    return digest.hexdigest()
+
+
 def validate_event(event: dict) -> None:
     try:
         validate_task_event_shape(event)
@@ -232,11 +269,61 @@ def _deduplicate_records(records: list[dict], key_fn, label: str) -> list[dict]:
     return sorted(result.values(), key=key_fn)
 
 
+def _immutable_records(directory: Path, key_fn, label: str) -> list[dict]:
+    if not directory.exists():
+        return []
+    records: list[dict] = []
+    for path in sorted(directory.glob("*.json")):
+        value = _read_json(path)
+        key = key_fn(value)
+        if not isinstance(key, str) or not key:
+            raise LearningError(f"immutable {label} has no valid identity: {path}")
+        if path.stem != key:
+            raise LearningError(f"immutable {label} filename does not match identity: {path.name} != {key}.json")
+        records.append(value)
+    return _deduplicate_records(records, key_fn, f"immutable {label} identity")
+
+
+def _merge_legacy_projection_with_immutable(
+    projection: list[dict],
+    immutable: list[dict],
+    *,
+    key_fn,
+    label: str,
+) -> list[dict]:
+    immutable_by_key = {key_fn(item): item for item in immutable}
+    legacy: list[dict] = []
+    for item in projection:
+        version = item.get("schema_version")
+        if type(version) is not int:
+            raise LearningError(f"{label} schema_version must be an integer")
+        if version == 1:
+            legacy.append(item)
+            continue
+        if version == 2:
+            key = key_fn(item)
+            authoritative = immutable_by_key.get(key)
+            if authoritative is None:
+                raise LearningError(
+                    f"V2 {label} exists only in rebuildable projection without immutable authority: {key}"
+                )
+            if authoritative != item:
+                raise LearningError(f"V2 {label} projection does not match immutable authority: {key}")
+            continue
+        # Preserve unsupported projection records so strict schema validation reports the real contract error.
+        legacy.append(item)
+    return _deduplicate_records(legacy + immutable, key_fn, f"{label} identity")
+
+
 def _load_events(paths: dict[str, Path]) -> list[dict]:
-    records = _read_jsonl(paths["events"])
-    if paths["event_dir"].exists():
-        records.extend(_read_json(path) for path in sorted(paths["event_dir"].glob("*.json")))
-    events = _deduplicate_records(records, _occurrence, "occurrence identity")
+    projection = _read_jsonl(paths["events"])
+    immutable = _immutable_records(paths["event_dir"], _occurrence, "event")
+    events = _merge_legacy_projection_with_immutable(
+        projection,
+        immutable,
+        key_fn=_occurrence,
+        label="event",
+    )
     seen_task_ids: dict[str, str] = {}
     for event in events:
         validate_event(event)
@@ -248,11 +335,20 @@ def _load_events(paths: dict[str, Path]) -> list[dict]:
     return events
 
 
+def _review_identity(review: dict) -> str:
+    value = review.get("review_id")
+    return value if isinstance(value, str) else ""
+
+
 def _load_reviews(paths: dict[str, Path]) -> list[dict]:
-    records = _read_jsonl(paths["reviews"])
-    if paths["review_dir"].exists():
-        records.extend(_read_json(path) for path in sorted(paths["review_dir"].glob("*.json")))
-    reviews = _deduplicate_records(records, lambda item: str(item.get("review_id", "")), "review identity")
+    projection = _read_jsonl(paths["reviews"])
+    immutable = _immutable_records(paths["review_dir"], _review_identity, "review")
+    reviews = _merge_legacy_projection_with_immutable(
+        projection,
+        immutable,
+        key_fn=_review_identity,
+        label="review",
+    )
     try:
         for review in reviews:
             validate_learning_review_shape(review)
@@ -582,6 +678,40 @@ def capture(target: Path, event: dict) -> tuple[dict, bool]:
     return state, False
 
 
+def authoritative_snapshot(target: Path, max_attempts: int = 4) -> dict:
+    """Read a stable authoritative learning snapshot without mutating the project."""
+    if type(max_attempts) is not int or max_attempts < 1:
+        raise LearningError("max_attempts must be a positive integer")
+    paths = _paths(target)
+    last_error: LearningError | None = None
+
+    for _ in range(max_attempts):
+        before = _ledger_generation(paths)
+        try:
+            events = _load_events(paths)
+            reviews = _load_reviews(paths)
+            state = derive_state(events, reviews)
+        except LearningError as exc:
+            last_error = exc
+            after_error = _ledger_generation(paths)
+            if after_error != before:
+                continue
+            raise
+
+        after = _ledger_generation(paths)
+        if after == before:
+            return {
+                "events": events,
+                "reviews": reviews,
+                "state": state,
+                "generation": after,
+            }
+
+    message = "learning ledgers changed during read-only snapshot"
+    if last_error is not None:
+        message += f": {last_error}"
+    raise LearningError(message)
+
 def status(target: Path) -> dict:
     paths = _paths(target)
     with _lock(paths["root"]):
@@ -634,16 +764,17 @@ def close_review(target: Path, args: argparse.Namespace, now: datetime | None = 
 
 
 def validate_ledgers(target: Path) -> dict:
-    paths = _paths(target)
-    events = _load_events(paths)
-    reviews = _load_reviews(paths)
-    state = derive_state(events, reviews)
+    snapshot = authoritative_snapshot(target)
+    events = snapshot["events"]
+    reviews = snapshot["reviews"]
+    state = snapshot["state"]
     return {
         "valid": True,
         "events": len(events),
         "reviews": len(reviews),
         "epoch_id": state["epoch_id"],
         "trigger": state["trigger"],
+        "generation": snapshot["generation"],
     }
 
 

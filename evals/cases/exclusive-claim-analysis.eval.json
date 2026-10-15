@@ -1,0 +1,34 @@
+{
+  "schema_version": "1.0",
+  "suite_id": "exclusive-claim-analysis-v1",
+  "artifact": "skills/exclusive-claim-analysis",
+  "cases": [
+    {
+      "id": "T-ECA-001-RANDOM-REF-RACE",
+      "tags": ["trigger", "concurrency", "singleton", "L3"],
+      "input": {"prompt": "A one-time operation creates a random unique Git ref for each attempt and proceeds if creation succeeds. Two actors may run concurrently. Is this mutual exclusion?"},
+      "expectations": [
+        {"type": "trace_tool_called", "tool": "exclusive-claim-analysis"},
+        {"type": "output_contains_all", "values": ["attempt", "canonical", "atomic", "claim"]},
+        {"type": "output_contains_none", "values": ["random uniqueness guarantees mutual exclusion"]}
+      ]
+    },
+    {
+      "id": "B-ECA-002-CANONICAL-CAS",
+      "tags": ["behavior", "atomic", "fencing"],
+      "input": {"prompt": "All contenders conditionally create the same canonical claim key; only one conditional create can succeed. The winner gets a generation token required by every downstream mutation. Analyze the design and its recovery requirements."},
+      "expectations": [
+        {"type": "output_contains_all", "values": ["atomic", "owner", "fencing", "recovery", "release"]}
+      ]
+    },
+    {
+      "id": "N-ECA-003-NO-SINGLETON",
+      "tags": ["non-trigger", "parallel-safe"],
+      "input": {"prompt": "Two independent read-only report jobs can safely execute in parallel and share no mutable resource."},
+      "expectations": [
+        {"type": "trace_tool_not_called", "tool": "exclusive-claim-analysis"},
+        {"type": "max_trace_steps", "value": 3}
+      ]
+    }
+  ]
+}

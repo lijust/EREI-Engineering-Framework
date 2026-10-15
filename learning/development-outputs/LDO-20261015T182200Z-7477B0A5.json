@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "output_id": "LDO-20261015T182200Z-7477B0A5",
+  "created_at": "2026-10-15T18:22:00Z",
+  "source": {
+    "project_repository": "lijust/EREI-App-Google",
+    "epoch_id": "EPOCH-023",
+    "review_id": "ELR-20261015T175500Z-23A155E1",
+    "framework_ref": "69079018606750312344cb3c648952b9ab72d35b"
+  },
+  "pattern": {
+    "pattern_id": "LP-CONFORMANCE-EXACT-ENVIRONMENT-001",
+    "pattern_class": "execution_environment_conformance",
+    "signal_summary": "A source/generic proof did not model Windows PowerShell 5.1 native stderr semantics, producing a verification escape before provider contact."
+  },
+  "interpretation": "The failed assumption was evidence promotion across execution environments, not business-logic correctness. Exact shell/runtime family and material process-stream/exit semantics must be a distinct assurance rung when they can change fail-closed control flow.",
+  "classification": "FRAMEWORK_FEEDBACK",
+  "development_route": "framework_feedback",
+  "evidence": [
+    "feedback:EFF-20261015T175500Z-7477B0A5",
+    "github-pr:480",
+    "task:ETASK-20261011T180543Z-F480A151",
+    "app-review:ELR-20261015T175500Z-23A155E1"
+  ],
+  "expected_effect": "Reduce recurrence of environment-specific verification escapes by requiring evidence at the execution rung that actually supports the accepted runtime claim.",
+  "success_metrics": [
+    {
+      "metric": "verification_escape_task_rate",
+      "direction": "decrease",
+      "baseline": "2/29 in EPOCH-023 overall",
+      "target": "0 recurrence for exact-environment mechanism in bounded trial",
+      "notes": "Primary quality signal; do not trade away verification."
+    },
+    {
+      "metric": "execution_environment_recurrence_count",
+      "direction": "decrease",
+      "baseline": "at least 1 confirmed escape",
+      "target": 0,
+      "notes": "Count the same root-cause mechanism, not unrelated failures."
+    }
+  ],
+  "promotion_boundary": "cross_project_evidence_required",
+  "notes": "Native Candidate exists at skills/execution-conformance-ladder. Stable promotion requires normal Knowledge Promotion/release governance."
+}

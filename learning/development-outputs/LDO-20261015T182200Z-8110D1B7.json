@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "output_id": "LDO-20261015T182200Z-8110D1B7",
+  "created_at": "2026-10-15T18:22:00Z",
+  "source": {
+    "project_repository": "lijust/EREI-App-Google",
+    "epoch_id": "EPOCH-023",
+    "review_id": "ELR-20261015T175500Z-23A155E1",
+    "framework_ref": "69079018606750312344cb3c648952b9ab72d35b"
+  },
+  "pattern": {
+    "pattern_id": "LP-EXCLUSIVE-CLAIM-001",
+    "pattern_class": "exclusive_claim_concurrency",
+    "signal_summary": "Per-attempt random Git refs made attempts unique but did not force concurrent actors to contend on one exclusion claim."
+  },
+  "interpretation": "Attempt journaling and singleton authority are different invariants. A safe one-time operation needs a canonical atomic claim shared by all contenders, downstream authority binding, and stale/recovery semantics.",
+  "classification": "FRAMEWORK_FEEDBACK",
+  "development_route": "framework_feedback",
+  "evidence": [
+    "feedback:EFF-20261015T175500Z-8110D1B7",
+    "github-pr:486",
+    "task:ETASK-20261012T013734Z-A15D0486",
+    "app-review:ELR-20261015T175500Z-23A155E1"
+  ],
+  "expected_effect": "Prevent concurrency races where multiple uniquely identified attempts each believe they hold singleton authority.",
+  "success_metrics": [
+    {
+      "metric": "exclusive_claim_race_recurrence_count",
+      "direction": "decrease",
+      "baseline": 1,
+      "target": 0,
+      "notes": "Adversarial concurrent-contender case must remain covered."
+    },
+    {
+      "metric": "verification_escape_task_rate",
+      "direction": "hold",
+      "baseline": "6.9% EPOCH-023 overall",
+      "target": "no increase attributable to claim design",
+      "notes": "Candidate must not move races later into runtime."
+    }
+  ],
+  "promotion_boundary": "cross_project_evidence_required",
+  "notes": "Native Candidate exists at skills/exclusive-claim-analysis. Additional real use outside the originating design is required before broad Stable claims."
+}

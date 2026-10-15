@@ -23,6 +23,33 @@ L0 conversational explanation-only requests do not require the router unless the
 - Risk Contract.
 - Available roles, skills, workflows, overlays, and tools.
 
+## Stage 0 — Learning-debt preflight
+
+Before starting a **new material engineering execution** in an integrated project, reconstruct the current Learning State from the authoritative Task Learning ledgers.
+
+1. Run `tools/task_learning.py status --target <project>` (or an equivalent locked derivation) first.
+   - It must load and validate the authoritative immutable event/review records.
+   - It must derive the current state from those records.
+   - It may refresh the rebuildable JSONL/state/summary projections.
+   - If derivation or ledger validation fails, fail closed as `BLOCKED_LEARNING_REVIEW`; do not fall back to an existing projection.
+2. Only after successful derivation, invoke `tools/learning_review_debt_gate.py` (or equivalent contract-validating implementation) **unconditionally before trusting the stored trigger level**.
+
+`LEARNING_STATE.json` is a rebuildable projection, not the learning source of truth. A missing/stale/healthy projection never authorizes execution when authoritative ledgers contain newer escape or critical evidence.
+
+Route by gate result:
+
+1. `PASS_NO_IMMEDIATE_REVIEW` — continue normal routing.
+2. `PASS_BOUNDED_REVIEW_DEFER` — continue only within the exact defer expiry/task-count boundary and preserve the defer evidence in the router record.
+3. `BLOCK_IMMEDIATE_REVIEW_DEBT` — route to `learning-review` before new material Framework-dependent execution and return `BLOCKED_LEARNING_REVIEW`.
+4. `BLOCK_CRITICAL_SECURITY_OR_DATA_REVIEW` — stop new material execution and route through Learning Review plus the normal security/data blocking governance; no bounded defer is valid.
+5. `BLOCK_INVALID_REVIEW_DEFER` or any state/defer contract-validation error — fail closed as `BLOCKED_LEARNING_REVIEW`; repair/rebuild the learning state before continuing.
+
+Do not pre-filter state reconstruction or the gate call by `trigger.level`, and do not skip reconstruction because `LEARNING_STATE.json` is absent. A stored `LEARNING_HEALTHY` value does not override authoritative ledger evidence or derived verification-escape/critical security-data metrics.
+
+This preflight does **not** retroactively change the terminal state of the task that created the trigger. It prevents unresolved immediate-review debt from growing without bound.
+
+A bounded defer never overrides security, data, release or verification blocking evidence.
+
 ## Stage 1 — Normalize the request
 
 Separate:
@@ -200,6 +227,21 @@ Read the deterministic learning trigger returned from the project-local `.erei/l
 
 A learning trigger never authorizes Framework self-modification and does not replace the task terminal state.
 
+If the new state is `IMMEDIATE_REVIEW`, record that the **next material execution** requires Learning Review closure or a valid bounded defer under Stage 0.
+
+## Stage 12.5 — Translate closed learning into development
+
+When the routed execution is a Learning Review, or when a Learning Review has just closed and produced reusable/measurement-relevant findings:
+
+- invoke `workflows/learning-to-development/WORKFLOW.md`;
+- require the Chief Engineer to interpret each material finding;
+- persist project-local Learning Development Outputs;
+- route project-only findings locally;
+- route Framework-relevant findings through Framework Feedback / Knowledge Promotion;
+- define expected effect and success metrics before any learning-derived Candidate implementation.
+
+Do not generate a Framework Candidate directly from a metric or pattern-detector output.
+
 ## Stage 13 — Exit
 
 Return one of:
@@ -209,6 +251,7 @@ Return one of:
 - `BLOCKED_SECURITY`
 - `BLOCKED_DATA_RISK`
 - `BLOCKED_VERIFICATION`
+- `BLOCKED_LEARNING_REVIEW`
 - `NEEDS_DISCOVERY`
 
 A generic `DONE` is not an accepted terminal state for material workflows.
@@ -230,6 +273,9 @@ Framework feedback: none | captured <feedback-id(s)>
 Task learning event: <task-id>
 Learning epoch: <epoch-id>
 Learning trigger: <level + reasons>
+Learning state derivation: authoritative-ledgers-pass | blocked
+Learning review debt gate: not-applicable | pass | bounded-defer | blocked
+Learning development outputs: none | <output-id(s) + route>
 Exit state:
 ```
 

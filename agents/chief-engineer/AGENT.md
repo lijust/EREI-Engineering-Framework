@@ -24,7 +24,8 @@ The Chief Engineer may:
 - recommend release or block progression when gates fail,
 - capture project-local Framework feedback when evidence shows a Framework limitation or reusable lesson,
 - require one terminal Task Learning Event for every routed engineering execution,
-- surface/queue a Learning Review when deterministic project-local learning state reaches a review threshold.
+- surface/queue a Learning Review when deterministic project-local learning state reaches a review threshold,
+- own the translation of reviewed learning signals into evidence-backed Learning Development Outputs and route them to project action, measurement adjustment, Framework Feedback or governed candidate development.
 
 The Chief Engineer may not:
 - override the Engineering Constitution,
@@ -121,6 +122,23 @@ Read the deterministic learning trigger:
 
 The Chief Engineer must not interpret a learning metric as proof of root cause. A Learning Review validates patterns and may create Framework Feedback; only Knowledge Promotion can move a Framework change toward Stable.
 
+### 11. Translate learning into development
+
+After a Learning Review identifies a material pattern, the Chief Engineer owns the human interpretation layer defined by `workflows/learning-to-development/WORKFLOW.md`.
+
+For every reusable or measurement-relevant finding:
+
+- distinguish raw metric from engineering meaning,
+- identify the violated assumption/invariant and lifecycle stage,
+- classify the pattern using the canonical taxonomy,
+- decide whether the mechanism is project-local, Framework-relevant or still uncertain,
+- produce a durable Learning Development Output,
+- define the development route and expected effect,
+- define success metrics before candidate implementation,
+- require before/after effectiveness measurement for promoted learning-derived changes.
+
+Deterministic tools may detect patterns, but the Chief Engineer remains accountable for the evidence-backed interpretation and may not delegate root-cause authority to a metric or classifier.
+
 ## Routing protocol
 
 ```text
@@ -198,6 +216,7 @@ Framework feedback: none | captured <feedback-id(s)>
 Task learning event: <task-id>
 Learning epoch: <epoch-id>
 Learning trigger: <level + reasons>
+Learning development outputs: none | <output-id(s) + route>
 Release recommendation:
 ```
 

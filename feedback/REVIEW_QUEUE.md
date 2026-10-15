@@ -83,10 +83,91 @@
   - `github-pr:54`
 - Review note: Pre-release deterministic catches should not be conflated with escaped defects in Framework health metrics. Evidence is strong inside one project; cross-project confirmation is still pending.
 
+
+## FCL-CONFORMANCE-LADDER-001 — October extension
+
+### EFF-20261015T175500Z-7477B0A5
+
+- Source project: `lijust/EREI-App-Google`
+- Source project ref: `a11f8911644118bc936037b154be7984f0354ca5`
+- Decision revision: `f1f9d4966f085868caa08829800c8955436eb6e4`
+- Review state: `CANDIDATE`
+- Promotion state: `CANDIDATE`
+- Decision ID: `EFD-20261015T181500Z-7477B0A5`
+- Candidate: `skills/execution-conformance-ladder/`
+- Evidence:
+  - `app-review:ELR-20261015T175500Z-23A155E1`
+  - `github-pr:480`
+  - `task:ETASK-20261011T180543Z-F480A151`
+  - `github-pr:497`
+  - `app-merge:a11f8911644118bc936037b154be7984f0354ca5`
+  - `framework-candidate:f1f9d4966f085868caa08829800c8955436eb6e4`
+- Review note: This observation corroborates the existing conformance ladder but adds an exact-execution-environment rung. PowerShell 7/source success cannot silently prove Windows PowerShell 5.1 native process semantics.
+
+## FCL-EXCLUSIVE-CLAIM-001
+
+### EFF-20261015T175500Z-8110D1B7
+
+- Source project: `lijust/EREI-App-Google`
+- Source project ref: `a11f8911644118bc936037b154be7984f0354ca5`
+- Decision revision: `f1f9d4966f085868caa08829800c8955436eb6e4`
+- Review state: `CANDIDATE`
+- Promotion state: `CANDIDATE`
+- Decision ID: `EFD-20261015T181500Z-8110D1B7`
+- Candidate: `skills/exclusive-claim-analysis/`
+- Evidence:
+  - `app-review:ELR-20261015T175500Z-23A155E1`
+  - `github-pr:486`
+  - `task:ETASK-20261012T013734Z-A15D0486`
+  - `github-pr:497`
+  - `app-merge:a11f8911644118bc936037b154be7984f0354ca5`
+  - `framework-candidate:f1f9d4966f085868caa08829800c8955436eb6e4`
+- Review note: Random/per-attempt uniqueness is not mutual exclusion. The Candidate separates attempt identity from one canonical atomic claim and requires authority/fencing/recovery analysis.
+
+## FCL-SEMANTIC-ASSURANCE-FRICTION-001
+
+### EFF-20261015T180800Z-A29B7B59
+
+- Source project: `lijust/EREI-App-Google`
+- Source project ref: `a11f8911644118bc936037b154be7984f0354ca5`
+- Decision revision: `f1f9d4966f085868caa08829800c8955436eb6e4`
+- Review state: `CANDIDATE`
+- Promotion state: `CANDIDATE`
+- Decision ID: `EFD-20261015T181500Z-A29B7B59`
+- Candidate: `skills/semantic-assurance-design/`
+- Evidence:
+  - `app-review:ELR-20261015T175500Z-23A155E1`
+  - `github-pr:497`
+  - `app-merge:a11f8911644118bc936037b154be7984f0354ca5`
+  - `framework-candidate:f1f9d4966f085868caa08829800c8955436eb6e4`
+- Review note: Repeated pre-runtime catches protected real invariants but recurring stale bindings, allowlists, incidental source-text assertions and process/provenance mechanics show avoidable harness friction. Candidate work must reduce this cost without reducing escape protection.
+
+
+### EFF-20261015T181724Z-E320C171 — independent second-project corroboration
+
+- Source project: `lijust/EREI-3.2`
+- Source project ref: `87d730ddc3547f863de2a6895e91f9b83e9c6e72`
+- Decision revision: `4716966d5eb492a3c4489ac4e2917597539c81db`
+- Review state: `CANDIDATE`
+- Promotion state: `CANDIDATE`
+- Decision ID: `EFD-20261015T182100Z-E320C171`
+- Candidate: `skills/semantic-assurance-design/`
+- Evidence:
+  - `github-pr:171`
+  - `github-pr:172`
+  - `github-actions:38784603725`
+  - `task:ETASK-20261015T181724Z-E320C171`
+  - `erei32-merge:87d730ddc3547f863de2a6895e91f9b83e9c6e72`
+  - `app-feedback:EFF-20261015T180800Z-A29B7B59`
+  - `framework-candidate:f1f9d4966f085868caa08829800c8955436eb6e4`
+- Review note: EREI 3.2 independently reproduced the predecessor/successor applicability problem when a bootstrap-only no-ledger invariant would have rejected the first legitimate post-integration Task Learning event. The safe correction preserved assurance by changing lifecycle applicability and successor validation rather than deleting the rule. This upgrades the pattern from one-project process friction to multi-project corroborated Candidate evidence.
+
 ## Intake summary
 
-- Source projects represented: `1`
-- Feedback events ingested: `4`
-- Clusters created: `3`
+- Source projects represented with feedback: `2`
+- Feedback events ingested: `8`
+- Clusters represented: `5`
+- Candidate feedback decisions: `5`
 - Promoted decisions: `0`
 - Source observations mutated by central intake: `0`
+- Multi-project corroborated cluster: `FCL-SEMANTIC-ASSURANCE-FRICTION-001`

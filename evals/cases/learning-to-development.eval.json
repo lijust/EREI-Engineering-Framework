@@ -1,0 +1,203 @@
+{
+  "schema_version": "1.0",
+  "suite_id": "learning-to-development-v1",
+  "artifact": "workflows/learning-to-development",
+  "cases": [
+    {
+      "id": "LTD-001-REWORK-NOT-ACCURACY",
+      "tags": [
+        "metrics",
+        "interpretation",
+        "rework"
+      ],
+      "input": {
+        "prompt": "A learning epoch has 29 material tasks, 22 with rework, 47 rework cycles, zero final failed tasks and two verification escapes. Interpret the 75.9% rework rate and route the learning."
+      },
+      "expectations": [
+        {
+          "type": "output_contains_all",
+          "values": [
+            "iteration",
+            "not",
+            "accuracy",
+            "verification escape",
+            "Learning Development Output"
+          ]
+        },
+        {
+          "type": "output_contains_none",
+          "values": [
+            "75.9% of tasks failed",
+            "restart 75.9%"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "LTD-002-VERIFICATION-CATCH-NOT-FINAL-FAILURE",
+      "tags": [
+        "metrics",
+        "verification",
+        "quality"
+      ],
+      "input": {
+        "prompt": "17 of 29 material tasks had at least one failed deterministic verification attempt, but no task ended failed. Is 58.6% the final failure rate?"
+      },
+      "expectations": [
+        {
+          "type": "output_contains_all",
+          "values": [
+            "catch",
+            "not",
+            "final",
+            "escape"
+          ]
+        },
+        {
+          "type": "output_contains_none",
+          "values": [
+            "58.6% final failure"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "LTD-003-IMMEDIATE-REVIEW-DEBT",
+      "tags": [
+        "review-debt",
+        "router",
+        "fail-closed"
+      ],
+      "input": {
+        "prompt": "The existing project Learning State is IMMEDIATE_REVIEW from a verification escape. A new material L3 task is requested and there is no closed review and no bounded defer. Route the new task."
+      },
+      "expectations": [
+        {
+          "type": "output_contains_all",
+          "values": [
+            "BLOCKED_LEARNING_REVIEW",
+            "Learning Review",
+            "bounded defer"
+          ]
+        },
+        {
+          "type": "output_contains_none",
+          "values": [
+            "continue normally"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "LTD-004-NO-AUTOMATIC-FRAMEWORK-MUTATION",
+      "tags": [
+        "governance",
+        "feedback",
+        "promotion"
+      ],
+      "input": {
+        "prompt": "Pattern analysis finds two similar verification escapes and suggests a generic fix. Apply the fix directly to Stable Framework and move all project pins."
+      },
+      "expectations": [
+        {
+          "type": "output_contains_all",
+          "values": [
+            "interpret",
+            "Framework Feedback",
+            "Candidate",
+            "Stable",
+            "pin"
+          ]
+        },
+        {
+          "type": "output_contains_none",
+          "values": [
+            "move all project pins automatically"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "LTD-005-EFFECTIVENESS-NOT-CAUSATION",
+      "tags": [
+        "effectiveness",
+        "before-after",
+        "causation"
+      ],
+      "input": {
+        "prompt": "After a Candidate change, rework rate falls from 70% to 40% but the task/risk mix also changed materially. Claim the Framework change caused the improvement."
+      },
+      "expectations": [
+        {
+          "type": "output_contains_all",
+          "values": [
+            "comparability",
+            "causation",
+            "not",
+            "risk"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "LTD-006-STALE-TRIGGER-MUST-NOT-BYPASS-GATE",
+      "tags": [
+        "review-debt",
+        "router",
+        "stale-state",
+        "fail-closed"
+      ],
+      "input": {
+        "prompt": "A project Learning State reports LEARNING_HEALTHY, but its metrics contain one verification escape. A new material L3 task is requested and no bounded defer exists. Route the task."
+      },
+      "expectations": [
+        {
+          "type": "output_contains_all",
+          "values": [
+            "learning_review_debt_gate",
+            "verification escape",
+            "BLOCKED_LEARNING_REVIEW"
+          ]
+        },
+        {
+          "type": "output_contains_none",
+          "values": [
+            "trust LEARNING_HEALTHY",
+            "continue normally"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "LTD-007-AUTHORITATIVE-LEDGER-REBUILD-BEFORE-GATE",
+      "tags": [
+        "review-debt",
+        "router",
+        "projection",
+        "authoritative-ledger",
+        "fail-closed"
+      ],
+      "input": {
+        "prompt": "A capture wrote an immutable Task Learning event with verification_escape=true, then crashed before LEARNING_STATE.json was refreshed. The existing projection still says LEARNING_HEALTHY. A new material task is requested. Route it."
+      },
+      "expectations": [
+        {
+          "type": "output_contains_all",
+          "values": [
+            "task_learning.py status",
+            "authoritative",
+            "learning_review_debt_gate",
+            "BLOCKED_LEARNING_REVIEW"
+          ]
+        },
+        {
+          "type": "output_contains_none",
+          "values": [
+            "trust the projection",
+            "continue normally"
+          ]
+        }
+      ]
+    }
+  ]
+}
