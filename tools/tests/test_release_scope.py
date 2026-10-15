@@ -43,12 +43,11 @@ class ReleaseScopeTests(unittest.TestCase):
             "status": "approved",
             "release_family": "task-learning-v2-core",
             "target_baseline": "task-learning-review-v2",
-            "capabilities": ["prospective_task_learning"],
-            "release_control_dependencies": ["capability_activation_governance"],
+            "capabilities": [{"name": "prospective_task_learning", "version": "v2"}],
+            "release_control_dependencies": [{"name": "capability_activation_governance", "version": "v1"}],
             "required_eval_suites": [
                 {"path": "evals/cases/task-learning-review.eval.json", "suite_id": "task-learning-review-v1"}
             ],
-            "required_deterministic_workflows": ["Task Learning Tests", "Framework Assurance Gate"],
             "excluded_candidate_capabilities": ["learning_pattern_analysis"],
             "post_promotion_gates": ["project_framework_pin_upgrade"],
             "rationale": "Promote the bounded V2 core independently from unrelated Candidate operations."
@@ -68,8 +67,18 @@ class ReleaseScopeTests(unittest.TestCase):
         temp, root = self.setup_root()
         try:
             value = self.scope()
-            value["capabilities"] = ["missing"]
+            value["capabilities"] = [{"name": "missing", "version": "v2"}]
             with self.assertRaisesRegex(release_scope.ReleaseScopeError, "unknown capabilities"):
+                release_scope.validate_scope(root, value)
+        finally:
+            temp.cleanup()
+
+    def test_capability_version_mismatch_fails(self):
+        temp, root = self.setup_root()
+        try:
+            value = self.scope()
+            value["capabilities"][0]["version"] = "wrong"
+            with self.assertRaisesRegex(release_scope.ReleaseScopeError, "version mismatch"):
                 release_scope.validate_scope(root, value)
         finally:
             temp.cleanup()
