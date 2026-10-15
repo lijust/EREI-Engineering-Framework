@@ -91,7 +91,7 @@ class GitHubReleaseProvenanceTests(unittest.TestCase):
 
     def test_clean_codex_review_authenticates_exact_reviewed_file(self):
         provenance = {
-            "kind": "github_codex_clean_review",
+            "kind": "github_codex_clean_security_review",
             "pr_number": 55,
             "actor_login": "chatgpt-codex-connector",
         }
@@ -114,7 +114,7 @@ class GitHubReleaseProvenanceTests(unittest.TestCase):
 
     def test_reviewed_blob_must_equal_release_record(self):
         provenance = {
-            "kind": "github_codex_clean_review",
+            "kind": "github_codex_clean_security_review",
             "pr_number": 55,
             "actor_login": "chatgpt-codex-connector",
         }
@@ -159,7 +159,7 @@ class GitHubReleaseProvenanceTests(unittest.TestCase):
 
     def test_unsigned_merge_is_rejected(self):
         provenance = {
-            "kind": "github_codex_clean_review",
+            "kind": "github_codex_clean_security_review",
             "pr_number": 55,
             "actor_login": "chatgpt-codex-connector",
         }
@@ -182,7 +182,7 @@ class GitHubReleaseProvenanceTests(unittest.TestCase):
 
     def test_missing_token_fails_closed(self):
         provenance = {
-            "kind": "github_codex_clean_review",
+            "kind": "github_codex_clean_security_review",
             "pr_number": 55,
             "actor_login": "chatgpt-codex-connector",
         }
