@@ -22,6 +22,7 @@ on:
       - "workflows/learning-review/**"
       - "workflows/learning-to-development/**"
       - "learning/PATTERN_TAXONOMY.json"
+      - "learning/development-outputs/**"
       - "templates/project-bootstrap/.erei/learning/**"
       - "workflows/router/WORKFLOW.md"
       - "agents/chief-engineer/AGENT.md"
@@ -99,3 +100,29 @@ jobs:
 
       - name: Run learning health dashboard tests
         run: python tools/tests/test_learning_health_dashboard.py
+
+  validate-learning-development-outputs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Validate published learning development outputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          files=(learning/development-outputs/*.json)
+          if [ "${#files[@]}" -eq 0 ]; then
+            echo "No Learning Development Outputs published."
+            exit 0
+          fi
+          for file in "${files[@]}"; do
+            python tools/learning_development_output.py --input "$file"
+          done
