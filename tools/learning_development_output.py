@@ -18,6 +18,12 @@ ROUTES={
 }
 BOUNDARIES={"project_only","candidate_only","stable_review_required","cross_project_evidence_required"}
 DIRECTIONS={"increase","decrease","hold","observe"}
+PATTERN_CLASSES={
+ "healthy_assurance_catch","verification_escape","execution_environment_conformance",
+ "provider_runtime_conformance","exclusive_claim_concurrency","stale_contract_or_reference",
+ "identity_or_authority_binding","measurement_model_gap","context_routing_gap",
+ "review_debt","project_local_defect","unknown"
+}
 
 class OutputError(RuntimeError): pass
 
@@ -40,6 +46,7 @@ def validate(value:dict)->dict:
     if not isinstance(source,dict) or not source.get("project_repository") or not source.get("epoch_id"): raise OutputError("source project_repository and epoch_id required")
     pattern=value["pattern"]
     if not isinstance(pattern,dict) or not pattern.get("pattern_id") or not pattern.get("pattern_class") or not pattern.get("signal_summary"): raise OutputError("pattern fields required")
+    if pattern.get("pattern_class") not in PATTERN_CLASSES: raise OutputError("invalid pattern_class")
     if not isinstance(value["interpretation"],str) or not value["interpretation"].strip(): raise OutputError("interpretation required")
     if value["classification"] not in CLASSES: raise OutputError("invalid classification")
     if value["development_route"] not in ROUTES: raise OutputError("invalid development_route")
