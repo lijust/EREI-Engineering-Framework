@@ -86,28 +86,52 @@ def _top(counter: Counter, limit: int = 8) -> list[dict]:
     return [{"value": key, "count": value} for key, value in counter.most_common(limit)]
 
 
+def _is_measured(event: dict, signal: str) -> bool:
+    if event.get("schema_version", 1) == 1:
+        return True
+    assessment = event.get("signal_assessment")
+    return isinstance(assessment, dict) and assessment.get(signal) == "measured"
+
+
 def analyze(events: list[dict], reviews: list[dict], state: dict) -> dict:
     reviewed = _reviewed_occurrences(events, reviews)
     current = [event for event in events if _occurrence(event) not in reviewed]
     material = [event for event in current if event.get("material") is True]
 
     schema_counts = Counter(str(event.get("schema_version", "unknown")) for event in current)
-    workflow_counts = Counter(str(event.get("workflow", "unknown")) for event in current)
-    outcome_counts = Counter(str(event.get("outcome_class", "unknown")) for event in current)
-    risk_counts = Counter(str(event.get("risk", "unknown")) for event in current)
+    workflow_counts = Counter(str(event.get("workflow", "unknown")) for event in material)
+    outcome_counts = Counter(str(event.get("outcome_class", "unknown")) for event in material)
+    risk_counts = Counter(str(event.get("risk", "unknown")) for event in material)
     task_group_counts = Counter(
-        str(event["task_group"]) for event in current
+        str(event["task_group"]) for event in material
         if isinstance(event.get("task_group"), str) and event["task_group"]
     )
 
-    rework_events = [event for event in material if isinstance(event.get("rework_cycles"), int)]
-    verification_events = [event for event in material if isinstance(event.get("verification_failures"), int)]
+    rework_events = [
+        event for event in material
+        if isinstance(event.get("rework_cycles"), int) and _is_measured(event, "rework_cycles")
+    ]
+    verification_events = [
+        event for event in material
+        if isinstance(event.get("verification_failures"), int) and _is_measured(event, "verification_failures")
+    ]
     rework_tasks = [event for event in rework_events if event.get("rework_cycles", 0) > 0]
     verification_failure_tasks = [
         event for event in verification_events if event.get("verification_failures", 0) > 0
     ]
-    escapes = [event for event in current if event.get("verification_escape") is True]
-    feedback_events = [event for event in current if event.get("framework_feedback_created") is True]
+    escapes = [
+        event for event in current
+        if event.get("verification_escape") is True and _is_measured(event, "verification_escape")
+    ]
+    material_escape_events = [
+        event for event in material
+        if event.get("verification_escape") is True and _is_measured(event, "verification_escape")
+    ]
+    escape_assessed_material = [event for event in material if _is_measured(event, "verification_escape")]
+    feedback_events = [
+        event for event in current
+        if event.get("framework_feedback_created") is True and _is_measured(event, "framework_feedback_created")
+    ]
 
     failure_stage_counts: Counter = Counter()
     unknown_stage_failures = 0
@@ -189,12 +213,23 @@ def analyze(events: list[dict], reviews: list[dict], state: dict) -> dict:
     verification_rate = _rate(len(verification_failure_tasks), len(verification_events))
     rework_free_rate = _rate(len(rework_events) - len(rework_tasks), len(rework_events))
     rework_cycles_total = sum(event.get("rework_cycles", 0) for event in rework_events)
-    rework_cycles_per_material_task = round(rework_cycles_total / len(material), 4) if material else None
+    rework_assessment_coverage_rate = _rate(len(rework_events), len(material))
+    rework_cycles_per_material_task = (
+        round(rework_cycles_total / len(material), 4)
+        if material and len(rework_events) == len(material)
+        else None
+    )
     rework_cycles_per_reworked_task = round(rework_cycles_total / len(rework_tasks), 4) if rework_tasks else None
     verification_clean_rate = _rate(len(verification_events) - len(verification_failure_tasks), len(verification_events))
     verification_failures_total = sum(event.get("verification_failures", 0) for event in verification_events)
-    verification_failures_per_material_task = round(verification_failures_total / len(material), 4) if material else None
-    verification_escape_rate = _rate(len(escapes), len(material))
+    verification_assessment_coverage_rate = _rate(len(verification_events), len(material))
+    verification_failures_per_material_task = (
+        round(verification_failures_total / len(material), 4)
+        if material and len(verification_events) == len(material)
+        else None
+    )
+    verification_escape_assessment_coverage_rate = _rate(len(escape_assessed_material), len(material))
+    verification_escape_rate = _rate(len(material_escape_events), len(escape_assessed_material))
     final_failed_task_rate = _rate(sum(event.get("outcome_class") == "failed" for event in material), len(material))
     verified_success_rate = _rate(sum(event.get("outcome_class") == "verified_success" for event in material), len(material))
     success_with_deferred_rate = _rate(sum(event.get("outcome_class") == "success_with_deferred" for event in material), len(material))
@@ -245,19 +280,23 @@ def analyze(events: list[dict], reviews: list[dict], state: dict) -> dict:
             "schema_versions": dict(sorted(schema_counts.items())),
             "outcomes": dict(sorted(outcome_counts.items())),
             "risks": dict(sorted(risk_counts.items())),
+            "workflows": dict(sorted(workflow_counts.items())),
             "rework_tasks": len(rework_tasks),
             "total_rework_cycles": rework_cycles_total,
             "rework_rate": rework_rate,
             "rework_free_task_rate": rework_free_rate,
+            "rework_assessment_coverage_rate": rework_assessment_coverage_rate,
             "rework_cycles_per_material_task": rework_cycles_per_material_task,
             "rework_cycles_per_reworked_task": rework_cycles_per_reworked_task,
             "verification_failure_tasks": len(verification_failure_tasks),
             "verification_failures": verification_failures_total,
             "verification_failure_rate": verification_rate,
             "verification_clean_task_rate": verification_clean_rate,
+            "verification_assessment_coverage_rate": verification_assessment_coverage_rate,
             "verification_failures_per_material_task": verification_failures_per_material_task,
-            "verification_escapes": len(escapes),
+            "verification_escapes": len(material_escape_events),
             "verification_escape_task_rate": verification_escape_rate,
+            "verification_escape_assessment_coverage_rate": verification_escape_assessment_coverage_rate,
             "verification_stage_coverage_rate": stage_coverage_rate,
             "final_failed_task_rate": final_failed_task_rate,
             "verified_success_rate": verified_success_rate,
@@ -271,7 +310,7 @@ def analyze(events: list[dict], reviews: list[dict], state: dict) -> dict:
         "metric_semantics": {
             "rework_rate": "Share of assessed material tasks with at least one material iteration after the first candidate. It is not task restart rate, final failure rate, or execution accuracy.",
             "verification_failure_rate": "Share of assessed material tasks with at least one failed deterministic verification attempt during execution. It is a catch-density signal, not final task failure rate.",
-            "verification_escape_task_rate": "Share of material tasks where a prior verification/completion assumption was later contradicted. This is a stronger negative quality signal than raw verification-failure rate.",
+            "verification_escape_task_rate": "Share of assessed material tasks where a prior verification/completion assumption was later contradicted. This is a stronger negative quality signal than raw verification-failure rate.",
             "final_failed_task_rate": "Share of material tasks whose terminal outcome is failed.",
             "rework_free_task_rate": "Share of assessed material tasks that required no recorded material rework cycle.",
             "verification_clean_task_rate": "Share of assessed material tasks with no recorded failed verification attempt."
