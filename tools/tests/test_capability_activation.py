@@ -134,6 +134,31 @@ class CapabilityActivationTests(unittest.TestCase):
         finally:
             ft.cleanup(); pt.cleanup()
 
+    def test_candidate_trial_requires_exact_commit_pin(self):
+        ft, pt, framework, project = self.make_roots(ref_type="tag")
+        try:
+            self.adoption(project)
+            with mock.patch.object(mod, "_head", return_value=PIN), mock.patch.object(
+                mod, "_resolve_project_ref", return_value=("tag", PIN)
+            ):
+                with self.assertRaisesRegex(mod.ActivationError, "exact commit"):
+                    mod.resolve(framework, project, "sample", NOW)
+        finally:
+            ft.cleanup(); pt.cleanup()
+
+    def test_repository_identity_mismatch_fails_closed(self):
+        ft, pt, framework, project = self.make_roots()
+        try:
+            manifest_path = project / ".erei" / "framework.json"
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            manifest["framework"]["repository"] = "example/other-framework"
+            manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+            with mock.patch.object(mod, "_head", return_value=PIN):
+                with self.assertRaisesRegex(mod.ActivationError, "does not match"):
+                    mod.resolve(framework, project, "sample", NOW)
+        finally:
+            ft.cleanup(); pt.cleanup()
+
     def test_trial_longer_than_30_days_fails(self):
         ft, pt, framework, project = self.make_roots()
         try:
