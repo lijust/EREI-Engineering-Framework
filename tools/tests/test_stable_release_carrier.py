@@ -92,10 +92,11 @@ class StableReleaseCarrierTests(unittest.TestCase):
             "target_tree": self.target_tree,
             "decision": decision,
             "recorded_at": "2026-09-07T12:01:00Z" if architecture else "2026-09-07T12:02:00Z",
-            "reviewer": {
-                "kind": "framework_role",
-                "id": "system-architect" if architecture else "security-engineer",
-            },
+            "reviewer": (
+                {"kind": "github_user", "id": "lijust"}
+                if architecture
+                else {"kind": "external_reviewer", "id": "chatgpt-codex-connector"}
+            ),
             "evidence": ["github-actions:123", "release-target:vnext-rc9"],
             "rationale": f"Reviewed immutable target for {approval_type} Stable promotion{rationale_suffix}.",
             "provenance": {
