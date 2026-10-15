@@ -26,4 +26,12 @@ try:
     raise AssertionError("expected feedback route boundary failure")
 except mod.OutputError:
     pass
-print("PASS: Learning Development Output validation preserves promotion boundary.")
+bad_pattern=dict(value)
+bad_pattern["pattern"]=dict(value["pattern"])
+bad_pattern["pattern"]["pattern_class"]="NOT_IN_TAXONOMY"
+try:
+    mod.validate(bad_pattern)
+    raise AssertionError("expected pattern taxonomy failure")
+except mod.OutputError:
+    pass
+print("PASS: Learning Development Output validation preserves promotion boundary and taxonomy.")
