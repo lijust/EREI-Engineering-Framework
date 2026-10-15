@@ -135,6 +135,82 @@ class TaskLearningTests(unittest.TestCase):
         finally:
             temp.cleanup()
 
+    def test_v2_projection_only_review_cannot_close_authoritative_event(self):
+        temp, target = self.make_project()
+        try:
+            event = task_learning.build_event(self.event_args(verification_escape=True))
+            self.capture_state(target, event)
+            review, _ = task_learning.close_review(target, self.review_args())
+            immutable_review = target / ".erei" / "learning" / "reviews" / f"{review['review_id']}.json"
+            immutable_review.unlink()
+            with self.assertRaisesRegex(
+                task_learning.LearningError,
+                "projection without immutable authority",
+            ):
+                task_learning.status(target)
+        finally:
+            temp.cleanup()
+
+    def test_v2_projection_only_event_is_not_authoritative(self):
+        temp, target = self.make_project()
+        try:
+            event = task_learning.build_event(self.event_args(verification_escape=True))
+            self.capture_state(target, event)
+            immutable_event = target / ".erei" / "learning" / "events" / f"{event['occurrence_id']}.json"
+            immutable_event.unlink()
+            with self.assertRaisesRegex(
+                task_learning.LearningError,
+                "projection without immutable authority",
+            ):
+                task_learning.status(target)
+        finally:
+            temp.cleanup()
+
+    def test_immutable_v2_records_rebuild_missing_projections(self):
+        temp, target = self.make_project()
+        try:
+            event = task_learning.build_event(self.event_args())
+            self.capture_state(target, event)
+            review, _ = task_learning.close_review(target, self.review_args())
+            learning = target / ".erei" / "learning"
+            (learning / "TASK_EVENTS.jsonl").write_text("", encoding="utf-8")
+            (learning / "LEARNING_REVIEWS.jsonl").write_text("", encoding="utf-8")
+            state = task_learning.status(target)
+            self.assertEqual(state["epoch_id"], "EPOCH-002")
+            self.assertEqual(state["reviewed_occurrence_count"], 1)
+            rebuilt_events = [
+                json.loads(line)
+                for line in (learning / "TASK_EVENTS.jsonl").read_text(encoding="utf-8").splitlines()
+                if line.strip()
+            ]
+            rebuilt_reviews = [
+                json.loads(line)
+                for line in (learning / "LEARNING_REVIEWS.jsonl").read_text(encoding="utf-8").splitlines()
+                if line.strip()
+            ]
+            self.assertEqual(rebuilt_events, [event])
+            self.assertEqual(rebuilt_reviews, [review])
+        finally:
+            temp.cleanup()
+
+    def test_v2_projection_mismatch_with_immutable_record_is_rejected(self):
+        temp, target = self.make_project()
+        try:
+            event = task_learning.build_event(self.event_args())
+            self.capture_state(target, event)
+            learning = target / ".erei" / "learning"
+            projection = json.loads((learning / "TASK_EVENTS.jsonl").read_text(encoding="utf-8").strip())
+            projection["duration_class"] = "long"
+            projection["fingerprint"] = task_learning._fingerprint(projection)
+            (learning / "TASK_EVENTS.jsonl").write_text(json.dumps(projection) + "\n", encoding="utf-8")
+            with self.assertRaisesRegex(
+                task_learning.LearningError,
+                "projection does not match immutable authority",
+            ):
+                task_learning.status(target)
+        finally:
+            temp.cleanup()
+
     def test_empty_epoch_cannot_be_closed(self):
         temp, target = self.make_project()
         try:
