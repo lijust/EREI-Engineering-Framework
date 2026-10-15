@@ -10,6 +10,8 @@ on:
 
 permissions:
   contents: read
+  pull-requests: read
+  issues: read
 
 jobs:
   assurance:
@@ -104,6 +106,8 @@ jobs:
 
       - name: Report derived VNext Stable readiness
         shell: powershell
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: py "-3.12" tools/stable_readiness.py --repo-root .
 
       - name: Validate last Stable release manifest
@@ -121,6 +125,24 @@ jobs:
       - name: Validate VNext Candidate manifest
         shell: powershell
         run: py "-3.12" tools/release_assurance.py releases/vnext-assurance-candidate.json --repo-root .
+
+      - name: Validate V2 Stable manifest and carrier when present
+        shell: powershell
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $stable = 'releases/vnext-assurance-v2-stable.json'
+          $target = 'releases/VNEXT_TARGET.json'
+          if (Test-Path $stable) {
+            py "-3.12" tools/release_assurance.py $stable --repo-root .
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+            if (-not (Test-Path $target)) { throw 'V2 Stable manifest requires VNEXT_TARGET.json' }
+            $targetJson = Get-Content -Raw $target | ConvertFrom-Json
+            $targetRef = [string]$targetJson.framework_ref
+            $carrierRef = (git rev-parse HEAD).Trim()
+            py "-3.12" tools/stable_release_carrier.py --framework-repo . --target-ref $targetRef --release-carrier-ref $carrierRef
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
 
       - name: Validate capability registry
         shell: powershell
