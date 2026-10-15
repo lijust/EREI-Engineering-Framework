@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://erei-framework.local/schemas/release-approval.schema.json",
-  "title": "EREI Framework Release Approval V1",
+  "title": "EREI Framework Release Approval V1/V2",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -17,28 +17,130 @@
     "rationale"
   ],
   "properties": {
-    "schema_version": {"const": 1},
-    "approval_id": {"type": "string", "pattern": "^EAPP-[0-9]{8}T[0-9]{6}Z-[A-F0-9]{8}$"},
-    "approval_type": {"enum": ["architecture", "security"]},
-    "target_framework_ref": {"type": "string", "pattern": "^[a-f0-9]{40}$"},
-    "target_tree": {"type": "string", "pattern": "^[a-f0-9]{40}$"},
-    "decision": {"enum": ["approved", "rejected"]},
-    "recorded_at": {"type": "string", "format": "date-time"},
+    "schema_version": {
+      "enum": [
+        1,
+        2
+      ]
+    },
+    "approval_id": {
+      "type": "string",
+      "pattern": "^EAPP-[0-9]{8}T[0-9]{6}Z-[A-F0-9]{8}$"
+    },
+    "approval_type": {
+      "enum": [
+        "architecture",
+        "security"
+      ]
+    },
+    "target_framework_ref": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{40}$"
+    },
+    "target_tree": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{40}$"
+    },
+    "decision": {
+      "enum": [
+        "approved",
+        "rejected"
+      ]
+    },
+    "recorded_at": {
+      "type": "string",
+      "format": "date-time"
+    },
     "reviewer": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["kind", "id"],
+      "required": [
+        "kind",
+        "id"
+      ],
       "properties": {
-        "kind": {"enum": ["github_user", "framework_role", "external_reviewer"]},
-        "id": {"type": "string", "minLength": 1}
+        "kind": {
+          "enum": [
+            "github_user",
+            "framework_role",
+            "external_reviewer"
+          ]
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        }
       }
     },
     "evidence": {
       "type": "array",
       "minItems": 1,
       "uniqueItems": true,
-      "items": {"type": "string", "minLength": 1}
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
     },
-    "rationale": {"type": "string", "minLength": 1}
-  }
+    "rationale": {
+      "type": "string",
+      "minLength": 1
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "pr_number",
+        "actor_login"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "github_codex_clean_review",
+            "github_owner_approval_comment"
+          ]
+        },
+        "pr_number": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "actor_login": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "schema_version": {
+            "const": 2
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "provenance"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "schema_version": {
+            "const": 1
+          }
+        }
+      },
+      "then": {
+        "not": {
+          "required": [
+            "provenance"
+          ]
+        }
+      }
+    }
+  ]
 }
