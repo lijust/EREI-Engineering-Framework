@@ -16,6 +16,7 @@ RFC3339_RE = re.compile(
 )
 MAX_TRIAL = timedelta(days=30)
 ADOPTION_PATH = Path(".erei/candidate-capabilities.json")
+FRAMEWORK_REPOSITORY = "lijust/EREI-Engineering-Framework"
 
 
 class ActivationError(RuntimeError):
@@ -57,6 +58,11 @@ def _resolve_project_ref(root: Path, manifest: dict) -> tuple[str, str]:
     framework = manifest.get("framework")
     if not isinstance(framework, dict):
         raise ActivationError("project manifest missing framework object")
+    repository = framework.get("repository")
+    if repository != FRAMEWORK_REPOSITORY:
+        raise ActivationError(
+            f"project Framework repository {repository!r} does not match {FRAMEWORK_REPOSITORY!r}"
+        )
     ref_type = framework.get("ref_type")
     ref = framework.get("ref")
     if ref_type not in {"commit", "tag", "branch"} or not isinstance(ref, str) or not ref:
