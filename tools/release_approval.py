@@ -119,8 +119,8 @@ def validate_record(
                     "architecture approval reviewer must be the authenticated GitHub provenance actor"
                 )
         if value["approval_type"] == "security":
-            if provenance["kind"] != "github_codex_clean_review":
-                raise ReleaseApprovalError("security approval V2 requires github_codex_clean_review provenance")
+            if provenance["kind"] != "github_codex_clean_security_review":
+                raise ReleaseApprovalError("security approval V2 requires github_codex_clean_security_review provenance")
             if reviewer["kind"] != "external_reviewer" or reviewer["id"] != provenance["actor_login"]:
                 raise ReleaseApprovalError(
                     "security approval reviewer must be the authenticated external provenance actor"
