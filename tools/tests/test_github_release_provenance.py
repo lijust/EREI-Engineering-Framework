@@ -196,6 +196,8 @@ class GitHubReleaseProvenanceTests(unittest.TestCase):
                     policy=self.policy,
                     target_ref=self.TARGET,
                     token="token",
+                    git_repo=self.root,
+                    closure_ref="HEAD",
                 )
 
     def test_reviewed_head_must_descend_from_frozen_target(self):
