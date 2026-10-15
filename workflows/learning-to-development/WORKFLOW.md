@@ -102,6 +102,24 @@ Every output records:
 - success metrics,
 - promotion boundary.
 
+### 5.1 Persist provenance
+
+The canonical project-local location is:
+
+```text
+.erei/learning/development-outputs/<LDO-ID>.json
+```
+
+The source project owns this provenance record.
+
+When a Framework-relevant output is accepted into central intake, the Framework may retain a generalized copy under:
+
+```text
+learning/development-outputs/<LDO-ID>.json
+```
+
+The Framework copy must retain source project/review/evidence references and must not silently replace or rewrite the project-local source.
+
 ### 6. Convert to development
 
 Allowed routes:
