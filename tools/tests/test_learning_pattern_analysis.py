@@ -77,6 +77,13 @@ report = mod.analyze(events, [], state)
 codes = signal_codes(report)
 assert report["current_epoch"]["unreviewed_events"] == 3
 assert report["current_epoch"]["verification_escapes"] == 2
+assert report["current_epoch"]["rework_rate"] == 0.6667
+assert report["current_epoch"]["rework_free_task_rate"] == 0.3333
+assert report["current_epoch"]["verification_failure_rate"] == 0.6667
+assert report["current_epoch"]["verification_clean_task_rate"] == 0.3333
+assert report["current_epoch"]["verification_escape_task_rate"] == 0.6667
+assert report["current_epoch"]["final_failed_task_rate"] == 0.0
+assert "not accuracy" in report["metric_semantics"]["rework_rate"]
 assert "REVIEW_DEBT" in codes
 assert "VERIFICATION_ESCAPE_CLUSTER" in codes
 assert "FEEDBACK_CONVERSION_GAP" in codes
