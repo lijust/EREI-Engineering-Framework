@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "decision_id": "DEC-LEARNING-RELEASE-PARTITION-20261015",
+  "status": "approved",
+  "decision": "separate_release_tracks",
+  "task_learning_v2_core": {
+    "release_track": "stable_promotion_candidate",
+    "capabilities": ["prospective_task_learning"],
+    "behavior_scope": [
+      "occurrence_identity",
+      "immutable_v2_event_and_review_authority",
+      "explicit_review_membership",
+      "signal_assessment_coverage",
+      "failure_stage_and_subject",
+      "idempotent_capture_retry",
+      "legacy_v1_read_compatibility"
+    ]
+  },
+  "learning_operations_v1": {
+    "release_track": "independent_candidate",
+    "capabilities": [
+      "learning_pattern_analysis",
+      "learning_to_development",
+      "learning_review_debt_guard",
+      "framework_effectiveness_measurement"
+    ],
+    "tooling": ["tools/learning_health_dashboard.py"],
+    "default_activation": "inactive_unless_stable_or_explicit_bounded_project_candidate_adoption"
+  },
+  "activation_contract": {
+    "project_record": ".erei/candidate-capabilities.json",
+    "schema": "schemas/candidate-capability-adoptions.schema.json",
+    "resolver": "tools/capability_activation.py",
+    "candidate_trial_requires_exact_commit": true,
+    "max_trial_days": 30
+  },
+  "promotion_boundary": {
+    "task_learning_v2_core_may_reach_stable_without_learning_operations_v1": true,
+    "learning_operations_v1_does_not_become_active_merely_by_sharing_a_framework_commit": true,
+    "project_pin_movement_requires_normal_framework_upgrade_governance": true
+  }
+}
