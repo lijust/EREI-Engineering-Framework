@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "repository": "lijust/EREI-Engineering-Framework",
   "main_branch": "main",
   "status": "candidate_control",
@@ -18,8 +18,8 @@
     "security_approval_required": true,
     "exact_target_runtime_evidence_required": true,
     "complete_prospective_cycle_required": true,
-    "equivalent_enforcement_verified": false,
-    "stable_promotion_policy": "blocked_until_server_or_equivalent_enforcement"
+    "stable_promotion_policy": "blocked_until_server_or_equivalent_enforcement",
+    "equivalence_review": null
   },
   "evidence": [
     "github-branch:main protected=false",
@@ -27,7 +27,7 @@
     "github-commit:72f03d2a905c38c88b40cc9b6639596fa1e1353f"
   ],
   "limitations": [
-    "CI cannot prevent a direct write to an unprotected main branch.",
-    "The controlled-release fallback reduces release risk but is not treated as server-enforced equivalence until independently verified and explicitly accepted."
+    "GitHub main remains unprotected on the current private-repository plan; self-asserted fallback equivalence cannot satisfy Stable enforcement.",
+    "Fallback equivalence requires a target-bound enforcement review plus live GitHub-authenticated provenance verification before Stable readiness may pass."
   ]
 }
