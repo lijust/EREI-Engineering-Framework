@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://erei-framework.local/schemas/project-candidate-capabilities.schema.json",
+  "title": "EREI Project Candidate Capability Adoptions",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "framework_ref", "adoptions"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "framework_ref": {"type": "string", "pattern": "^[a-f0-9]{40}$"},
+    "adoptions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["adoption_id","capability","version","approved_at","expires_at","approved_by_role","risk","purpose","evidence"],
+        "properties": {
+          "adoption_id": {"type": "string", "pattern": "^CAD-[0-9]{8}T[0-9]{6}Z-[A-F0-9]{8}$"},
+          "capability": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_]*$"},
+          "version": {"type": "string", "minLength": 1},
+          "approved_at": {"type": "string", "format": "date-time"},
+          "expires_at": {"type": "string", "format": "date-time"},
+          "approved_by_role": {"type": "string", "minLength": 3},
+          "risk": {"enum": ["L2","L3","L4"]},
+          "purpose": {"type": "string", "minLength": 20},
+          "evidence": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+        }
+      }
+    }
+  }
+}
