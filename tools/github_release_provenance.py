@@ -134,7 +134,7 @@ def validate_provenance_shape(value: Any) -> dict[str, Any]:
     required = {"kind", "pr_number", "actor_login"}
     if set(value) != required:
         raise GitHubProvenanceError("provenance must contain exactly kind/pr_number/actor_login")
-    if value["kind"] not in {"github_codex_clean_review", "github_owner_approval_comment"}:
+    if value["kind"] not in {"github_codex_clean_security_review", "github_owner_approval_comment"}:
         raise GitHubProvenanceError("unsupported provenance.kind")
     _positive_int(value["pr_number"], "provenance.pr_number")
     _text(value["actor_login"], "provenance.actor_login")
@@ -191,11 +191,18 @@ def _content_blob(repository: str, path: str, ref: str, token: str) -> tuple[str
     return sha, content
 
 
-def _require_clean_codex_review(repository: str, pr_number: int, head_sha: str, actor: str, token: str) -> dict[str, Any]:
+def _require_clean_codex_security_review(
+    repository: str,
+    pr_number: int,
+    head_sha: str,
+    actor: str,
+    token: str,
+) -> dict[str, Any]:
     comments = _api_json(repository, f"issues/{pr_number}/comments?per_page=100", token)
     if not isinstance(comments, list):
         raise GitHubProvenanceError("GitHub comments response must be an array")
-    clean_summary = None
+
+    candidates: list[tuple[str, int, dict[str, Any]]] = []
     for comment in comments:
         if not isinstance(comment, dict) or comment.get("user", {}).get("login") != actor:
             continue
@@ -209,35 +216,24 @@ def _require_clean_codex_review(repository: str, pr_number: int, head_sha: str, 
             state = json.loads(match.group(1))
         except json.JSONDecodeError:
             continue
-        review = state.get("code_review") if isinstance(state, dict) else None
-        if not isinstance(review, dict):
+        review = state.get("security_review") if isinstance(state, dict) else None
+        if not isinstance(review, dict) or review.get("commit_sha") != head_sha:
             continue
-        if (
-            review.get("commit_sha") == head_sha
-            and review.get("status") == "completed"
-            and review.get("has_any_findings") is False
-            and review.get("has_unresolved_findings") is False
-        ):
-            clean_summary = {"comment_id": comment.get("id"), "state": review}
-    if clean_summary is None:
-        raise GitHubProvenanceError("no clean Codex review summary is bound to the exact PR head")
+        updated = comment.get("updated_at") or comment.get("created_at") or ""
+        comment_id = comment.get("id")
+        candidates.append((str(updated), int(comment_id) if isinstance(comment_id, int) else 0, review))
 
-    reviews = _api_json(repository, f"pulls/{pr_number}/reviews?per_page=100", token)
-    if not isinstance(reviews, list):
-        raise GitHubProvenanceError("GitHub reviews response must be an array")
-    receipt = None
-    for review in reviews:
-        if not isinstance(review, dict) or review.get("user", {}).get("login") != actor:
-            continue
-        body = review.get("body")
-        if not isinstance(body, str):
-            continue
-        match = REVIEWED_COMMIT_RE.search(body)
-        if match and head_sha.startswith(match.group(1)):
-            receipt = {"review_id": review.get("id"), "state": review.get("state")}
-    if receipt is None:
-        raise GitHubProvenanceError("no Codex review receipt is bound to the exact PR head")
-    return {**clean_summary, **receipt}
+    if not candidates:
+        raise GitHubProvenanceError("no Codex security-review summary is bound to the exact PR head")
+    _, comment_id, latest = sorted(candidates)[-1]
+    if (
+        latest.get("status") != "completed"
+        or latest.get("has_any_findings") is not False
+        or latest.get("has_unresolved_findings") is not False
+    ):
+        raise GitHubProvenanceError("latest exact-head Codex security review is not completed and finding-free")
+    return {"comment_id": comment_id, "state": latest}
+
 
 
 def verify_reviewed_file(
@@ -280,10 +276,10 @@ def verify_reviewed_file(
     kind = provenance["kind"]
     actor = provenance["actor_login"]
     details: dict[str, Any]
-    if kind == "github_codex_clean_review":
+    if kind == "github_codex_clean_security_review":
         if actor != policy["codex_reviewer_login"]:
             raise GitHubProvenanceError("Codex provenance actor does not match frozen review policy")
-        details = _require_clean_codex_review(repository, pr_number, head_sha, actor, token)
+        details = _require_clean_codex_security_review(repository, pr_number, head_sha, actor, token)
     else:
         if actor != policy["architecture_approver_login"]:
             raise GitHubProvenanceError("architecture approver does not match frozen review policy")
@@ -307,6 +303,18 @@ def verify_reviewed_file(
 
     merge_sha = pr.get("merge_commit_sha")
     if require_merged:
+        if git_repo is None:
+            raise GitHubProvenanceError("merged release provenance requires a Git repository for ancestry verification")
+        target_check = subprocess.run(
+            ["git", "-C", str(git_repo), "merge-base", "--is-ancestor", target_ref, head_sha],
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        if target_check.returncode != 0:
+            raise GitHubProvenanceError(
+                "reviewed PR head does not descend from the frozen release target"
+            )
         if pr.get("merged") is not True or not isinstance(merge_sha, str) or not SHA40_RE.fullmatch(merge_sha):
             raise GitHubProvenanceError("review provenance PR is not merged")
         commit = _api_json(repository, f"commits/{merge_sha}", token)
@@ -316,17 +324,16 @@ def verify_reviewed_file(
             and (not isinstance(verification, dict) or verification.get("verified") is not True)
         ):
             raise GitHubProvenanceError("review provenance merge commit is not GitHub-verified")
-        if git_repo is not None:
-            process = subprocess.run(
-                ["git", "-C", str(git_repo), "merge-base", "--is-ancestor", merge_sha, closure_ref],
-                text=True,
-                capture_output=True,
-                check=False,
+        process = subprocess.run(
+            ["git", "-C", str(git_repo), "merge-base", "--is-ancestor", merge_sha, closure_ref],
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        if process.returncode != 0:
+            raise GitHubProvenanceError(
+                "review provenance merge commit is not an ancestor of the validated release carrier"
             )
-            if process.returncode != 0:
-                raise GitHubProvenanceError(
-                    "review provenance merge commit is not an ancestor of the validated release carrier"
-                )
     return {
         "status": "authenticated",
         "repository": repository,
