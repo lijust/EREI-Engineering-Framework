@@ -346,7 +346,7 @@ class StructuredApprovalReadinessTests(unittest.TestCase):
             "evidence": ["github-actions:123", "release-target:vnext-rc1"],
             "rationale": f"Reviewed immutable target for {approval_type} Stable promotion{rationale_suffix}.",
             "provenance": {
-                "kind": "github_owner_approval_comment" if architecture else "github_codex_clean_review",
+                "kind": "github_owner_approval_comment" if architecture else "github_codex_clean_security_review",
                 "pr_number": 61 if architecture else 62,
                 "actor_login": "lijust" if architecture else "chatgpt-codex-connector",
             },
