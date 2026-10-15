@@ -13,6 +13,41 @@ class ReleaseScopeTests(unittest.TestCase):
         temp = tempfile.TemporaryDirectory()
         root = Path(temp.name)
         (root / "evals" / "cases").mkdir(parents=True)
+        (root / "evals" / "runner.py").write_text(
+            """
+def validate_suite(data, path):
+    errors = []
+    if not isinstance(data, dict):
+        return [f"{path}: root must be object"]
+    if not isinstance(data.get("suite_id"), str) or not data.get("suite_id"):
+        errors.append(f"{path}: suite_id must be non-empty")
+    cases = data.get("cases")
+    if not isinstance(cases, list) or not cases:
+        errors.append(f"{path}: cases must be non-empty")
+        return errors
+    for index, case in enumerate(cases):
+        if not isinstance(case, dict):
+            errors.append(f"{path}: cases[{index}] must be object")
+            continue
+        if not isinstance(case.get("id"), str) or not case.get("id"):
+            errors.append(f"{path}: cases[{index}].id missing")
+        if not isinstance(case.get("input"), dict):
+            errors.append(f"{path}: cases[{index}].input must be object")
+        expectations = case.get("expectations")
+        if not isinstance(expectations, list) or not expectations:
+            errors.append(f"{path}: cases[{index}].expectations must be non-empty")
+            continue
+        for exp_index, expectation in enumerate(expectations):
+            if not isinstance(expectation, dict) or expectation.get("type") != "output_contains_all":
+                errors.append(f"{path}: cases[{index}].expectations[{exp_index}] unsupported")
+                continue
+            values = expectation.get("values")
+            if not isinstance(values, list) or any(not isinstance(item, str) for item in values):
+                errors.append(f"{path}: cases[{index}].expectations[{exp_index}].values invalid")
+    return errors
+""".strip() + "\n",
+            encoding="utf-8",
+        )
         registry = {
             "schema_version": 1,
             "development_line": {
@@ -100,6 +135,47 @@ class ReleaseScopeTests(unittest.TestCase):
             value["required_eval_suites"][0]["covers"] = ["prospective_task_learning", "learning_pattern_analysis"]
             with self.assertRaisesRegex(release_scope.ReleaseScopeError, "outside release scope"):
                 release_scope.validate_scope(root, value)
+        finally:
+            temp.cleanup()
+
+    def test_stable_manifest_binding_requires_exact_baseline_and_capability_versions(self):
+        temp, root = self.setup_root()
+        try:
+            scope = self.scope()
+            manifest = {
+                "baseline": "task-learning-review-v2",
+                "capabilities": {
+                    "prospective_task_learning": "v2",
+                    "capability_activation_governance": "v1",
+                },
+            }
+            result = release_scope.validate_stable_manifest_against_scope(manifest, scope)
+            self.assertEqual(result["baseline"], "task-learning-review-v2")
+
+            wrong = dict(manifest)
+            wrong["baseline"] = "other"
+            with self.assertRaisesRegex(release_scope.ReleaseScopeError, "baseline"):
+                release_scope.validate_stable_manifest_against_scope(wrong, scope)
+
+            leaked = dict(manifest)
+            leaked["capabilities"] = {
+                **manifest["capabilities"],
+                "learning_pattern_analysis": "v1",
+            }
+            with self.assertRaisesRegex(release_scope.ReleaseScopeError, "excluded"):
+                release_scope.validate_stable_manifest_against_scope(leaked, scope)
+        finally:
+            temp.cleanup()
+
+    def test_invalid_eval_contract_fails_before_case_pairs_are_accepted(self):
+        temp, root = self.setup_root()
+        try:
+            suite_path = root / "evals" / "cases" / "task-learning-review.eval.json"
+            suite = json.loads(suite_path.read_text(encoding="utf-8"))
+            del suite["cases"][0]["input"]
+            suite_path.write_text(json.dumps(suite), encoding="utf-8")
+            with self.assertRaisesRegex(release_scope.ReleaseScopeError, "eval suite contract invalid"):
+                release_scope.validate_scope(root, self.scope())
         finally:
             temp.cleanup()
 

@@ -3,15 +3,20 @@
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 import re
+import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 SCOPE_PATH = Path("releases/VNEXT_RELEASE_SCOPE.json")
 CAPABILITIES_PATH = Path("CAPABILITIES.json")
+EVAL_RUNNER_PATH = Path("evals/runner.py")
 SCOPE_ID_RE = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 EVAL_PATH_RE = re.compile(r"^evals/cases/[A-Za-z0-9._-]+\.eval\.json$")
+SHA40_RE = re.compile(r"^[a-f0-9]{40}$")
 
 
 class ReleaseScopeError(RuntimeError):
@@ -26,6 +31,23 @@ def _load(path: Path, label: str) -> dict:
     if not isinstance(value, dict):
         raise ReleaseScopeError(f"{label} must be a JSON object")
     return value
+
+
+def _load_eval_runner(repo_root: Path):
+    path = repo_root / EVAL_RUNNER_PATH
+    if not path.exists():
+        raise ReleaseScopeError(f"missing eval runner required for release-scope validation: {path}")
+    spec = importlib.util.spec_from_file_location("erei_release_scope_eval_runner", path)
+    if spec is None or spec.loader is None:
+        raise ReleaseScopeError("unable to load eval runner for release-scope validation")
+    module = importlib.util.module_from_spec(spec)
+    try:
+        spec.loader.exec_module(module)
+    except Exception as exc:
+        raise ReleaseScopeError(f"unable to import eval runner: {exc}") from exc
+    if not callable(getattr(module, "validate_suite", None)):
+        raise ReleaseScopeError("eval runner does not expose validate_suite")
+    return module
 
 
 def _unique_text_list(value, label: str, *, minimum: int = 0) -> list[str]:
@@ -113,6 +135,7 @@ def validate_scope(repo_root: Path, value: dict) -> dict:
     suites = value["required_eval_suites"]
     if not isinstance(suites, list) or not suites:
         raise ReleaseScopeError("required_eval_suites must be non-empty")
+    eval_runner = _load_eval_runner(repo_root)
     seen_paths: set[str] = set()
     seen_ids: set[str] = set()
     covered_capabilities: set[str] = set()
@@ -140,6 +163,11 @@ def validate_scope(repo_root: Path, value: dict) -> dict:
         covered_capabilities.update(covers)
         suite_path = repo_root / path
         suite = _load(suite_path, "eval suite")
+        errors = eval_runner.validate_suite(suite, str(suite_path))
+        if errors:
+            raise ReleaseScopeError(
+                f"eval suite contract invalid for {path}: " + "; ".join(errors)
+            )
         if suite.get("suite_id") != suite_id:
             raise ReleaseScopeError(
                 f"eval suite identity mismatch for {path}: scope={suite_id!r} file={suite.get('suite_id')!r}"
@@ -174,7 +202,12 @@ def validate_scope(repo_root: Path, value: dict) -> dict:
         "required_eval_suite_count": len(suites),
         "required_eval_case_count": len(expected_cases),
         "covered_capabilities": sorted(covered_capabilities),
+        "required_eval_paths": [item["path"] for item in suites],
         "required_eval_cases": sorted([f"{suite}/{case}" for suite, case in expected_cases]),
+        "required_eval_case_pairs": [
+            {"suite_id": suite, "case_id": case}
+            for suite, case in sorted(expected_cases)
+        ],
     }
 
 
@@ -182,6 +215,166 @@ def load_scope(repo_root: Path, path: Path = SCOPE_PATH) -> tuple[dict, dict]:
     resolved = path if path.is_absolute() else repo_root / path
     value = _load(resolved, "release scope")
     return value, validate_scope(repo_root, value)
+
+
+def _git(repo_root: Path, *args: str, allow_missing: bool = False) -> str | None:
+    process = subprocess.run(
+        ["git", "-C", str(repo_root), *args],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if process.returncode != 0:
+        if allow_missing:
+            return None
+        raise ReleaseScopeError(f"git {' '.join(args)} failed: {process.stderr.strip()}")
+    return process.stdout.strip()
+
+
+def _git_blob(repo_root: Path, revision: str, path: str) -> str | None:
+    value = _git(repo_root, "rev-parse", f"{revision}:{path}", allow_missing=True)
+    if value is None:
+        return None
+    if not SHA40_RE.fullmatch(value):
+        raise ReleaseScopeError(f"invalid blob identity for {revision}:{path}")
+    return value
+
+
+def _git_text(repo_root: Path, revision: str, path: str) -> str:
+    value = _git(repo_root, "show", f"{revision}:{path}")
+    assert value is not None
+    return value
+
+
+def _git_json(repo_root: Path, revision: str, path: str, label: str) -> dict:
+    try:
+        value = json.loads(_git_text(repo_root, revision, path))
+    except json.JSONDecodeError as exc:
+        raise ReleaseScopeError(f"invalid JSON in frozen {label} {revision}:{path}: {exc}") from exc
+    if not isinstance(value, dict):
+        raise ReleaseScopeError(f"frozen {label} must be a JSON object: {revision}:{path}")
+    return value
+
+
+def load_target_bound_scope(
+    repo_root: Path,
+    target_ref: str,
+    *,
+    closure_ref: str = "HEAD",
+) -> tuple[dict | None, dict | None]:
+    if not isinstance(target_ref, str) or not SHA40_RE.fullmatch(target_ref):
+        raise ReleaseScopeError("target_ref must be an exact 40-character commit")
+    scope_path = SCOPE_PATH.as_posix()
+    target_scope_blob = _git_blob(repo_root, target_ref, scope_path)
+    closure_scope_blob = _git_blob(repo_root, closure_ref, scope_path)
+
+    if target_scope_blob is None and closure_scope_blob is None:
+        return None, None
+    if target_scope_blob is None or closure_scope_blob is None:
+        raise ReleaseScopeError("VNext release scope presence changed after target freeze")
+    if target_scope_blob != closure_scope_blob:
+        raise ReleaseScopeError("VNext release scope drifted after target freeze")
+
+    scope = _git_json(repo_root, target_ref, scope_path, "release scope")
+    raw_suites = scope.get("required_eval_suites")
+    if not isinstance(raw_suites, list) or not raw_suites:
+        raise ReleaseScopeError("frozen release scope required_eval_suites must be non-empty")
+
+    dependencies = [scope_path, CAPABILITIES_PATH.as_posix(), EVAL_RUNNER_PATH.as_posix()]
+    for index, item in enumerate(raw_suites):
+        path = item.get("path") if isinstance(item, dict) else None
+        if not isinstance(path, str) or not EVAL_PATH_RE.fullmatch(path):
+            raise ReleaseScopeError(f"frozen required_eval_suites[{index}].path is invalid")
+        dependencies.append(path)
+
+    for path in dependencies:
+        target_blob = _git_blob(repo_root, target_ref, path)
+        closure_blob = _git_blob(repo_root, closure_ref, path)
+        if target_blob is None or closure_blob is None:
+            raise ReleaseScopeError(f"release-scope dependency presence changed after target freeze: {path}")
+        if target_blob != closure_blob:
+            raise ReleaseScopeError(f"release-scope dependency drifted after target freeze: {path}")
+
+    with tempfile.TemporaryDirectory() as tmp:
+        frozen_root = Path(tmp)
+        for path in dependencies:
+            destination = frozen_root / path
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            destination.write_text(_git_text(repo_root, target_ref, path), encoding="utf-8")
+        summary = validate_scope(frozen_root, scope)
+    return scope, summary
+
+
+def scoped_capability_versions(scope: dict) -> dict[str, str]:
+    versions: dict[str, str] = {}
+    for label in ("capabilities", "release_control_dependencies"):
+        items = scope.get(label)
+        if not isinstance(items, list):
+            raise ReleaseScopeError(f"{label} must be an array")
+        for index, item in enumerate(items):
+            if not isinstance(item, dict) or set(item) != {"name", "version"}:
+                raise ReleaseScopeError(f"{label}[{index}] must contain exactly name and version")
+            name, version = item["name"], item["version"]
+            if not isinstance(name, str) or not name or not isinstance(version, str) or not version:
+                raise ReleaseScopeError(f"{label}[{index}] name/version must be non-empty strings")
+            if name in versions:
+                raise ReleaseScopeError(f"duplicate scoped capability binding: {name}")
+            versions[name] = version
+    if not versions:
+        raise ReleaseScopeError("release scope must bind at least one capability/dependency")
+    return versions
+
+
+def required_eval_paths(scope: dict) -> list[str]:
+    suites = scope.get("required_eval_suites")
+    if not isinstance(suites, list) or not suites:
+        raise ReleaseScopeError("required_eval_suites must be non-empty")
+    paths: list[str] = []
+    for index, item in enumerate(suites):
+        if not isinstance(item, dict) or not isinstance(item.get("path"), str) or not item["path"]:
+            raise ReleaseScopeError(f"required_eval_suites[{index}].path is invalid")
+        paths.append(item["path"])
+    if len(paths) != len(set(paths)):
+        raise ReleaseScopeError("required eval suite paths must be unique")
+    return paths
+
+
+def validate_stable_manifest_against_scope(manifest: dict, scope: dict) -> dict:
+    baseline = scope.get("target_baseline")
+    if not isinstance(baseline, str) or not baseline:
+        raise ReleaseScopeError("release scope target_baseline must be non-empty")
+    if manifest.get("baseline") != baseline:
+        raise ReleaseScopeError(
+            f"Stable manifest baseline {manifest.get('baseline')!r} does not match frozen scope {baseline!r}"
+        )
+    expected = scoped_capability_versions(scope)
+    actual = manifest.get("capabilities")
+    if not isinstance(actual, dict):
+        raise ReleaseScopeError("Stable manifest capabilities must be an object")
+    excluded = scope.get("excluded_candidate_capabilities")
+    if not isinstance(excluded, list) or any(not isinstance(item, str) or not item for item in excluded):
+        raise ReleaseScopeError("excluded_candidate_capabilities must be a string array")
+    leaked = sorted(set(actual) & set(excluded))
+    if leaked:
+        raise ReleaseScopeError(
+            "Stable manifest contains capabilities excluded by frozen release scope: " + ", ".join(leaked)
+        )
+    if actual != expected:
+        missing = sorted(set(expected) - set(actual))
+        extra = sorted(set(actual) - set(expected))
+        mismatched = sorted(
+            name for name in set(actual) & set(expected)
+            if actual[name] != expected[name]
+        )
+        raise ReleaseScopeError(
+            "Stable manifest capabilities do not match frozen release scope: "
+            f"missing={missing} extra={extra} version_mismatch={mismatched}"
+        )
+    return {
+        "scope_id": scope.get("scope_id"),
+        "baseline": baseline,
+        "capabilities": expected,
+    }
 
 
 def main(argv=None) -> int:

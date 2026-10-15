@@ -65,10 +65,20 @@ jobs:
       - name: Report retained execution-evidence coverage honestly
         shell: powershell
         run: |
+          $scopePath = 'releases/VNEXT_RELEASE_SCOPE.json'
+          if (Test-Path $scopePath) {
+            $scope = Get-Content -Raw $scopePath | ConvertFrom-Json
+            $coveragePaths = @($scope.required_eval_suites | ForEach-Object { $_.path })
+            if ($coveragePaths.Count -eq 0) { throw 'release scope has no required eval suites' }
+            Write-Host "COVERAGE_SCOPE=frozen-release-scope"
+          } else {
+            $coveragePaths = @('evals/cases')
+            Write-Host "COVERAGE_SCOPE=all-published-evals"
+          }
           $evidenceFiles = Get-ChildItem -Path 'evals' -Filter 'EXECUTION_EVIDENCE*.json' | Sort-Object Name
           foreach ($evidence in $evidenceFiles) {
             Write-Host "EVIDENCE $($evidence.FullName)"
-            py "-3.12" evals/runner.py coverage evals/cases --evidence $evidence.FullName --minimum-level exact_target_runtime
+            & py "-3.12" evals/runner.py coverage @coveragePaths --evidence $evidence.FullName --minimum-level exact_target_runtime
             if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           }
 

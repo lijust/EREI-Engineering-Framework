@@ -20,10 +20,11 @@ from pathlib import Path, PurePosixPath
 from typing import Any
 
 try:
-    from . import release_approval, release_assurance, release_target
+    from . import release_approval, release_assurance, release_scope, release_target
 except ImportError:
     import release_approval
     import release_assurance
+    import release_scope
     import release_target
 
 SHA40_RE = re.compile(r"^[a-f0-9]{40}$")
@@ -32,6 +33,7 @@ LEGACY_STABLE_ID = "task-learning-review-v1"
 LEGACY_MANIFEST = "releases/task-learning-review-v1.json"
 V2_STABLE_MANIFEST = "releases/vnext-assurance-v2-stable.json"
 TARGET_MANIFEST = "releases/VNEXT_TARGET.json"
+RELEASE_SCOPE_MANIFEST = "releases/VNEXT_RELEASE_SCOPE.json"
 
 
 class StableCarrierError(RuntimeError):
@@ -280,6 +282,17 @@ def _validate_v2(
     if target_manifest["target_tree"] != target_tree:
         raise StableCarrierError("frozen release target tree does not match requested target tree")
 
+    target_scope = _git_json(repo, target_ref, RELEASE_SCOPE_MANIFEST)
+    carrier_scope = _git_json(repo, carrier_ref, RELEASE_SCOPE_MANIFEST)
+    if _blob(repo, target_ref, RELEASE_SCOPE_MANIFEST) != _blob(repo, carrier_ref, RELEASE_SCOPE_MANIFEST):
+        raise StableCarrierError("frozen release scope changed after target selection")
+    if target_scope != carrier_scope:
+        raise StableCarrierError("release carrier scope differs from frozen target scope")
+    try:
+        release_scope.validate_stable_manifest_against_scope(manifest, target_scope)
+    except release_scope.ReleaseScopeError as exc:
+        raise StableCarrierError(f"Stable manifest violates frozen release scope: {exc}") from exc
+
     changed_paths = _validate_v2_closure(repo, target_ref, carrier_ref)
     if TARGET_MANIFEST not in changed_paths:
         raise StableCarrierError("V2 Stable carrier must include the immutable frozen release target")
@@ -311,7 +324,12 @@ def _validate_v2(
         materialized = Path(tmp)
         _safe_materialize(repo, carrier_ref, materialized)
         try:
-            result = release_assurance.validate_manifest(manifest, repo_root=materialized)
+            result = release_assurance.validate_manifest(
+                manifest,
+                repo_root=materialized,
+                scope_git_repo=repo,
+                scope_closure_ref=carrier_ref,
+            )
         except (release_assurance.ReleaseError, OSError) as exc:
             raise StableCarrierError(f"V2 Stable release assurance failed: {exc}") from exc
     if result.get("status") != "stable" or result.get("framework_ref") != target_ref:
