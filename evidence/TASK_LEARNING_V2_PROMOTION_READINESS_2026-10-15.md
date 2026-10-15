@@ -101,7 +101,9 @@ The packaging decision is frozen in `releases/VNEXT_RELEASE_SCOPE.json`.
 
 Those Candidate capabilities remain dormant by default and require explicit project-local bounded adoption under `.erei/CANDIDATE_CAPABILITIES.json`.
 
-**Status:** CLOSED — SEPARATE RELEASE TRACKS.
+**Status:** CONTRACT CLOSED — SEPARATE RELEASE TRACKS.
+
+**Promotion authority note:** the scope contract is not itself sufficient to promote Stable. Until scoped enforcement is merged into Stable readiness, release assurance, and retained-evidence coverage, the existing all-published-evals gates remain authoritative and promotion remains blocked.
 
 ## Recommendation
 
@@ -110,11 +112,12 @@ Those Candidate capabilities remain dormant by default and require explicit proj
 The remaining problem is no longer lack of real-project learning volume. The remaining work is:
 1. merge and verify the Candidate capability-activation boundary;
 2. freeze an immutable Task Learning V2 Core release candidate whose target tree contains `releases/VNEXT_RELEASE_SCOPE.json`;
-3. verify V1/V2 compatibility and assessment-coverage semantics on that frozen target;
-4. retain exact-target evidence for every eval case named by the frozen release scope;
-5. satisfy release enforcement and then bind final architecture/security approvals to the immutable RC;
-6. promote only through the normal Stable release carrier;
-7. move project pins only after Stable promotion through Framework Upgrade Workflow.
+3. merge scope-enforcement tooling so Stable readiness, release assurance, and retained-evidence coverage all consume the frozen scope;
+4. verify V1/V2 compatibility and assessment-coverage semantics on that frozen target;
+5. retain exact-target evidence for every eval case named by the frozen release scope;
+6. satisfy release enforcement and then bind final architecture/security approvals to the immutable RC;
+7. promote only through the normal Stable release carrier;
+8. move project pins only after Stable promotion through Framework Upgrade Workflow.
 
 Learning Operations V1 proceeds independently through bounded Candidate trials and effectiveness evidence; it is not a blocker to Task Learning V2 Core Stable promotion.
 
