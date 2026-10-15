@@ -10,13 +10,15 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from collections import Counter
 from pathlib import Path
 
-try:
-    from tools import task_learning as authoritative_task_learning
-except ImportError:
-    import task_learning as authoritative_task_learning
+TOOLS_DIR = Path(__file__).resolve().parent
+if str(TOOLS_DIR) not in sys.path:
+    sys.path.insert(0, str(TOOLS_DIR))
+
+import task_learning as authoritative_task_learning
 
 
 class LearningPatternError(RuntimeError):
