@@ -61,16 +61,16 @@ class GitHubReleaseProvenanceTests(unittest.TestCase):
                 }]
             state = {
                 "code_review": {
-                    "commit_sha": self.HEAD,
-                    "has_any_findings": False,
-                    "has_unresolved_findings": False,
-                    "status": "completed",
-                },
-                "security_review": {
                     "commit_sha": None,
                     "has_any_findings": None,
                     "has_unresolved_findings": None,
                     "status": None,
+                },
+                "security_review": {
+                    "commit_sha": self.HEAD,
+                    "has_any_findings": False,
+                    "has_unresolved_findings": False,
+                    "status": "completed",
                 },
             }
             return [{
@@ -99,6 +99,10 @@ class GitHubReleaseProvenanceTests(unittest.TestCase):
             mod,
             "_api_json",
             side_effect=lambda repository, path, token: self.api(path),
+        ), mock.patch.object(
+            mod.subprocess,
+            "run",
+            return_value=mock.Mock(returncode=0, stdout="", stderr=""),
         ):
             result = mod.verify_reviewed_file(
                 self.root,
@@ -107,6 +111,8 @@ class GitHubReleaseProvenanceTests(unittest.TestCase):
                 policy=self.policy,
                 target_ref=self.TARGET,
                 token="token",
+                git_repo=self.root,
+                closure_ref="HEAD",
             )
         self.assertEqual(result["status"], "authenticated")
         self.assertEqual(result["head_sha"], self.HEAD)
@@ -132,6 +138,8 @@ class GitHubReleaseProvenanceTests(unittest.TestCase):
                     policy=self.policy,
                     target_ref=self.TARGET,
                     token="token",
+                    git_repo=self.root,
+                    closure_ref="HEAD",
                 )
 
     def test_architecture_owner_comment_must_bind_approval_target_and_head(self):
@@ -145,6 +153,10 @@ class GitHubReleaseProvenanceTests(unittest.TestCase):
             mod,
             "_api_json",
             side_effect=lambda repository, path, token: self.api(path, owner_comment=True),
+        ), mock.patch.object(
+            mod.subprocess,
+            "run",
+            return_value=mock.Mock(returncode=0, stdout="", stderr=""),
         ):
             result = mod.verify_reviewed_file(
                 self.root,
@@ -154,6 +166,8 @@ class GitHubReleaseProvenanceTests(unittest.TestCase):
                 target_ref=self.TARGET,
                 approval_id=approval_id,
                 token="token",
+                git_repo=self.root,
+                closure_ref="HEAD",
             )
         self.assertEqual(result["comment_id"], 91)
 
@@ -169,7 +183,11 @@ class GitHubReleaseProvenanceTests(unittest.TestCase):
                 return {"commit": {"verification": {"verified": False}}}
             return self.api(path)
 
-        with mock.patch.object(mod, "_api_json", side_effect=api):
+        with mock.patch.object(mod, "_api_json", side_effect=api), mock.patch.object(
+            mod.subprocess,
+            "run",
+            return_value=mock.Mock(returncode=0, stdout="", stderr=""),
+        ):
             with self.assertRaisesRegex(mod.GitHubProvenanceError, "not GitHub-verified"):
                 mod.verify_reviewed_file(
                     self.root,
@@ -178,6 +196,60 @@ class GitHubReleaseProvenanceTests(unittest.TestCase):
                     policy=self.policy,
                     target_ref=self.TARGET,
                     token="token",
+                )
+
+    def test_reviewed_head_must_descend_from_frozen_target(self):
+        provenance = {
+            "kind": "github_codex_clean_security_review",
+            "pr_number": 55,
+            "actor_login": "chatgpt-codex-connector",
+        }
+        with mock.patch.object(
+            mod,
+            "_api_json",
+            side_effect=lambda repository, path, token: self.api(path),
+        ), mock.patch.object(
+            mod.subprocess,
+            "run",
+            return_value=mock.Mock(returncode=1, stdout="", stderr=""),
+        ):
+            with self.assertRaisesRegex(mod.GitHubProvenanceError, "does not descend"):
+                mod.verify_reviewed_file(
+                    self.root,
+                    self.path,
+                    provenance,
+                    policy=self.policy,
+                    target_ref=self.TARGET,
+                    token="token",
+                    git_repo=self.root,
+                    closure_ref="HEAD",
+                )
+
+    def test_reviewed_merge_must_be_in_carrier_history(self):
+        provenance = {
+            "kind": "github_codex_clean_security_review",
+            "pr_number": 55,
+            "actor_login": "chatgpt-codex-connector",
+        }
+        calls = [
+            mock.Mock(returncode=0, stdout="", stderr=""),
+            mock.Mock(returncode=1, stdout="", stderr=""),
+        ]
+        with mock.patch.object(
+            mod,
+            "_api_json",
+            side_effect=lambda repository, path, token: self.api(path),
+        ), mock.patch.object(mod.subprocess, "run", side_effect=calls):
+            with self.assertRaisesRegex(mod.GitHubProvenanceError, "not an ancestor"):
+                mod.verify_reviewed_file(
+                    self.root,
+                    self.path,
+                    provenance,
+                    policy=self.policy,
+                    target_ref=self.TARGET,
+                    token="token",
+                    git_repo=self.root,
+                    closure_ref="HEAD",
                 )
 
     def test_missing_token_fails_closed(self):
