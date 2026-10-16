@@ -20,7 +20,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
           TARGET_BRANCH: release-control-authenticated-provenance-20261016
-          KEEP_SHA: d1de204a0a36535a41a199272c6219ba7deed8e6
+          KEEP_SHA: 28a0c21fec62b978b063d72ba4d1fc7d482bbc04
         run: |
           set -euo pipefail
           for status in queued in_progress; do
@@ -33,3 +33,4 @@ jobs:
               gh api --method POST "repos/$REPO/actions/runs/$run_id/cancel" >/dev/null || true
             done
           done
+
