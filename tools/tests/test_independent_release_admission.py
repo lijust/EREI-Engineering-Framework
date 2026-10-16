@@ -240,6 +240,9 @@ class AdmissionIntegrationTests(unittest.TestCase):
         if not graph.exists():
             self.skipTest("Git build did not produce a commit-graph")
         payload = bytearray(graph.read_bytes())
+        # Git writes commit-graph files read-only on Linux. Deliberately mutate
+        # this test fixture after making it writable; production remains untouched.
+        graph.chmod(0o600)
         payload[len(payload) // 2] ^= 0x01
         graph.write_bytes(bytes(payload))
         self.assertEqual(self._verify()["status"], "verified_offline_signatures_only")
