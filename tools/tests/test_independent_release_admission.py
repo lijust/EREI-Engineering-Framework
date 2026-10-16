@@ -279,6 +279,31 @@ class AdmissionIntegrationTests(unittest.TestCase):
             result = self._verify()
         self.assertFalse(result["stable_enforcement_satisfied"])
 
+    def test_corrupt_loose_blob_under_signed_oid_is_rejected(self):
+        import zlib
+        blob_sha = self._git("rev-parse", f"{self.target}:README.md")
+        loose = self.repo / ".git" / "objects" / blob_sha[:2] / blob_sha[2:]
+        if not loose.is_file():
+            self.skipTest("fixture has no loose README blob")
+        forged = b"forged README bytes under a trusted Git blob id\\n"
+        loose.write_bytes(zlib.compress(b"blob " + str(len(forged)).encode() + b"\\0" + forged))
+        with self.assertRaises(admission.AdmissionError):
+            self._verify()
+
+    def test_symlink_mode_manifest_is_rejected_even_when_contents_are_json(self):
+        old_blob = self._git("rev-parse", f"{self.carrier}:releases/VNEXT_TARGET.json")
+        self._git("reset", "--hard", self.target)
+        self._git("update-index", "--add", "--cacheinfo",
+                  f"120000,{old_blob},releases/VNEXT_TARGET.json")
+        self._git("commit", "-q", "-m", "unsafe signed carrier manifest as symlink")
+        self.carrier = self._git("rev-parse", "HEAD")
+        self.carrier_tree = self._git("rev-parse", f"{self.carrier}^{{tree}}")
+        self.data["carrier_ref"] = self.carrier
+        self.data["carrier_tree"] = self.carrier_tree
+        self._save_packet()
+        with self.assertRaisesRegex(admission.AdmissionError, "ordinary non-executable blob"):
+            self._verify()
+
     def test_carrier_with_extra_file_is_rejected(self):
         self._write("unexpected.txt", "extra mutation\n")
         self._git("add", "-A")
