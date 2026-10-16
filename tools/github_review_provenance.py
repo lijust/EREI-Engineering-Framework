@@ -38,14 +38,14 @@ def validate_descriptor(value: Any, *, expected_purpose: str | None = None) -> d
     purpose = value["purpose"]
     if purpose not in PURPOSES:
         raise ReviewProvenanceError("invalid review_provenance.purpose")
+    if expected_purpose is not None and purpose != expected_purpose:
+        raise ReviewProvenanceError(
+            f"review_provenance purpose mismatch: expected {expected_purpose}, got {purpose}"
+        )
     expected_review_type = "code_review" if purpose == "architecture_approval" else "security_review"
     if value["review_type"] != expected_review_type:
         raise ReviewProvenanceError(
             f"review_provenance.review_type must be {expected_review_type} for {purpose}"
-        )
-    if expected_purpose is not None and purpose != expected_purpose:
-        raise ReviewProvenanceError(
-            f"review_provenance purpose mismatch: expected {expected_purpose}, got {purpose}"
         )
     return value
 
