@@ -345,7 +345,7 @@ class StructuredApprovalReadinessTests(unittest.TestCase):
             "review_provenance": {
                 "provider": "github_codex_review",
                 "reviewer_login": "chatgpt-codex-connector[bot]",
-                "review_type": "code_review",
+                "review_type": "code_review" if approval_type == "architecture" else "security_review",
                 "purpose": f"{approval_type}_approval",
             },
             "evidence": ["github-actions:123", "release-target:vnext-rc1"],
