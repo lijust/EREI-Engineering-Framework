@@ -1,0 +1,31 @@
+name: Cancel stale RC3 CI
+
+on:
+  push:
+    branches:
+      - ops/cancel-stale-rc3-ci-20261016
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  cancel:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Keep only current RC3 closure run
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          KEEP_SHA: 0942f7c302d41357cc72819ce929d80d82489224
+        run: |
+          set -euo pipefail
+          for status in queued in_progress; do
+            gh api "repos/$REPO/actions/runs?status=$status&per_page=100" \
+              --jq '.workflow_runs[] |
+                select(.head_branch == "release/vnext-rc3" and .head_sha != env.KEEP_SHA) | .id' |
+            while read -r run_id; do
+              [ -n "$run_id" ] || continue
+              gh api --method POST "repos/$REPO/actions/runs/$run_id/cancel" >/dev/null || true
+            done
+          done
