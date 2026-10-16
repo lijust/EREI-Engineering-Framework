@@ -10,10 +10,11 @@ import sys
 from pathlib import Path
 
 try:
-    from . import assurance_enforcement, exact_target_evidence, release_approval, release_scope, release_target
+    from . import assurance_enforcement, exact_target_evidence, github_review_provenance, release_approval, release_scope, release_target
 except ImportError:
     import assurance_enforcement
     import exact_target_evidence
+    import github_review_provenance
     import release_approval
     import release_scope
     import release_target
@@ -58,7 +59,13 @@ def _load_runner(repo_root: Path):
     return runner
 
 
-def _validate_structured_approvals(manifest: dict, repo_root: Path) -> int:
+def _validate_structured_approvals(
+    manifest: dict,
+    repo_root: Path,
+    *,
+    provenance_git_repo: Path,
+    provenance_closure_ref: str,
+) -> int:
     target_path = repo_root / release_target.DEFAULT_TARGET
     try:
         target_manifest = _load(target_path)
@@ -72,14 +79,26 @@ def _validate_structured_approvals(manifest: dict, repo_root: Path) -> int:
     validated = 0
     for approval_type, relative_path in release_approval.APPROVAL_PATHS.items():
         try:
-            release_approval.load_and_validate(
+            record = release_approval.load_and_validate(
                 repo_root / relative_path,
                 expected_type=approval_type,
                 expected_target=manifest["framework_ref"],
                 expected_tree=target_tree,
                 require_approved=True,
             )
-        except release_approval.ReleaseApprovalError as exc:
+            github_review_provenance.verify_artifact_review(
+                provenance_git_repo,
+                repository="lijust/EREI-Engineering-Framework",
+                target_ref=manifest["framework_ref"],
+                closure_ref=provenance_closure_ref,
+                artifact_path=relative_path,
+                descriptor=record["review_provenance"],
+                expected_purpose=f"{approval_type}_approval",
+            )
+        except (
+            release_approval.ReleaseApprovalError,
+            github_review_provenance.ReviewProvenanceError,
+        ) as exc:
             raise ReleaseError(f"invalid {approval_type} release approval: {exc}") from exc
         validated += 1
     return validated
@@ -161,10 +180,20 @@ def validate_manifest(
             raise ReleaseError(f"invalid or mismatched target-bound release scope: {exc}") from exc
         result["release_scope_id"] = scope_binding["scope_id"]
 
+        enforcement_path = repo_root / "security" / "ASSURANCE_ENFORCEMENT.json"
+        enforcement_record = _load(enforcement_path)
         try:
             enforcement = assurance_enforcement.load_and_validate(
-                repo_root / "security" / "ASSURANCE_ENFORCEMENT.json"
+                enforcement_path,
+                expected_target=manifest["framework_ref"],
             )
+            if enforcement["stable_enforcement_satisfied"]:
+                assurance_enforcement.verify_authenticated_equivalence(
+                    scope_repo,
+                    enforcement_record,
+                    expected_target=manifest["framework_ref"],
+                    closure_ref=scope_closure_ref,
+                )
         except assurance_enforcement.EnforcementError as exc:
             raise ReleaseError(f"invalid assurance enforcement record: {exc}") from exc
         result["stable_enforcement_satisfied"] = enforcement["stable_enforcement_satisfied"]
@@ -200,7 +229,12 @@ def validate_manifest(
                 f"missing={len(missing)} nonpass={len(nonpass)} lower_assurance={len(lower)} unexpected={len(extras)}"
             )
 
-        result["approval_records_validated"] = _validate_structured_approvals(manifest, repo_root)
+        result["approval_records_validated"] = _validate_structured_approvals(
+            manifest,
+            repo_root,
+            provenance_git_repo=scope_repo,
+            provenance_closure_ref=scope_closure_ref,
+        )
 
         for key in sorted(expected):
             try:

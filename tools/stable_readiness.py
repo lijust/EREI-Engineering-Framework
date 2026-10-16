@@ -13,10 +13,11 @@ from pathlib import Path
 from typing import Any
 
 try:
-    from . import assurance_enforcement, exact_target_evidence, prospective_cycle_status, release_approval, release_scope, release_target
+    from . import assurance_enforcement, exact_target_evidence, github_review_provenance, prospective_cycle_status, release_approval, release_scope, release_target
 except ImportError:
     import assurance_enforcement
     import exact_target_evidence
+    import github_review_provenance
     import prospective_cycle_status
     import release_approval
     import release_scope
@@ -317,7 +318,20 @@ def approval_gate(repo_root: Path, target_ref: str, preapproval_ready: bool) -> 
                 require_approved=True,
             )
             history = _approval_history_binding(repo_root, target_ref, rel_path, manifest.get(ref_field))
-        except (release_approval.ReleaseApprovalError, StableReadinessError) as exc:
+            review = github_review_provenance.verify_artifact_review(
+                repo_root,
+                repository="lijust/EREI-Engineering-Framework",
+                target_ref=target_ref,
+                closure_ref="HEAD",
+                artifact_path=rel_path,
+                descriptor=record["review_provenance"],
+                expected_purpose=f"{approval_type}_approval",
+            )
+        except (
+            release_approval.ReleaseApprovalError,
+            github_review_provenance.ReviewProvenanceError,
+            StableReadinessError,
+        ) as exc:
             return {
                 "status": "blocked",
                 "reason": f"{approval_type} approval invalid: {exc}",
@@ -328,6 +342,7 @@ def approval_gate(repo_root: Path, target_ref: str, preapproval_ready: bool) -> 
             "decision": record["decision"],
             "recorded_at": record["recorded_at"],
             **history,
+            "review_provenance": review,
         }
     return {
         "status": "pass",
@@ -364,14 +379,35 @@ def report(repo_root: Path, *, target_ref: str | None = None) -> dict[str, Any]:
         cycle = prospective_cycle_status.load_and_validate(repo_root / "learning" / "PROSPECTIVE_CYCLE_STATUS.json")
     except prospective_cycle_status.CycleStatusError as exc:
         raise StableReadinessError(f"invalid prospective cycle status: {exc}") from exc
+    enforcement_record = _load_json(repo_root / "security" / "ASSURANCE_ENFORCEMENT.json")
     try:
-        enforcement = assurance_enforcement.load_and_validate(repo_root / "security" / "ASSURANCE_ENFORCEMENT.json")
+        enforcement = assurance_enforcement.load_and_validate(
+            repo_root / "security" / "ASSURANCE_ENFORCEMENT.json",
+            expected_target=selected_target,
+        )
     except assurance_enforcement.EnforcementError as exc:
         raise StableReadinessError(f"invalid assurance enforcement: {exc}") from exc
+
+    enforcement_review = None
+    enforcement_review_error = None
+    if enforcement["stable_enforcement_satisfied"]:
+        try:
+            enforcement_review = assurance_enforcement.verify_authenticated_equivalence(
+                repo_root,
+                enforcement_record,
+                expected_target=selected_target,
+                closure_ref="HEAD",
+            )
+        except assurance_enforcement.EnforcementError as exc:
+            enforcement_review_error = str(exc)
+
     eval_result = eval_gate(repo_root, selected_target)
     cycle_pass = cycle["status"] == "complete"
     eval_pass = eval_result["status"] == "pass"
-    enforcement_pass = enforcement["stable_enforcement_satisfied"]
+    enforcement_pass = (
+        enforcement["stable_enforcement_satisfied"]
+        and enforcement_review_error is None
+    )
     preapproval = cycle_pass and eval_pass and enforcement_pass
     approvals = approval_gate(repo_root, selected_target, preapproval)
     derived = derive_readiness(
@@ -386,7 +422,12 @@ def report(repo_root: Path, *, target_ref: str | None = None) -> dict[str, Any]:
         "gates": {
             "prospective_cycle": {"status": "pass" if cycle_pass else "blocked", "cycle_id": cycle["cycle_id"], "completed_steps": cycle["completed_steps"]},
             "exact_target_runtime": eval_result,
-            "release_enforcement": {"status": "pass" if enforcement_pass else "blocked", **enforcement},
+            "release_enforcement": {
+                "status": "pass" if enforcement_pass else "blocked",
+                **enforcement,
+                "authenticated_review": enforcement_review,
+                "authenticated_review_error": enforcement_review_error,
+            },
             "final_architecture_security_approvals": approvals,
         },
         **derived,

@@ -7,7 +7,7 @@ from tools import release_approval as mod
 class ReleaseApprovalTests(unittest.TestCase):
     def valid(self, approval_type="architecture"):
         return {
-            "schema_version": 1,
+            "schema_version": 2,
             "approval_id": "EAPP-20260907T123000Z-A1B2C3D4",
             "approval_type": approval_type,
             "target_framework_ref": "a" * 40,
@@ -15,6 +15,12 @@ class ReleaseApprovalTests(unittest.TestCase):
             "decision": "approved",
             "recorded_at": "2026-09-07T12:30:00Z",
             "reviewer": {"kind": "framework_role", "id": "system-architect"},
+            "review_provenance": {
+                "provider": "github_codex_review",
+                "reviewer_login": "chatgpt-codex-connector[bot]",
+                "review_type": "code_review",
+                "purpose": f"{approval_type}_approval",
+            },
             "evidence": ["github-actions:123", "release-target:vnext-rc1"],
             "rationale": "Reviewed the immutable target and found the architecture acceptable for Stable promotion.",
         }
@@ -61,6 +67,17 @@ class ReleaseApprovalTests(unittest.TestCase):
         value = self.valid()
         value["reviewer"]["extra"] = "x"
         with self.assertRaisesRegex(mod.ReleaseApprovalError, "exactly kind/id"):
+            mod.validate_record(value)
+
+    def test_review_provenance_is_required_and_purpose_bound(self):
+        value = self.valid()
+        del value["review_provenance"]
+        with self.assertRaisesRegex(mod.ReleaseApprovalError, "missing fields"):
+            mod.validate_record(value)
+
+        value = self.valid()
+        value["review_provenance"]["purpose"] = "security_approval"
+        with self.assertRaisesRegex(mod.ReleaseApprovalError, "purpose mismatch"):
             mod.validate_record(value)
 
     def test_duplicate_evidence_fails(self):

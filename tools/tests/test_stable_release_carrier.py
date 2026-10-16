@@ -35,8 +35,15 @@ class StableReleaseCarrierTests(unittest.TestCase):
         })
         self.target = self._commit("target")
         self.target_tree = self._git("rev-parse", f"{self.target}^{{tree}}")
+        self.review_patcher = mock.patch.object(
+            mod.github_review_provenance,
+            "verify_artifact_review",
+            return_value={"status": "verified"},
+        )
+        self.review_patcher.start()
 
     def tearDown(self):
+        self.review_patcher.stop()
         self.tmp.cleanup()
 
     def _git(self, *args):
@@ -85,7 +92,7 @@ class StableReleaseCarrierTests(unittest.TestCase):
     def _approval(self, approval_type, *, decision="approved", rationale_suffix=""):
         architecture = approval_type == "architecture"
         return {
-            "schema_version": 1,
+            "schema_version": 2,
             "approval_id": "EAPP-20260907T120100Z-A1B2C3D4" if architecture else "EAPP-20260907T120200Z-E5F6A7B8",
             "approval_type": approval_type,
             "target_framework_ref": self.target,
@@ -95,6 +102,12 @@ class StableReleaseCarrierTests(unittest.TestCase):
             "reviewer": {
                 "kind": "framework_role",
                 "id": "system-architect" if architecture else "security-engineer",
+            },
+            "review_provenance": {
+                "provider": "github_codex_review",
+                "reviewer_login": "chatgpt-codex-connector[bot]",
+                "review_type": "code_review",
+                "purpose": f"{approval_type}_approval",
             },
             "evidence": ["github-actions:123", "release-target:vnext-rc9"],
             "rationale": f"Reviewed immutable target for {approval_type} Stable promotion{rationale_suffix}.",

@@ -20,8 +20,9 @@ from pathlib import Path, PurePosixPath
 from typing import Any
 
 try:
-    from . import release_approval, release_assurance, release_scope, release_target
+    from . import github_review_provenance, release_approval, release_assurance, release_scope, release_target
 except ImportError:
+    import github_review_provenance
     import release_approval
     import release_assurance
     import release_scope
@@ -256,6 +257,20 @@ def _validate_approval_ref(
         raise StableCarrierError(f"invalid {approval_type} approval record at {ref}: {exc}") from exc
     if _blob(repo, ref, approval_path) != _blob(repo, carrier_ref, approval_path):
         raise StableCarrierError(f"{approval_type} approval record changed after its bound approval ref")
+    try:
+        github_review_provenance.verify_artifact_review(
+            repo,
+            repository="lijust/EREI-Engineering-Framework",
+            target_ref=target_ref,
+            closure_ref=carrier_ref,
+            artifact_path=approval_path,
+            descriptor=record["review_provenance"],
+            expected_purpose=f"{approval_type}_approval",
+        )
+    except github_review_provenance.ReviewProvenanceError as exc:
+        raise StableCarrierError(
+            f"{approval_type} approval lacks authenticated GitHub review provenance: {exc}"
+        ) from exc
     return ref
 
 

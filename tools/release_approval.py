@@ -10,6 +10,11 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+try:
+    from . import github_review_provenance
+except ImportError:
+    import github_review_provenance
+
 SHA40_RE = re.compile(r"^[a-f0-9]{40}$")
 APPROVAL_ID_RE = re.compile(r"^EAPP-[0-9]{8}T[0-9]{6}Z-[A-F0-9]{8}$")
 APPROVAL_PATHS = {
@@ -69,7 +74,7 @@ def validate_record(
         raise ReleaseApprovalError("release approval must be an object")
     fields = {
         "schema_version", "approval_id", "approval_type", "target_framework_ref", "target_tree",
-        "decision", "recorded_at", "reviewer", "evidence", "rationale",
+        "decision", "recorded_at", "reviewer", "review_provenance", "evidence", "rationale",
     }
     missing = sorted(fields - set(value))
     unknown = sorted(set(value) - fields)
@@ -77,8 +82,8 @@ def validate_record(
         raise ReleaseApprovalError("release approval missing fields: " + ", ".join(missing))
     if unknown:
         raise ReleaseApprovalError("release approval unknown fields: " + ", ".join(unknown))
-    if value["schema_version"] != 1:
-        raise ReleaseApprovalError("unsupported release approval schema_version")
+    if type(value["schema_version"]) is not int or value["schema_version"] != 2:
+        raise ReleaseApprovalError("release approval schema_version must be integer 2")
     if not isinstance(value["approval_id"], str) or not APPROVAL_ID_RE.fullmatch(value["approval_id"]):
         raise ReleaseApprovalError("invalid approval_id")
     if value["approval_type"] not in APPROVAL_PATHS:
@@ -94,6 +99,13 @@ def validate_record(
     if reviewer["kind"] not in {"github_user", "framework_role", "external_reviewer"}:
         raise ReleaseApprovalError("invalid reviewer.kind")
     _text(reviewer["id"], "reviewer.id")
+    try:
+        github_review_provenance.validate_descriptor(
+            value["review_provenance"],
+            expected_purpose=f"{value['approval_type']}_approval",
+        )
+    except github_review_provenance.ReviewProvenanceError as exc:
+        raise ReleaseApprovalError(f"invalid review_provenance: {exc}") from exc
     _unique_texts(value["evidence"], "evidence")
     _text(value["rationale"], "rationale")
 

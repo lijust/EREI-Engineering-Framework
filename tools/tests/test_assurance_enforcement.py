@@ -6,7 +6,7 @@ from tools import assurance_enforcement
 class AssuranceEnforcementTests(unittest.TestCase):
     def base(self, **overrides):
         value = {
-            "schema_version": 1,
+            "schema_version": 2,
             "repository": "lijust/EREI-Engineering-Framework",
             "main_branch": "main",
             "status": "candidate_control",
@@ -26,6 +26,8 @@ class AssuranceEnforcementTests(unittest.TestCase):
                 "exact_target_runtime_evidence_required": True,
                 "complete_prospective_cycle_required": True,
                 "equivalent_enforcement_verified": False,
+                "equivalence_target_ref": None,
+                "review_provenance": None,
                 "stable_promotion_policy": "blocked_until_server_or_equivalent_enforcement",
             },
             "evidence": ["github-branch:main protected=false"],
@@ -46,10 +48,42 @@ class AssuranceEnforcementTests(unittest.TestCase):
 
     def test_verified_equivalent_fallback_can_satisfy_stable_enforcement(self):
         value = self.base(status="enforced")
-        value["fallback"] = {**value["fallback"], "equivalent_enforcement_verified": True}
-        result = assurance_enforcement.validate_enforcement(value)
+        value["fallback"] = {
+            **value["fallback"],
+            "equivalent_enforcement_verified": True,
+            "equivalence_target_ref": "a" * 40,
+            "review_provenance": {
+                "provider": "github_codex_review",
+                "reviewer_login": "chatgpt-codex-connector[bot]",
+                "review_type": "code_review",
+                "purpose": "enforcement_equivalence",
+            },
+        }
+        result = assurance_enforcement.validate_enforcement(value, expected_target="a" * 40)
         self.assertTrue(result["stable_enforcement_satisfied"])
         self.assertTrue(result["fallback_equivalent_verified"])
+
+    def test_verified_equivalence_is_target_bound(self):
+        value = self.base(status="enforced")
+        value["fallback"] = {
+            **value["fallback"],
+            "equivalent_enforcement_verified": True,
+            "equivalence_target_ref": "a" * 40,
+            "review_provenance": {
+                "provider": "github_codex_review",
+                "reviewer_login": "chatgpt-codex-connector[bot]",
+                "review_type": "code_review",
+                "purpose": "enforcement_equivalence",
+            },
+        }
+        with self.assertRaisesRegex(assurance_enforcement.EnforcementError, "target mismatch"):
+            assurance_enforcement.validate_enforcement(value, expected_target="b" * 40)
+
+    def test_unverified_equivalence_cannot_carry_target_or_review(self):
+        value = self.base()
+        value["fallback"] = {**value["fallback"], "equivalence_target_ref": "a" * 40}
+        with self.assertRaisesRegex(assurance_enforcement.EnforcementError, "must be null"):
+            assurance_enforcement.validate_enforcement(value)
 
     def test_boolean_fields_reject_integer_aliases(self):
         value = self.base()
