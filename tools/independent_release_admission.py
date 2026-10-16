@@ -11,6 +11,7 @@ import argparse
 import base64
 import hashlib
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -43,8 +44,14 @@ class AdmissionError(RuntimeError):
 
 
 def _git(repo: Path, *args: str) -> bytes:
+    # Never accept caller-controlled Git replacement/configuration
+    # environment for release-object provenance. Disable replace refs even
+    # before probing the repository for unauthorized replacement mechanisms.
+    clean_env = {key: value for key, value in os.environ.items() if not key.startswith("GIT_")}
+    clean_env["GIT_NO_REPLACE_OBJECTS"] = "1"
     result = subprocess.run(
-        ["git", "-C", str(repo), *args], capture_output=True, check=False
+        ["git", "-C", str(repo), *args],
+        capture_output=True, check=False, env=clean_env,
     )
     if result.returncode:
         raise AdmissionError("unavailable or inconsistent exact Git object")
@@ -142,6 +149,14 @@ def _verify_release_objects(repo: Path, data: dict[str, Any], target: str, carri
     git_root = Path(_git(root, "rev-parse", "--show-toplevel").decode().strip()).resolve(strict=True)
     if git_root != root:
         raise AdmissionError("release checkout must be the actual Git worktree root")
+    if _git(root, "for-each-ref", "--format=%(refname)", "refs/replace").strip():
+        raise AdmissionError("Git replace refs are forbidden for independently verified release objects")
+    graft_raw = _git(root, "rev-parse", "--git-path", "info/grafts").decode().strip()
+    graft_path = Path(graft_raw)
+    if not graft_path.is_absolute():
+        graft_path = root / graft_path
+    if graft_path.exists() or graft_path.is_symlink():
+        raise AdmissionError("Git graft records are forbidden for independently verified release objects")
     if data["target_ref"] != target or data["carrier_ref"] != carrier:
         raise AdmissionError("admission does not bind expected exact target/carrier")
     if target == carrier:
