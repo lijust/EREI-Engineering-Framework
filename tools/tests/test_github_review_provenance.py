@@ -76,6 +76,10 @@ class ReviewProvenanceTests(unittest.TestCase):
             subprocess.run(["git", "-C", str(repo), "add", "-A"], check=True)
             subprocess.run(["git", "-C", str(repo), "commit", "-q", "-m", "reviewed"], check=True)
             reviewed = subprocess.check_output(["git", "-C", str(repo), "rev-parse", "HEAD"], text=True).strip()
+            reviewed_blob = subprocess.check_output(
+                ["git", "-C", str(repo), "rev-parse", f"{reviewed}:releases/approvals/security.json"],
+                text=True,
+            ).strip()
 
             pulls = [{
                 "number": 77,
@@ -95,9 +99,18 @@ class ReviewProvenanceTests(unittest.TestCase):
                 }}, separators=(",", ":"))
                 + " -->",
             }]
+            files = [{
+                "filename": "releases/approvals/security.json",
+                "status": "added",
+                "sha": reviewed_blob,
+            }]
 
             def fake(url, token):
-                return pulls if "/commits/" in url else comments
+                if "/commits/" in url:
+                    return pulls
+                if "/files" in url:
+                    return files
+                return comments
 
             with mock.patch.object(mod, "_github_json", side_effect=fake):
                 result = mod.verify_artifact_review(
@@ -113,6 +126,43 @@ class ReviewProvenanceTests(unittest.TestCase):
             self.assertEqual(result["status"], "verified")
             self.assertEqual(result["pull_request_number"], 77)
             self.assertEqual(result["reviewed_commit"], reviewed)
+            self.assertEqual(result["reviewed_artifact_blob"], reviewed_blob)
+
+
+    def test_unrelated_clean_pr_cannot_launder_preexisting_artifact(self):
+        files = [{
+            "filename": "README.md",
+            "status": "modified",
+            "sha": "a" * 40,
+        }]
+        self.assertFalse(
+            mod._pr_reviews_artifact(
+                files,
+                artifact_path="releases/approvals/security.json",
+                expected_blob="b" * 40,
+            )
+        )
+
+    def test_reviewed_artifact_requires_exact_resulting_blob(self):
+        files = [{
+            "filename": "releases/approvals/security.json",
+            "status": "modified",
+            "sha": "a" * 40,
+        }]
+        self.assertFalse(
+            mod._pr_reviews_artifact(
+                files,
+                artifact_path="releases/approvals/security.json",
+                expected_blob="b" * 40,
+            )
+        )
+        self.assertTrue(
+            mod._pr_reviews_artifact(
+                files,
+                artifact_path="releases/approvals/security.json",
+                expected_blob="a" * 40,
+            )
+        )
 
 
 if __name__ == "__main__":
