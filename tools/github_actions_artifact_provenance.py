@@ -75,6 +75,8 @@ def _validated_zip_bytes(archive: Path) -> tuple[bytes, dict[str, bytes]]:
                 if len(payload) > MAX_FILE_BYTES:
                     raise ActionsProvenanceError("expanded evidence file exceeds maximum size")
                 files[item.filename] = payload
+    except ActionsProvenanceError:
+        raise
     except (OSError, zipfile.BadZipFile, RuntimeError) as exc:
         raise ActionsProvenanceError("unreadable GitHub Actions evidence archive") from exc
     return raw, files

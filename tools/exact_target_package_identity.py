@@ -53,7 +53,8 @@ def validate_relative_json_path(value: Any, *, prefix: str, label: str) -> Path:
 
 def identity_path_for_manifest(manifest_path: Path | str) -> Path:
     path = validate_relative_json_path(
-        str(manifest_path), prefix="evals/exact-target-runs/", label="run manifest path"
+        manifest_path.as_posix() if isinstance(manifest_path, Path) else manifest_path,
+        prefix="evals/exact-target-runs/", label="run manifest path"
     )
     if path.name.endswith(".identity.json"):
         raise ExactTargetPackageIdentityError("run manifest path cannot use the reserved .identity.json suffix")
