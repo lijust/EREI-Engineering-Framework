@@ -12,13 +12,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 894cc8a8678082547f3f683471bf62bd5649045b
+          ref: 7c78d90cb40b17d8b914272bb84838277d5b78c6
           fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
       - name: Assert exact PR source SHA
-        run: test "$(git rev-parse HEAD)" = "894cc8a8678082547f3f683471bf62bd5649045b"
+        run: test "$(git rev-parse HEAD)" = "7c78d90cb40b17d8b914272bb84838277d5b78c6"
       - name: Compile Framework and adapter
         run: python -m compileall -q tools evals validation_contract.py
       - name: Require live Ed25519 integration proof
