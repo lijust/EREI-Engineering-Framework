@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import importlib.util
+import types
 import json
 import re
 import subprocess
@@ -22,6 +23,7 @@ SHA256_RE = re.compile(r"^[a-f0-9]{64}$")
 RUN_ID_RE = re.compile(r"^ETR-[0-9]{8}T[0-9]{6}Z-[A-F0-9]{8}$")
 REF_RE = re.compile(r"^exact-target-run:(?P<path>[^#]+)#(?P<suite>[^/]+)/(?P<case>[^/]+)$")
 RETAINED_RESPONSE_FIELDS = {"output", "metadata", "trace"}
+OFFICIAL_REPOSITORY = "lijust/EREI-Engineering-Framework"
 
 
 class ExactTargetEvidenceError(RuntimeError):
@@ -117,11 +119,13 @@ def _validate_retained_response(value: Any, label: str) -> dict[str, Any]:
 
 def _load_runner(repo_root: Path):
     runner_path = repo_root / "evals" / "runner.py"
-    spec = importlib.util.spec_from_file_location("erei_exact_target_eval_runner", runner_path)
-    if spec is None or spec.loader is None:
-        raise ExactTargetEvidenceError("unable to load eval runner for exact-target reconstruction")
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
+    try:
+        source = runner_path.read_bytes()
+        module = types.ModuleType("erei_exact_target_eval_runner")
+        module.__file__ = str(runner_path)
+        exec(compile(source, str(runner_path), "exec"), module.__dict__)
+    except (OSError, SyntaxError) as exc:
+        raise ExactTargetEvidenceError(f"unable to load eval runner for exact-target reconstruction: {exc}") from exc
     return module
 
 
@@ -362,6 +366,8 @@ def _durable_identity_binding(
     except exact_target_package_identity.ExactTargetPackageIdentityError as exc:
         raise ExactTargetEvidenceError(f"runtime identity invalid: {exc}") from exc
 
+    if identity["repository"] != OFFICIAL_REPOSITORY:
+        raise ExactTargetEvidenceError("runtime identity repository does not match official Framework repository")
     if Path(identity["run_manifest_path"]) != manifest_path:
         raise ExactTargetEvidenceError("runtime identity run_manifest_path does not match evidence_ref manifest")
     if Path(identity["runtime_identity_path"]) != identity_path:
