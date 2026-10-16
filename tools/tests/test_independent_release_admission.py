@@ -233,6 +233,14 @@ class AdmissionIntegrationTests(unittest.TestCase):
         self.assertGreaterEqual(len(git_reads), 8)
         for args in git_reads:
             self.assertEqual(args[3:5], ["-c", "core.commitGraph=false"])
+            self.assertIn("protocol.allow=never", args)
+            self.assertIn("protocol.ext.allow=never", args)
+        for call in calls.call_args_list:
+            if call.args and call.args[0][0] == "git":
+                self.assertEqual(call.kwargs["env"]["GIT_NO_LAZY_FETCH"], "1")
+                self.assertEqual(call.kwargs["env"]["GIT_ALLOW_PROTOCOL"], "")
+                self.assertEqual(call.kwargs["env"]["GIT_PROTOCOL_FROM_USER"], "0")
+
 
     def test_corrupted_commit_graph_does_not_change_raw_commit_verification(self):
         self._git("commit-graph", "write", "--reachable")
