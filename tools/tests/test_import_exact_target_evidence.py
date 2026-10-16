@@ -87,8 +87,15 @@ class ExactTargetEvidenceImportTests(unittest.TestCase):
         })
         self.carrier_ref = self._commit("freeze rc2")
         self._write_package()
+        self._provenance_patch = mock.patch.object(
+            import_exact_target_evidence.github_actions_artifact_provenance,
+            "verify_official_run_artifact",
+            return_value={"authenticated": True, "repository": "lijust/EREI-Engineering-Framework"},
+        )
+        self._provenance_patch.start()
 
     def tearDown(self):
+        self._provenance_patch.stop()
         self.tmp.cleanup()
 
     def _git(self, *args):
