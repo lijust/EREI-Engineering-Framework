@@ -13,10 +13,11 @@ from pathlib import Path
 from typing import Any
 
 try:
-    from . import assurance_enforcement, exact_target_evidence, github_review_provenance, prospective_cycle_status, release_approval, release_scope, release_target
+    from . import assurance_enforcement, exact_target_evidence, github_actions_artifact_provenance, github_review_provenance, prospective_cycle_status, release_approval, release_scope, release_target
 except ImportError:
     import assurance_enforcement
     import exact_target_evidence
+    import github_actions_artifact_provenance
     import github_review_provenance
     import prospective_cycle_status
     import release_approval
@@ -205,9 +206,37 @@ def _evaluate_evidence_file(repo_root: Path, runner, expected: set[tuple[str, st
         and bound == len(expected)
         and not binding_errors
     )
+    actions_source_authenticated = False
+    if complete:
+        # Reconstructed scorer/history evidence alone does not authenticate
+        # its claimed execution origin. Readiness must use the same fail-closed
+        # official-run ZIP verification as the final Stable release gate.
+        try:
+            manifest_refs = {
+                exact_target_evidence.parse_evidence_ref(row["evidence_ref"])[0].as_posix()
+                for key, row in passing.items() if key in expected
+            }
+            if len(manifest_refs) != 1:
+                raise StableReadinessError(
+                    "exact-target readiness requires exactly one authenticated runtime artifact"
+                )
+            proof = github_actions_artifact_provenance.verify_retained_release_provenance(
+                repo_root, Path(next(iter(manifest_refs)))
+            )
+            if proof.get("authenticated") is not True:
+                raise StableReadinessError("exact-target Actions source is not authenticated")
+            actions_source_authenticated = True
+        except (
+            github_actions_artifact_provenance.ActionsProvenanceError,
+            exact_target_evidence.ExactTargetEvidenceError,
+            StableReadinessError,
+        ) as exc:
+            binding_errors.append(f"Actions provenance unavailable: {exc}")
+            complete = False
     return {
         "evidence_path": path.relative_to(repo_root).as_posix(),
         "complete": complete,
+        "actions_source_authenticated": actions_source_authenticated,
         "framework_revision": evidence["framework_revision"],
         "revision_matches_target": revision_matches_target,
         "evidence_schema_version": schema_version,

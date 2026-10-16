@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from tools import release_scope
+from tools import release_scope, stable_readiness
 
 from tools.stable_readiness import (
     StableReadinessError,
@@ -84,6 +84,87 @@ class StableReadinessTests(unittest.TestCase):
             path.write_text(json.dumps({"pull_request": {"head": {"sha": "main"}}}), encoding="utf-8")
             with self.assertRaises(StableReadinessError):
                 _event_target_revision(path)
+
+
+class AuthenticatedEvidenceReadinessTests(unittest.TestCase):
+    class FakeRunner:
+        ASSURANCE_LEVELS = {
+            "harness_smoke": 0, "reference_contract": 1,
+            "managed_runtime": 2, "exact_target_runtime": 3,
+        }
+
+        @staticmethod
+        def validate_execution_evidence(data):
+            return data
+
+        @staticmethod
+        def execution_assurance_level(row, version):
+            return row["assurance_level"]
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.root = Path(self.tmp.name)
+        (self.root / "evals").mkdir()
+        self.path = self.root / "evals" / "EXECUTION_EVIDENCE.test.json"
+        self.expected = {("suite", "case")}
+        self.ref = "a" * 40
+        self.path.write_text(json.dumps({
+            "schema_version": 2,
+            "framework_revision": self.ref,
+            "executions": [{
+                "suite_id": "suite", "case_id": "case",
+                "assurance_level": "exact_target_runtime",
+                "independent_runtime": True,
+                "status": "pass",
+                "evidence_ref": "exact-target-run:evals/exact-target-runs/copilot-test.json#suite/case",
+            }],
+        }), encoding="utf-8")
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def test_unavailable_actions_artifact_blocks_preapprovals(self):
+        with mock.patch.object(stable_readiness.exact_target_evidence, "validate_binding", return_value={}), \
+             mock.patch.object(
+                 stable_readiness.github_actions_artifact_provenance,
+                 "verify_retained_release_provenance",
+                 side_effect=stable_readiness.github_actions_artifact_provenance.ActionsProvenanceError("expired ZIP"),
+             ):
+            result = stable_readiness._evaluate_evidence_file(
+                self.root, self.FakeRunner, self.expected, self.path, self.ref
+            )
+        self.assertFalse(result["complete"])
+        self.assertFalse(result["actions_source_authenticated"])
+        self.assertEqual(result["binding_error_count"], 1)
+        self.assertIn("expired ZIP", result["binding_errors"][0])
+
+    def test_authenticated_exact_artifact_allows_readiness_evidence_pass(self):
+        with mock.patch.object(stable_readiness.exact_target_evidence, "validate_binding", return_value={}), \
+             mock.patch.object(
+                 stable_readiness.github_actions_artifact_provenance,
+                 "verify_retained_release_provenance",
+                 return_value={"authenticated": True},
+             ) as verify:
+            result = stable_readiness._evaluate_evidence_file(
+                self.root, self.FakeRunner, self.expected, self.path, self.ref
+            )
+        self.assertTrue(result["complete"])
+        self.assertTrue(result["actions_source_authenticated"])
+        self.assertEqual(result["binding_error_count"], 0)
+        self.assertEqual(verify.call_args.args[1], Path("evals/exact-target-runs/copilot-test.json"))
+
+    def test_false_provenance_receipt_is_not_a_pass(self):
+        with mock.patch.object(stable_readiness.exact_target_evidence, "validate_binding", return_value={}), \
+             mock.patch.object(
+                 stable_readiness.github_actions_artifact_provenance,
+                 "verify_retained_release_provenance",
+                 return_value={"authenticated": False},
+             ):
+            result = stable_readiness._evaluate_evidence_file(
+                self.root, self.FakeRunner, self.expected, self.path, self.ref
+            )
+        self.assertFalse(result["complete"])
+        self.assertEqual(result["binding_error_count"], 1)
 
 
 class ReleaseScopeReadinessTests(unittest.TestCase):
