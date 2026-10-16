@@ -31,3 +31,24 @@ jobs:
         run: python evals/runner.py validate evals/cases
       - name: Run all 75 reference-contract cases
         run: python evals/runner.py run evals/cases --adapter "python evals/fixtures/reference_oracle_adapter.py"
+  independent-windows-admission-tests:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fbb75d38655cef2c420c6e4478eb9ff6c1f42984
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Assert exact PR source SHA on Git for Windows
+        shell: pwsh
+        run: |
+          python -c "import subprocess; assert subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip() == 'fbb75d38655cef2c420c6e4478eb9ff6c1f42984'"
+      - name: Require OpenSSH Ed25519 on Windows
+        shell: pwsh
+        run: |
+          if (-not (get-command ssh-keygen -erroraction silentlycontinue)) { throw 'ssh-keygen unavailable: fail closed' }
+      - name: Verify signed admission and Git attack regressions on Windows
+        run: python -m unittest tools.tests.test_independent_release_admission -v
