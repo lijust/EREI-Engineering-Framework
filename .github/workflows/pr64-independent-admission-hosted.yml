@@ -1,0 +1,33 @@
+name: PR64 Two Signer Offline Admission Exact-SHA Hosted Test
+on:
+  push:
+    branches:
+      - verification/pr64-independent-admission-20261016
+permissions:
+  contents: read
+jobs:
+  independent-source-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: d7e6520b437206a9cb05795fb7eb871b727308b8
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Assert exact PR source SHA
+        run: test "$(git rev-parse HEAD)" = "d7e6520b437206a9cb05795fb7eb871b727308b8"
+      - name: Compile Framework and adapter
+        run: python -m compileall -q tools evals validation_contract.py
+      - name: Require live Ed25519 integration proof
+        run: command -v ssh-keygen && command -v git && python -m unittest tools.tests.test_independent_release_admission.AdmissionIntegrationTests -v
+      - name: Framework tooling tests
+        run: python -m unittest discover -s tools/tests -p 'test_*.py' -v
+      - name: Eval and adapter tests
+        run: python -m unittest discover -s evals/tests -p 'test_*.py' -v
+      - name: Validate published suites
+        run: python evals/runner.py validate evals/cases
+      - name: Run all 75 reference-contract cases
+        run: python evals/runner.py run evals/cases --adapter "python evals/fixtures/reference_oracle_adapter.py"
