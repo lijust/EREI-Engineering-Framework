@@ -103,3 +103,8 @@ A verified target without a Stable carrier may be inspected only with `--allow-n
 - No using Candidate capabilities as the project Stable pin before explicit Stable promotion.
 - No treating `BASELINE.status=stable` as sufficient Stable provenance for a new Framework target.
 - No treating a SHA-shaped `approval_ref` as an approval unless the structured approval record, first-write binding, target/tree binding and immutable history all validate.
+
+
+## Live GitHub server-enforcement verification (2026-10-16)
+
+The machine-readable `security/ASSURANCE_ENFORCEMENT.json` booleans are declarations, **not** authenticated proof that GitHub branch restrictions exist. For any V2 Stable candidate claiming server enforcement, both Stable readiness and release assurance must query GitHub using a read-only authenticated token. They require a protected `main`, an administrator-enforced classic protection rule, strict required `assurance` check bound to GitHub Actions (app id 15368), at least one mandatory approving PR review, stale-review dismissal and no explicit review bypass, forced pushes or deletions. Missing permissions, missing policy or API errors block Stable. This path does not change branch settings and does not implement ruleset-only verification; separately assessed equivalent fallback remains governed by authenticated security review. At this checkpoint GitHub reports `main.protected=false`, so Stable promotion is still blocked.
