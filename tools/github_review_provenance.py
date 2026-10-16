@@ -35,14 +35,17 @@ def validate_descriptor(value: Any, *, expected_purpose: str | None = None) -> d
         raise ReviewProvenanceError("review_provenance.provider must be github_codex_review")
     if value["reviewer_login"] != CODEX_REVIEWER:
         raise ReviewProvenanceError("review_provenance.reviewer_login must be the configured Codex bot")
-    if value["review_type"] != "code_review":
-        raise ReviewProvenanceError("review_provenance.review_type must be code_review")
     purpose = value["purpose"]
     if purpose not in PURPOSES:
         raise ReviewProvenanceError("invalid review_provenance.purpose")
     if expected_purpose is not None and purpose != expected_purpose:
         raise ReviewProvenanceError(
             f"review_provenance purpose mismatch: expected {expected_purpose}, got {purpose}"
+        )
+    expected_review_type = "code_review" if purpose == "architecture_approval" else "security_review"
+    if value["review_type"] != expected_review_type:
+        raise ReviewProvenanceError(
+            f"review_provenance.review_type must be {expected_review_type} for {purpose}"
         )
     return value
 
@@ -163,8 +166,19 @@ def _github_paginated_array(
     )
 
 
-def _clean_codex_summary(comments: list[dict[str, Any]], reviewed_commit: str, reviewer_login: str) -> int | None:
-    for comment in reversed(comments):
+def _clean_codex_summary(
+    comments: list[dict[str, Any]],
+    reviewed_commit: str,
+    reviewer_login: str,
+    review_type: str = "code_review",
+) -> int | None:
+    """Accept only the newest authenticated summary, never an older clean snapshot.
+
+    A later summary for another head, a failed/in-progress review, or an
+    unavailable security review supersedes earlier approvals and blocks.
+    """
+    summaries: list[tuple[str, int, dict[str, Any]]] = []
+    for comment in comments:
         user = comment.get("user")
         if not isinstance(user, dict) or user.get("login") != reviewer_login:
             continue
@@ -178,17 +192,31 @@ def _clean_codex_summary(comments: list[dict[str, Any]], reviewed_commit: str, r
             state = json.loads(match.group(1))
         except json.JSONDecodeError:
             continue
-        review = state.get("code_review")
-        if not isinstance(review, dict):
+        if not isinstance(state, dict):
             continue
-        if (
-            review.get("commit_sha") == reviewed_commit
-            and review.get("status") == "completed"
-            and review.get("has_any_findings") is False
-            and review.get("has_unresolved_findings") is False
-        ):
-            comment_id = comment.get("id")
-            return comment_id if isinstance(comment_id, int) else 0
+        comment_id = comment.get("id")
+        if type(comment_id) is not int:
+            continue
+        timestamp = comment.get("updated_at") or comment.get("created_at") or ""
+        if not isinstance(timestamp, str):
+            timestamp = ""
+        summaries.append((timestamp, comment_id, state))
+
+    if not summaries:
+        return None
+    # GitHub returns comments oldest-first, but ordering by last edit is
+    # necessary because Codex updates its summary in place.
+    _, comment_id, latest = max(summaries, key=lambda item: (item[0], item[1]))
+    review = latest.get(review_type)
+    if not isinstance(review, dict):
+        return None
+    if (
+        review.get("commit_sha") == reviewed_commit
+        and review.get("status") == "completed"
+        and review.get("has_any_findings") is False
+        and review.get("has_unresolved_findings") is False
+    ):
+        return comment_id
     return None
 
 
@@ -274,6 +302,17 @@ def verify_artifact_review(
                 continue
             if pull.get("merged_at") is None:
                 continue
+            merge_sha = pull.get("merge_commit_sha")
+            if not isinstance(merge_sha, str) or not SHA40_RE.fullmatch(merge_sha):
+                continue
+            # The reviewed merge MUST be inside this specific carrier's
+            # ancestry. A different merge/direct replay cannot impersonate it.
+            if not _is_ancestor(repo_root, merge_sha, closure_ref):
+                continue
+            if not _is_ancestor(repo_root, target_ref, candidate):
+                continue
+            if not _is_ancestor(repo_root, candidate, merge_sha):
+                continue
             base_ref = base.get("ref")
             if not isinstance(base_ref, str):
                 continue
@@ -299,6 +338,7 @@ def verify_artifact_review(
                 comments,
                 candidate,
                 descriptor["reviewer_login"],
+                descriptor["review_type"],
             )
             if summary_comment_id is None:
                 continue
@@ -308,6 +348,7 @@ def verify_artifact_review(
                 "purpose": expected_purpose,
                 "pull_request_number": number,
                 "reviewed_commit": candidate,
+                "merge_commit_sha": merge_sha,
                 "reviewed_artifact_path": artifact_path,
                 "reviewed_artifact_blob": candidate_blob,
                 "summary_comment_id": summary_comment_id,

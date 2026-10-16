@@ -55,7 +55,7 @@ class AssuranceEnforcementTests(unittest.TestCase):
             "review_provenance": {
                 "provider": "github_codex_review",
                 "reviewer_login": "chatgpt-codex-connector[bot]",
-                "review_type": "code_review",
+                "review_type": "security_review",
                 "purpose": "enforcement_equivalence",
             },
         }
@@ -72,7 +72,7 @@ class AssuranceEnforcementTests(unittest.TestCase):
             "review_provenance": {
                 "provider": "github_codex_review",
                 "reviewer_login": "chatgpt-codex-connector[bot]",
-                "review_type": "code_review",
+                "review_type": "security_review",
                 "purpose": "enforcement_equivalence",
             },
         }
