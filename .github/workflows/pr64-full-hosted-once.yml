@@ -1,0 +1,200 @@
+# ONE-TIME verification-only workflow. Not a permanent Framework CI/Runner policy change.
+# Mirrors all steps from the canonical assurance and bootstrap workflows at PR64's exact SHA.
+# The original self-hosted checks remain queued and are not retroactively made green.
+name: PR64 One-Time Full Hosted Windows Assurance and Bootstrap
+on:
+  push:
+    branches:
+      - verification/pr64-independent-admission-20261016
+permissions:
+  contents: read
+  pull-requests: read
+  issues: read
+jobs:
+  assurance-hosted-once:
+    runs-on: windows-latest
+    env:
+      GITHUB_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 788b12d33bf5dbed813096a70a8541bb4d4b05bd
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Assert exact immutable PR64 source SHA
+        shell: powershell
+        run: |
+          $actual = (git rev-parse head).Trim()
+          if ($actual -ne '788b12d33bf5dbed813096a70a8541bb4d4b05bd') { throw 'wrong immutable source SHA' }
+
+      - name: Verify local Python 3.12
+        shell: powershell
+        run: |
+          py "-3.12" -c "import sys, encodings, ssl; print(sys.version); print(sys.executable)"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Compile Framework Python
+        shell: powershell
+        run: py "-3.12" -m compileall -q tools evals validation_contract.py validate_framework_feedback.py capture_framework_feedback.py
+
+      - name: Parse all published JSON contracts
+        shell: powershell
+        run: |
+          @'
+          import json
+          from pathlib import Path
+          paths = sorted(Path('schemas').rglob('*.json')) + sorted(Path('evals').rglob('*.schema.json'))
+          for path in paths:
+              json.loads(path.read_text(encoding='utf-8'))
+              print('PASS JSON', path)
+          '@ | py "-3.12" -
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Run all Framework tool tests
+        shell: powershell
+        run: py "-3.12" -m unittest discover -s tools/tests -p 'test_*.py' -v
+
+      - name: Validate repository-local assurance references
+        shell: powershell
+        run: py "-3.12" tools/validate_project_assurance_refs.py --target .
+
+      - name: Run eval harness tests
+        shell: powershell
+        run: py "-3.12" -m unittest discover -s evals/tests -p 'test_*.py' -v
+
+      - name: Validate all machine-readable eval suites
+        shell: powershell
+        run: py "-3.12" evals/runner.py validate evals/cases
+
+      - name: Execute all published cases at reference-contract level
+        shell: powershell
+        run: py "-3.12" evals/runner.py run evals/cases --adapter "py -3.12 evals/fixtures/reference_oracle_adapter.py"
+
+      - name: Report retained execution-evidence coverage honestly
+        shell: powershell
+        run: |
+          $scopePath = 'releases/VNEXT_RELEASE_SCOPE.json'
+          if (Test-Path $scopePath) {
+            $scope = Get-Content -Raw $scopePath | ConvertFrom-Json
+            $coveragePaths = @($scope.required_eval_suites | ForEach-Object { $_.path })
+            if ($coveragePaths.Count -eq 0) { throw 'release scope has no required eval suites' }
+            Write-Host "COVERAGE_SCOPE=frozen-release-scope"
+          } else {
+            $coveragePaths = @('evals/cases')
+            Write-Host "COVERAGE_SCOPE=all-published-evals"
+          }
+          $evidenceFiles = Get-ChildItem -Path 'evals' -Filter 'EXECUTION_EVIDENCE*.json' | Sort-Object Name
+          foreach ($evidence in $evidenceFiles) {
+            Write-Host "EVIDENCE $($evidence.FullName)"
+            & py "-3.12" evals/runner.py coverage @coveragePaths --evidence $evidence.FullName --minimum-level exact_target_runtime
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
+
+      - name: Validate structured central feedback decisions
+        shell: powershell
+        run: py "-3.12" tools/feedback_decisions.py validate feedback/DECISIONS.jsonl
+
+      - name: Validate current prospective learning-cycle progress
+        shell: powershell
+        run: py "-3.12" tools/prospective_cycle_status.py learning/PROSPECTIVE_CYCLE_STATUS.json
+
+      - name: Validate truthful assurance enforcement state
+        shell: powershell
+        run: py "-3.12" tools/assurance_enforcement.py security/ASSURANCE_ENFORCEMENT.json
+
+      - name: Validate VNext release scope
+        shell: powershell
+        run: py "-3.12" tools/release_scope.py --repo-root .
+
+      - name: Validate frozen release-target closure when selected
+        shell: powershell
+        run: py "-3.12" tools/release_target.py --repo-root . --if-present --validate-closure
+
+      - name: Report derived VNext Stable readiness
+        shell: powershell
+        run: py "-3.12" tools/stable_readiness.py --repo-root .
+
+      - name: Validate last Stable release manifest
+        shell: powershell
+        run: py "-3.12" tools/release_assurance.py releases/task-learning-review-v1.json --repo-root .
+
+      - name: Validate grandfathered last Stable carrier provenance
+        shell: powershell
+        run: |
+          $carrierRef = (git rev-parse origin/main).Trim()
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          py "-3.12" tools/stable_release_carrier.py --framework-repo . --target-ref 69079018606750312344cb3c648952b9ab72d35b --release-carrier-ref $carrierRef
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Validate VNext Candidate manifest
+        shell: powershell
+        run: py "-3.12" tools/release_assurance.py releases/vnext-assurance-candidate.json --repo-root .
+
+      - name: Validate capability registry
+        shell: powershell
+        run: |
+          @'
+          import json
+          import re
+          import subprocess
+          from pathlib import Path
+
+          data = json.loads(Path('CAPABILITIES.json').read_text(encoding='utf-8'))
+          assert data['schema_version'] == 1
+          assert len(data['stable_release']['framework_ref']) == 40
+          assert data['development_line']['status'] == 'candidate'
+
+          stable = []
+          for name, capability in sorted(data['development_line']['capabilities'].items()):
+              if capability['status'] != 'stable':
+                  continue
+              ref = capability.get('stable_ref', '')
+              assert re.fullmatch(r'[a-f0-9]{40}', ref), f'{name}: stable capability requires exact stable_ref'
+              subprocess.run(['git', 'cat-file', '-e', f'{ref}^{{commit}}'], check=True)
+              subprocess.run(['git', 'merge-base', '--is-ancestor', ref, 'HEAD'], check=True)
+              stable.append(f'{name}@{ref}')
+
+          print('PASS capability registry')
+          print('STABLE_CAPABILITIES=' + ','.join(stable))
+          '@ | py "-3.12" -
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+  bootstrap-hosted-once:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.11', '3.12']
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 788b12d33bf5dbed813096a70a8541bb4d4b05bd
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Assert exact immutable PR64 source SHA
+        shell: powershell
+        run: |
+          $actual = (git rev-parse head).Trim()
+          if ($actual -ne '788b12d33bf5dbed813096a70a8541bb4d4b05bd') { throw 'wrong immutable source SHA' }
+      - name: Verify local Python
+        shell: powershell
+        run: |
+          py "-${{ matrix.python-version }}" -c "import sys, encodings, ssl; print(sys.version); print(sys.executable)"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Compile bootstrap and capability activation tools
+        shell: powershell
+        run: py "-${{ matrix.python-version }}" -m py_compile tools/bootstrap_project.py tools/capability_activation.py
+      - name: Parse integration schemas
+        shell: powershell
+        run: |
+          py "-${{ matrix.python-version }}" -m json.tool schemas/project-framework.schema.json
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          py "-${{ matrix.python-version }}" -m json.tool schemas/project-candidate-capabilities.schema.json
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Run bootstrap unit tests
+        shell: powershell
+        run: py "-${{ matrix.python-version }}" -m unittest discover -s tools/tests -p 'test_*.py' -v
