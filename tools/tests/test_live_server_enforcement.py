@@ -125,6 +125,89 @@ class LiveServerEnforcementTests(unittest.TestCase):
             with self.assertRaises(assurance_enforcement.EnforcementError):
                 self.verify(pair)
 
+
+    def test_missing_or_malformed_force_push_and_delete_flags_are_rejected(self):
+        for flag in ("allow_force_pushes", "allow_deletions"):
+            for missing in (True, False):
+                with self.subTest(flag=flag, missing=missing):
+                    pair = responses()
+                    if missing:
+                        pair[1].pop(flag)
+                    else:
+                        pair[1][flag] = {"enabled": "false"}
+                    with self.assertRaisesRegex(assurance_enforcement.EnforcementError, flag):
+                        self.verify(pair)
+
+    def test_server_and_fallback_are_alternative_authenticated_proofs(self):
+        both = record()
+        both["fallback"]["equivalent_enforcement_verified"] = True
+        both["fallback"]["equivalence_target_ref"] = "a" * 40
+        both["fallback"]["review_provenance"] = {
+            "provider": "github_codex_review",
+            "reviewer_login": "chatgpt-codex-connector[bot]",
+            "review_type": "security_review",
+            "purpose": "enforcement_equivalence",
+        }
+        with mock.patch.object(
+            assurance_enforcement,
+            "verify_live_server_enforcement",
+            side_effect=assurance_enforcement.EnforcementError("server unavailable"),
+        ), mock.patch.object(
+            assurance_enforcement,
+            "verify_authenticated_equivalence",
+            return_value={"status": "verified", "review": {"pull_request_number": 77}},
+        ):
+            proof = assurance_enforcement.verify_effective_enforcement(
+                __import__("pathlib").Path("."), both, expected_target="a" * 40,
+            )
+            self.assertEqual(proof["mode"], "fallback")
+
+        with mock.patch.object(
+            assurance_enforcement, "verify_live_server_enforcement",
+            return_value={"status": "verified_live_server_enforcement"},
+        ), mock.patch.object(
+            assurance_enforcement, "verify_authenticated_equivalence",
+            side_effect=AssertionError("fallback must not be called when live server is valid"),
+        ):
+            proof = assurance_enforcement.verify_effective_enforcement(
+                __import__("pathlib").Path("."), both, expected_target="a" * 40,
+            )
+            self.assertEqual(proof["mode"], "server")
+
+    def test_all_asserted_proof_failures_block_promotion(self):
+        both = record()
+        both["fallback"]["equivalent_enforcement_verified"] = True
+        both["fallback"]["equivalence_target_ref"] = "a" * 40
+        both["fallback"]["review_provenance"] = {
+            "provider": "github_codex_review",
+            "reviewer_login": "chatgpt-codex-connector[bot]",
+            "review_type": "security_review",
+            "purpose": "enforcement_equivalence",
+        }
+        with mock.patch.object(
+            assurance_enforcement, "verify_live_server_enforcement",
+            side_effect=assurance_enforcement.EnforcementError("server 403"),
+        ), mock.patch.object(
+            assurance_enforcement, "verify_authenticated_equivalence",
+            side_effect=assurance_enforcement.EnforcementError("review stale"),
+        ):
+            with self.assertRaisesRegex(
+                assurance_enforcement.EnforcementError, "server 403.*review stale"
+            ):
+                assurance_enforcement.verify_effective_enforcement(
+                    __import__("pathlib").Path("."), both, expected_target="a" * 40
+                )
+
+    def test_self_asserted_server_without_live_proof_fails_effective_enforcement(self):
+        with mock.patch.object(
+            assurance_enforcement, "verify_live_server_enforcement",
+            side_effect=assurance_enforcement.EnforcementError("API unavailable"),
+        ):
+            with self.assertRaisesRegex(assurance_enforcement.EnforcementError, "API unavailable"):
+                assurance_enforcement.verify_effective_enforcement(
+                    __import__("pathlib").Path("."), record(), expected_target="a" * 40
+                )
+
     def test_unavailable_github_protection_api_is_not_a_pass(self):
         with mock.patch.object(
             assurance_enforcement.github_review_provenance, "_github_json",
