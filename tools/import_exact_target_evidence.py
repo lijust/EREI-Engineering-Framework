@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import importlib.util
+import types
 import json
 import os
 import shutil
@@ -21,6 +22,8 @@ except ImportError:
     import exact_target_package_identity
     import release_target
     import release_scope
+
+OFFICIAL_REPOSITORY = "lijust/EREI-Engineering-Framework"
 
 PACKAGE_FILES = {
     "identity": "runtime-identity.json",
@@ -67,11 +70,13 @@ def _git_head(repo_root: Path) -> str:
 
 def _load_runner(repo_root: Path):
     path = repo_root / "evals" / "runner.py"
-    spec = importlib.util.spec_from_file_location("erei_import_eval_runner", path)
-    if spec is None or spec.loader is None:
-        raise ExactTargetImportError("unable to load eval runner")
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
+    try:
+        source = path.read_bytes()
+        module = types.ModuleType("erei_import_eval_runner")
+        module.__file__ = str(path)
+        exec(compile(source, str(path), "exec"), module.__dict__)
+    except (OSError, SyntaxError) as exc:
+        raise ExactTargetImportError(f"unable to load eval runner: {exc}") from exc
     return module
 
 
@@ -132,7 +137,15 @@ def validate_package(repo_root: Path, package_dir: Path) -> dict[str, Any]:
     identity_package = package_dir / PACKAGE_FILES["identity"]
     manifest_package = package_dir / PACKAGE_FILES["manifest"]
     evidence_package = package_dir / PACKAGE_FILES["evidence"]
-    identity = _identity(_load_json(identity_package, "runtime identity"))
+    try:
+        identity_bytes = identity_package.read_bytes()
+        manifest_bytes = manifest_package.read_bytes()
+        evidence_bytes = evidence_package.read_bytes()
+        identity = _identity(json.loads(identity_bytes))
+    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+        raise ExactTargetImportError(f"unable to load exact-target package bytes: {exc}") from exc
+    if identity["repository"] != OFFICIAL_REPOSITORY:
+        raise ExactTargetImportError("package repository does not match the official release repository")
 
     if identity["target_id"] != target["target_id"]:
         raise ExactTargetImportError("runtime identity target_id does not match frozen release target")
@@ -145,12 +158,15 @@ def validate_package(repo_root: Path, package_dir: Path) -> dict[str, Any]:
     if _git_head(repo_root) != identity["release_carrier_ref"]:
         raise ExactTargetImportError("import must run at the exact release carrier used to execute the runtime evidence")
 
-    if _digest_file(manifest_package) != identity["run_manifest_sha256"]:
+    if hashlib.sha256(manifest_bytes).hexdigest() != identity["run_manifest_sha256"]:
         raise ExactTargetImportError("run manifest package digest mismatch")
-    if _digest_file(evidence_package) != identity["execution_evidence_sha256"]:
+    if hashlib.sha256(evidence_bytes).hexdigest() != identity["execution_evidence_sha256"]:
         raise ExactTargetImportError("execution evidence package digest mismatch")
 
-    manifest = exact_target_evidence.validate_run_manifest(_load_json(manifest_package, "run manifest"))
+    try:
+        manifest = exact_target_evidence.validate_run_manifest(json.loads(manifest_bytes))
+    except (UnicodeError, json.JSONDecodeError) as exc:
+        raise ExactTargetImportError(f"invalid run manifest JSON: {exc}") from exc
     if manifest["run_id"] != identity["run_id"]:
         raise ExactTargetImportError("runtime identity run_id does not match run manifest")
     if manifest["framework_revision"] != target["framework_ref"]:
@@ -167,7 +183,10 @@ def validate_package(repo_root: Path, package_dir: Path) -> dict[str, Any]:
         raise ExactTargetImportError("run manifest runtime identity evidence does not match package provenance")
 
     runner = _load_runner(repo_root)
-    evidence = runner.validate_execution_evidence(_load_json(evidence_package, "execution evidence"))
+    try:
+        evidence = runner.validate_execution_evidence(json.loads(evidence_bytes))
+    except (UnicodeError, json.JSONDecodeError) as exc:
+        raise ExactTargetImportError(f"invalid execution evidence JSON: {exc}") from exc
     if evidence.get("schema_version") != 2:
         raise ExactTargetImportError("execution evidence must use schema_version 2")
     if evidence.get("framework_revision") != target["framework_ref"]:
@@ -223,9 +242,6 @@ def validate_package(repo_root: Path, package_dir: Path) -> dict[str, Any]:
         if path != manifest_destination or (suite_id, case_id) != key:
             raise ExactTargetImportError(f"evidence_ref does not bind imported manifest for {key[0]}/{key[1]}")
 
-    manifest_bytes = manifest_package.read_bytes()
-    evidence_bytes = evidence_package.read_bytes()
-    identity_bytes = identity_package.read_bytes()
     with _stage_binding_root(
         repo_root,
         manifest_path=manifest_destination,
@@ -250,9 +266,9 @@ def validate_package(repo_root: Path, package_dir: Path) -> dict[str, Any]:
         "manifest_destination": manifest_destination,
         "evidence_destination": evidence_destination,
         "identity_destination": identity_destination,
-        "manifest_source": manifest_package,
-        "evidence_source": evidence_package,
-        "identity_source": identity_package,
+        "manifest_bytes": manifest_bytes,
+        "evidence_bytes": evidence_bytes,
+        "identity_bytes": identity_bytes,
         "case_count": len(expected),
     }
 
@@ -261,7 +277,7 @@ def _exclusive_write_set(writes: tuple[tuple[Path, Path], ...]) -> None:
     """Reserve every destination exclusively, write all bytes, and rollback the whole set on failure."""
     if not writes:
         raise ExactTargetImportError("evidence import write set must not be empty")
-    handles: list[tuple[Any, Path, Path]] = []
+    handles: list[tuple[Any, bytes | Path, Path]] = []
     created: list[Path] = []
     rollback_errors: list[str] = []
     try:
@@ -275,7 +291,7 @@ def _exclusive_write_set(writes: tuple[tuple[Path, Path], ...]) -> None:
             handles.append((handle, source, destination))
             created.append(destination)
         for handle, source, _ in handles:
-            payload = source.read_bytes()
+            payload = source if isinstance(source, bytes) else source.read_bytes()
             handle.write(payload)
             handle.flush()
             os.fsync(handle.fileno())
@@ -311,9 +327,9 @@ def import_package(repo_root: Path, package_dir: Path) -> dict[str, Any]:
     repo_root = repo_root.resolve()
     validated = validate_package(repo_root, package_dir)
     writes = (
-        (validated["manifest_source"], repo_root / validated["manifest_destination"]),
-        (validated["evidence_source"], repo_root / validated["evidence_destination"]),
-        (validated["identity_source"], repo_root / validated["identity_destination"]),
+        (validated["manifest_bytes"], repo_root / validated["manifest_destination"]),
+        (validated["evidence_bytes"], repo_root / validated["evidence_destination"]),
+        (validated["identity_bytes"], repo_root / validated["identity_destination"]),
     )
     _exclusive_write_set(writes)
     return validated
