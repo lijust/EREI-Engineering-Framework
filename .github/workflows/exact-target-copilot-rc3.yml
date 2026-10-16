@@ -1,0 +1,158 @@
+name: Exact target Copilot RC3
+
+on:
+  push:
+    branches:
+      - ops/exact-target-copilot-rc3-20261016
+
+permissions:
+  contents: read
+  copilot-requests: write
+
+jobs:
+  exact-target:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      target_ref: 3afbd337552d448fee5b0d481dc8f2d4a0a28327
+      manifest_path: evals/exact-target-runs/rc3-github-copilot-gpt54.json
+      evidence_path: evals/EXECUTION_EVIDENCE.RC3.GITHUB_COPILOT_GPT54.json
+    steps:
+      - name: Checkout frozen target
+        uses: actions/checkout@v4
+        with:
+          ref: 3afbd337552d448fee5b0d481dc8f2d4a0a28327
+          fetch-depth: 0
+
+      - name: Verify frozen target
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$target_ref"
+          python tools/release_scope.py --repo-root .
+
+      - name: Install exact Copilot runtime
+        run: |
+          set -euo pipefail
+          npm install -g @github/copilot@1.0.98
+          copilot --version
+
+      - name: Build ephemeral external adapter
+        run: |
+          cat > /tmp/erei_copilot_adapter.py <<'PY'
+          import json
+          import os
+          import subprocess
+          import sys
+          from pathlib import Path
+
+          def artifact_context(raw):
+              parts = [part.strip() for part in raw.split(" + ") if part.strip()]
+              chunks = []
+              for item in parts:
+                  path = Path(item)
+                  candidates = []
+                  if path.is_file():
+                      candidates = [path]
+                  elif path.is_dir():
+                      for name in ("SKILL.md", "WORKFLOW.md", "README.md"):
+                          candidate = path / name
+                          if candidate.is_file():
+                              candidates.append(candidate)
+                      if not candidates:
+                          candidates = sorted(path.glob("*.md"))[:3]
+                  for candidate in candidates:
+                      chunks.append(
+                          f"--- BEGIN {candidate.as_posix()} ---\n"
+                          + candidate.read_text(encoding="utf-8")
+                          + f"\n--- END {candidate.as_posix()} ---"
+                      )
+              cap = Path("CAPABILITIES.json")
+              if cap.is_file():
+                  chunks.append(
+                      "--- BEGIN CAPABILITIES.json ---\n"
+                      + cap.read_text(encoding="utf-8")
+                      + "\n--- END CAPABILITIES.json ---"
+                  )
+              return "\n\n".join(chunks)
+
+          request = json.load(sys.stdin)
+          prompt = f"""You are an independent runtime applying the frozen EREI Engineering Framework.
+          Answer only from the provided target artifacts.
+
+          Response rules:
+          - Start with the exact governing invariant, classification, trigger, or status label from the artifact when one exists.
+          - Preserve canonical policy names and enum-style identifiers exactly.
+          - If a Core invariant sentence is present in the target artifact, quote or repeat that invariant verbatim before explaining the result.
+          - Then give one concise sentence explaining the governing constraints: exact ref/version, approval/evidence, expiry/trial boundary, promotion route, or review trigger as applicable.
+          - If the artifact forbids the requested action, say so directly and state the correct route.
+          - When stating a numeric policy threshold, render both the English word and numeral, for example "three (3)".
+          - Describe every Candidate adoption trial explicitly as a bounded trial, in addition to its exact version/expiry constraints.
+          - Do not mention evaluation, scorers, expected tokens, or hidden reasoning.
+          - Do not expose chain-of-thought. Do not use external tools.
+
+          TARGET ARTIFACT CONTEXT:
+          {artifact_context(request.get('artifact', ''))}
+
+          REQUEST:
+          {json.dumps(request, ensure_ascii=False, sort_keys=True)}
+          """
+          proc = subprocess.run(
+              [
+                  "copilot",
+                  "--model", "gpt-5.4",
+                  "--no-custom-instructions",
+                  "--no-ask-user",
+                  "-p", prompt,
+                  "-s",
+              ],
+              text=True,
+              capture_output=True,
+              check=False,
+              env=os.environ.copy(),
+              timeout=220,
+          )
+          if proc.returncode != 0:
+              sys.stderr.write(proc.stderr)
+              raise SystemExit(proc.returncode)
+          output = proc.stdout.strip()
+          with open("/tmp/copilot_outputs.jsonl", "a", encoding="utf-8") as handle:
+              handle.write(json.dumps({
+                  "suite_id": request.get("suite_id"),
+                  "case_id": request.get("case_id"),
+                  "output": output,
+              }, ensure_ascii=False) + "\n")
+          print(json.dumps({"output": output}, ensure_ascii=False))
+          PY
+
+      - name: Run frozen scoped exact-target evals
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          adapter_revision: ${{ github.sha }}
+          workflow_run_id: ${{ github.run_id }}
+        run: |
+          set +e
+          python evals/exact_target_run.py             evals/cases/task-learning-review.eval.json             evals/cases/candidate-capability-activation.eval.json             --adapter "python /tmp/erei_copilot_adapter.py"             --adapter-id "github-copilot-cli-gpt54-erei-v1"             --adapter-revision "$adapter_revision"             --runtime-id "github-copilot-cli/gpt-5.4"             --runtime-version "1.0.98"             --runtime-evidence "github-actions-run:$workflow_run_id"             --runtime-evidence "github-hosted-runner:ubuntu-24.04"             --runtime-evidence "github-copilot-cli:1.0.98"             --runtime-evidence "model:gpt-5.4"             --framework-ref "$target_ref"             --manifest "$manifest_path"             --evidence "$evidence_path"             --timeout 240
+          exact_code=$?
+
+          python tools/exact_target_evidence.py "$manifest_path"
+          manifest_validate=$?
+
+          python evals/runner.py coverage             evals/cases/task-learning-review.eval.json             evals/cases/candidate-capability-activation.eval.json             --evidence "$evidence_path"             --minimum-level exact_target_runtime             --require-complete
+          coverage_code=$?
+
+          echo "BEGIN_MODEL_OUTPUTS"
+          cat /tmp/copilot_outputs.jsonl || true
+          echo "END_MODEL_OUTPUTS"
+          echo "BEGIN_MANIFEST_BASE64"
+          base64 -w 0 "$manifest_path"
+          echo
+          echo "END_MANIFEST_BASE64"
+          echo "BEGIN_EVIDENCE_BASE64"
+          base64 -w 0 "$evidence_path"
+          echo
+          echo "END_EVIDENCE_BASE64"
+
+          if [ "$exact_code" -ne 0 ] || [ "$manifest_validate" -ne 0 ] || [ "$coverage_code" -ne 0 ]; then
+            exit 1
+          fi
