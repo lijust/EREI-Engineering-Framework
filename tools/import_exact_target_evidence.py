@@ -170,8 +170,8 @@ def validate_package(repo_root: Path, package_dir: Path) -> dict[str, Any]:
 
     try:
         manifest = exact_target_evidence.validate_run_manifest(json.loads(manifest_bytes))
-    except (UnicodeError, json.JSONDecodeError) as exc:
-        raise ExactTargetImportError(f"invalid run manifest JSON: {exc}") from exc
+    except (UnicodeError, json.JSONDecodeError, exact_target_evidence.ExactTargetEvidenceError) as exc:
+        raise ExactTargetImportError(f"invalid run manifest: {exc}") from exc
     if manifest["run_id"] != identity["run_id"]:
         raise ExactTargetImportError("runtime identity run_id does not match run manifest")
     if manifest["framework_revision"] != target["framework_ref"]:
@@ -190,8 +190,8 @@ def validate_package(repo_root: Path, package_dir: Path) -> dict[str, Any]:
     runner = _load_runner(repo_root)
     try:
         evidence = runner.validate_execution_evidence(json.loads(evidence_bytes))
-    except (UnicodeError, json.JSONDecodeError) as exc:
-        raise ExactTargetImportError(f"invalid execution evidence JSON: {exc}") from exc
+    except (UnicodeError, json.JSONDecodeError, RuntimeError, ValueError) as exc:
+        raise ExactTargetImportError(f"invalid execution evidence: {exc}") from exc
     if evidence.get("schema_version") != 2:
         raise ExactTargetImportError("execution evidence must use schema_version 2")
     if evidence.get("framework_revision") != target["framework_ref"]:

@@ -103,8 +103,12 @@ def _validate_adapter_command(command: str) -> str:
 def _validate_manifest_path(value: str) -> str:
     path = Path(_text(value, "manifest path"))
     raw = path.as_posix()
-    if path.is_absolute() or ".." in path.parts or not raw.startswith("evals/exact-target-runs/") or path.suffix != ".json":
-        raise ExactTargetRunError("manifest path must be a relative JSON path under evals/exact-target-runs/")
+    prefix = "evals/exact-target-runs/"
+    basename = raw[len(prefix):] if raw.startswith(prefix) else ""
+    if (path.is_absolute() or ".." in path.parts or not raw.startswith(prefix)
+        or path.suffix != ".json" or not basename or "/" in basename
+        or chr(92) in basename or basename.endswith(".identity.json")):
+        raise ExactTargetRunError("manifest path must be a single JSON filename under evals/exact-target-runs/")
     return raw
 
 
