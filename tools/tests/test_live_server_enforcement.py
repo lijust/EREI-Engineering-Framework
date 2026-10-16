@@ -126,6 +126,24 @@ class LiveServerEnforcementTests(unittest.TestCase):
                 self.verify(pair)
 
 
+    def test_missing_or_malformed_pr_bypass_allowances_fail_closed(self):
+        for variant in ("missing", "null", "malformed", "missing_users", "bypass_actor"):
+            with self.subTest(variant=variant):
+                pair = responses()
+                reviews = pair[1]["required_pull_request_reviews"]
+                if variant == "missing":
+                    reviews.pop("bypass_pull_request_allowances")
+                elif variant == "null":
+                    reviews["bypass_pull_request_allowances"] = None
+                elif variant == "malformed":
+                    reviews["bypass_pull_request_allowances"] = "no-bypass"
+                elif variant == "missing_users":
+                    reviews["bypass_pull_request_allowances"].pop("users")
+                else:
+                    reviews["bypass_pull_request_allowances"]["apps"] = [{"slug": "bypass-app"}]
+                with self.assertRaisesRegex(assurance_enforcement.EnforcementError, "bypass allowances"):
+                    self.verify(pair)
+
     def test_missing_or_malformed_force_push_and_delete_flags_are_rejected(self):
         for flag in ("allow_force_pushes", "allow_deletions"):
             for missing in (True, False):

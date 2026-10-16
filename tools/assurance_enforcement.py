@@ -187,8 +187,11 @@ def verify_live_server_enforcement(value: dict, *, token: str | None = None) -> 
     ):
         raise EnforcementError("stale-dismissing pull-request approval protection is not enforced")
     bypass = reviews.get("bypass_pull_request_allowances")
-    if isinstance(bypass, dict) and any(bypass.get(k) for k in ("users", "teams", "apps")):
-        raise EnforcementError("pull-request approval has explicit bypass actors")
+    if not isinstance(bypass, dict) or any(
+        not isinstance(bypass.get(k), list) or bool(bypass[k])
+        for k in ("users", "teams", "apps")
+    ):
+        raise EnforcementError("GitHub PR bypass allowances must explicitly contain empty user/team/app lists")
     for key in ("allow_force_pushes", "allow_deletions"):
         setting = protection.get(key)
         if not isinstance(setting, dict) or setting.get("enabled") is not False:
