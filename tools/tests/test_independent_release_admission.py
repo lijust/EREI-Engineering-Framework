@@ -348,6 +348,28 @@ class AdmissionIntegrationTests(unittest.TestCase):
         with self.assertRaisesRegex(admission.AdmissionError, "invalid frozen target"):
             self._verify()
 
+    def test_baseline_must_equal_target_capabilities(self):
+        original = json.loads(self._git("show", f"{self.carrier}:releases/VNEXT_TARGET.json"))
+        for baseline, stable_sha in (
+            ("different-v1", original["stable_baseline"]["framework_ref"]),
+            ("task-learning-review-v1", "b" * 40),
+            ("task-learning-review-v1", self.target),
+        ):
+            with self.subTest(baseline=baseline, ref=stable_sha):
+                self._git("reset", "--hard", self.target)
+                changed = json.loads(json.dumps(original))
+                changed["stable_baseline"] = {"baseline": baseline, "framework_ref": stable_sha}
+                self._write("releases/VNEXT_TARGET.json", json.dumps(changed, sort_keys=True) + "\n")
+                self._git("add", "releases/VNEXT_TARGET.json")
+                self._git("commit", "-q", "-m", "baseline parity case")
+                self.carrier = self._git("rev-parse", "HEAD")
+                self.carrier_tree = self._git("rev-parse", f"{self.carrier}^{{tree}}")
+                self.data["carrier_ref"] = self.carrier
+                self.data["carrier_tree"] = self.carrier_tree
+                self._save_packet()
+                with self.assertRaisesRegex(admission.AdmissionError, "baseline does not match"):
+                    self._verify()
+
     def test_carrier_with_extra_file_is_rejected(self):
         self._write("unexpected.txt", "extra mutation\n")
         self._git("add", "-A")
