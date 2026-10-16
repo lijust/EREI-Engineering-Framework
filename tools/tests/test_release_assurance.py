@@ -208,7 +208,7 @@ class ReleaseAssuranceTests(unittest.TestCase):
 
     @contextmanager
     def stable_patches(self):
-        with self.stable_patches(), \
+        with self.scope_patch(), \
              mock.patch.object(
                  release_assurance.assurance_enforcement,
                  "verify_authenticated_equivalence",
