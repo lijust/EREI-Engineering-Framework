@@ -74,6 +74,16 @@ def _blob_if_present(repo: Path, revision: str, path: str) -> str | None:
     return value
 
 
+def _is_ancestor(repo: Path, ancestor: str, descendant: str) -> bool:
+    process = subprocess.run(
+        ["git", "-C", str(repo), "merge-base", "--is-ancestor", ancestor, descendant],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    return process.returncode == 0
+
+
 def _candidate_review_commits(repo: Path, target_ref: str, closure_ref: str, artifact_path: str) -> list[str]:
     commits = [
         item.strip()
@@ -99,6 +109,8 @@ def _candidate_review_commits(repo: Path, target_ref: str, closure_ref: str, art
     result: list[str] = []
     for commit in candidates:
         if commit == target_ref or commit in result:
+            continue
+        if not _is_ancestor(repo, target_ref, commit):
             continue
         if _blob_if_present(repo, commit, artifact_path) == current_blob:
             result.append(commit)
@@ -166,6 +178,7 @@ def verify_artifact_review(
     expected_purpose: str,
     token: str | None = None,
     required_base_prefix: str = "release/",
+    required_base_ref: str | None = None,
 ) -> dict[str, Any]:
     validate_descriptor(descriptor, expected_purpose=expected_purpose)
     repo_root = repo_root.resolve()
@@ -195,7 +208,12 @@ def verify_artifact_review(
             if pull.get("merged_at") is None:
                 continue
             base_ref = base.get("ref")
-            if not isinstance(base_ref, str) or not base_ref.startswith(required_base_prefix):
+            if not isinstance(base_ref, str):
+                continue
+            if required_base_ref is not None:
+                if base_ref != required_base_ref:
+                    continue
+            elif not base_ref.startswith(required_base_prefix):
                 continue
             comments = _github_json(f"{api_base}/issues/{number}/comments?per_page=100", token)
             if not isinstance(comments, list):
