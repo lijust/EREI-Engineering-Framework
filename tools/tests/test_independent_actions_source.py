@@ -154,6 +154,14 @@ class IndependentActionsSourceTests(unittest.TestCase):
                 with self.assertRaises(src.ActionsSourceError):
                     self._verify(jobs=jobs)
 
+    def test_github_documented_attempt_job_without_run_attempt_field_passes(self):
+        official_jobs = {"total_count": 1, "jobs": [{
+            key: value for key, value in self.jobs["jobs"][0].items()
+            if key != "run_attempt"
+        }]}
+        result = self._verify(jobs=official_jobs)
+        self.assertEqual(result["status"], "authenticated_actions_source_metadata_only")
+
     def test_wrong_attempt_job_rejected(self):
         jobs = {"total_count": 1, "jobs": [
             {**self.jobs["jobs"][0], "run_attempt": 1},
