@@ -188,6 +188,26 @@ def _derived_release_base_ref(repo: Path, closure_ref: str) -> str | None:
     return f"release/{target_id}"
 
 
+def _pr_reviews_artifact(
+    files: Any,
+    *,
+    artifact_path: str,
+    expected_blob: str,
+) -> bool:
+    if not isinstance(files, list):
+        return False
+    for item in files:
+        if not isinstance(item, dict):
+            continue
+        if item.get("filename") != artifact_path:
+            continue
+        if item.get("status") == "removed":
+            continue
+        if item.get("sha") == expected_blob:
+            return True
+    return False
+
+
 def verify_artifact_review(
     repo_root: Path,
     *,
@@ -239,6 +259,18 @@ def verify_artifact_review(
                     continue
             elif not base_ref.startswith(required_base_prefix):
                 continue
+
+            candidate_blob = _blob_if_present(repo_root, candidate, artifact_path)
+            if candidate_blob is None:
+                continue
+            files = _github_json(f"{api_base}/pulls/{number}/files?per_page=100", token)
+            if not _pr_reviews_artifact(
+                files,
+                artifact_path=artifact_path,
+                expected_blob=candidate_blob,
+            ):
+                continue
+
             comments = _github_json(f"{api_base}/issues/{number}/comments?per_page=100", token)
             if not isinstance(comments, list):
                 continue
@@ -255,6 +287,8 @@ def verify_artifact_review(
                 "purpose": expected_purpose,
                 "pull_request_number": number,
                 "reviewed_commit": candidate,
+                "reviewed_artifact_path": artifact_path,
+                "reviewed_artifact_blob": candidate_blob,
                 "summary_comment_id": summary_comment_id,
                 "base_ref": base_ref,
                 "reviewer_login": descriptor["reviewer_login"],
