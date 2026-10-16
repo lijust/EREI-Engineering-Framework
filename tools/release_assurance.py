@@ -188,7 +188,7 @@ def validate_manifest(
                 expected_target=manifest["framework_ref"],
             )
             if enforcement["stable_enforcement_satisfied"]:
-                assurance_enforcement.verify_authenticated_equivalence(
+                assurance_enforcement.verify_effective_enforcement(
                     scope_repo,
                     enforcement_record,
                     expected_target=manifest["framework_ref"],
