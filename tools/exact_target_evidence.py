@@ -151,7 +151,7 @@ def _is_git_checkout(repo_root: Path) -> bool:
     return process.returncode == 0 and process.stdout.strip() == "true"
 
 
-def _first_add_commit(repo_root: Path, path: Path) -> str:
+def _first_add_commit(repo_root: Path, path: Path, closure_ref: str = "HEAD") -> str:
     commits = [
         row.strip()
         for row in _git(
@@ -160,7 +160,7 @@ def _first_add_commit(repo_root: Path, path: Path) -> str:
             "--diff-filter=A",
             "--reverse",
             "--format=%H",
-            "HEAD",
+            closure_ref,
             "--",
             path.as_posix(),
         ).splitlines()
@@ -173,12 +173,24 @@ def _first_add_commit(repo_root: Path, path: Path) -> str:
     return _sha40(commits[0], f"first-add commit for {path}")
 
 
-def _validate_history_binding(repo_root: Path, identity: dict[str, Any]) -> dict[str, Any]:
+def _validate_history_binding(
+    repo_root: Path,
+    identity: dict[str, Any],
+    *,
+    closure_ref: str = "HEAD",
+    materialized_root: Path | None = None,
+) -> dict[str, Any]:
+    if not _is_git_checkout(repo_root):
+        raise ExactTargetEvidenceError("governed history verification requires an original Git checkout")
+    if closure_ref != "HEAD":
+        _sha40(closure_ref, "history closure_ref")
+        if _git(repo_root, "rev-parse", f"{closure_ref}^{{commit}}") != closure_ref:
+            raise ExactTargetEvidenceError("history closure_ref does not identify its exact commit")
     manifest_path = Path(identity["run_manifest_path"])
     evidence_path = Path(identity["execution_evidence_path"])
     identity_path = Path(identity["runtime_identity_path"])
     paths = (manifest_path, evidence_path, identity_path)
-    first_adds = {_first_add_commit(repo_root, path) for path in paths}
+    first_adds = {_first_add_commit(repo_root, path, closure_ref) for path in paths}
     if len(first_adds) != 1:
         raise ExactTargetEvidenceError(
             "retained exact-target manifest, execution evidence, and runtime identity must be added by one commit"
@@ -194,7 +206,7 @@ def _validate_history_binding(repo_root: Path, identity: dict[str, Any]) -> dict
         )
     first_parent_history = {
         row.strip()
-        for row in _git(repo_root, "rev-list", "--first-parent", "HEAD").splitlines()
+        for row in _git(repo_root, "rev-list", "--first-parent", closure_ref).splitlines()
         if row.strip()
     }
     if evidence_commit not in first_parent_history:
@@ -227,11 +239,23 @@ def _validate_history_binding(repo_root: Path, identity: dict[str, Any]) -> dict
 
     for path in paths:
         first_blob = _git(repo_root, "rev-parse", f"{evidence_commit}:{path.as_posix()}")
-        current_blob = _git(repo_root, "rev-parse", f"HEAD:{path.as_posix()}")
+        current_blob = _git(repo_root, "rev-parse", f"{closure_ref}:{path.as_posix()}")
         if first_blob != current_blob:
             raise ExactTargetEvidenceError(
                 f"retained exact-target evidence changed after its evidence commit: {path.as_posix()}"
             )
+        if materialized_root is not None:
+            copied = (materialized_root / path).resolve()
+            try:
+                if not copied.is_file() or not copied.is_relative_to(materialized_root.resolve()):
+                    raise ExactTargetEvidenceError(f"materialized evidence file is missing or outside carrier: {path}")
+                source_blob = _git(repo_root, "hash-object", str(copied))
+            except (OSError, ValueError) as exc:
+                raise ExactTargetEvidenceError(f"unable to verify materialized evidence file: {path}") from exc
+            if source_blob != current_blob:
+                raise ExactTargetEvidenceError(
+                    f"materialized evidence bytes differ from exact carrier Git blob: {path.as_posix()}"
+                )
     return {
         "evidence_commit": evidence_commit,
         "release_carrier_ref": parent,
@@ -415,7 +439,14 @@ def _durable_identity_binding(
     return identity
 
 
-def validate_binding(repo_root: Path, framework_revision: str, execution: dict[str, Any]) -> dict[str, Any]:
+def validate_binding(
+    repo_root: Path,
+    framework_revision: str,
+    execution: dict[str, Any],
+    *,
+    history_repo: Path | None = None,
+    history_ref: str = "HEAD",
+) -> dict[str, Any]:
     repo_root = repo_root.resolve()
     if execution.get("assurance_level") != "exact_target_runtime" or execution.get("independent_runtime") is not True:
         raise ExactTargetEvidenceError("binding validation requires exact_target_runtime with independent_runtime=true")
@@ -431,7 +462,14 @@ def validate_binding(repo_root: Path, framework_revision: str, execution: dict[s
         raise ExactTargetEvidenceError("exact-target run adapter_revision mismatch")
 
     identity = _durable_identity_binding(repo_root, framework_revision, path, manifest, execution)
-    if _is_git_checkout(repo_root):
+    if history_repo is not None:
+        # Stable carrier validation materializes files without .git. Verify the
+        # ORIGINAL Git history and exact carrier revision instead of skipping it.
+        _validate_history_binding(
+            Path(history_repo).resolve(), identity,
+            closure_ref=history_ref, materialized_root=repo_root,
+        )
+    elif _is_git_checkout(repo_root):
         _validate_history_binding(repo_root, identity)
 
     match = next(

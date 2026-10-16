@@ -239,7 +239,10 @@ def validate_manifest(
 
         for key in sorted(expected):
             try:
-                exact_target_evidence.validate_binding(repo_root, manifest["framework_ref"], observed[key])
+                exact_target_evidence.validate_binding(
+                    repo_root, manifest["framework_ref"], observed[key],
+                    history_repo=scope_repo, history_ref=scope_closure_ref,
+                )
             except exact_target_evidence.ExactTargetEvidenceError as exc:
                 raise ReleaseError(f"exact-target evidence binding failed for {key[0]}/{key[1]}: {exc}") from exc
         # A valid evidence manifest + Git first-parent history is NOT proof of real

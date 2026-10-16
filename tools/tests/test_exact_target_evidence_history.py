@@ -61,6 +61,52 @@ class ExactTargetEvidenceHistoryTests(unittest.TestCase):
             self.write(path, f"{{\"file\": {index}}}\n")
         return self.commit("import exact-target evidence")
 
+    def test_materialized_carrier_checks_original_three_file_history(self):
+        self.add_three()
+        revision = self.git("rev-parse", "HEAD")
+        with tempfile.TemporaryDirectory() as tmp:
+            copied = Path(tmp)
+            for p in self.PATHS:
+                destination = copied / p
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                destination.write_bytes((self.repo / p).read_bytes())
+            result = exact_target_evidence._validate_history_binding(
+                self.repo, self.identity(), closure_ref=revision, materialized_root=copied
+            )
+            self.assertEqual(result["release_carrier_ref"], self.carrier)
+
+    def test_materialized_carrier_rejects_split_evidence_commits(self):
+        self.write(self.PATHS[0])
+        self.write(self.PATHS[1])
+        self.commit("partial evidence")
+        self.write(self.PATHS[2])
+        revision = self.commit("late identity")
+        with tempfile.TemporaryDirectory() as tmp:
+            copied = Path(tmp)
+            for p in self.PATHS:
+                dest = copied / p
+                dest.parent.mkdir(parents=True, exist_ok=True)
+                dest.write_bytes((self.repo / p).read_bytes())
+            with self.assertRaisesRegex(exact_target_evidence.ExactTargetEvidenceError, "one commit"):
+                exact_target_evidence._validate_history_binding(
+                    self.repo, self.identity(), closure_ref=revision, materialized_root=copied
+                )
+
+    def test_materialized_carrier_rejects_bytes_different_from_git(self):
+        self.add_three()
+        revision = self.git("rev-parse", "HEAD")
+        with tempfile.TemporaryDirectory() as tmp:
+            copied = Path(tmp)
+            for p in self.PATHS:
+                dest = copied / p
+                dest.parent.mkdir(parents=True, exist_ok=True)
+                dest.write_bytes((self.repo / p).read_bytes())
+            (copied / self.PATHS[0]).write_text("tampered materialization", encoding="utf-8")
+            with self.assertRaisesRegex(exact_target_evidence.ExactTargetEvidenceError, "differ from exact carrier Git blob"):
+                exact_target_evidence._validate_history_binding(
+                    self.repo, self.identity(), closure_ref=revision, materialized_root=copied
+                )
+
     def test_three_file_evidence_commit_directly_above_carrier_passes(self):
         evidence_commit = self.add_three()
         result = exact_target_evidence._validate_history_binding(self.repo, self.identity())

@@ -429,8 +429,11 @@ class ReleaseAssuranceTests(unittest.TestCase):
             self.write_stable_root(root)
             with self.stable_patches(), \
                  mock.patch.object(release_assurance, "_load_runner", return_value=self.FakeRunner), \
-                 mock.patch.object(release_assurance.exact_target_evidence, "validate_binding", return_value={}):
+                 mock.patch.object(release_assurance.exact_target_evidence, "validate_binding", return_value={}) as binding:
                 result = release_assurance.validate_manifest(self.stable(), repo_root=root)
+            self.assertEqual(binding.call_count, 1)
+            self.assertEqual(binding.call_args.kwargs["history_repo"], root)
+            self.assertEqual(binding.call_args.kwargs["history_ref"], "HEAD")
             self.assertEqual(result["exact_target_bindings_validated"], 1)
             self.assertEqual(result["approval_records_validated"], 2)
             self.assertEqual(result["release_scope_id"], "task-learning-v2-core")
