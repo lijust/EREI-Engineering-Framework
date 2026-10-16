@@ -201,6 +201,37 @@ class ExactTargetEvidenceImportTests(unittest.TestCase):
         row = json.loads(evidence.read_text(encoding="utf-8"))["executions"][0]
         exact_target_evidence.validate_binding(self.repo, self.target_ref, row)
 
+    def test_rejects_foreign_repository_identity(self):
+        identity_file = self.package / "runtime-identity.json"
+        identity = json.loads(identity_file.read_text(encoding="utf-8"))
+        identity["repository"] = "attacker/fork"
+        identity_file.write_text(json.dumps(identity), encoding="utf-8")
+        with self.assertRaisesRegex(import_exact_target_evidence.ExactTargetImportError, "official release repository"):
+            import_exact_target_evidence.validate_package(self.repo, self.package)
+
+    def test_validated_package_load_does_not_create_bytecode_in_release_checkout(self):
+        import_exact_target_evidence.validate_package(self.repo, self.package)
+        self.assertFalse((self.repo / "evals" / "__pycache__").exists())
+
+    def test_import_writes_validated_bytes_even_if_package_changes_after_validation(self):
+        original_manifest = (self.package / "exact-target-run.json").read_bytes()
+        original_identity = (self.package / "runtime-identity.json").read_bytes()
+        original_evidence = (self.package / "execution-evidence.json").read_bytes()
+        real_validate = import_exact_target_evidence.validate_package
+
+        def mutate_after_validation(*args):
+            result = real_validate(*args)
+            (self.package / "exact-target-run.json").write_bytes(b"tampered after validation")
+            (self.package / "runtime-identity.json").write_bytes(b"tampered after validation")
+            (self.package / "execution-evidence.json").write_bytes(b"tampered after validation")
+            return result
+
+        with mock.patch.object(import_exact_target_evidence, "validate_package", side_effect=mutate_after_validation):
+            result = import_exact_target_evidence.import_package(self.repo, self.package)
+        self.assertEqual((self.repo / result["manifest_destination"]).read_bytes(), original_manifest)
+        self.assertEqual((self.repo / result["evidence_destination"]).read_bytes(), original_evidence)
+        self.assertEqual((self.repo / result["identity_destination"]).read_bytes(), original_identity)
+
     def test_hash_tamper_is_rejected_before_any_write(self):
         path = self.package / "execution-evidence.json"
         path.write_text(path.read_text(encoding="utf-8") + "\n", encoding="utf-8")
