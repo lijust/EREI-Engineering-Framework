@@ -107,6 +107,8 @@ jobs:
           - For routed successful engineering work, name the canonical Task Learning Capture procedure.
           - For Framework-learning findings, preserve the artifact's Candidate status and the Framework Feedback / Knowledge Promotion route.
           - Preserve canonical trigger/status identifiers exactly when they exist.
+          - When stating a numeric policy threshold, render both the English word and numeral, for example "three (3)".
+          - Describe every Candidate adoption trial explicitly as a bounded trial, in addition to stating its exact version/expiry constraints.
           - Do not mention evaluation, scorers, expected tokens, or hidden reasoning.
           - Do not expose chain-of-thought. Do not use external tools.
 
