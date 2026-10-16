@@ -43,6 +43,9 @@ FIELDS = {
     "source_assurance", "issued_at", "expires_at",
 }
 MAX_PACKET_BYTES = 32 * 1024
+# Bound every Git object read, including fsck, when inspecting hostile checkouts.
+# Filesystem or repository-config attacks must fail closed, not hang admission.
+GIT_PROVENANCE_TIMEOUT_SECONDS = 30
 
 
 class AdmissionError(RuntimeError):
@@ -63,10 +66,14 @@ def _git(repo: Path, *args: str) -> bytes:
     # Git commit-graph caches include parent/tree IDs. A writable checkout may
     # contain a checksum-valid but deliberately forged graph, so all provenance
     # reads must resolve the raw Git objects, not cached commit-graph metadata.
-    result = subprocess.run(
-        ["git", "-C", str(repo), "-c", "core.commitGraph=false", "-c", "protocol.allow=never", "-c", "protocol.ext.allow=never", *args],
-        capture_output=True, check=False, env=clean_env,
-    )
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(repo), "-c", "core.commitGraph=false", "-c", "protocol.allow=never", "-c", "protocol.ext.allow=never", *args],
+            capture_output=True, check=False, env=clean_env,
+            timeout=GIT_PROVENANCE_TIMEOUT_SECONDS,
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise AdmissionError("exact Git object verification exceeded bounded timeout") from exc
     if result.returncode:
         raise AdmissionError("unavailable or inconsistent exact Git object")
     return result.stdout
