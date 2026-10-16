@@ -19,6 +19,7 @@ except ImportError:
     import runner
 
 SHA40_RE = re.compile(r"^[a-f0-9]{40}$")
+RETAINED_RESPONSE_FIELDS = {"output", "metadata", "trace"}
 FORBIDDEN_EXACT_TARGET_MARKERS = (
     "evals/fixtures/",
     "reference_oracle_adapter",
@@ -73,6 +74,22 @@ def _blinded_request(suite: dict[str, Any], case: dict[str, Any]) -> dict[str, A
         "input": case_input,
         "context": context,
     }
+
+
+def _retained_response(response: Any) -> dict[str, Any]:
+    """Validate the shape retained for authoritative independent scorer replay."""
+    if not isinstance(response, dict):
+        raise ExactTargetRunError("adapter response must be an object before retention")
+    unknown = sorted(set(response) - RETAINED_RESPONSE_FIELDS)
+    if unknown:
+        raise ExactTargetRunError(f"adapter response contains unknown retained fields: {unknown}")
+    if "output" not in response:
+        raise ExactTargetRunError("adapter response output is required before retention")
+    if "metadata" in response and not isinstance(response["metadata"], dict):
+        raise ExactTargetRunError("adapter response metadata must be an object before retention")
+    if "trace" in response and not isinstance(response["trace"], list):
+        raise ExactTargetRunError("adapter response trace must be an array before retention")
+    return json.loads(json.dumps(response, ensure_ascii=False, sort_keys=True))
 
 
 def _validate_adapter_command(command: str) -> str:
@@ -138,13 +155,19 @@ def run_suites(
             continue
         for case in data["cases"]:
             request = _blinded_request(data, case)
+            response: dict[str, Any] | None = None
+            adapter_error = False
             try:
-                response = runner.call_adapter(command, request, timeout, case["expectations"])
+                response = _retained_response(
+                    runner.call_adapter(command, request, timeout, case["expectations"])
+                )
                 scorer_results = [runner.score(expectation, response) for expectation in case["expectations"]]
                 status = "pass" if all(item[0] for item in scorer_results) else "fail"
                 response_digest = _canonical_digest(response)
             except Exception:
+                adapter_error = True
                 status = "fail"
+                response = None
                 response_digest = _canonical_digest({
                     "adapter_error": True,
                     "suite_id": data["suite_id"],
@@ -155,6 +178,8 @@ def run_suites(
                 "case_id": case["id"],
                 "status": status,
                 "response_digest": response_digest,
+                "response": response,
+                "adapter_error": adapter_error,
             })
             evidence_rows.append({
                 "suite_id": data["suite_id"],
@@ -171,7 +196,7 @@ def run_suites(
         raise ExactTargetRunError("no behavioral_runtime eval cases found for exact-target execution")
 
     manifest = {
-        "schema_version": 1,
+        "schema_version": 2,
         "run_id": generated_run_id,
         "produced_at": now,
         "framework_revision": framework_ref,

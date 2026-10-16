@@ -52,6 +52,9 @@ class ExactTargetRunTests(unittest.TestCase):
                 run_id="ETR-20260907T120000Z-ABCDEF12",
             )
             self.assertEqual(manifest["executions"][0]["status"], "pass")
+            self.assertEqual(manifest["schema_version"], 2)
+            self.assertEqual(manifest["executions"][0]["response"], {"output": "hello from external runtime"})
+            self.assertIs(manifest["executions"][0]["adapter_error"], False)
             self.assertEqual(evidence["schema_version"], 2)
             row = evidence["executions"][0]
             self.assertEqual(row["assurance_level"], "exact_target_runtime")

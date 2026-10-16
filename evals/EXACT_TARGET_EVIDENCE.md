@@ -1,36 +1,15 @@
-# Exact-target runtime evidence
+# Exact-target runtime evidence — Reconstructible V2 candidate
 
-`reference_contract` execution proves the eval definitions and scorer logic. It is not evidence that a real coding-agent/model runtime follows the Framework.
+The published 75 reference-contract cases (including one harness-only case) do **not** constitute independent-model evidence. The blind exact-target request transport uses protocol V2 with unique opaque IDs. Scorer expectations and canonical case identities remain harness-only.
 
-For Assurance Contract V2 Stable, `exact_target_runtime` evidence must be produced by `evals/exact_target_run.py` against an independent adapter implementation. The runner deliberately rejects the Framework reference oracle and mock fixtures as exact-target adapters.
+## Three-file governed evidence package
 
-Each run writes two artifacts:
+1. `exact-target-run.json` — exact target revision, adapter identity, runtime identity evidence, and a **retained normalized response** for every executed behavioral case; schema V2.
+2. `execution-evidence.json` — V2 scored case rows with exact refs to the manifest.
+3. `runtime-identity.json` — provenance of exact release carrier, target/tree, model, CLI package/version/hash, Actions run/attempt, destinations and SHA-256 of first two files.
 
-1. a run manifest under `evals/exact-target-runs/` containing the exact Framework revision, adapter identity/revision, runtime identity evidence, a digest of the adapter command, and a response digest for every case;
-2. V2 execution evidence whose `evidence_ref` points back to the exact run manifest and case.
+`tools/exact_target_evidence.py` reconstructs and re-scores responses against the published behavioral cases, validates digests and rejects stale identities or mismatched outcomes. `tools/import_exact_target_evidence.py` checks the package in a temporary non-Git staging area before reserving and writing the three original files. Git history binding then requires their **first add in one direct first-parent commit** above the carrier and forbids later mutation.
 
-The Stable release validator resolves every exact-target `evidence_ref` and fails closed if the run manifest, Framework revision, adapter identity/revision, case identity, or status do not agree.
+Only exact frozen scope `releases/VNEXT_RELEASE_SCOPE.json` (currently Task Learning V2 Core plus Candidate Activation governance, 13 behavioral cases) belongs in the Stable release gate. Separate general-eval coverage remains 74 external behavioral cases; do not assume that reference-oracle 75/75 PASS is model behavior.
 
-The command itself is never retained; only its SHA-256 digest is stored, so credentials must remain in the target runtime's normal secret/configuration boundary and must not be embedded in the adapter command.
-
-Example shape:
-
-```bash
-python evals/exact_target_run.py evals/cases \
-  --adapter "<external adapter command>" \
-  --adapter-id "<adapter id>" \
-  --adapter-revision "<40-char adapter commit>" \
-  --runtime-id "<runtime id>" \
-  --runtime-version "<runtime version>" \
-  --runtime-evidence "<durable runtime identity evidence>" \
-  --framework-ref "$(git rev-parse HEAD)" \
-  --manifest "evals/exact-target-runs/<new-run>.json" \
-  --evidence "evals/EXECUTION_EVIDENCE.<new-run>.json"
-```
-
-A generated manifest does not authorize Stable promotion by itself. All 74 behavioral-runtime cases must pass at `exact_target_runtime`, the prospective cycle must be complete, enforcement must satisfy the Stable gate, and architecture/security approvals must bind the final immutable release candidate.
-
-
-## Scope separation on current Framework main
-
-The published eval catalog currently has **75 reference-contract cases** across **16 suites**: **74 behavioral-runtime** cases and **one harness-only** case (`harness-smoke/SMOKE-001`). Harness-only checks always run in reference CI but must not be sent to external model/runtime adapters or accepted as Stable exact-target evidence. Counts are informational: the validators always derive the required case identities from frozen, target-bound JSON contracts.
+**Release note:** this is source-only engineering until manual, explicit runtime authorization, credential and package identity binding, genuine independent execution, verified enforcement and target-bound Architecture/Security approvals exist. A passing unit test alone is not Stable evidence.
