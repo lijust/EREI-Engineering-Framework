@@ -58,6 +58,7 @@ class AdmissionIntegrationTests(unittest.TestCase):
         self._git("config", "user.email", "test@erei.invalid")
         self._write("releases/VNEXT_RELEASE_SCOPE.json", '{"scope_id":"test-release-scope"}\n')
         self._write("README.md", "source tested independently\n")
+        self._write("CAPABILITIES.json", json.dumps({"stable_release": {"baseline": "task-learning-review-v1", "framework_ref": "69079018606750312344cb3c648952b9ab72d35b"}}, sort_keys=True) + "\n")
         self._git("add", "-A")
         self._git("commit", "-q", "-m", "source candidate")
         self.target = self._git("rev-parse", "HEAD").strip()
