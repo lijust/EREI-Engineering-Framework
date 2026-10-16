@@ -28,6 +28,9 @@ env:
 
 jobs:
   exact-target-copilot:
+    # Fail-closed: disabled while main is unprotected and trusted admission/security approval are absent.
+    # Enable only through a separately reviewed immutable release-enforcement change.
+    if: ${{ false }}
     runs-on: ubuntu-latest
     timeout-minutes: 180
     steps:

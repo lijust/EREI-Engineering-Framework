@@ -20,6 +20,7 @@ class VNextExactTargetWorkflowTests(unittest.TestCase):
 
     def test_workflow_is_manual_only(self):
         self.assertIn("workflow_dispatch:", self.text)
+        self.assertIn("if: ${{ false }}", self.text)
         self.assertNotRegex(self.text, r"(?m)^\s{2}(push|pull_request|schedule):")
 
     def test_permissions_are_read_only_and_runtime_uses_pat(self):

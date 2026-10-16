@@ -18,6 +18,7 @@ class ExactTargetCopilotWorkflowTests(unittest.TestCase):
     def test_workflow_is_manual_read_only_and_exact_carrier_bound(self):
         text = WORKFLOW.read_text(encoding="utf-8")
         self.assertIn("workflow_dispatch:", text)
+        self.assertIn("if: ${{ false }}", text)
         self.assertNotIn("pull_request:", text)
         self.assertNotIn("schedule:", text)
         self.assertIn("contents: read", text)
