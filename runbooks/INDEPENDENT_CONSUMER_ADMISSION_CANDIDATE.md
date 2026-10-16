@@ -47,6 +47,12 @@ python tools/independent_consumer_gate.py \
 
 **Exit code 2 means DENIED. Exit code 0 means *read-only precheck* only**: output expressly includes `consumer_activation_authorized=false`, `stable_enforcement_satisfied=false`, `independent_runtime_enforcement_attested=false`, and `replay_protection_attested=false`. Never invert or bypass these flags. Absent a separately governed consumer-side enforcement point, **all release activation remains denied**.
 
+## Review hardening: trust-file rotation and path races
+
+The candidate first validates the external Actions policy and then copies the **exact original permit, both detached consumer signatures, signed carrier envelope, both detached release signatures, four allowed-signers files, and pinned Actions policy** into one owner-only temporary directory outside the checkout. Distinct public keys and both OpenSSH `-Y verify` calls operate on these **same private snapshots**; the upstream PR64/PR65 verifiers also receive those snapshots, not the mutable submission paths. Malformed `source_assurance` structures are denied explicitly instead of bubbling out as `AttributeError`.
+
+POSIX private-temp permission checks are applied on POSIX systems. Windows `st_mode` cannot attest NTFS ACL independence: that requires trusted-host setup and an **independent Windows ACL/security review** before any real use. A privileged same-user attacker, compromised verifier process or mutable working tree can still bypass source-only checks, so external host/process immutability remains mandatory.
+
 ## Required staged testing before installation
 
 - Re-run PR64 exact-Git and PR65 Actions-source tests; run `python -m unittest tools.tests.test_independent_consumer_gate -v` with OpenSSH to test real signatures and negative cases.
