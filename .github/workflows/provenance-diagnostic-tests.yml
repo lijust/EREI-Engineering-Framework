@@ -1,0 +1,28 @@
+name: Provenance diagnostic tests
+
+on:
+  push:
+    branches:
+      - ops/provenance-diagnostic-20261016
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 0b0b205784618170f1a4ce057d854a1e5daaec74
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile
+        run: python -m compileall -q tools evals validation_contract.py validate_framework_feedback.py capture_framework_feedback.py
+      - name: Tool tests
+        run: python -m unittest discover -s tools/tests -p 'test_*.py' -v
+      - name: Eval tests
+        run: python -m unittest discover -s evals/tests -p 'test_*.py' -v
