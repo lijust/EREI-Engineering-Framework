@@ -220,6 +220,30 @@ class AdmissionIntegrationTests(unittest.TestCase):
         with self.assertRaisesRegex(admission.AdmissionError, "scope hash differs"):
             self._verify()
 
+    def test_git_replace_object_cannot_rewrite_signed_carrier_history(self):
+        self._git("replace", "--graft", self.carrier)
+        with self.assertRaisesRegex(admission.AdmissionError, "replace refs"):
+            self._verify()
+
+    def test_legacy_git_graft_cannot_rewrite_signed_carrier_history(self):
+        graft = self.repo / ".git" / "info" / "grafts"
+        graft.parent.mkdir(parents=True, exist_ok=True)
+        graft.write_text(f"{self.carrier} {self.target}\\n", encoding="utf-8")
+        with self.assertRaisesRegex(admission.AdmissionError, "graft records"):
+            self._verify()
+
+    def test_untrusted_git_environment_variables_are_ignored(self):
+        import os
+        from unittest import mock
+        with mock.patch.dict(os.environ, {
+            "GIT_NO_REPLACE_OBJECTS": "0",
+            "GIT_CONFIG_COUNT": "1",
+            "GIT_CONFIG_KEY_0": "core.useReplaceRefs",
+            "GIT_CONFIG_VALUE_0": "true",
+        }):
+            result = self._verify()
+        self.assertFalse(result["stable_enforcement_satisfied"])
+
     def test_carrier_with_extra_file_is_rejected(self):
         self._write("unexpected.txt", "extra mutation\n")
         self._git("add", "-A")
