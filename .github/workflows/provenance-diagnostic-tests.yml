@@ -15,7 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 0b0b205784618170f1a4ce057d854a1e5daaec74
+          ref: 453d82e83c2fef1c12b52574fb4ae987399c2915
           fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
@@ -26,3 +26,4 @@ jobs:
         run: python -m unittest discover -s tools/tests -p 'test_*.py' -v
       - name: Eval tests
         run: python -m unittest discover -s evals/tests -p 'test_*.py' -v
+
