@@ -1,0 +1,31 @@
+name: PR63 Authenticated Readiness Exact-SHA Hosted Source Test
+on:
+  push:
+    branches:
+      - verification/pr63-readiness-authenticated-20261016
+permissions:
+  contents: read
+jobs:
+  independent-source-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 544384dd8d95212ef494453810d69fb4d956b780
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Assert exact PR source SHA
+        run: test "$(git rev-parse HEAD)" = "544384dd8d95212ef494453810d69fb4d956b780"
+      - name: Compile Framework and adapter
+        run: python -m compileall -q tools evals validation_contract.py
+      - name: Framework tooling tests
+        run: python -m unittest discover -s tools/tests -p 'test_*.py' -v
+      - name: Eval and adapter tests
+        run: python -m unittest discover -s evals/tests -p 'test_*.py' -v
+      - name: Validate published suites
+        run: python evals/runner.py validate evals/cases
+      - name: Run all 75 reference-contract cases
+        run: python evals/runner.py run evals/cases --adapter "python evals/fixtures/reference_oracle_adapter.py"
