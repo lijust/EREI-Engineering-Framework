@@ -20,6 +20,11 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
+try:
+    from . import release_target
+except ImportError:
+    import release_target
+
 REPOSITORY = "lijust/EREI-Engineering-Framework"
 PURPOSE = "erei-framework-v2-trusted-carrier-admission"
 NAMESPACE = "erei-framework-admission@erei.invalid"
@@ -202,8 +207,14 @@ def _verify_release_objects(repo: Path, data: dict[str, Any], target: str, carri
         scope = _git(root, "show", f"{target}:releases/VNEXT_RELEASE_SCOPE.json")
     except (ValueError, UnicodeError) as exc:
         raise AdmissionError("invalid frozen target or release scope") from exc
-    if not isinstance(frozen, dict):
-        raise AdmissionError("frozen target must be a JSON object")
+    # Schema parity is mandatory: validating a subset of fields lets a validly
+    # signed packet admit a carrier that the actual release machinery rejects.
+    # The authoritative validator and its dependency must be independently
+    # pinned together with this verifier on the external trust host.
+    try:
+        release_target.validate_manifest_shape(frozen)
+    except release_target.ReleaseTargetError as exc:
+        raise AdmissionError(f"frozen target manifest fails authoritative schema: {exc}") from exc
     if (
         frozen.get("target_id") != data["target_id"]
         or frozen.get("framework_ref") != target
