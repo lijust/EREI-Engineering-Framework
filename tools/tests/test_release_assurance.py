@@ -78,7 +78,7 @@ class ReleaseAssuranceTests(unittest.TestCase):
                 "review_provenance": ({
                     "provider": "github_codex_review",
                     "reviewer_login": "chatgpt-codex-connector[bot]",
-                    "review_type": "code_review",
+                    "review_type": "security_review",
                     "purpose": "enforcement_equivalence",
                 } if equivalent else None),
                 "stable_promotion_policy": "blocked_until_server_or_equivalent_enforcement",
@@ -141,7 +141,7 @@ class ReleaseAssuranceTests(unittest.TestCase):
             "review_provenance": {
                 "provider": "github_codex_review",
                 "reviewer_login": "chatgpt-codex-connector[bot]",
-                "review_type": "code_review",
+                "review_type": "code_review" if approval_type == "architecture" else "security_review",
                 "purpose": f"{approval_type}_approval",
             },
             "evidence": ["test-evidence", "release-target:vnext-rc9"],
