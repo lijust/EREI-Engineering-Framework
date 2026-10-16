@@ -14,6 +14,7 @@ import json
 import os
 import re
 import shutil
+import stat
 import subprocess
 import sys
 from datetime import datetime, timedelta, timezone
@@ -97,15 +98,27 @@ def _timestamp(value: Any, label: str) -> datetime:
 
 def _external_folder(repo: Path, folder: Path, label: str) -> Path:
     root = repo.resolve(strict=True)
+    original = folder.absolute()
+    if ".." in original.parts:
+        raise AdmissionError(f"{label} cannot include parent traversal")
     try:
-        original = folder.absolute()
         resolved = original.resolve(strict=True)
+        if not resolved.is_dir():
+            raise AdmissionError(f"{label} must be an existing directory")
+        if resolved == root or root in resolved.parents:
+            raise AdmissionError(f"{label} must be outside the Git worktree")
+        # On Windows Path.absolute() and Path.resolve() may legitimately
+        # represent the same directory with different canonical casing/aliases.
+        # Check the actual filesystem symlink/reparse attributes instead.
+        for component in (original, *original.parents):
+            attrs = component.lstat()
+            if stat.S_ISLNK(attrs.st_mode) or (
+                getattr(attrs, "st_file_attributes", 0)
+                & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400)
+            ):
+                raise AdmissionError(f"{label} must be a non-symlink directory")
     except OSError as exc:
         raise AdmissionError(f"{label} is unavailable") from exc
-    if original != resolved or not resolved.is_dir():
-        raise AdmissionError(f"{label} must be an existing non-symlink directory")
-    if resolved == root or root in resolved.parents:
-        raise AdmissionError(f"{label} must be outside the Git worktree")
     return resolved
 
 
