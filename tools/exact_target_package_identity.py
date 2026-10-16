@@ -41,18 +41,20 @@ def _int(value: Any, label: str) -> int:
 def validate_relative_json_path(value: Any, *, prefix: str, label: str) -> Path:
     text = _text(value, label)
     path = Path(text)
-    if path.is_absolute() or ".." in path.parts or not text.startswith(prefix) or path.suffix != ".json":
-        raise ExactTargetPackageIdentityError(f"{label} must be a relative JSON path under {prefix}")
+    suffix = text[len(prefix):] if text.startswith(prefix) else ""
+    if (
+        path.is_absolute() or ".." in path.parts or not text.startswith(prefix)
+        or path.suffix != ".json" or not suffix or "/" in suffix
+        or chr(92) in suffix or suffix in {".json", "..json"}
+    ):
+        raise ExactTargetPackageIdentityError(f"{label} must be a single relative JSON filename under {prefix}")
     return path
 
 
 def identity_path_for_manifest(manifest_path: Path | str) -> Path:
-    path = Path(manifest_path)
-    raw = path.as_posix()
-    if path.is_absolute() or ".." in path.parts or not raw.startswith("evals/exact-target-runs/") or path.suffix != ".json":
-        raise ExactTargetPackageIdentityError(
-            "run manifest path must be a relative JSON path under evals/exact-target-runs/"
-        )
+    path = validate_relative_json_path(
+        str(manifest_path), prefix="evals/exact-target-runs/", label="run manifest path"
+    )
     if path.name.endswith(".identity.json"):
         raise ExactTargetPackageIdentityError("run manifest path cannot use the reserved .identity.json suffix")
     return path.with_name(path.stem + ".identity.json")
@@ -97,8 +99,9 @@ def validate_runtime_identity(data: Any) -> dict[str, Any]:
         data["requested_cli_version"], SEMVER_RE, "requested_cli_version",
         "requested_cli_version must be an exact semantic version",
     )
-    if version not in runtime_version:
-        raise ExactTargetPackageIdentityError("runtime_version must contain the requested CLI version")
+    token_pattern = r"(?<![0-9A-Za-z._-])" + re.escape(version) + r"(?![0-9A-Za-z._-])"
+    if re.search(token_pattern, runtime_version) is None:
+        raise ExactTargetPackageIdentityError("runtime_version must contain the exact requested CLI version token")
     _pattern(
         data["requested_cli_integrity"], SRI_SHA512_RE, "requested_cli_integrity",
         "requested_cli_integrity must be one full npm sha512 SRI digest",
