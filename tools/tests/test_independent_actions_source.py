@@ -142,6 +142,16 @@ class IndependentActionsSourceTests(unittest.TestCase):
                 with self.assertRaisesRegex(src.ActionsSourceError, "run metadata"):
                     self._verify(run={**self.run, "path": untrusted_path})
 
+    def test_github_nested_repository_objects_must_be_objects(self):
+        # Valid JSON can still be adversarially typed: strings/lists/truthy
+        # scalars must fail with ActionsSourceError, not AttributeError.
+        for key in ("repository", "head_repository"):
+            for malformed in ("rogue", ["repo"], True, None, 12, {}):
+                with self.subTest(key=key, malformed=malformed):
+                    run = {**self.run, key: malformed}
+                    with self.assertRaises(src.ActionsSourceError):
+                        self._verify(run=run)
+
     def test_github_run_wrong_workflow_id_rejected(self):
         with self.assertRaisesRegex(src.ActionsSourceError, "run metadata"):
             self._verify(run={**self.run, "workflow_id": 999})
