@@ -12,13 +12,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 29d633770bace99dcbd25c52cc965ac20ae56b2e
+          ref: f0d444fd5bd1637e410b27fe5f486bbce68845bf
           fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
       - name: Assert exact PR source SHA
-        run: test "$(git rev-parse HEAD)" = "29d633770bace99dcbd25c52cc965ac20ae56b2e"
+        run: test "$(git rev-parse HEAD)" = "f0d444fd5bd1637e410b27fe5f486bbce68845bf"
       - name: Compile Framework and adapter
         run: python -m compileall -q tools evals validation_contract.py
       - name: Framework tooling tests
