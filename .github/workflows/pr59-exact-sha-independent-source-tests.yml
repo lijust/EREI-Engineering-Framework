@@ -16,7 +16,7 @@ jobs:
       - name: Checkout exact reviewed PR59 SHA
         uses: actions/checkout@v4
         with:
-          ref: 7ace138b848e2495295826744c7f93833bbc389e
+          ref: 51b0f5bd35cc872fc60b68e144342b9178757325
           fetch-depth: 0
 
       - name: Set up Python 3.12
@@ -27,7 +27,7 @@ jobs:
       - name: Assert exact SHA
         shell: bash
         run: |
-          test "$(git rev-parse HEAD)" = "7ace138b848e2495295826744c7f93833bbc389e"
+          test "$(git rev-parse HEAD)" = "51b0f5bd35cc872fc60b68e144342b9178757325"
           echo "VALIDATED_SHA=$(git rev-parse HEAD)"
           git status --porcelain
 
