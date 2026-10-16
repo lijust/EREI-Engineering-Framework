@@ -286,7 +286,8 @@ class AdmissionIntegrationTests(unittest.TestCase):
         if not loose.is_file():
             self.skipTest("fixture has no loose README blob")
         forged = b"forged README bytes under a trusted Git blob id\\n"
-        loose.write_bytes(zlib.compress(b"blob " + str(len(forged)).encode() + b"\\0" + forged))
+        loose.chmod(0o600)
+        loose.write_bytes(zlib.compress(b"blob " + str(len(forged)).encode() + bytes([0]) + forged))
         with self.assertRaises(admission.AdmissionError):
             self._verify()
 

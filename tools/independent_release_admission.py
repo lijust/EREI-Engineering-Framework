@@ -193,7 +193,9 @@ def _verify_release_objects(repo: Path, data: dict[str, Any], target: str, carri
         raise AdmissionError("initial trusted carrier may only first-add the frozen target record")
     # Diff path statuses do not distinguish a normal JSON blob from a symlink.
     manifest_entry = _git(root, "ls-tree", carrier, "--", "releases/VNEXT_TARGET.json").decode().strip()
-    if not re.fullmatch(r"100644 blob [0-9a-f]{40}\\treleases/VNEXT_TARGET\\.json", manifest_entry):
+    fields = manifest_entry.split()
+    if (len(fields) != 4 or fields[0] != "100644" or fields[1] != "blob"
+        or SHA40.fullmatch(fields[2]) is None or fields[3] != "releases/VNEXT_TARGET.json"):
         raise AdmissionError("frozen target manifest must be an ordinary non-executable blob")
     try:
         frozen = json.loads(_git(root, "show", f"{carrier}:releases/VNEXT_TARGET.json"))
