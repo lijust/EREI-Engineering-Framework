@@ -69,7 +69,7 @@ class VNextExactTargetWorkflowTests(unittest.TestCase):
         )
 
     def test_workflow_executes_exact_target_coverage_without_auto_commit(self):
-        self.assertIn("python evals/exact_target_run.py "${suites[@]}"", self.text)
+        self.assertIn('python evals/exact_target_run.py "${suites[@]}"', self.text)
         self.assertIn("--minimum-level exact_target_runtime", self.text)
         self.assertIn("mapfile -t suites", self.text)
         self.assertIn("required_eval_suites", self.text)
