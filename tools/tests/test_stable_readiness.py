@@ -304,6 +304,7 @@ class StructuredApprovalReadinessTests(unittest.TestCase):
         self.review_patcher.start()
 
     def tearDown(self):
+        self.review_patcher.stop()
         self.tmp.cleanup()
 
     def _git(self, *args):
