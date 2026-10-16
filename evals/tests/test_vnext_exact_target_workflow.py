@@ -51,8 +51,8 @@ class VNextExactTargetWorkflowTests(unittest.TestCase):
     def test_workflow_requires_exact_release_carrier_and_frozen_target(self):
         self.assertIn("expected_carrier_sha", self.text)
         self.assertIn("python tools/release_target.py --repo-root . --validate-closure", self.text)
-        self.assertIn("target_ref=${{ steps.target.outputs.target_ref }}", self.text.lower())
-        self.assertIn("target_tree=${{ steps.target.outputs.target_tree }}", self.text.lower())
+        self.assertIn("target_ref: ${{ steps.target.outputs.target_ref }}", self.text.lower())
+        self.assertIn("target_tree: ${{ steps.target.outputs.target_tree }}", self.text.lower())
         self.assertIn("git -C target rev-parse HEAD", self.text)
         self.assertIn("git -C target rev-parse 'HEAD^{tree}'", self.text)
 
