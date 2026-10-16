@@ -35,3 +35,4 @@ This Candidate uses `ssh-keygen -Y verify -f <role.allowed_signers> -I <role-pri
 - Neither this code nor reference/synthetic tests are independent model proof.
 - Never copy signing keys or public trust anchors into the release checkout.
 - Stop/fail closed if the source authority or signer independence cannot be verified.
+- Every Git provenance subprocess (including `git fsck`) is bounded to 30 seconds and raises an admission error on timeout. The repository may contain hostile Git configuration (for example an unbounded fsck skip list); timeouts are **denial**, never evidence of successful verification. The independently operated host must also enforce process-level resource limits/sandboxing, review and pin its own verifier code, and reject adversarial repository configuration where feasible. A local timeout alone does not provide independent enforcement.
