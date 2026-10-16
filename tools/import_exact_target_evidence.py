@@ -15,11 +15,12 @@ from pathlib import Path
 from typing import Any
 
 try:
-    from . import exact_target_evidence, exact_target_package_identity, release_target
+    from . import exact_target_evidence, exact_target_package_identity, release_target, release_scope
 except ImportError:
     import exact_target_evidence
     import exact_target_package_identity
     import release_target
+    import release_scope
 
 PACKAGE_FILES = {
     "identity": "runtime-identity.json",
@@ -122,8 +123,11 @@ def _identity(data: Any) -> dict[str, Any]:
 def validate_package(repo_root: Path, package_dir: Path) -> dict[str, Any]:
     repo_root = repo_root.resolve()
     package_dir = package_dir.resolve()
-    target = release_target.load_and_validate_target(repo_root)
-    release_target.validate_closure(repo_root, target)
+    try:
+        target = release_target.load_and_validate_target(repo_root)
+        release_target.validate_closure(repo_root, target)
+    except release_target.ReleaseTargetError as exc:
+        raise ExactTargetImportError(f"invalid or drifted frozen release carrier: {exc}") from exc
 
     identity_package = package_dir / PACKAGE_FILES["identity"]
     manifest_package = package_dir / PACKAGE_FILES["manifest"]
@@ -168,9 +172,21 @@ def validate_package(repo_root: Path, package_dir: Path) -> dict[str, Any]:
         raise ExactTargetImportError("execution evidence must use schema_version 2")
     if evidence.get("framework_revision") != target["framework_ref"]:
         raise ExactTargetImportError("execution evidence framework_revision does not match frozen target")
-    expected = runner._expected_cases(
-        [str(repo_root / "evals" / "cases")], minimum_level="exact_target_runtime"
-    )
+    try:
+        frozen_scope, scope_summary = release_scope.load_target_bound_scope(
+            repo_root, target["framework_ref"], closure_ref="HEAD"
+        )
+    except release_scope.ReleaseScopeError as exc:
+        raise ExactTargetImportError(f"invalid target-bound release scope: {exc}") from exc
+    if frozen_scope is not None:
+        expected = {
+            (item["suite_id"], item["case_id"])
+            for item in scope_summary["required_eval_case_pairs"]
+        }
+    else:
+        expected = runner._expected_cases(
+            [str(repo_root / "evals" / "cases")], minimum_level="exact_target_runtime"
+        )
     observed = {(row["suite_id"], row["case_id"]): row for row in evidence["executions"]}
     if set(observed) != expected:
         raise ExactTargetImportError(

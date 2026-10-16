@@ -30,6 +30,7 @@ class ExactTargetEvidenceImportTests(unittest.TestCase):
         self._git("config", "user.email", "test@example.invalid")
         self._git("config", "user.name", "EREI Test")
 
+        self._write(".gitignore", "__pycache__/\n*.pyc\n")
         self._write("README.md", "stable root\n")
         self.stable_ref = self._commit("stable root")
 
