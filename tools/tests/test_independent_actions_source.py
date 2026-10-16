@@ -113,6 +113,21 @@ class IndependentActionsSourceTests(unittest.TestCase):
         with self.assertRaisesRegex(src.ActionsSourceError, "run metadata"):
             self._verify(run=changed)
 
+    def test_github_documented_main_qualified_workflow_path_is_valid(self):
+        authenticated = {**self.run, "path": src.WORKFLOW_PATH + "@main"}
+        result = self._verify(run=authenticated)
+        self.assertEqual(result["status"], "authenticated_actions_source_metadata_only")
+
+    def test_wrong_qualified_workflow_ref_is_rejected(self):
+        for untrusted_path in (
+            src.WORKFLOW_PATH + "@feature",
+            src.WORKFLOW_PATH + "@refs/pull/1/merge",
+            src.WORKFLOW_PATH + "@main/unsafe",
+        ):
+            with self.subTest(path=untrusted_path):
+                with self.assertRaisesRegex(src.ActionsSourceError, "run metadata"):
+                    self._verify(run={**self.run, "path": untrusted_path})
+
     def test_github_run_wrong_workflow_id_rejected(self):
         with self.assertRaisesRegex(src.ActionsSourceError, "run metadata"):
             self._verify(run={**self.run, "workflow_id": 999})
