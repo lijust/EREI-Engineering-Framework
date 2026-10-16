@@ -134,3 +134,36 @@ def verify_official_run_artifact(
     if extracted != package_bytes:
         raise ActionsProvenanceError("extracted release package differs from authenticated artifact ZIP")
     return {"authenticated": True, "repository": REPOSITORY, "run_id": run_id, "attempt": attempt, "artifact_id": artifact["id"], "archive_digest": match.group(1)}
+
+
+
+def verify_retained_release_provenance(repo_root: Path, manifest_path: Path) -> dict[str, Any]:
+    """Reauthenticate the original three-file GitHub artifact in the final Stable gate.
+
+    This intentionally fails closed when the artifact expires or credentials are
+    absent. An importer receipt is not a durable signature, and a matching JSON
+    identity by itself cannot establish source authenticity.
+    """
+    try:
+        from . import exact_target_package_identity
+    except ImportError:
+        import exact_target_package_identity
+
+    root = Path(repo_root).resolve()
+    try:
+        identity_path = exact_target_package_identity.identity_path_for_manifest(manifest_path)
+        identity_bytes = (root / identity_path).read_bytes()
+        identity = exact_target_package_identity.validate_runtime_identity(json.loads(identity_bytes))
+        package_bytes = {
+            "exact-target-run.json": (root / manifest_path).read_bytes(),
+            "execution-evidence.json": (root / identity["execution_evidence_path"]).read_bytes(),
+            "runtime-identity.json": identity_bytes,
+        }
+    except (OSError, UnicodeError, ValueError, exact_target_package_identity.ExactTargetPackageIdentityError) as exc:
+        raise ActionsProvenanceError("unable to reconstruct original retained evidence package for Stable verification") from exc
+    archive = os.environ.get("EREI_EVIDENCE_ACTIONS_ARTIFACT_ZIP")
+    return verify_official_run_artifact(
+        identity, package_bytes,
+        archive=Path(archive) if archive else None,
+        token=os.environ.get("EREI_EVIDENCE_GITHUB_TOKEN"),
+    )

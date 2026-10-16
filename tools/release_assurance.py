@@ -10,10 +10,11 @@ import sys
 from pathlib import Path
 
 try:
-    from . import assurance_enforcement, exact_target_evidence, github_review_provenance, release_approval, release_scope, release_target
+    from . import assurance_enforcement, exact_target_evidence, github_actions_artifact_provenance, github_review_provenance, release_approval, release_scope, release_target
 except ImportError:
     import assurance_enforcement
     import exact_target_evidence
+    import github_actions_artifact_provenance
     import github_review_provenance
     import release_approval
     import release_scope
@@ -241,7 +242,28 @@ def validate_manifest(
                 exact_target_evidence.validate_binding(repo_root, manifest["framework_ref"], observed[key])
             except exact_target_evidence.ExactTargetEvidenceError as exc:
                 raise ReleaseError(f"exact-target evidence binding failed for {key[0]}/{key[1]}: {exc}") from exc
+        # A valid evidence manifest + Git first-parent history is NOT proof of real
+        # GitHub Actions execution; always reauthenticate the exact artifact
+        # before Stable promotion. An expired or missing artifact blocks Stable.
+        try:
+            run_manifests = {
+                exact_target_evidence.parse_evidence_ref(row["evidence_ref"])[0].as_posix()
+                for row in observed.values()
+            }
+            if len(run_manifests) != 1:
+                raise ReleaseError("V2 Stable requires one authenticated exact-target runtime evidence package")
+            receipt = github_actions_artifact_provenance.verify_retained_release_provenance(
+                repo_root, Path(next(iter(run_manifests)))
+            )
+            if receipt.get("authenticated") is not True:
+                raise ReleaseError("V2 Stable requires authenticated GitHub Actions source evidence")
+        except (
+            github_actions_artifact_provenance.ActionsProvenanceError,
+            exact_target_evidence.ExactTargetEvidenceError,
+        ) as exc:
+            raise ReleaseError(f"V2 Stable Actions provenance verification failed: {exc}") from exc
         result["exact_target_bindings_validated"] = len(expected)
+        result["exact_target_source_authenticated"] = True
     elif manifest["status"] == "candidate":
         blockers = manifest.get("stable_blockers")
         if not isinstance(blockers, list) or not blockers or any(not isinstance(item, str) or not item.strip() for item in blockers):
