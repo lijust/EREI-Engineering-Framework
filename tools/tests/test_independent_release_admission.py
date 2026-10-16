@@ -1,0 +1,237 @@
+"""Adversarial tests for source-only, non-authoritative external release admission."""
+import json
+import shutil
+import subprocess
+import tempfile
+import unittest
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
+from tools import independent_release_admission as admission
+
+
+class AdmissionShapeTests(unittest.TestCase):
+    def test_rejects_bool_instead_of_positive_run_id(self):
+        now = datetime(2026, 10, 16, 18, tzinfo=timezone.utc)
+        item = {
+            "schema_version": 1, "purpose": admission.PURPOSE,
+            "repository": admission.REPOSITORY, "target_id": "vnext-rc4",
+            "target_ref": "a"*40, "target_tree": "b"*40,
+            "carrier_ref": "c"*40, "carrier_tree": "d"*40,
+            "scope_sha256": "e"*64,
+            "source_assurance": {
+                "workflow": "Framework Assurance Gate", "run_id": True,
+                "run_attempt": 1, "event": "push", "conclusion": "success",
+            },
+            "issued_at": "2026-10-16T18:00:00Z",
+            "expires_at": "2026-10-17T18:00:00Z",
+        }
+        raw = (json.dumps(item, separators=(",", ":"), sort_keys=True) + "\n").encode()
+        with self.assertRaisesRegex(admission.AdmissionError, "run_id"):
+            admission._envelope(raw, now)
+
+    def test_rejects_noncanonical_envelope(self):
+        now = datetime(2026, 10, 16, 18, tzinfo=timezone.utc)
+        with self.assertRaises(admission.AdmissionError):
+            admission._envelope(b'{"schema_version": 1}\n', now)
+
+    def test_never_sets_stable_enforcement_from_offline_signatures(self):
+        self.assertEqual(admission.PURPOSE, "erei-framework-v2-trusted-carrier-admission")
+        self.assertEqual(len(admission.ROLES), 2)
+
+
+@unittest.skipUnless(shutil.which("ssh-keygen") and shutil.which("git"), "OpenSSH git integration test requires ssh-keygen and git")
+class AdmissionIntegrationTests(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.root = Path(self.tmp.name)
+        self.repo = self.root / "repo"
+        self.repo.mkdir()
+        self.packet = self.root / "packet"
+        self.packet.mkdir()
+        self.trust = self.root / "trust"
+        self.trust.mkdir()
+        self.keys = self.root / "keys"
+        self.keys.mkdir()
+        self._git("init", "-q")
+        self._git("config", "user.name", "EREI Offline Admission Test")
+        self._git("config", "user.email", "test@erei.invalid")
+        self._write("releases/VNEXT_RELEASE_SCOPE.json", '{"scope_id":"test-release-scope"}\n')
+        self._write("README.md", "source tested independently\n")
+        self._git("add", "-A")
+        self._git("commit", "-q", "-m", "source candidate")
+        self.target = self._git("rev-parse", "HEAD").strip()
+        self.target_tree = self._git("rev-parse", f"{self.target}^{{tree}}").strip()
+        self.assurance = {
+            "workflow": "Framework Assurance Gate",
+            "run_id": 123456, "run_attempt": 1,
+            "event": "push", "conclusion": "success",
+        }
+        frozen = {
+            "schema_version": 1, "target_id": "vnext-rc4",
+            "status": "frozen_candidate", "framework_ref": self.target,
+            "target_tree": self.target_tree, "selected_at": "2026-10-16T17:00:00Z",
+            "source_branch": "main", "assurance": {
+                k: self.assurance[k] for k in ("workflow", "run_id", "event", "conclusion")
+            },
+            "stable_baseline": {
+                "baseline": "task-learning-review-v1",
+                "framework_ref": "69079018606750312344cb3c648952b9ab72d35b",
+            },
+            "promotion_authorized": False,
+        }
+        self._write("releases/VNEXT_TARGET.json", json.dumps(frozen, sort_keys=True) + "\n")
+        self._git("add", "releases/VNEXT_TARGET.json")
+        self._git("commit", "-q", "-m", "freeze RC4")
+        self.carrier = self._git("rev-parse", "HEAD").strip()
+        self.carrier_tree = self._git("rev-parse", f"{self.carrier}^{{tree}}").strip()
+        import hashlib
+        scope_hash = hashlib.sha256((self.repo / "releases/VNEXT_RELEASE_SCOPE.json").read_bytes()).hexdigest()
+        self.now = datetime(2026, 10, 16, 18, tzinfo=timezone.utc)
+        self.data = {
+            "schema_version": 1, "purpose": admission.PURPOSE,
+            "repository": admission.REPOSITORY,
+            "target_id": "vnext-rc4", "target_ref": self.target,
+            "target_tree": self.target_tree, "carrier_ref": self.carrier,
+            "carrier_tree": self.carrier_tree, "scope_sha256": scope_hash,
+            "source_assurance": self.assurance,
+            "issued_at": "2026-10-16T17:00:00Z",
+            "expires_at": "2026-10-17T17:00:00Z",
+        }
+        for role, principal in admission.ROLES.items():
+            priv = self.keys / role
+            subprocess.run(
+                ["ssh-keygen", "-q", "-t", "ed25519", "-f", str(priv), "-N", "", "-C", ""],
+                check=True, capture_output=True,
+            )
+            parts = (self.keys / f"{role}.pub").read_text(encoding="ascii").split()
+            (self.trust / f"{role}.allowed_signers").write_text(
+                f"{principal} {parts[0]} {parts[1]}\n", encoding="ascii"
+            )
+        self._save_packet()
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def _git(self, *args):
+        res = subprocess.run(["git", "-C", str(self.repo), *args], capture_output=True, text=True)
+        if res.returncode:
+            self.fail(f"git failure: {args}: {res.stderr}")
+        return res.stdout.strip()
+
+    def _write(self, rel, text):
+        p = self.repo / rel
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(text, encoding="utf-8")
+
+    def _save_packet(self):
+        envelope = self.packet / "admission.json"
+        envelope.write_bytes((json.dumps(
+            self.data, sort_keys=True, separators=(",", ":"), ensure_ascii=False
+        ) + "\n").encode("utf-8"))
+        for role in admission.ROLES:
+            generated = envelope.with_name("admission.json.sig")
+            if generated.exists():
+                generated.unlink()
+            subprocess.run(
+                ["ssh-keygen", "-Y", "sign", "-f", str(self.keys / role),
+                 "-n", admission.NAMESPACE, str(envelope)],
+                check=True, capture_output=True,
+            )
+            generated.replace(self.packet / f"{role}.sig")
+
+    def _verify(self, **overrides):
+        kw = {
+            "expected_target": self.target,
+            "expected_carrier": self.carrier, "at": self.now,
+        }
+        kw.update(overrides)
+        return admission.verify_candidate(self.repo, self.packet, self.trust, **kw)
+
+    def test_valid_two_independent_signatures_are_candidate_only(self):
+        out = self._verify()
+        self.assertEqual(out["status"], "verified_offline_signatures_only")
+        self.assertEqual(out["verified_roles"], list(admission.ROLES))
+        self.assertFalse(out["stable_enforcement_satisfied"])
+        self.assertFalse(out["live_actions_run_authenticated"])
+        self.assertFalse(out["trusted_verifier_host_attested"])
+
+    def test_mutated_canonical_packet_fails_signature(self):
+        self.data["source_assurance"]["run_attempt"] = 2
+        (self.packet / "admission.json").write_bytes((
+            json.dumps(self.data, separators=(",", ":"), sort_keys=True) + "\n"
+        ).encode())
+        with self.assertRaisesRegex(admission.AdmissionError, "signature invalid"):
+            self._verify()
+
+    def test_missing_second_signature_fails(self):
+        (self.packet / "independent-security.sig").unlink()
+        with self.assertRaises(admission.AdmissionError):
+            self._verify()
+
+    def test_shared_signing_key_is_rejected_even_with_valid_first_signature(self):
+        (self.trust / "independent-security.allowed_signers").write_text(
+            (self.trust / "release-owner.allowed_signers").read_text().replace(
+                "release-owner@erei.invalid", "independent-security@erei.invalid"
+            )
+        )
+        with self.assertRaisesRegex(admission.AdmissionError, "cannot share one key"):
+            self._verify()
+
+    def test_swapped_role_signatures_fail(self):
+        a = (self.packet / "release-owner.sig").read_bytes()
+        b = (self.packet / "independent-security.sig").read_bytes()
+        (self.packet / "release-owner.sig").write_bytes(b)
+        (self.packet / "independent-security.sig").write_bytes(a)
+        with self.assertRaisesRegex(admission.AdmissionError, "signature invalid"):
+            self._verify()
+
+    def test_replayed_packet_to_different_carrier_fails(self):
+        with self.assertRaisesRegex(admission.AdmissionError, "expected exact target/carrier"):
+            self._verify(expected_carrier="f" * 40)
+
+    def test_expired_packet_fails(self):
+        with self.assertRaisesRegex(admission.AdmissionError, "not currently valid"):
+            self._verify(at=self.now + timedelta(days=2))
+
+    def test_packet_inside_mutable_repository_is_rejected(self):
+        import shutil as _shutil
+        in_repo = self.repo / "packet"
+        _shutil.copytree(self.packet, in_repo)
+        with self.assertRaisesRegex(admission.AdmissionError, "outside the Git worktree"):
+            admission.verify_candidate(
+                self.repo, in_repo, self.trust,
+                expected_target=self.target, expected_carrier=self.carrier, at=self.now
+            )
+
+    def test_trust_anchor_inside_mutable_repository_is_rejected(self):
+        import shutil as _shutil
+        in_repo = self.repo / "trust"
+        _shutil.copytree(self.trust, in_repo)
+        with self.assertRaisesRegex(admission.AdmissionError, "outside the Git worktree"):
+            admission.verify_candidate(
+                self.repo, self.packet, in_repo,
+                expected_target=self.target, expected_carrier=self.carrier, at=self.now
+            )
+
+    def test_wrong_git_target_scope_digest_is_rejected(self):
+        self.data["scope_sha256"] = "0" * 64
+        self._save_packet()
+        with self.assertRaisesRegex(admission.AdmissionError, "scope hash differs"):
+            self._verify()
+
+    def test_carrier_with_extra_file_is_rejected(self):
+        self._write("unexpected.txt", "extra mutation\n")
+        self._git("add", "-A")
+        self._git("commit", "-q", "-m", "untrusted extra")
+        extra = self._git("rev-parse", "HEAD")
+        extra_tree = self._git("rev-parse", f"{extra}^{{tree}}")
+        self.data["carrier_ref"] = extra
+        self.data["carrier_tree"] = extra_tree
+        self._save_packet()
+        with self.assertRaisesRegex(admission.AdmissionError, "one direct single-parent"):
+            self._verify(expected_carrier=extra)
+
+
+if __name__ == "__main__":
+    unittest.main()
