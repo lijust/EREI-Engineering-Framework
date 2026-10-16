@@ -21,12 +21,13 @@ from typing import Any
 sys.dont_write_bytecode = True
 
 try:
-    from . import exact_target_evidence, exact_target_package_identity, release_target, release_scope
+    from . import exact_target_evidence, exact_target_package_identity, release_target, release_scope, github_actions_artifact_provenance
 except ImportError:
     import exact_target_evidence
     import exact_target_package_identity
     import release_target
     import release_scope
+    import github_actions_artifact_provenance
 
 OFFICIAL_REPOSITORY = "lijust/EREI-Engineering-Framework"
 
@@ -130,7 +131,7 @@ def _identity(data: Any) -> dict[str, Any]:
         raise ExactTargetImportError(str(exc)) from exc
 
 
-def validate_package(repo_root: Path, package_dir: Path) -> dict[str, Any]:
+def validate_package(repo_root: Path, package_dir: Path, *, artifact_zip: Path | None = None) -> dict[str, Any]:
     repo_root = repo_root.resolve()
     package_dir = package_dir.resolve()
     try:
@@ -247,6 +248,20 @@ def validate_package(repo_root: Path, package_dir: Path) -> dict[str, Any]:
         if path != manifest_destination or (suite_id, case_id) != key:
             raise ExactTargetImportError(f"evidence_ref does not bind imported manifest for {key[0]}/{key[1]}")
 
+    try:
+        actions_receipt = github_actions_artifact_provenance.verify_official_run_artifact(
+            identity,
+            {
+                "exact-target-run.json": manifest_bytes,
+                "execution-evidence.json": evidence_bytes,
+                "runtime-identity.json": identity_bytes,
+            },
+            archive=artifact_zip,
+            token=os.environ.get("EREI_EVIDENCE_GITHUB_TOKEN"),
+        )
+    except github_actions_artifact_provenance.ActionsProvenanceError as exc:
+        raise ExactTargetImportError(f"GitHub Actions artifact provenance not authenticated: {exc}") from exc
+
     with _stage_binding_root(
         repo_root,
         manifest_path=manifest_destination,
@@ -275,6 +290,7 @@ def validate_package(repo_root: Path, package_dir: Path) -> dict[str, Any]:
         "evidence_bytes": evidence_bytes,
         "identity_bytes": identity_bytes,
         "case_count": len(expected),
+        "actions_provenance": actions_receipt,
     }
 
 
@@ -328,9 +344,9 @@ def _exclusive_write_pair(writes: tuple[tuple[Path, Path], ...]) -> None:
     _exclusive_write_set(writes)
 
 
-def import_package(repo_root: Path, package_dir: Path) -> dict[str, Any]:
+def import_package(repo_root: Path, package_dir: Path, *, artifact_zip: Path | None = None) -> dict[str, Any]:
     repo_root = repo_root.resolve()
-    validated = validate_package(repo_root, package_dir)
+    validated = validate_package(repo_root, package_dir, artifact_zip=artifact_zip)
     writes = (
         (validated["manifest_bytes"], repo_root / validated["manifest_destination"]),
         (validated["evidence_bytes"], repo_root / validated["evidence_destination"]),
@@ -344,13 +360,14 @@ def main(argv=None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--repo-root", default=".")
     parser.add_argument("--package-dir", required=True)
+    parser.add_argument("--actions-artifact-zip", help="Original ZIP downloaded from authenticated GitHub Actions run")
     parser.add_argument("--validate-only", action="store_true")
     args = parser.parse_args(argv)
     try:
         result = (
-            validate_package(Path(args.repo_root), Path(args.package_dir))
+            validate_package(Path(args.repo_root), Path(args.package_dir), artifact_zip=Path(args.actions_artifact_zip) if args.actions_artifact_zip else None)
             if args.validate_only
-            else import_package(Path(args.repo_root), Path(args.package_dir))
+            else import_package(Path(args.repo_root), Path(args.package_dir), artifact_zip=Path(args.actions_artifact_zip) if args.actions_artifact_zip else None)
         )
     except (
         ExactTargetImportError,
@@ -366,6 +383,7 @@ def main(argv=None) -> int:
         "framework_ref": result["target"]["framework_ref"],
         "run_id": result["identity"]["run_id"],
         "cases": result["case_count"],
+        "github_actions_artifact_authenticated": result["actions_provenance"]["authenticated"],
         "run_manifest_path": result["manifest_destination"].as_posix(),
         "execution_evidence_path": result["evidence_destination"].as_posix(),
         "runtime_identity_path": result["identity_destination"].as_posix(),
