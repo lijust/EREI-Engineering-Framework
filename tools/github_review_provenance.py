@@ -167,6 +167,27 @@ def _clean_codex_summary(comments: list[dict[str, Any]], reviewed_commit: str, r
     return None
 
 
+def _derived_release_base_ref(repo: Path, closure_ref: str) -> str | None:
+    process = subprocess.run(
+        ["git", "-C", str(repo), "show", f"{closure_ref}:releases/VNEXT_TARGET.json"],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if process.returncode != 0:
+        return None
+    try:
+        value = json.loads(process.stdout)
+    except json.JSONDecodeError as exc:
+        raise ReviewProvenanceError("invalid VNEXT_TARGET.json while deriving release review branch") from exc
+    if not isinstance(value, dict):
+        raise ReviewProvenanceError("VNEXT_TARGET.json must be an object")
+    target_id = value.get("target_id")
+    if not isinstance(target_id, str) or not re.fullmatch(r"vnext-rc[0-9]+", target_id):
+        raise ReviewProvenanceError("VNEXT_TARGET.json has invalid target_id for provenance binding")
+    return f"release/{target_id}"
+
+
 def verify_artifact_review(
     repo_root: Path,
     *,
@@ -189,6 +210,9 @@ def verify_artifact_review(
         )
 
     candidates = _candidate_review_commits(repo_root, target_ref, closure_ref, artifact_path)
+    derived_base_ref = _derived_release_base_ref(repo_root, closure_ref)
+    if required_base_ref is None and derived_base_ref is not None:
+        required_base_ref = derived_base_ref
     api_base = f"https://api.github.com/repos/{repository}"
 
     for candidate in candidates:
