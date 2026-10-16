@@ -85,7 +85,7 @@ def _is_ancestor(repo: Path, ancestor: str, descendant: str) -> bool:
 
 
 def _candidate_review_commits(repo: Path, target_ref: str, closure_ref: str, artifact_path: str) -> list[str]:
-    commits = [
+    path_changes = [
         item.strip()
         for item in _git(
             repo,
@@ -98,22 +98,27 @@ def _candidate_review_commits(repo: Path, target_ref: str, closure_ref: str, art
         ).splitlines()
         if item.strip()
     ]
-    if not commits:
+    if not path_changes:
         raise ReviewProvenanceError(f"no post-target change found for reviewed artifact {artifact_path}")
-    first = commits[0]
-    parent_line = _git(repo, "rev-list", "--parents", "-n", "1", first).split()
-    candidates = [first, *parent_line[1:]]
+
     current_blob = _blob_if_present(repo, closure_ref, artifact_path)
     if current_blob is None:
         raise ReviewProvenanceError(f"reviewed artifact is absent at closure ref: {artifact_path}")
+
+    reachable = [
+        item.strip()
+        for item in _git(repo, "rev-list", "--reverse", f"{target_ref}..{closure_ref}").splitlines()
+        if item.strip()
+    ]
     result: list[str] = []
-    for commit in candidates:
+    for commit in reachable:
         if commit == target_ref or commit in result:
             continue
         if not _is_ancestor(repo, target_ref, commit):
             continue
         if _blob_if_present(repo, commit, artifact_path) == current_blob:
             result.append(commit)
+
     if not result:
         raise ReviewProvenanceError(
             f"unable to identify a reviewed source commit carrying closure blob for {artifact_path}"
@@ -136,6 +141,26 @@ def _github_json(url: str, token: str) -> Any:
             return json.loads(response.read().decode("utf-8"))
     except (urllib.error.URLError, urllib.error.HTTPError, json.JSONDecodeError) as exc:
         raise ReviewProvenanceError(f"GitHub provenance query failed for {url}: {exc}") from exc
+
+
+def _github_paginated_array(
+    url: str,
+    token: str,
+    *,
+    max_pages: int = 30,
+) -> list[dict[str, Any]]:
+    result: list[dict[str, Any]] = []
+    for page in range(1, max_pages + 1):
+        separator = "&" if "?" in url else "?"
+        batch = _github_json(f"{url}{separator}per_page=100&page={page}", token)
+        if not isinstance(batch, list):
+            raise ReviewProvenanceError(f"GitHub paginated endpoint did not return an array: {url}")
+        result.extend(item for item in batch if isinstance(item, dict))
+        if len(batch) < 100:
+            return result
+    raise ReviewProvenanceError(
+        f"GitHub provenance pagination exceeded {max_pages} pages: {url}"
+    )
 
 
 def _clean_codex_summary(comments: list[dict[str, Any]], reviewed_commit: str, reviewer_login: str) -> int | None:
@@ -236,9 +261,7 @@ def verify_artifact_review(
     api_base = f"https://api.github.com/repos/{repository}"
 
     for candidate in candidates:
-        pulls = _github_json(f"{api_base}/commits/{candidate}/pulls", token)
-        if not isinstance(pulls, list):
-            continue
+        pulls = _github_paginated_array(f"{api_base}/commits/{candidate}/pulls", token)
         for pull in pulls:
             if not isinstance(pull, dict):
                 continue
@@ -263,7 +286,7 @@ def verify_artifact_review(
             candidate_blob = _blob_if_present(repo_root, candidate, artifact_path)
             if candidate_blob is None:
                 continue
-            files = _github_json(f"{api_base}/pulls/{number}/files?per_page=100", token)
+            files = _github_paginated_array(f"{api_base}/pulls/{number}/files", token)
             if not _pr_reviews_artifact(
                 files,
                 artifact_path=artifact_path,
@@ -271,9 +294,7 @@ def verify_artifact_review(
             ):
                 continue
 
-            comments = _github_json(f"{api_base}/issues/{number}/comments?per_page=100", token)
-            if not isinstance(comments, list):
-                continue
+            comments = _github_paginated_array(f"{api_base}/issues/{number}/comments", token)
             summary_comment_id = _clean_codex_summary(
                 comments,
                 candidate,
