@@ -15,18 +15,13 @@ jobs:
     timeout-minutes: 10
     steps:
       - run: npm install -g @github/copilot@1.0.98
-      - name: Probe exact RC3 flags and fixed model
+      - name: Probe default runtime identity
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
-          set +e
+          set -euo pipefail
           copilot --version
-          echo '--- gpt-5.4 exact flags ---'
-          copilot --model gpt-5.4 --no-custom-instructions --no-ask-user -p "Return exactly: RC3_MODEL_OK" -s
-          code=$?
-          echo "exit_code=$code"
-          echo '--- default exact flags ---'
-          copilot --no-custom-instructions --no-ask-user -p "Return exactly: RC3_DEFAULT_OK" -s
-          code2=$?
-          echo "default_exit_code=$code2"
-          exit 0
+          copilot --no-custom-instructions --no-ask-user             --usage-output-file /tmp/copilot-usage.json             -p "Return exactly: RC3_USAGE_OK" -s
+          echo '--- usage ---'
+          cat /tmp/copilot-usage.json
+
