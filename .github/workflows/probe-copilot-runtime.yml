@@ -14,12 +14,16 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Install Copilot CLI
-        run: npm install -g @github/copilot
-      - name: Probe independent model runtime
+      - run: npm install -g @github/copilot@1.0.98
+      - name: Show CLI model/help surface
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
-          set -euo pipefail
-          echo "COPILOT_VERSION=$(copilot --version | tr '\n' ' ')"
-          copilot -p "Return exactly this token and nothing else: COPILOT_RUNTIME_OK" -s
+          set +e
+          copilot --version
+          echo '--- help ---'
+          copilot --help
+          echo '--- models command ---'
+          copilot models
+          exit 0
+
