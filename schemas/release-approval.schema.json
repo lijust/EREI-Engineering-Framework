@@ -100,7 +100,10 @@
           "const": "chatgpt-codex-connector[bot]"
         },
         "review_type": {
-          "const": "code_review"
+          "enum": [
+            "code_review",
+            "security_review"
+          ]
         },
         "purpose": {
           "enum": [
@@ -108,7 +111,47 @@
             "security_approval"
           ]
         }
-      }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "purpose": {
+                "const": "architecture_approval"
+              }
+            },
+            "required": [
+              "purpose"
+            ]
+          },
+          "then": {
+            "properties": {
+              "review_type": {
+                "const": "code_review"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "purpose": {
+                "const": "security_approval"
+              }
+            },
+            "required": [
+              "purpose"
+            ]
+          },
+          "then": {
+            "properties": {
+              "review_type": {
+                "const": "security_review"
+              }
+            }
+          }
+        }
+      ]
     }
   }
 }
