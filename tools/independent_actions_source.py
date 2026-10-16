@@ -150,7 +150,10 @@ def verify_source(
     if (
         run.get("id") != run_id or run.get("run_attempt") != run_attempt
         or run.get("workflow_id") != policy["workflow_id"]
-        or run.get("name") != RUN_NAME or run.get("path") != WORKFLOW_PATH
+        or run.get("name") != RUN_NAME
+        # GitHub REST may report a ref-qualified path, e.g. workflow.yml@main.
+        # Do not accept any other suffix, ref or pull-request variant.
+        or run.get("path") not in {WORKFLOW_PATH, WORKFLOW_PATH + "@main"}
         or run.get("event") != "push" or run.get("head_branch") != "main"
         or run.get("head_sha") != target_ref or run.get("status") != "completed"
         or run.get("conclusion") != "success"
