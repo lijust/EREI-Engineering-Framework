@@ -165,5 +165,52 @@ class ReviewProvenanceTests(unittest.TestCase):
         )
 
 
+    def test_candidate_selection_includes_later_reviewed_head_with_same_artifact_blob(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            subprocess.run(["git", "init", "-q", str(repo)], check=True)
+            subprocess.run(["git", "-C", str(repo), "config", "user.email", "test@example.invalid"], check=True)
+            subprocess.run(["git", "-C", str(repo), "config", "user.name", "EREI Test"], check=True)
+            (repo / "README.md").write_text("target\n", encoding="utf-8")
+            subprocess.run(["git", "-C", str(repo), "add", "-A"], check=True)
+            subprocess.run(["git", "-C", str(repo), "commit", "-q", "-m", "target"], check=True)
+            target = subprocess.check_output(
+                ["git", "-C", str(repo), "rev-parse", "HEAD"], text=True
+            ).strip()
+
+            artifact = repo / "security" / "ASSURANCE_ENFORCEMENT.json"
+            artifact.parent.mkdir(parents=True)
+            artifact.write_text('{"schema_version":2}\n', encoding="utf-8")
+            subprocess.run(["git", "-C", str(repo), "add", "-A"], check=True)
+            subprocess.run(["git", "-C", str(repo), "commit", "-q", "-m", "artifact"], check=True)
+
+            (repo / "README.md").write_text("target\nfollow-up\n", encoding="utf-8")
+            subprocess.run(["git", "-C", str(repo), "add", "-A"], check=True)
+            subprocess.run(["git", "-C", str(repo), "commit", "-q", "-m", "follow-up"], check=True)
+            reviewed_head = subprocess.check_output(
+                ["git", "-C", str(repo), "rev-parse", "HEAD"], text=True
+            ).strip()
+
+            candidates = mod._candidate_review_commits(
+                repo,
+                target,
+                reviewed_head,
+                "security/ASSURANCE_ENFORCEMENT.json",
+            )
+            self.assertIn(reviewed_head, candidates)
+
+    def test_paginated_lookup_reads_later_pages(self):
+        page1 = [{"id": index} for index in range(100)]
+        page2 = [{"id": 100}]
+        with mock.patch.object(
+            mod,
+            "_github_json",
+            side_effect=[page1, page2],
+        ) as request:
+            result = mod._github_paginated_array("https://api.github.test/items", "token")
+        self.assertEqual(len(result), 101)
+        self.assertIn("page=1", request.call_args_list[0].args[0])
+        self.assertIn("page=2", request.call_args_list[1].args[0])
+
 if __name__ == "__main__":
     unittest.main()
