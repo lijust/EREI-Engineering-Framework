@@ -87,7 +87,14 @@ class AdmissionIntegrationTests(unittest.TestCase):
         self.carrier = self._git("rev-parse", "HEAD").strip()
         self.carrier_tree = self._git("rev-parse", f"{self.carrier}^{{tree}}").strip()
         import hashlib
-        scope_hash = hashlib.sha256((self.repo / "releases/VNEXT_RELEASE_SCOPE.json").read_bytes()).hexdigest()
+        # Git for Windows may check text fixtures out with CRLF even though the
+        # immutable signed target object stores LF. Bind to Git blob bytes,
+        # which is exactly what the admission verifier authenticates.
+        scope_blob = subprocess.run(
+            ["git", "-C", str(self.repo), "show", f"{self.target}:releases/VNEXT_RELEASE_SCOPE.json"],
+            check=True, capture_output=True,
+        ).stdout
+        scope_hash = hashlib.sha256(scope_blob).hexdigest()
         self.now = datetime(2026, 10, 16, 18, tzinfo=timezone.utc)
         self.data = {
             "schema_version": 1, "purpose": admission.PURPOSE,
