@@ -169,6 +169,14 @@ def _verify_release_objects(repo: Path, data: dict[str, Any], target: str, carri
         raise AdmissionError("admission does not bind expected exact target/carrier")
     if target == carrier:
         raise AdmissionError("release target cannot equal the evidence carrier")
+    # A repository supplied by an attacker can hold a counterfeit loose object
+    # under the *expected* SHA filename. Revision/tree name comparisons alone
+    # trust that corrupt storage. Verify the complete reachable object closure
+    # and content hashes using raw Git objects; missing or corrupt blobs fail.
+    _git(
+        root, "fsck", "--full", "--strict", "--no-reflogs",
+        "--no-progress", "--no-dangling", target, carrier,
+    )
     for label, revision, recorded_tree in (
         ("target", target, data["target_tree"]),
         ("carrier", carrier, data["carrier_tree"]),
@@ -183,6 +191,10 @@ def _verify_release_objects(repo: Path, data: dict[str, Any], target: str, carri
     changes = _git(root, "diff-tree", "--no-commit-id", "--name-status", "-r", carrier).decode().splitlines()
     if changes != ["A\treleases/VNEXT_TARGET.json"]:
         raise AdmissionError("initial trusted carrier may only first-add the frozen target record")
+    # Diff path statuses do not distinguish a normal JSON blob from a symlink.
+    manifest_entry = _git(root, "ls-tree", carrier, "--", "releases/VNEXT_TARGET.json").decode().strip()
+    if not re.fullmatch(r"100644 blob [0-9a-f]{40}\\treleases/VNEXT_TARGET\\.json", manifest_entry):
+        raise AdmissionError("frozen target manifest must be an ordinary non-executable blob")
     try:
         frozen = json.loads(_git(root, "show", f"{carrier}:releases/VNEXT_TARGET.json"))
         scope = _git(root, "show", f"{target}:releases/VNEXT_RELEASE_SCOPE.json")
