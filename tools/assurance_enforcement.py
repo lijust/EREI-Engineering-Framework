@@ -7,6 +7,11 @@ import json
 import sys
 from pathlib import Path
 
+try:
+    from . import github_review_provenance
+except ImportError:
+    import github_review_provenance
+
 
 class EnforcementError(RuntimeError):
     pass
@@ -35,14 +40,14 @@ def _text(value, label: str) -> str:
     return value.strip()
 
 
-def validate_enforcement(value: dict) -> dict:
+def validate_enforcement(value: dict, *, expected_target: str | None = None) -> dict:
     top = {
         "schema_version", "repository", "main_branch", "status",
         "server_enforcement", "fallback", "evidence", "limitations",
     }
     _exact_fields(value, top, "assurance enforcement")
-    if value["schema_version"] != 1:
-        raise EnforcementError("unsupported assurance enforcement schema_version")
+    if type(value["schema_version"]) is not int or value["schema_version"] != 2:
+        raise EnforcementError("assurance enforcement schema_version must be integer 2")
     if _text(value["repository"], "repository") != "lijust/EREI-Engineering-Framework":
         raise EnforcementError("repository mismatch")
     if _text(value["main_branch"], "main_branch") != "main":
@@ -62,7 +67,7 @@ def validate_enforcement(value: dict) -> dict:
         "release_assurance_contract_version", "architecture_approval_required",
         "security_approval_required", "exact_target_runtime_evidence_required",
         "complete_prospective_cycle_required", "equivalent_enforcement_verified",
-        "stable_promotion_policy",
+        "equivalence_target_ref", "review_provenance", "stable_promotion_policy",
     }
     fallback = value["fallback"]
     _exact_fields(fallback, fallback_required, "fallback")
@@ -83,6 +88,29 @@ def validate_enforcement(value: dict) -> dict:
     if fallback["stable_promotion_policy"] != "blocked_until_server_or_equivalent_enforcement":
         raise EnforcementError("fallback.stable_promotion_policy mismatch")
 
+    equivalent = fallback["equivalent_enforcement_verified"]
+    if equivalent:
+        target = _text(fallback["equivalence_target_ref"], "fallback.equivalence_target_ref")
+        import re
+        if re.fullmatch(r"[a-f0-9]{40}", target) is None:
+            raise EnforcementError("fallback.equivalence_target_ref must be an exact commit")
+        if expected_target is not None and target != expected_target:
+            raise EnforcementError(
+                f"fallback equivalence target mismatch: expected {expected_target}, got {target}"
+            )
+        try:
+            github_review_provenance.validate_descriptor(
+                fallback["review_provenance"],
+                expected_purpose="enforcement_equivalence",
+            )
+        except github_review_provenance.ReviewProvenanceError as exc:
+            raise EnforcementError(f"invalid fallback.review_provenance: {exc}") from exc
+    else:
+        if fallback["equivalence_target_ref"] is not None:
+            raise EnforcementError("fallback.equivalence_target_ref must be null until equivalence is verified")
+        if fallback["review_provenance"] is not None:
+            raise EnforcementError("fallback.review_provenance must be null until equivalence is verified")
+
     for label in ("evidence", "limitations"):
         items = value[label]
         if not isinstance(items, list) or not items:
@@ -100,17 +128,46 @@ def validate_enforcement(value: dict) -> dict:
         "server_enforcement_satisfied": server_equivalent,
         "fallback_equivalent_verified": fallback_equivalent,
         "stable_enforcement_satisfied": stable_enforcement_satisfied,
+        "equivalence_target_ref": fallback["equivalence_target_ref"],
     }
 
 
-def load_and_validate(path: Path) -> dict:
+def load_and_validate(path: Path, *, expected_target: str | None = None) -> dict:
     try:
         value = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
         raise EnforcementError(f"unable to load enforcement record: {exc}") from exc
     if not isinstance(value, dict):
         raise EnforcementError("assurance enforcement record must be an object")
-    return validate_enforcement(value)
+    return validate_enforcement(value, expected_target=expected_target)
+
+
+def verify_authenticated_equivalence(
+    repo_root: Path,
+    value: dict,
+    *,
+    expected_target: str,
+    closure_ref: str = "HEAD",
+    token: str | None = None,
+) -> dict:
+    result = validate_enforcement(value, expected_target=expected_target)
+    fallback = value["fallback"]
+    if not fallback["equivalent_enforcement_verified"]:
+        return {"status": "not_required", **result}
+    try:
+        review = github_review_provenance.verify_artifact_review(
+            repo_root,
+            repository=value["repository"],
+            target_ref=expected_target,
+            closure_ref=closure_ref,
+            artifact_path="security/ASSURANCE_ENFORCEMENT.json",
+            descriptor=fallback["review_provenance"],
+            expected_purpose="enforcement_equivalence",
+            token=token,
+        )
+    except github_review_provenance.ReviewProvenanceError as exc:
+        raise EnforcementError(f"authenticated enforcement review provenance failed: {exc}") from exc
+    return {"status": "verified", **result, "review": review}
 
 
 def main(argv=None) -> int:
