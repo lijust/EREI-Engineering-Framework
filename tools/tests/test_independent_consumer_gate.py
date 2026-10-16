@@ -96,7 +96,15 @@ class ConsumerGateIntegrationTests(unittest.TestCase):
         self.admission_trust = self.root / "admission-trust"
         self.now = datetime(2026, 10, 17, 0, 0, tzinfo=timezone.utc)
         self.scope_sha = "c" * 64
-        self.policy_sha = "e" * 64
+        policy = {
+            "schema_version": 1, "repository": gate.actions.REPOSITORY,
+            "workflow_path": gate.actions.WORKFLOW_PATH,
+            "workflow_sha256": "0" * 64, "workflow_id": 123,
+            "required_job": "assurance", "head_branch": "main",
+        }
+        policy_raw = (json.dumps(policy, sort_keys=True, separators=(",", ":")) + "\n").encode()
+        (self.root / "actions-policy.json").write_bytes(policy_raw)
+        self.policy_sha = hashlib.sha256(policy_raw).hexdigest()
         self.target = "a" * 40
         self.carrier = "b" * 40
         self.admission_raw = (
@@ -221,6 +229,87 @@ class ConsumerGateIntegrationTests(unittest.TestCase):
         self._resign()
         with self.assertRaisesRegex(gate.ConsumerGateError, "scope or run"):
             self._verify()
+
+    def test_untrusted_source_assurance_string_fails_with_governed_denial(self):
+        self.admission_raw = (
+            json.dumps({"scope_sha256": self.scope_sha, "source_assurance": "spoofed"},
+                       sort_keys=True, separators=(",", ":")) + "\n"
+        ).encode()
+        (self.admission / "admission.json").write_bytes(self.admission_raw)
+        self.permit["admission_envelope_sha256"] = hashlib.sha256(self.admission_raw).hexdigest()
+        self._resign()
+        with self.assertRaisesRegex(gate.ConsumerGateError, "scope or run"):
+            self._verify()
+
+    def test_untrusted_source_assurance_array_fails_with_governed_denial(self):
+        self.admission_raw = (
+            json.dumps({"scope_sha256": self.scope_sha, "source_assurance": ["malformed"]},
+                       sort_keys=True, separators=(",", ":")) + "\n"
+        ).encode()
+        (self.admission / "admission.json").write_bytes(self.admission_raw)
+        self.permit["admission_envelope_sha256"] = hashlib.sha256(self.admission_raw).hexdigest()
+        self._resign()
+        with self.assertRaisesRegex(gate.ConsumerGateError, "scope or run"):
+            self._verify()
+
+    def test_original_trust_key_swap_after_snapshot_does_not_change_verifier_input(self):
+        original_run = subprocess.run
+        observed_verify_paths = []
+        switched = False
+
+        def switch_original_trust_before_verification(argv, *args, **kwargs):
+            nonlocal switched
+            if len(argv) >= 3 and argv[1:3] == ["-Y", "verify"]:
+                idx = argv.index("-f")
+                observed_verify_paths.append(Path(argv[idx + 1]))
+                if not switched:
+                    switched = True
+                    first = (self.trust / "consumer-architecture.allowed_signers").read_text().split()
+                    (self.trust / "consumer-security.allowed_signers").write_text(
+                        gate.PRINCIPALS["consumer-security"] + " " + " ".join(first[1:]) + "\n"
+                    )
+                    (self.packet / "consumer-security.sig").write_bytes(b"forged after inspection")
+                    (self.admission / "admission.json").write_bytes(b"forged after inspection")
+            return original_run(argv, *args, **kwargs)
+
+        with mock.patch.object(gate.subprocess, "run", side_effect=switch_original_trust_before_verification):
+            result, a, b = self._verify()
+        self.assertTrue(switched)
+        self.assertEqual(len(observed_verify_paths), 2)
+        self.assertTrue(all(str(p) != str(self.trust / p.name) for p in observed_verify_paths))
+        self.assertIs(result["consumer_activation_authorized"], False)
+        self.assertEqual((a, b), (1, 1))
+
+    def test_original_actions_policy_swap_after_snapshot_does_not_bypass_pin(self):
+        source_raw = (self.root / "actions-policy.json").read_bytes()
+        with mock.patch.object(gate.actions, "verify_source") as mocked:
+            def attest_source(*args, **kwargs):
+                self.assertEqual(Path(args[1]).read_bytes(), source_raw)
+                self.assertNotEqual(Path(args[1]), self.root / "actions-policy.json")
+                (self.root / "actions-policy.json").write_bytes(b"tampered policy")
+                return {
+                    "status": "authenticated_actions_source_metadata_only",
+                    "target_ref": self.target, "run_id": 123, "run_attempt": 1,
+                    "policy_sha256": self.policy_sha, "required_job": "assurance",
+                    "stable_enforcement_satisfied": False,
+                }
+            mocked.side_effect = attest_source
+            carrier_result = {
+                "status": "verified_offline_signatures_only",
+                "target_ref": self.target, "carrier_ref": self.carrier,
+                "signed_envelope_sha256": self.permit["admission_envelope_sha256"],
+                "verified_roles": list(gate.carrier.ROLES),
+                "stable_enforcement_satisfied": False,
+            }
+            with mock.patch.object(gate.carrier, "verify_candidate", return_value=carrier_result):
+                result = gate.verify_precheck(
+                    self.repo, self.packet, self.trust, self.admission, self.admission_trust,
+                    self.root / "actions-policy.json", expected_consumer=gate.CONSUMER,
+                    expected_target=self.target, expected_carrier=self.carrier,
+                    expected_actions_policy_sha256=self.policy_sha,
+                    github_token="mock-read-only-token", at=self.now,
+                )
+        self.assertEqual(result["status"], "consumer_admission_precheck_only")
 
     def test_wrong_expected_target_denied(self):
         with self.assertRaisesRegex(gate.ConsumerGateError, "expected exact commits"):
