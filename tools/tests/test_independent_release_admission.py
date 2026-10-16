@@ -205,6 +205,26 @@ class AdmissionIntegrationTests(unittest.TestCase):
                 expected_target=self.target, expected_carrier=self.carrier, at=self.now
             )
 
+    def test_external_packet_directory_symlink_is_rejected(self):
+        alias = self.root / "packet-link"
+        try:
+            alias.symlink_to(self.packet, target_is_directory=True)
+        except (OSError, NotImplementedError):
+            self.skipTest("cannot create directory symlinks on this platform")
+        with self.assertRaisesRegex(admission.AdmissionError, "non-symlink directory"):
+            admission.verify_candidate(
+                self.repo, alias, self.trust,
+                expected_target=self.target, expected_carrier=self.carrier, at=self.now
+            )
+
+    def test_external_packet_directory_traversal_is_rejected(self):
+        unsafe = self.root / "placeholder" / ".." / "packet"
+        with self.assertRaisesRegex(admission.AdmissionError, "parent traversal"):
+            admission.verify_candidate(
+                self.repo, unsafe, self.trust,
+                expected_target=self.target, expected_carrier=self.carrier, at=self.now
+            )
+
     def test_trust_anchor_inside_mutable_repository_is_rejected(self):
         import shutil as _shutil
         in_repo = self.repo / "trust"
