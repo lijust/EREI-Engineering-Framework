@@ -1,0 +1,322 @@
+name: VNext Exact Target Copilot Evidence
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_ref:
+        description: Release branch/ref containing the frozen VNEXT_TARGET closure
+        required: true
+        type: string
+      expected_carrier_sha:
+        description: Exact 40-character HEAD expected for release_ref
+        required: true
+        type: string
+      copilot_cli_version:
+        description: Exact @github/copilot npm version to execute (for example 1.0.54)
+        required: true
+        type: string
+      copilot_cli_integrity:
+        description: Exact npm dist.integrity sha512 SRI for the requested @github/copilot version
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+env:
+  PYTHONDONTWRITEBYTECODE: '1'
+
+jobs:
+  exact-target-copilot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - name: Checkout controlled release carrier
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ inputs.release_ref }}
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+
+      - name: Verify exact release carrier and frozen target
+        id: target
+        env:
+          EXPECTED_CARRIER_SHA: ${{ inputs.expected_carrier_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ ! "$EXPECTED_CARRIER_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "expected_carrier_sha must be an exact lowercase 40-character commit" >&2
+            exit 2
+          fi
+          actual_carrier="$(git rev-parse HEAD)"
+          if [[ "$actual_carrier" != "$EXPECTED_CARRIER_SHA" ]]; then
+            echo "release carrier moved: expected=$EXPECTED_CARRIER_SHA actual=$actual_carrier" >&2
+            exit 2
+          fi
+          python tools/release_target.py --repo-root . --validate-closure
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          from pathlib import Path
+          target = json.loads(Path('releases/VNEXT_TARGET.json').read_text(encoding='utf-8'))
+          print(f"target_ref={target['framework_ref']}")
+          print(f"target_tree={target['target_tree']}")
+          print(f"target_id={target['target_id']}")
+          PY
+
+      - name: Checkout exact frozen Framework target
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ steps.target.outputs.target_ref }}
+          fetch-depth: 0
+          path: target
+
+      - name: Verify target identity and adapter boundary tests
+        env:
+          TARGET_REF: ${{ steps.target.outputs.target_ref }}
+          TARGET_TREE: ${{ steps.target.outputs.target_tree }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          actual_ref="$(git -C target rev-parse HEAD)"
+          actual_tree="$(git -C target rev-parse 'HEAD^{tree}')"
+          test "$actual_ref" = "$TARGET_REF"
+          test "$actual_tree" = "$TARGET_TREE"
+          cd target
+          python -m unittest \
+            evals.tests.test_assurance_scope \
+            evals.tests.test_exact_target_run \
+            evals.tests.test_copilot_cli_exact_target \
+            evals.tests.test_copilot_routing_prompt_boundary \
+            evals.tests.test_vnext_exact_target_workflow -v
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: '24'
+
+      - name: Verify Copilot credential, version, and registry integrity
+        env:
+          COPILOT_GITHUB_TOKEN: ${{ secrets.EREI_COPILOT_EXACT_TARGET_TOKEN }}
+          COPILOT_CLI_VERSION: ${{ inputs.copilot_cli_version }}
+          COPILOT_CLI_INTEGRITY: ${{ inputs.copilot_cli_integrity }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "$COPILOT_GITHUB_TOKEN" ]]; then
+            echo "EREI_COPILOT_EXACT_TARGET_TOKEN is required for this personal repository" >&2
+            exit 2
+          fi
+          if [[ ! "$COPILOT_CLI_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+([-.][0-9A-Za-z.-]+)?$ ]]; then
+            echo "copilot_cli_version must be an exact npm version, not latest/range/tag" >&2
+            exit 2
+          fi
+          if [[ ! "$COPILOT_CLI_INTEGRITY" =~ ^sha512-[A-Za-z0-9+/]{86}==$ ]]; then
+            echo "copilot_cli_integrity must be one full SHA-512 npm SRI digest" >&2
+            exit 2
+          fi
+          registry_integrity="$(npm view "@github/copilot@${COPILOT_CLI_VERSION}" dist.integrity)"
+          if [[ "$registry_integrity" != "$COPILOT_CLI_INTEGRITY" ]]; then
+            echo "Copilot registry integrity mismatch for version ${COPILOT_CLI_VERSION}" >&2
+            exit 2
+          fi
+          echo "PASS: Copilot registry version/integrity binding verified"
+
+      - name: Fetch and byte-verify pinned Copilot CLI tarball
+        id: copilot_package
+        env:
+          COPILOT_CLI_VERSION: ${{ inputs.copilot_cli_version }}
+          COPILOT_CLI_INTEGRITY: ${{ inputs.copilot_cli_integrity }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p copilot-package
+          cd copilot-package
+          npm pack "@github/copilot@${COPILOT_CLI_VERSION}" --json > pack.json
+          node <<'NODE'
+          const crypto = require('crypto');
+          const fs = require('fs');
+          const pack = JSON.parse(fs.readFileSync('pack.json', 'utf8'));
+          if (!Array.isArray(pack) || pack.length !== 1 || typeof pack[0].filename !== 'string') {
+            throw new Error('npm pack did not return exactly one tarball filename');
+          }
+          const filename = pack[0].filename;
+          const bytes = fs.readFileSync(filename);
+          const actual = 'sha512-' + crypto.createHash('sha512').update(bytes).digest('base64');
+          const expected = process.env.COPILOT_CLI_INTEGRITY;
+          if (actual !== expected) {
+            throw new Error(`downloaded Copilot tarball integrity mismatch: expected=${expected} actual=${actual}`);
+          }
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `tarball=${filename}\n`);
+          console.log(`PASS: byte-verified Copilot tarball ${filename}`);
+          NODE
+
+      - name: Install byte-verified GitHub Copilot CLI tarball
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install -g "./copilot-package/${{ steps.copilot_package.outputs.tarball }}"
+
+      - name: Record runtime identity
+        id: runtime
+        env:
+          EXPECTED_COPILOT_VERSION: ${{ inputs.copilot_cli_version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="$(copilot version 2>&1 | head -n 1 | tr -d '\r')"
+          if [[ -z "$version" ]]; then
+            echo "unable to determine Copilot CLI version" >&2
+            exit 2
+          fi
+          if [[ "$version" != *"$EXPECTED_COPILOT_VERSION"* ]]; then
+            echo "installed Copilot CLI identity mismatch: expected=$EXPECTED_COPILOT_VERSION actual=$version" >&2
+            exit 2
+          fi
+          echo "copilot_version=$version" >> "$GITHUB_OUTPUT"
+          printf '%s\n' "$version"
+
+      - name: Verify skill invocation telemetry transport
+        env:
+          COPILOT_GITHUB_TOKEN: ${{ secrets.EREI_COPILOT_EXACT_TARGET_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd target
+          python evals/adapters/copilot_cli_exact_target.py \
+            --target-root . \
+            --model=gpt-5.4 \
+            --timeout=120 \
+            --probe-skill-event skills/impact-analysis
+
+      - name: Execute frozen release-scoped behavioral cases against target
+        env:
+          COPILOT_GITHUB_TOKEN: ${{ secrets.EREI_COPILOT_EXACT_TARGET_TOKEN }}
+          COPILOT_CLI_INTEGRITY: ${{ inputs.copilot_cli_integrity }}
+          TARGET_REF: ${{ steps.target.outputs.target_ref }}
+          CARRIER_SHA: ${{ inputs.expected_carrier_sha }}
+          COPILOT_VERSION: ${{ steps.runtime.outputs.copilot_version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd target
+          run_slug="copilot-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          manifest="evals/exact-target-runs/${run_slug}.json"
+          evidence="evals/EXECUTION_EVIDENCE.${run_slug}.json"
+          mapfile -t suites < <(python - <<'PY'
+          import json
+          from pathlib import Path
+          scope = json.loads(Path('releases/VNEXT_RELEASE_SCOPE.json').read_text(encoding='utf-8'))
+          for item in scope['required_eval_suites']:
+              print(item['path'])
+          PY
+          )
+          if [[ "${#suites[@]}" -eq 0 ]]; then
+            echo 'No frozen release-scope suites selected' >&2
+            exit 2
+          fi
+          python evals/exact_target_run.py "${suites[@]}" \
+            --adapter "python evals/adapters/copilot_cli_exact_target.py --target-root . --model=gpt-5.4 --timeout=240" \
+            --adapter-id "github-copilot-cli-exact-target-v2" \
+            --adapter-revision "$TARGET_REF" \
+            --runtime-id "github-copilot-cli" \
+            --runtime-version "$COPILOT_VERSION" \
+            --runtime-evidence "github-actions:${GITHUB_REPOSITORY}/run/${GITHUB_RUN_ID}/attempt/${GITHUB_RUN_ATTEMPT}" \
+            --runtime-evidence "release-carrier:${CARRIER_SHA}" \
+            --runtime-evidence "copilot-model:gpt-5.4" \
+            --runtime-evidence "copilot-package-integrity:${COPILOT_CLI_INTEGRITY}" \
+            --runtime-evidence "copilot-skill-event-transport:skill.invoked-v1" \
+            --framework-ref "$TARGET_REF" \
+            --manifest "$manifest" \
+            --evidence "$evidence" \
+            --timeout 300
+          python evals/runner.py coverage "${suites[@]}" \
+            --evidence "$evidence" \
+            --minimum-level exact_target_runtime \
+            --require-complete
+          python - "$manifest" "$evidence" <<'PY'
+          import subprocess, sys
+          manifest, evidence = sys.argv[1:]
+          changed = subprocess.check_output(
+              ['git', 'status', '--porcelain', '--untracked-files=all'], text=True
+          ).splitlines()
+          paths = {line[3:] for line in changed if len(line) >= 4}
+          expected = {manifest, evidence}
+          if paths != expected:
+              raise SystemExit(f'unexpected target checkout mutation: actual={sorted(paths)} expected={sorted(expected)}')
+          print('PASS: exact-target execution mutated only the two target-checkout evidence outputs')
+          PY
+          mkdir -p ../evidence-package
+          cp "$manifest" ../evidence-package/exact-target-run.json
+          cp "$evidence" ../evidence-package/execution-evidence.json
+
+      - name: Write evidence package identity
+        env:
+          TARGET_REF: ${{ steps.target.outputs.target_ref }}
+          TARGET_TREE: ${{ steps.target.outputs.target_tree }}
+          TARGET_ID: ${{ steps.target.outputs.target_id }}
+          CARRIER_SHA: ${{ inputs.expected_carrier_sha }}
+          COPILOT_VERSION: ${{ steps.runtime.outputs.copilot_version }}
+          COPILOT_CLI_VERSION_INPUT: ${{ inputs.copilot_cli_version }}
+          COPILOT_CLI_INTEGRITY: ${{ inputs.copilot_cli_integrity }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          run_slug="copilot-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          python target/tools/build_exact_target_package_identity.py \
+            --package-dir evidence-package \
+            --repository "$GITHUB_REPOSITORY" \
+            --target-id "$TARGET_ID" \
+            --framework-ref "$TARGET_REF" \
+            --target-tree "$TARGET_TREE" \
+            --release-carrier-ref "$CARRIER_SHA" \
+            --adapter-id "github-copilot-cli-exact-target-v2" \
+            --adapter-revision "$TARGET_REF" \
+            --runtime-id "github-copilot-cli" \
+            --runtime-version "$COPILOT_VERSION" \
+            --requested-cli-version "$COPILOT_CLI_VERSION_INPUT" \
+            --requested-cli-integrity "$COPILOT_CLI_INTEGRITY" \
+            --model "gpt-5.4" \
+            --github-run-id "$GITHUB_RUN_ID" \
+            --github-run-attempt "$GITHUB_RUN_ATTEMPT" \
+            --run-manifest-path "evals/exact-target-runs/${run_slug}.json" \
+            --execution-evidence-path "evals/EXECUTION_EVIDENCE.${run_slug}.json" \
+            --runtime-identity-path "evals/exact-target-runs/${run_slug}.identity.json" \
+            --output evidence-package/runtime-identity.json
+
+      - name: Upload immutable-candidate evidence package
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: vnext-exact-target-${{ steps.target.outputs.target_id }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: evidence-package/
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Summarize evidence boundary
+        env:
+          TARGET_REF: ${{ steps.target.outputs.target_ref }}
+          CARRIER_SHA: ${{ inputs.expected_carrier_sha }}
+          COPILOT_CLI_VERSION: ${{ inputs.copilot_cli_version }}
+          COPILOT_CLI_INTEGRITY: ${{ inputs.copilot_cli_integrity }}
+        shell: bash
+        run: |
+          {
+            echo '## VNext exact-target evidence'
+            echo
+            echo "- Frozen target: \`$TARGET_REF\`"
+            echo "- Release carrier: \`$CARRIER_SHA\`"
+            echo '- Behavioral runtime cases: frozen release scope (13 currently)'
+            echo '- Harness-only cases sent to Copilot: 0'
+            echo '- Model: `gpt-5.4`'
+            echo "- Requested Copilot CLI: \`$COPILOT_CLI_VERSION\`"
+            echo "- Copilot npm integrity: \`$COPILOT_CLI_INTEGRITY\`"
+            echo '- Copilot installation source: byte-verified local npm tarball'
+            echo '- Skill invocation telemetry: `skill.invoked-v1` transport probe PASS required before evidence production'
+            echo '- Evidence package: digest-bound V2 runtime identity + reconstructible run manifest + execution evidence'
+            echo '- Governed release import retains all three package files immutably'
+            echo '- Repository mutation/commit/promotion: none'
+          } >> "$GITHUB_STEP_SUMMARY"
