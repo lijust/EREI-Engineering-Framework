@@ -139,7 +139,8 @@ def _envelope(raw: bytes, now: datetime) -> dict[str, Any]:
 
 def _verify_release_objects(repo: Path, data: dict[str, Any], target: str, carrier: str) -> None:
     root = repo.resolve(strict=True)
-    if _git(root, "rev-parse", "--show-toplevel").decode().strip() != str(root):
+    git_root = Path(_git(root, "rev-parse", "--show-toplevel").decode().strip()).resolve(strict=True)
+    if git_root != root:
         raise AdmissionError("release checkout must be the actual Git worktree root")
     if data["target_ref"] != target or data["carrier_ref"] != carrier:
         raise AdmissionError("admission does not bind expected exact target/carrier")
