@@ -12,13 +12,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 3dcef11cc42e0c17d245a2e16f59834834439b24
+          ref: 788b12d33bf5dbed813096a70a8541bb4d4b05bd
           fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
       - name: Assert exact PR source SHA
-        run: test "$(git rev-parse HEAD)" = "3dcef11cc42e0c17d245a2e16f59834834439b24"
+        run: test "$(git rev-parse HEAD)" = "788b12d33bf5dbed813096a70a8541bb4d4b05bd"
       - name: Compile Framework and adapter
         run: python -m compileall -q tools evals validation_contract.py
       - name: Require live Ed25519 integration proof
@@ -37,7 +37,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 3dcef11cc42e0c17d245a2e16f59834834439b24
+          ref: 788b12d33bf5dbed813096a70a8541bb4d4b05bd
           fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
@@ -45,7 +45,7 @@ jobs:
       - name: Assert exact PR source SHA on Git for Windows
         shell: pwsh
         run: |
-          python -c "import subprocess; assert subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip() == '3dcef11cc42e0c17d245a2e16f59834834439b24'"
+          python -c "import subprocess; assert subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip() == '788b12d33bf5dbed813096a70a8541bb4d4b05bd'"
       - name: Require OpenSSH Ed25519 on Windows
         shell: pwsh
         run: |
