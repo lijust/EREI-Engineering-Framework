@@ -104,6 +104,20 @@ class IndependentActionsSourceTests(unittest.TestCase):
         with self.assertRaisesRegex(src.ActionsSourceError, "outside mutable Git checkout"):
             self._verify(policy_path=inner)
 
+    def test_external_policy_symlink_is_rejected(self):
+        alias = self.policies / "linked-policy.json"
+        try:
+            alias.symlink_to(self.file)
+        except (OSError, NotImplementedError):
+            self.skipTest("symbolic link creation unavailable for test user")
+        with self.assertRaisesRegex(src.ActionsSourceError, "symlink or indirect path"):
+            self._verify(policy_path=alias)
+
+    def test_external_policy_parent_traversal_is_rejected(self):
+        weird = self.policies / "subdir" / ".." / self.file.name
+        with self.assertRaisesRegex(src.ActionsSourceError, "parent traversal"):
+            self._verify(policy_path=weird)
+
     def test_source_workflow_changed_fails_even_with_successful_run(self):
         with self.assertRaisesRegex(src.ActionsSourceError, "workflow source not externally pinned"):
             self._verify(source=b"altered workflow\n")
