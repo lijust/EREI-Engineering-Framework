@@ -237,6 +237,30 @@ def _validate_history_binding(
             "exact-target evidence commit must add exactly the retained manifest, execution evidence, and runtime identity"
         )
 
+    # Endpoint blob equality alone misses a change that was later reverted.
+    # Traverse the full *first-parent* closure and reject each content change
+    # to any governed file after its one-shot import, including later reverts.
+    later_commits = [
+        value.strip()
+        for value in _git(
+            repo_root, "rev-list", "--first-parent",
+            f"{evidence_commit}..{closure_ref}",
+        ).splitlines()
+        if value.strip()
+    ]
+    for commit in later_commits:
+        parents = _git(repo_root, "rev-list", "--parents", "-n", "1", commit).split()
+        if len(parents) < 2:
+            raise ExactTargetEvidenceError("post-import first-parent history has no parent")
+        changed = _git(
+            repo_root, "diff-tree", "--no-commit-id", "--name-only", "-r",
+            parents[1], commit, "--", *(p.as_posix() for p in paths),
+        )
+        if changed:
+            raise ExactTargetEvidenceError(
+                "retained exact-target evidence changed after its evidence commit: " + changed
+            )
+
     for path in paths:
         first_blob = _git(repo_root, "rev-parse", f"{evidence_commit}:{path.as_posix()}")
         current_blob = _git(repo_root, "rev-parse", f"{closure_ref}:{path.as_posix()}")

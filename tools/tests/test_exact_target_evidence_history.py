@@ -136,6 +136,25 @@ class ExactTargetEvidenceHistoryTests(unittest.TestCase):
         with self.assertRaisesRegex(exact_target_evidence.ExactTargetEvidenceError, "exactly"):
             exact_target_evidence._validate_history_binding(self.repo, self.identity())
 
+    def test_reverted_post_import_rewrite_cannot_pass_immutable_history(self):
+        self.add_three()
+        original = (self.repo / self.PATHS[1]).read_bytes()
+        self.write(self.PATHS[1], '{"temporary": "rewrite"}\n')
+        self.commit("intervening change to evidence")
+        (self.repo / self.PATHS[1]).write_bytes(original)
+        revision = self.commit("restore old bytes")
+        self.assertEqual((self.repo / self.PATHS[1]).read_bytes(), original)
+        with tempfile.TemporaryDirectory() as tmp:
+            copied = Path(tmp)
+            for p in self.PATHS:
+                destination = copied / p
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                destination.write_bytes((self.repo / p).read_bytes())
+            with self.assertRaisesRegex(exact_target_evidence.ExactTargetEvidenceError, "changed after"):
+                exact_target_evidence._validate_history_binding(
+                    self.repo, self.identity(), closure_ref=revision, materialized_root=copied,
+                )
+
     def test_later_rewrite_of_any_retained_file_fails(self):
         self.add_three()
         self.write(self.PATHS[2], "{\"rewritten\": true}\n")
