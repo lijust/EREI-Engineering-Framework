@@ -74,7 +74,10 @@ def _git_blob(repo: Path, ref: str, path: str) -> bytes:
     root = repo.resolve(strict=True)
     env = {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
     env["GIT_NO_REPLACE_OBJECTS"] = "1"
-    argv = ["git", "-C", str(root), "-c", "core.commitGraph=false"]
+    env["GIT_NO_LAZY_FETCH"] = "1"
+    env["GIT_ALLOW_PROTOCOL"] = ""
+    env["GIT_PROTOCOL_FROM_USER"] = "0"
+    argv = ["git", "-C", str(root), "-c", "core.commitGraph=false", "-c", "protocol.allow=never", "-c", "protocol.ext.allow=never"]
     def git(*args: str) -> bytes:
         cp = subprocess.run([*argv, *args], env=env, capture_output=True, check=False, timeout=15)
         if cp.returncode:
