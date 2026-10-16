@@ -160,6 +160,41 @@ class IndependentActionsSourceTests(unittest.TestCase):
         with self.assertRaisesRegex(src.ActionsSourceError, "outside official repository"):
             src._request_json("https://attacker.invalid/secret", "token")
 
+    def test_git_source_reader_disables_partial_clone_fetch_and_external_transports(self):
+        import subprocess
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "repo"
+            root.mkdir()
+            def git(*args):
+                r = subprocess.run(["git", "-C", str(root), *args], capture_output=True, text=True)
+                self.assertEqual(r.returncode, 0, r.stderr)
+                return r.stdout.strip()
+            git("init", "-q")
+            git("config", "user.name", "Source Test")
+            git("config", "user.email", "source-test@erei.invalid")
+            file = root / src.WORKFLOW_PATH
+            file.parent.mkdir(parents=True)
+            file.write_bytes(self.workflow_bytes)
+            git("add", "-A")
+            git("commit", "-q", "-m", "exact source")
+            target = git("rev-parse", "HEAD")
+            original_run = subprocess.run
+            with mock.patch.object(src.subprocess, "run", wraps=original_run) as trace:
+                data = src._git_blob(root, target, src.WORKFLOW_PATH)
+            self.assertEqual(data, self.workflow_bytes)
+            seen = [
+                item for item in trace.call_args_list
+                if item.args and item.args[0][0] == "git"
+            ]
+            self.assertGreaterEqual(len(seen), 3)
+            for call in seen:
+                args = call.args[0]
+                self.assertIn("core.commitGraph=false", args)
+                self.assertIn("protocol.allow=never", args)
+                self.assertIn("protocol.ext.allow=never", args)
+                self.assertEqual(call.kwargs["env"]["GIT_NO_LAZY_FETCH"], "1")
+                self.assertEqual(call.kwargs["env"]["GIT_ALLOW_PROTOCOL"], "")
+
     def test_boolean_run_id_is_not_a_valid_number(self):
         with self.assertRaisesRegex(src.ActionsSourceError, "positive integers"):
             src.verify_source(
