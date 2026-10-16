@@ -137,6 +137,7 @@ class ConsumerGateIntegrationTests(unittest.TestCase):
             )
             self.keys[role] = key
         self._resign()
+        self._sign_carrier_fixture()
 
     def _resign(self):
         permit_path = self.packet / "permit.json"
@@ -152,6 +153,22 @@ class ConsumerGateIntegrationTests(unittest.TestCase):
             produced = Path(str(permit_path) + ".sig")
             (self.packet / (role + ".sig")).write_bytes(produced.read_bytes())
             produced.unlink()
+
+    def _sign_carrier_fixture(self):
+        # The consumer precheck snapshots *all* real detached carrier files
+        # before entering the mocked PR64 verifier, so the fixture must model
+        # a complete signed release submission rather than just signer keys.
+        # These short-lived test keys are created only inside TemporaryDirectory.
+        envelope = self.admission / "admission.json"
+        for role in gate.carrier.ROLES:
+            subprocess.run(
+                ["ssh-keygen", "-Y", "sign", "-f", str(self.keys[role]),
+                 "-n", gate.carrier.NAMESPACE, str(envelope)],
+                check=True, capture_output=True, timeout=20,
+            )
+            generated = Path(str(envelope) + ".sig")
+            (self.admission / (role + ".sig")).write_bytes(generated.read_bytes())
+            generated.unlink()
 
     def _verify(self, *, signed_carrier_override=None, source_override=None, **kw):
         signed_carrier = {
