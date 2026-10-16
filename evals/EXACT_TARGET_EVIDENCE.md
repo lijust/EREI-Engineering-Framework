@@ -28,4 +28,9 @@ python evals/exact_target_run.py evals/cases \
   --evidence "evals/EXECUTION_EVIDENCE.<new-run>.json"
 ```
 
-A generated manifest does not authorize Stable promotion by itself. All 44 published cases must pass at `exact_target_runtime`, the prospective cycle must be complete, enforcement must satisfy the Stable gate, and architecture/security approvals must bind the final immutable release candidate.
+A generated manifest does not authorize Stable promotion by itself. All 74 behavioral-runtime cases must pass at `exact_target_runtime`, the prospective cycle must be complete, enforcement must satisfy the Stable gate, and architecture/security approvals must bind the final immutable release candidate.
+
+
+## Scope separation on current Framework main
+
+The published eval catalog currently has **75 reference-contract cases** across **16 suites**: **74 behavioral-runtime** cases and **one harness-only** case (`harness-smoke/SMOKE-001`). Harness-only checks always run in reference CI but must not be sent to external model/runtime adapters or accepted as Stable exact-target evidence. Counts are informational: the validators always derive the required case identities from frozen, target-bound JSON contracts.
