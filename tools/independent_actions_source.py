@@ -11,6 +11,7 @@ import hashlib
 import json
 import os
 import re
+import stat
 import subprocess
 import sys
 import urllib.error
@@ -103,13 +104,34 @@ def _policy(repo_root: Path, trust_file: Path, expected_sha256: str) -> dict[str
         raise ActionsSourceError("external policy pin must be exact SHA256")
     root = repo_root.resolve(strict=True)
     source = trust_file.absolute()
-    if source.is_symlink() or root == source or root in source.parents:
-        raise ActionsSourceError("trusted policy must be independently stored outside mutable Git checkout")
-    if source.resolve(strict=True) != source or not source.is_file():
-        raise ActionsSourceError("trusted policy file must not be a symlink or indirect path")
-    if source.stat().st_size > MAX_POLICY_BYTES:
-        raise ActionsSourceError("trusted policy file exceeds size limit")
-    raw = source.read_bytes()
+    if ".." in source.parts:
+        raise ActionsSourceError("trusted policy path cannot contain parent traversal")
+    try:
+        resolved = source.resolve(strict=True)
+        if root == resolved or root in resolved.parents:
+            raise ActionsSourceError(
+                "trusted policy must be independently stored outside mutable Git checkout"
+            )
+        # Path.absolute and Path.resolve can legitimately differ on Windows
+        # due to OS canonical casing/drive aliases. Reject actual symlinks and
+        # junctions/reparse points in every path component instead of testing
+        # raw pathname-string equality.
+        for candidate in (source, *source.parents):
+            record = candidate.lstat()
+            if stat.S_ISLNK(record.st_mode) or (
+                getattr(record, "st_file_attributes", 0)
+                & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400)
+            ):
+                raise ActionsSourceError(
+                    "trusted policy file must not be a symlink or indirect path"
+                )
+        if not resolved.is_file():
+            raise ActionsSourceError("trusted policy file must be a regular file")
+        if resolved.stat().st_size > MAX_POLICY_BYTES:
+            raise ActionsSourceError("trusted policy file exceeds size limit")
+        raw = resolved.read_bytes()
+    except (OSError, ValueError) as exc:
+        raise ActionsSourceError("trusted policy path is unavailable") from exc
     if hashlib.sha256(raw).hexdigest() != expected_sha256:
         raise ActionsSourceError("trusted policy does not match externally pinned hash")
     try:
