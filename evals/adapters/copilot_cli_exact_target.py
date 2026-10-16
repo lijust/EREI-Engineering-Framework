@@ -75,11 +75,11 @@ def _read_utf8(path: Path, root: Path) -> str:
         resolved.relative_to(root.resolve())
     except (OSError, ValueError) as exc:
         raise CopilotExactTargetError(f"invalid artifact file: {path}") from exc
-    if resolved.suffix.lower() != ".md":
-        raise CopilotExactTargetError(f"only Markdown Framework artifacts are allowed: {path}")
     lowered_parts = {part.lower() for part in resolved.relative_to(root.resolve()).parts}
     if lowered_parts & {"evals", "tests", "fixtures", ".github"}:
         raise CopilotExactTargetError(f"evaluation/test content is forbidden from model context: {path}")
+    if resolved.suffix.lower() != ".md":
+        raise CopilotExactTargetError(f"only Markdown Framework artifacts are allowed: {path}")
     try:
         return resolved.read_text(encoding="utf-8")
     except (OSError, UnicodeError) as exc:
