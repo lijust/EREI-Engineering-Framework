@@ -104,6 +104,15 @@ class ExactTargetRunTests(unittest.TestCase):
                     run_id="ETR-20260907T120000Z-ABCDEF12",
                 )
 
+    def test_rejects_nested_and_reserved_exact_target_manifest_paths(self):
+        for path in (
+            "evals/exact-target-runs/sub/attempt.json",
+            "evals/exact-target-runs/attempt.identity.json",
+        ):
+            with self.subTest(path=path):
+                with self.assertRaisesRegex(exact_target_run.ExactTargetRunError, "single JSON filename"):
+                    exact_target_run._validate_manifest_path(path)
+
     def test_rejects_reference_oracle_as_exact_target(self):
         with self.assertRaisesRegex(exact_target_run.ExactTargetRunError, "reference/mock"):
             exact_target_run.run_suites(

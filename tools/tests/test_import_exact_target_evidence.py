@@ -269,6 +269,18 @@ class ExactTargetEvidenceImportTests(unittest.TestCase):
         with self.assertRaisesRegex(import_exact_target_evidence.ExactTargetImportError, "single relative JSON filename"):
             import_exact_target_evidence.validate_package(self.repo, self.package)
 
+    def test_invalid_manifest_shape_has_governed_error(self):
+        manifest = self.package / "exact-target-run.json"
+        value = json.loads(manifest.read_text(encoding="utf-8"))
+        del value["executions"]
+        manifest.write_text(json.dumps(value), encoding="utf-8")
+        identity_file = self.package / "runtime-identity.json"
+        identity = json.loads(identity_file.read_text(encoding="utf-8"))
+        identity["run_manifest_sha256"] = import_exact_target_evidence.hashlib.sha256(manifest.read_bytes()).hexdigest()
+        identity_file.write_text(json.dumps(identity), encoding="utf-8")
+        with self.assertRaisesRegex(import_exact_target_evidence.ExactTargetImportError, "invalid run manifest"):
+            import_exact_target_evidence.validate_package(self.repo, self.package)
+
     def test_hash_tamper_is_rejected_before_any_write(self):
         path = self.package / "execution-evidence.json"
         path.write_text(path.read_text(encoding="utf-8") + "\n", encoding="utf-8")
