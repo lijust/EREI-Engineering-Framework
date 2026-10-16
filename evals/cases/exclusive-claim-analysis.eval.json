@@ -2,6 +2,7 @@
   "schema_version": "1.0",
   "suite_id": "exclusive-claim-analysis-v1",
   "artifact": "skills/exclusive-claim-analysis",
+  "assurance_scope": "behavioral_runtime",
   "cases": [
     {
       "id": "T-ECA-001-RANDOM-REF-RACE",

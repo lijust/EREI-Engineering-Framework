@@ -2,6 +2,7 @@
   "schema_version": "1.0",
   "suite_id": "behavior-first-testing-v1",
   "artifact": "skills/behavior-first-testing",
+  "assurance_scope": "behavioral_runtime",
   "cases": [
     {
       "id": "T-BFT-001-REGRESSION-SLICE",

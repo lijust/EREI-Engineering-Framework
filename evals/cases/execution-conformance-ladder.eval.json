@@ -2,6 +2,7 @@
   "schema_version": "1.0",
   "suite_id": "execution-conformance-ladder-v1",
   "artifact": "skills/execution-conformance-ladder",
+  "assurance_scope": "behavioral_runtime",
   "cases": [
     {
       "id": "T-ECL-001-EXACT-SHELL",

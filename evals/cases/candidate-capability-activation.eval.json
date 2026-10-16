@@ -2,6 +2,7 @@
   "schema_version": "1.0",
   "suite_id": "candidate-capability-activation-v1",
   "artifact": "workflows/candidate-capability-adoption",
+  "assurance_scope": "behavioral_runtime",
   "cases": [
     {
       "id": "CCA-001-PRESENCE-IS-NOT-ACTIVATION",

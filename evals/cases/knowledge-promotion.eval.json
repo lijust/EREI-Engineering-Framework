@@ -2,6 +2,7 @@
   "schema_version": "1.0",
   "suite_id": "knowledge-promotion-v1",
   "artifact": "workflows/knowledge-promotion",
+  "assurance_scope": "behavioral_runtime",
   "cases": [
     {
       "id": "KP-001-REPEATED-GENERIC-GAP",

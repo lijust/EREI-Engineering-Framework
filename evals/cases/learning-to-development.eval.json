@@ -2,6 +2,7 @@
   "schema_version": "1.0",
   "suite_id": "learning-to-development-v1",
   "artifact": "workflows/learning-to-development",
+  "assurance_scope": "behavioral_runtime",
   "cases": [
     {
       "id": "LTD-001-REWORK-NOT-ACCURACY",

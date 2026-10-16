@@ -2,6 +2,7 @@
   "schema_version": "1.0",
   "suite_id": "impact-analysis-v1",
   "artifact": "skills/impact-analysis",
+  "assurance_scope": "behavioral_runtime",
   "cases": [
     {
       "id": "T-001-AUTH-TENANT",
