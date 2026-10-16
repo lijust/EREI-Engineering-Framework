@@ -17,7 +17,15 @@ SAFE_INHERITED_ENV = {
     "HTTPS_PROXY", "HTTP_PROXY", "NO_PROXY",
     "SSL_CERT_FILE", "SSL_CERT_DIR", "NODE_EXTRA_CA_CERTS",
 }
-ROUTING_SKILLS = {"skills/impact-analysis": "impact-analysis"}
+ROUTING_SKILLS = {
+    "skills/architecture-deepening-analysis": "architecture-deepening-analysis",
+    "skills/behavior-first-testing": "behavior-first-testing",
+    "skills/domain-language-modeling": "domain-language-modeling",
+    "skills/exclusive-claim-analysis": "exclusive-claim-analysis",
+    "skills/execution-conformance-ladder": "execution-conformance-ladder",
+    "skills/impact-analysis": "impact-analysis",
+    "skills/semantic-assurance-design": "semantic-assurance-design",
+}
 
 
 class CopilotExactTargetError(RuntimeError):
@@ -209,22 +217,37 @@ def _tool_request(value: Any, label: str) -> tuple[str, str]:
     return call_id, name
 
 
-def _skill_event_name(data: Any, allowed_skill_names: set[str]) -> str:
+def _skill_event_name(data: Any, allowed_skill_names: set[str], workspace: Path | None) -> str:
     payload = _object(data, "skill.invoked data")
     name = _text(payload.get("name"), "skill.invoked name")
     path = _text(payload.get("path"), "skill.invoked path").replace("\\", "/")
     if name not in allowed_skill_names:
         raise CopilotExactTargetError(f"unexpected skill.invoked name outside staged routing boundary: {name}")
-    expected_suffix = f"/.github/skills/{name}/SKILL.md"
-    if not (path == expected_suffix[1:] or path.endswith(expected_suffix)):
+    if workspace is None:
+        raise CopilotExactTargetError("skill.invoked requires the authenticated staged workspace")
+    relative = Path(".github") / "skills" / name / "SKILL.md"
+    staged = (workspace.resolve() / relative)
+    if not staged.is_file():
+        raise CopilotExactTargetError("the staged workspace skill contract is missing")
+    observed = Path(path)
+    if observed.is_absolute():
+        matched = observed.resolve() == staged.resolve()
+    else:
+        matched = path == relative.as_posix()
+    if not matched:
         raise CopilotExactTargetError(
             f"skill.invoked path does not resolve to the staged project skill: name={name} path={path}"
         )
     return name
 
 
-def parse_copilot_jsonl(stdout: str, *, allowed_skill_names: set[str] | None = None) -> dict[str, Any]:
+def parse_copilot_jsonl(
+    stdout: str, *,
+    allowed_skill_names: set[str] | None = None,
+    workspace: Path | None = None,
+) -> dict[str, Any]:
     allowed_skill_names = set() if allowed_skill_names is None else set(allowed_skill_names)
+    allowed_tool_names = {"skill"} if allowed_skill_names else set()
     final_messages: list[str] = []
     invoked_skills: list[str] = []
     skill_request_ids: set[str] = set()
@@ -253,8 +276,9 @@ def parse_copilot_jsonl(stdout: str, *, allowed_skill_names: set[str] | None = N
                 raise CopilotExactTargetError("assistant.message data.toolRequests must be an array")
             for request_index, request in enumerate(tool_requests or []):
                 call_id, name = _tool_request(request, f"assistant.message toolRequests[{request_index}]")
-                if name == "skill":
-                    skill_request_ids.add(call_id)
+                if name not in allowed_tool_names:
+                    raise CopilotExactTargetError(f"unauthorized Copilot tool request: {name}")
+                skill_request_ids.add(call_id)
             if isinstance(content, str) and content.strip() and not tool_requests:
                 final_messages.append(content.strip())
         elif event_type == "tool.execution_start":
@@ -264,8 +288,9 @@ def parse_copilot_jsonl(stdout: str, *, allowed_skill_names: set[str] | None = N
             arguments = payload.get("arguments")
             if arguments is not None and not isinstance(arguments, dict):
                 raise CopilotExactTargetError("tool.execution_start arguments must be an object when present")
-            if tool_name == "skill":
-                skill_start_ids.add(call_id)
+            if tool_name not in allowed_tool_names:
+                raise CopilotExactTargetError(f"unauthorized Copilot tool execution: {tool_name}")
+            skill_start_ids.add(call_id)
         elif event_type == "tool.execution_complete":
             payload = _object(data, "tool.execution_complete data")
             call_id = _text(payload.get("toolCallId"), "tool.execution_complete toolCallId")
@@ -276,7 +301,7 @@ def parse_copilot_jsonl(stdout: str, *, allowed_skill_names: set[str] | None = N
                 raise CopilotExactTargetError(f"duplicate tool.execution_complete for {call_id}")
             completions[call_id] = success
         elif event_type == "skill.invoked":
-            invoked_skills.append(_skill_event_name(data, allowed_skill_names))
+            invoked_skills.append(_skill_event_name(data, allowed_skill_names, workspace))
 
     observed_skill_tool_ids = skill_request_ids | skill_start_ids
     if observed_skill_tool_ids and not invoked_skills:
@@ -351,7 +376,7 @@ def invoke_copilot(
     if process.returncode != 0:
         raise CopilotExactTargetError(f"Copilot CLI exited {process.returncode}: {process.stderr.strip()[:1000]}")
     allowed = {expected_skill} if expected_skill is not None else set()
-    return parse_copilot_jsonl(process.stdout, allowed_skill_names=allowed)
+    return parse_copilot_jsonl(process.stdout, allowed_skill_names=allowed, workspace=workspace)
 
 
 def run_adapter(request: dict[str, Any], *, target_root: Path, model: str, copilot_bin: str, timeout: float) -> dict[str, Any]:

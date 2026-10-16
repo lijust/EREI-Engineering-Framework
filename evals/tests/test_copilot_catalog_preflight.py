@@ -42,6 +42,7 @@ class CopilotBehavioralCatalogPreflight(unittest.TestCase):
                         self.assertNotIn("/tests/", name)
         self.assertEqual(suites, 15)
         self.assertEqual(count, 74)
+        self.assertEqual(len(adapter.ROUTING_SKILLS), 7)
 
 
 if __name__ == "__main__":

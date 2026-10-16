@@ -66,6 +66,19 @@ class CopilotCliExactTargetTests(unittest.TestCase):
             },
         ]
 
+    def _create_staged_workspace(self, root: Path, skill_name="impact-analysis") -> Path:
+        staged = root / ".github" / "skills" / skill_name
+        staged.mkdir(parents=True, exist_ok=True)
+        (staged / "SKILL.md").write_text("POLICY", encoding="utf-8")
+        return root
+
+    def _parse_routing_events(self, text: str, skill_name="impact-analysis"):
+        with tempfile.TemporaryDirectory() as tmp:
+            workspace = self._create_staged_workspace(Path(tmp), skill_name)
+            return adapter.parse_copilot_jsonl(
+                text, allowed_skill_names={skill_name}, workspace=workspace
+            )
+
     def test_request_requires_blinded_ids_and_no_extra_fields(self):
         valid = self.request()
         self.assertEqual(adapter.validate_request(valid), valid)
@@ -149,7 +162,7 @@ class CopilotCliExactTargetTests(unittest.TestCase):
             self.final_event(),
         ])
         self.assertEqual(
-            adapter.parse_copilot_jsonl(stdout, allowed_skill_names={"impact-analysis"}),
+            self._parse_routing_events(stdout),
             {
                 "output": "Framework answer",
                 "metadata": {"risk": "L3"},
@@ -162,7 +175,7 @@ class CopilotCliExactTargetTests(unittest.TestCase):
         events = [event for event in events if event["type"] != "skill.invoked"]
         stdout = "\n".join(json.dumps(event) for event in [*events, self.final_event()])
         with self.assertRaisesRegex(adapter.CopilotExactTargetError, "authoritative skill.invoked"):
-            adapter.parse_copilot_jsonl(stdout, allowed_skill_names={"impact-analysis"})
+            self._parse_routing_events(stdout)
 
     def test_jsonl_parser_rejects_wrong_skill_name_or_path(self):
         wrong_name = "\n".join(json.dumps(event) for event in [
@@ -170,14 +183,14 @@ class CopilotCliExactTargetTests(unittest.TestCase):
             self.final_event(),
         ])
         with self.assertRaisesRegex(adapter.CopilotExactTargetError, "outside staged routing boundary"):
-            adapter.parse_copilot_jsonl(wrong_name, allowed_skill_names={"impact-analysis"})
+            self._parse_routing_events(wrong_name)
 
         wrong_path = "\n".join(json.dumps(event) for event in [
             *self.skill_events(path="/tmp/other/impact-analysis/SKILL.md"),
             self.final_event(),
         ])
         with self.assertRaisesRegex(adapter.CopilotExactTargetError, "does not resolve to the staged"):
-            adapter.parse_copilot_jsonl(wrong_path, allowed_skill_names={"impact-analysis"})
+            self._parse_routing_events(wrong_path)
 
     def test_jsonl_parser_rejects_failed_skill_completion_after_invocation(self):
         stdout = "\n".join(json.dumps(event) for event in [
@@ -185,7 +198,7 @@ class CopilotCliExactTargetTests(unittest.TestCase):
             self.final_event(),
         ])
         with self.assertRaisesRegex(adapter.CopilotExactTargetError, "execution failed"):
-            adapter.parse_copilot_jsonl(stdout, allowed_skill_names={"impact-analysis"})
+            self._parse_routing_events(stdout)
 
     def test_jsonl_parser_rejects_skill_invocation_outside_routing_mode(self):
         stdout = "\n".join(json.dumps(event) for event in [
@@ -206,7 +219,7 @@ class CopilotCliExactTargetTests(unittest.TestCase):
                 event["data"]["toolCallId"] = "other-id"
         stdout = "\n".join(json.dumps(event) for event in [*events, self.final_event()])
         with self.assertRaisesRegex(adapter.CopilotExactTargetError, "request/start correlation"):
-            adapter.parse_copilot_jsonl(stdout, allowed_skill_names={"impact-analysis"})
+            self._parse_routing_events(stdout)
 
     def test_jsonl_parser_rejects_ambiguous_final_answer_and_invalid_jsonl(self):
         payload = json.dumps({"output": "answer", "metadata": {"risk": "L1"}})
@@ -218,6 +231,46 @@ class CopilotCliExactTargetTests(unittest.TestCase):
             adapter.parse_copilot_jsonl(duplicated, allowed_skill_names=set())
         with self.assertRaisesRegex(adapter.CopilotExactTargetError, "invalid JSON"):
             adapter.parse_copilot_jsonl("not-json", allowed_skill_names=set())
+
+    def test_rejects_tools_not_in_active_mode_allowlist(self):
+        final = self.final_event(output="ok", risk="L1")
+        for name in ("shell", "write", "read", "ask_user"):
+            for event in (
+                {"type": "assistant.message", "data": {
+                    "content": "", "toolRequests": [{
+                        "toolCallId": "tool-1", "name": name, "arguments": {}
+                    }]
+                }},
+                {"type": "tool.execution_start", "data": {
+                    "toolCallId": "tool-1", "toolName": name, "arguments": {}
+                }},
+            ):
+                with self.subTest(tool=name, event=event["type"]):
+                    stdout = "\n".join(json.dumps(v) for v in [event, final])
+                    with self.assertRaisesRegex(adapter.CopilotExactTargetError, "unauthorized Copilot tool"):
+                        self._parse_routing_events(stdout)
+                    with self.assertRaisesRegex(adapter.CopilotExactTargetError, "unauthorized Copilot tool"):
+                        adapter.parse_copilot_jsonl(stdout, allowed_skill_names=set())
+
+    def test_skill_invocation_cannot_claim_staged_skill_from_other_workspace(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            workspace = self._create_staged_workspace(Path(tmp) / "legitimate")
+            other = self._create_staged_workspace(Path(tmp) / "untrusted")
+            for path in (
+                (other / ".github/skills/impact-analysis/SKILL.md").as_posix(),
+                "/untrusted/.github/skills/impact-analysis/SKILL.md",
+                "../.github/skills/impact-analysis/SKILL.md",
+            ):
+                with self.subTest(path=path):
+                    records = [*self.skill_events(path=path), self.final_event()]
+                    stdout = "\n".join(json.dumps(v) for v in records)
+                    with self.assertRaisesRegex(adapter.CopilotExactTargetError, "does not resolve to the staged"):
+                        adapter.parse_copilot_jsonl(stdout, allowed_skill_names={"impact-analysis"}, workspace=workspace)
+
+    def test_skill_invocation_requires_real_staged_workspace(self):
+        stdout = "\n".join(json.dumps(v) for v in [*self.skill_events(), self.final_event()])
+        with self.assertRaisesRegex(adapter.CopilotExactTargetError, "authenticated staged workspace"):
+            adapter.parse_copilot_jsonl(stdout, allowed_skill_names={"impact-analysis"})
 
     def test_child_environment_requires_dedicated_pat_and_drops_unrelated_secrets(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -290,7 +343,7 @@ class CopilotCliExactTargetTests(unittest.TestCase):
             stderr="",
         )
         with tempfile.TemporaryDirectory() as tmp:
-            workspace = Path(tmp)
+            workspace = self._create_staged_workspace(Path(tmp))
             with mock.patch.dict(os.environ, {"PATH": "/safe/bin", "COPILOT_GITHUB_TOKEN": "token"}, clear=True):
                 with mock.patch.object(adapter.subprocess, "run", return_value=completed) as run:
                     result = adapter.invoke_copilot(
