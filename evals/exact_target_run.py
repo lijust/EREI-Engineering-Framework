@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Execute Framework evals against a genuine external target adapter and retain bound evidence."""
+"""Execute behavioral Framework evals against an independent adapter and retain bound evidence."""
 from __future__ import annotations
 
 import argparse
@@ -112,6 +112,8 @@ def run_suites(
         errors = runner.validate_suite(data, str(path))
         if errors:
             raise ExactTargetRunError("; ".join(errors))
+        if not runner.suite_required_for_level(data, "exact_target_runtime"):
+            continue
         for case in data["cases"]:
             request = {
                 "protocol_version": "1.0",
@@ -150,6 +152,9 @@ def run_suites(
                 "independent_runtime": True,
                 "evidence_ref": f"exact-target-run:{manifest_relpath}#{data['suite_id']}/{case['id']}",
             })
+
+    if not executions:
+        raise ExactTargetRunError("no behavioral_runtime eval cases found for exact-target execution")
 
     manifest = {
         "schema_version": 1,

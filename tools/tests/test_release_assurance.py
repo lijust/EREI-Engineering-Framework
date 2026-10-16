@@ -238,6 +238,7 @@ class ReleaseAssuranceTests(unittest.TestCase):
             "schema_version": "1.0",
             "suite_id": "suite",
             "artifact": "task-learning",
+            "assurance_scope": "behavioral_runtime",
             "cases": [{
                 "id": "case",
                 "input": {"prompt": "test"},

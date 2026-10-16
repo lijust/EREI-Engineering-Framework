@@ -89,7 +89,7 @@ class StableReadinessTests(unittest.TestCase):
 class ReleaseScopeReadinessTests(unittest.TestCase):
     class Runner:
         @staticmethod
-        def _expected_cases(paths):
+        def _expected_cases(paths, minimum_level="harness_smoke"):
             result = set()
             for raw in paths:
                 path = Path(raw)
@@ -155,6 +155,7 @@ def validate_suite(data, path):
             "schema_version": "1.0",
             "suite_id": "task-learning-review-v1",
             "artifact": "task-learning",
+            "assurance_scope": "behavioral_runtime",
             "cases": [
                 {"id": "TLR-001", "input": {"prompt": "x"}, "expectations": [{"type": "output_contains_all", "values": ["x"]}]},
                 {"id": "TLR-002", "input": {"prompt": "y"}, "expectations": [{"type": "output_contains_all", "values": ["y"]}]},
@@ -164,6 +165,7 @@ def validate_suite(data, path):
             "schema_version": "1.0",
             "suite_id": "candidate-capability-activation-v1",
             "artifact": "capability-activation",
+            "assurance_scope": "behavioral_runtime",
             "cases": [
                 {"id": "CCA-001", "input": {"prompt": "a"}, "expectations": [{"type": "output_contains_all", "values": ["a"]}]},
             ],
@@ -172,6 +174,7 @@ def validate_suite(data, path):
             "schema_version": "1.0",
             "suite_id": "unrelated-v1",
             "artifact": "other",
+            "assurance_scope": "behavioral_runtime",
             "cases": [
                 {"id": "OTH-001", "input": {"prompt": "z"}, "expectations": [{"type": "output_contains_all", "values": ["z"]}]},
             ],

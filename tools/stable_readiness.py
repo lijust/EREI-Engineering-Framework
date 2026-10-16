@@ -137,7 +137,7 @@ def _expected_cases_for_release(repo_root: Path, runner, target_ref: str) -> tup
         raise StableReadinessError(f"invalid target-bound VNext release scope: {exc}") from exc
 
     if scope is None or summary is None:
-        expected = runner._expected_cases([str(repo_root / "evals" / "cases")])
+        expected = runner._expected_cases([str(repo_root / "evals" / "cases")], minimum_level="exact_target_runtime")
         return expected, {
             "mode": "all_published_evals",
             "scope_path": None,

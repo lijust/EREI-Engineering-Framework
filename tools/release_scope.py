@@ -172,6 +172,8 @@ def validate_scope(repo_root: Path, value: dict) -> dict:
             raise ReleaseScopeError(
                 f"eval suite identity mismatch for {path}: scope={suite_id!r} file={suite.get('suite_id')!r}"
             )
+        if suite.get("assurance_scope") != "behavioral_runtime":
+            raise ReleaseScopeError(f"frozen Stable scope cannot require a harness_only suite: {path}")
         cases = suite.get("cases")
         if not isinstance(cases, list) or not cases:
             raise ReleaseScopeError(f"eval suite has no cases: {path}")

@@ -69,6 +69,7 @@ Each `*.eval.json` contains:
 - `schema_version`
 - `suite_id`
 - `artifact`
+- `assurance_scope` (`behavioral_runtime` or `harness_only`)
 - `cases[]`
 
 Each case contains:
@@ -118,3 +119,7 @@ Migration policy:
 The runner is intentionally CLI-first and returns stable exit codes so GitHub Actions or any other CI system can call it later without changing the canonical eval format.
 
 Adding a CI workflow is a separate release/integration decision.
+
+## Assurance-level separation
+
+Published suites currently contain 75 cases (74 behavioral and one harness-only). The harness-only smoke case verifies the evaluator at reference-contract level, never through independent exact-target runtime. `coverage --minimum-level exact_target_runtime` excludes harness-only cases from the required set and reports unexpected evidence rows rather than allowing them to satisfy a Stable gate.

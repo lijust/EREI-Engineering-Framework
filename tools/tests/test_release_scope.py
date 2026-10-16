@@ -64,6 +64,7 @@ def validate_suite(data, path):
             "schema_version": "1.0",
             "suite_id": "task-learning-review-v1",
             "artifact": "task-learning",
+            "assurance_scope": "behavioral_runtime",
             "cases": [
                 {"id": "TLR-001", "input": {"prompt": "x"}, "expectations": [{"type": "output_contains_all", "values": ["x"]}]}
             ]
@@ -95,6 +96,18 @@ def validate_suite(data, path):
             self.assertEqual(result["status"], "VALID")
             self.assertEqual(result["required_eval_case_count"], 1)
             self.assertEqual(result["required_eval_cases"], ["task-learning-review-v1/TLR-001"])
+        finally:
+            temp.cleanup()
+
+    def test_harness_only_suite_cannot_be_in_stable_release_scope(self):
+        temp, root = self.setup_root()
+        try:
+            path = root / "evals" / "cases" / "task-learning-review.eval.json"
+            suite = json.loads(path.read_text(encoding="utf-8"))
+            suite["assurance_scope"] = "harness_only"
+            path.write_text(json.dumps(suite), encoding="utf-8")
+            with self.assertRaisesRegex(release_scope.ReleaseScopeError, "harness_only"):
+                release_scope.validate_scope(root, self.scope())
         finally:
             temp.cleanup()
 

@@ -2,6 +2,7 @@
   "schema_version": "1.0",
   "suite_id": "architecture-deepening-analysis-v1",
   "artifact": "skills/architecture-deepening-analysis",
+  "assurance_scope": "behavioral_runtime",
   "cases": [
     {
       "id": "T-ADA-001-REPEATED-HOTSPOT",
