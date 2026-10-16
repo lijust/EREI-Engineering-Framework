@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -129,6 +130,79 @@ def validate_enforcement(value: dict, *, expected_target: str | None = None) -> 
         "fallback_equivalent_verified": fallback_equivalent,
         "stable_enforcement_satisfied": stable_enforcement_satisfied,
         "equivalence_target_ref": fallback["equivalence_target_ref"],
+    }
+
+
+def verify_live_server_enforcement(value: dict, *, token: str | None = None) -> dict:
+    """Authenticate declared GitHub server protection instead of trusting JSON booleans.
+
+    This verifier deliberately supports classic protection only. Ruleset-only
+    configurations need a separate independently verified ruleset policy.
+    GitHub authentication/permissions failures are hard blockers, not passes.
+    """
+    summary = validate_enforcement(value)
+    if not summary["server_enforcement_satisfied"]:
+        raise EnforcementError("server branch/status protection is not asserted in this record")
+    token = token or os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")
+    if not token:
+        raise EnforcementError("live server enforcement requires authenticated GitHub API access")
+    api = f"https://api.github.com/repos/{value['repository']}"
+    branch = value["main_branch"]
+    try:
+        branch_info = github_review_provenance._github_json(f"{api}/branches/{branch}", token)
+        protection = github_review_provenance._github_json(f"{api}/branches/{branch}/protection", token)
+    except github_review_provenance.ReviewProvenanceError as exc:
+        raise EnforcementError(f"unable to authenticate live branch protection: {exc}") from exc
+
+    if not isinstance(branch_info, dict) or branch_info.get("protected") is not True:
+        raise EnforcementError("GitHub main branch is not live-protected")
+    if not isinstance(protection, dict):
+        raise EnforcementError("GitHub branch-protection response is not an object")
+
+    admin = protection.get("enforce_admins")
+    if not isinstance(admin, dict) or admin.get("enabled") is not True:
+        raise EnforcementError("branch protection does not enforce restrictions on administrators")
+    checks = protection.get("required_status_checks")
+    if not isinstance(checks, dict) or checks.get("strict") is not True:
+        raise EnforcementError("required status checks are absent or not strict")
+    required = checks.get("checks")
+    if not isinstance(required, list):
+        raise EnforcementError("required status checks lack authenticated GitHub-App bindings")
+    # The exact Actions job is named assurance in assurance-gate.yml.
+    # The standard GitHub Actions App ID binds the required check source.
+    if not any(
+        isinstance(item, dict)
+        and item.get("context") == "assurance"
+        and item.get("app_id") == 15368
+        for item in required
+    ):
+        raise EnforcementError("Framework assurance check is not required from GitHub Actions")
+
+    reviews = protection.get("required_pull_request_reviews")
+    if (
+        not isinstance(reviews, dict)
+        or type(reviews.get("required_approving_review_count")) is not int
+        or reviews["required_approving_review_count"] < 1
+        or reviews.get("dismiss_stale_reviews") is not True
+    ):
+        raise EnforcementError("stale-dismissing pull-request approval protection is not enforced")
+    bypass = reviews.get("bypass_pull_request_allowances")
+    if isinstance(bypass, dict) and any(bypass.get(k) for k in ("users", "teams", "apps")):
+        raise EnforcementError("pull-request approval has explicit bypass actors")
+    for key in ("allow_force_pushes", "allow_deletions"):
+        setting = protection.get(key)
+        if isinstance(setting, dict) and setting.get("enabled") is True:
+            raise EnforcementError(f"branch protection allows {key}")
+
+    return {
+        "status": "verified_live_server_enforcement",
+        "repository": value["repository"],
+        "branch": branch,
+        "required_check": "assurance",
+        "github_app_id": 15368,
+        "strict_status_checks": True,
+        "administrator_enforcement": True,
+        "stale_review_dismissal": True,
     }
 
 
