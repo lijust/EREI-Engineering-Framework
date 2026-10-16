@@ -15,6 +15,11 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
+# A governed release evidence commit may contain only the three retained files.
+# Stop Python imports from creating untracked tools/__pycache__ in the carrier.
+# This must run before importing any local release validation modules.
+sys.dont_write_bytecode = True
+
 try:
     from . import exact_target_evidence, exact_target_package_identity, release_target, release_scope
 except ImportError:
