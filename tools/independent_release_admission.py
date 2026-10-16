@@ -49,8 +49,11 @@ def _git(repo: Path, *args: str) -> bytes:
     # before probing the repository for unauthorized replacement mechanisms.
     clean_env = {key: value for key, value in os.environ.items() if not key.startswith("GIT_")}
     clean_env["GIT_NO_REPLACE_OBJECTS"] = "1"
+    # Git commit-graph caches include parent/tree IDs. A writable checkout may
+    # contain a checksum-valid but deliberately forged graph, so all provenance
+    # reads must resolve the raw Git objects, not cached commit-graph metadata.
     result = subprocess.run(
-        ["git", "-C", str(repo), *args],
+        ["git", "-C", str(repo), "-c", "core.commitGraph=false", *args],
         capture_output=True, check=False, env=clean_env,
     )
     if result.returncode:
