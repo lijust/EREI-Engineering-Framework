@@ -246,8 +246,8 @@ class ExactTargetEvidenceImportTests(unittest.TestCase):
         original_evidence = (self.package / "execution-evidence.json").read_bytes()
         real_validate = import_exact_target_evidence.validate_package
 
-        def mutate_after_validation(*args):
-            result = real_validate(*args)
+        def mutate_after_validation(*args, **kwargs):
+            result = real_validate(*args, **kwargs)
             (self.package / "exact-target-run.json").write_bytes(b"tampered after validation")
             (self.package / "runtime-identity.json").write_bytes(b"tampered after validation")
             (self.package / "execution-evidence.json").write_bytes(b"tampered after validation")
