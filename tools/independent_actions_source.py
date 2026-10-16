@@ -172,7 +172,10 @@ def verify_source(
     job = rows[0]
     if not isinstance(job, dict) or (
         job.get("name") != policy["required_job"]
-        or job.get("run_id") != run_id or job.get("run_attempt") != run_attempt
+        or job.get("run_id") != run_id
+        # The per-attempt URL binds the attempt; GitHub's documented job
+        # representation does not always include a run_attempt field.
+        or ("run_attempt" in job and job["run_attempt"] != run_attempt)
         or job.get("head_sha") != target_ref
         or job.get("status") != "completed" or job.get("conclusion") != "success"
     ):
