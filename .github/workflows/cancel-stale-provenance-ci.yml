@@ -1,0 +1,35 @@
+name: Cancel stale provenance CI
+
+on:
+  push:
+    branches:
+      - ops/cancel-stale-provenance-ci-20261016
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  cancel:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Cancel superseded provenance runs only
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          TARGET_BRANCH: release-control-authenticated-provenance-20261016
+          KEEP_SHA: d1de204a0a36535a41a199272c6219ba7deed8e6
+        run: |
+          set -euo pipefail
+          for status in queued in_progress; do
+            gh api "repos/$REPO/actions/runs?status=$status&per_page=100" \
+              --jq '.workflow_runs[] |
+                select(.head_branch == env.TARGET_BRANCH and .head_sha != env.KEEP_SHA) | .id' |
+            while read -r run_id; do
+              [ -n "$run_id" ] || continue
+              echo "cancel stale run $run_id"
+              gh api --method POST "repos/$REPO/actions/runs/$run_id/cancel" >/dev/null || true
+            done
+          done
