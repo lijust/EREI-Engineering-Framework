@@ -334,6 +334,20 @@ class AdmissionIntegrationTests(unittest.TestCase):
                 with self.assertRaisesRegex(admission.AdmissionError, "authoritative schema"):
                     self._verify()
 
+    def test_utf16_frozen_manifest_cannot_be_admitted(self):
+        original = self._git("show", f"{self.carrier}:releases/VNEXT_TARGET.json")
+        self._git("reset", "--hard", self.target)
+        (self.repo / "releases" / "VNEXT_TARGET.json").write_bytes(original.encode("utf-16"))
+        self._git("add", "releases/VNEXT_TARGET.json")
+        self._git("commit", "-q", "-m", "UTF16 target test")
+        self.carrier = self._git("rev-parse", "HEAD")
+        self.carrier_tree = self._git("rev-parse", f"{self.carrier}^{{tree}}")
+        self.data["carrier_ref"] = self.carrier
+        self.data["carrier_tree"] = self.carrier_tree
+        self._save_packet()
+        with self.assertRaisesRegex(admission.AdmissionError, "invalid frozen target"):
+            self._verify()
+
     def test_carrier_with_extra_file_is_rejected(self):
         self._write("unexpected.txt", "extra mutation\n")
         self._git("add", "-A")
