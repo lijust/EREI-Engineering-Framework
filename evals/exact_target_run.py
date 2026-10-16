@@ -53,6 +53,28 @@ def _command_digest(command: str) -> str:
     return hashlib.sha256(command.encode("utf-8")).hexdigest()
 
 
+def _blinded_request(suite: dict[str, Any], case: dict[str, Any]) -> dict[str, Any]:
+    """Keep scorer expectations/tags and enumerable case identifiers outside adapter input.
+
+    Unpredictable one-use IDs are deliberately preferred to unsalted hashes
+    of published suite/case names (which are trivial to reverse by enumeration).
+    Canonical original IDs stay solely in trusted harness evidence.
+    """
+    artifact = _text(suite.get("artifact"), "artifact")
+    case_input = case.get("input")
+    context = case.get("context", {})
+    if not isinstance(case_input, dict) or not isinstance(context, dict):
+        raise ExactTargetRunError("case input/context must be objects")
+    return {
+        "protocol_version": "2.0",
+        "suite_id": f"blind-suite-{secrets.token_hex(8)}",
+        "case_id": f"blind-case-{secrets.token_hex(8)}",
+        "artifact": artifact,
+        "input": case_input,
+        "context": context,
+    }
+
+
 def _validate_adapter_command(command: str) -> str:
     command = _text(command, "adapter command")
     normalized = command.replace("\\", "/").lower()
@@ -115,15 +137,7 @@ def run_suites(
         if not runner.suite_required_for_level(data, "exact_target_runtime"):
             continue
         for case in data["cases"]:
-            request = {
-                "protocol_version": "1.0",
-                "suite_id": data["suite_id"],
-                "case_id": case["id"],
-                "artifact": data["artifact"],
-                "input": case["input"],
-                "context": case.get("context", {}),
-                "tags": case.get("tags", []),
-            }
+            request = _blinded_request(data, case)
             try:
                 response = runner.call_adapter(command, request, timeout, case["expectations"])
                 scorer_results = [runner.score(expectation, response) for expectation in case["expectations"]]
