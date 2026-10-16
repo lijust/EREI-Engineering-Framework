@@ -218,6 +218,11 @@ class ReleaseAssuranceTests(unittest.TestCase):
                  release_assurance.github_review_provenance,
                  "verify_artifact_review",
                  return_value={"status": "verified"},
+             ), \
+             mock.patch.object(
+                 release_assurance.github_actions_artifact_provenance,
+                 "verify_retained_release_provenance",
+                 return_value={"authenticated": True},
              ):
             yield
 
@@ -403,14 +408,32 @@ class ReleaseAssuranceTests(unittest.TestCase):
                 with self.assertRaisesRegex(release_assurance.ReleaseError, "architecture release approval"):
                     release_assurance.validate_manifest(self.stable(), repo_root=root)
 
+    def test_v2_stable_rejects_missing_authenticated_actions_provenance(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.write_stable_root(root)
+            with self.stable_patches(), \
+                 mock.patch.object(release_assurance, "_load_runner", return_value=self.FakeRunner), \
+                 mock.patch.object(release_assurance.exact_target_evidence, "validate_binding", return_value={}), \
+                 mock.patch.object(
+                     release_assurance.github_actions_artifact_provenance,
+                     "verify_retained_release_provenance",
+                     side_effect=release_assurance.github_actions_artifact_provenance.ActionsProvenanceError("artifact expired or missing"),
+                 ):
+                with self.assertRaisesRegex(release_assurance.ReleaseError, "Actions provenance verification failed"):
+                    release_assurance.validate_manifest(self.stable(), repo_root=root)
+
     def test_v2_stable_counts_validated_exact_target_bindings_and_approvals(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             self.write_stable_root(root)
             with self.stable_patches(), \
                  mock.patch.object(release_assurance, "_load_runner", return_value=self.FakeRunner), \
-                 mock.patch.object(release_assurance.exact_target_evidence, "validate_binding", return_value={}):
+                 mock.patch.object(release_assurance.exact_target_evidence, "validate_binding", return_value={}) as binding:
                 result = release_assurance.validate_manifest(self.stable(), repo_root=root)
+            self.assertEqual(binding.call_count, 1)
+            self.assertEqual(binding.call_args.kwargs["history_repo"], root)
+            self.assertEqual(binding.call_args.kwargs["history_ref"], "HEAD")
             self.assertEqual(result["exact_target_bindings_validated"], 1)
             self.assertEqual(result["approval_records_validated"], 2)
             self.assertEqual(result["release_scope_id"], "task-learning-v2-core")

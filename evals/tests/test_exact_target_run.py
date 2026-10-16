@@ -52,6 +52,9 @@ class ExactTargetRunTests(unittest.TestCase):
                 run_id="ETR-20260907T120000Z-ABCDEF12",
             )
             self.assertEqual(manifest["executions"][0]["status"], "pass")
+            self.assertEqual(manifest["schema_version"], 2)
+            self.assertEqual(manifest["executions"][0]["response"], {"output": "hello from external runtime"})
+            self.assertIs(manifest["executions"][0]["adapter_error"], False)
             self.assertEqual(evidence["schema_version"], 2)
             row = evidence["executions"][0]
             self.assertEqual(row["assurance_level"], "exact_target_runtime")
@@ -100,6 +103,15 @@ class ExactTargetRunTests(unittest.TestCase):
                     produced_at="2026-09-07T12:00:00Z",
                     run_id="ETR-20260907T120000Z-ABCDEF12",
                 )
+
+    def test_rejects_nested_and_reserved_exact_target_manifest_paths(self):
+        for path in (
+            "evals/exact-target-runs/sub/attempt.json",
+            "evals/exact-target-runs/attempt.identity.json",
+        ):
+            with self.subTest(path=path):
+                with self.assertRaisesRegex(exact_target_run.ExactTargetRunError, "single JSON filename"):
+                    exact_target_run._validate_manifest_path(path)
 
     def test_rejects_reference_oracle_as_exact_target(self):
         with self.assertRaisesRegex(exact_target_run.ExactTargetRunError, "reference/mock"):

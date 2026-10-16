@@ -1,12 +1,12 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://erei-framework.local/evals/exact-target-run.schema.json",
-  "title": "EREI Exact Target Runtime Eval Run Manifest V1",
+  "title": "EREI Exact Target Runtime Eval Run Manifest V2",
   "type": "object",
   "additionalProperties": false,
   "required": ["schema_version", "run_id", "produced_at", "framework_revision", "adapter", "runtime", "adapter_command_digest", "executions"],
   "properties": {
-    "schema_version": {"const": 1},
+    "schema_version": {"const": 2},
     "run_id": {"type": "string", "pattern": "^ETR-[0-9]{8}T[0-9]{6}Z-[A-F0-9]{8}$"},
     "produced_at": {"type": "string", "format": "date-time"},
     "framework_revision": {"type": "string", "pattern": "^[a-f0-9]{40}$"},
@@ -42,13 +42,49 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["suite_id", "case_id", "status", "response_digest"],
+        "required": ["suite_id", "case_id", "status", "response_digest", "response", "adapter_error"],
         "properties": {
           "suite_id": {"type": "string", "minLength": 1},
           "case_id": {"type": "string", "minLength": 1},
-          "status": {"enum": ["pass", "fail", "inconclusive"]},
-          "response_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
-        }
+          "status": {"enum": ["pass", "fail"]},
+          "response_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+          "adapter_error": {"type": "boolean"},
+          "response": {
+            "type": ["object", "null"],
+            "additionalProperties": false,
+            "required": ["output"],
+            "properties": {
+              "output": {},
+              "metadata": {"type": "object"},
+              "trace": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "type": {"type": "string"},
+                    "name": {"type": "string", "minLength": 1}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "allOf": [
+          {
+            "if": {"properties": {"adapter_error": {"const": true}}, "required": ["adapter_error"]},
+            "then": {
+              "properties": {
+                "status": {"const": "fail"},
+                "response": {"type": "null"}
+              }
+            },
+            "else": {
+              "properties": {
+                "response": {"type": "object"}
+              }
+            }
+          }
+        ]
       }
     }
   }

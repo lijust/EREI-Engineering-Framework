@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://erei-framework.local/evals/exact-target-package-identity.schema.json",
+  "title": "EREI Exact Target Evidence Package Identity V2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "repository",
+    "target_id",
+    "framework_ref",
+    "target_tree",
+    "release_carrier_ref",
+    "adapter_id",
+    "adapter_revision",
+    "runtime_id",
+    "runtime_version",
+    "requested_cli_version",
+    "requested_cli_integrity",
+    "model",
+    "github_run_id",
+    "github_run_attempt",
+    "run_id",
+    "run_manifest_path",
+    "execution_evidence_path",
+    "runtime_identity_path",
+    "run_manifest_sha256",
+    "execution_evidence_sha256"
+  ],
+  "properties": {
+    "schema_version": {"const": 2},
+    "repository": {"type": "string", "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"},
+    "target_id": {"type": "string", "minLength": 1},
+    "framework_ref": {"type": "string", "pattern": "^[a-f0-9]{40}$"},
+    "target_tree": {"type": "string", "pattern": "^[a-f0-9]{40}$"},
+    "release_carrier_ref": {"type": "string", "pattern": "^[a-f0-9]{40}$"},
+    "adapter_id": {"type": "string", "minLength": 1},
+    "adapter_revision": {"type": "string", "pattern": "^[a-f0-9]{40}$"},
+    "runtime_id": {"type": "string", "minLength": 1},
+    "runtime_version": {"type": "string", "minLength": 1},
+    "requested_cli_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:[-.][0-9A-Za-z.-]+)?$"
+    },
+    "requested_cli_integrity": {
+      "type": "string",
+      "pattern": "^sha512-[A-Za-z0-9+/]{86}==$"
+    },
+    "model": {"type": "string", "minLength": 1},
+    "github_run_id": {"type": "integer", "minimum": 1},
+    "github_run_attempt": {"type": "integer", "minimum": 1},
+    "run_id": {"type": "string", "pattern": "^ETR-[0-9]{8}T[0-9]{6}Z-[A-F0-9]{8}$"},
+    "run_manifest_path": {
+      "type": "string",
+      "pattern": "^evals/exact-target-runs/[^/]+\\.json$",
+      "not": {"pattern": "\\.identity\\.json$"}
+    },
+    "execution_evidence_path": {
+      "type": "string",
+      "pattern": "^evals/EXECUTION_EVIDENCE\\.[^/]+\\.json$"
+    },
+    "runtime_identity_path": {
+      "type": "string",
+      "pattern": "^evals/exact-target-runs/[^/]+\\.identity\\.json$"
+    },
+    "run_manifest_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "execution_evidence_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+  }
+}
