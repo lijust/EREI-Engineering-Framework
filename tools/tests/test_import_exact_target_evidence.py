@@ -1,4 +1,7 @@
 import json
+import os
+import shutil
+import sys
 import subprocess
 import tempfile
 import unittest
@@ -183,6 +186,23 @@ class ExactTargetEvidenceImportTests(unittest.TestCase):
         (self.package / "runtime-identity.json").write_text(
             json.dumps(identity, indent=2, sort_keys=True) + "\n", encoding="utf-8"
         )
+
+    def test_importer_cli_does_not_generate_sibling_bytecode(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            copied = Path(temporary) / "tools"
+            shutil.copytree(
+                ROOT / "tools",
+                copied,
+                ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
+            )
+            env = dict(os.environ)
+            env.pop("PYTHONDONTWRITEBYTECODE", None)
+            process = subprocess.run(
+                [sys.executable, str(copied / "import_exact_target_evidence.py"), "--help"],
+                text=True, capture_output=True, check=False, env=env
+            )
+            self.assertEqual(process.returncode, 0, process.stderr)
+            self.assertEqual(list(copied.rglob("*.pyc")), [])
 
     def test_valid_package_imports_all_three_governed_files_then_binds_committed_history(self):
         result = import_exact_target_evidence.import_package(self.repo, self.package)
