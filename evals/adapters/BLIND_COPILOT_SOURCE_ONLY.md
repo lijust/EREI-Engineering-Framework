@@ -2,7 +2,7 @@
 
 This adaptation rebases the standalone CLI adapter and its simulated tests from historical PR #42 onto the current Framework after PR #58. It does **not** authorize or run Copilot, install packages, import evidence, move Stable/RC pins, or imply release readiness.
 
-The external adapter request contains only artifact, task input/context, protocol version and **unpredictable per-invocation opaque IDs**. Scorer expectations, case tags and canonical suite/case identities stay in the trusted harness. The adapter itself rejects non-blinded requests and excludes test/eval material from its model context.
+The external adapter request explicitly uses **protocol version 2.0**, because replacing canonical V1 suite/case IDs with blind randomized IDs is a breaking transport change. Published V1 reference adapter compatibility is unchanged; this `exact_target_run.py` independent-runtime surface uses only V2. It contains only artifact, task input/context, protocol version and **unpredictable per-invocation opaque IDs**. Scorer expectations, case tags and canonical suite/case identities stay in the trusted harness. The adapter itself rejects non-blinded requests and excludes test/eval material from its model context.
 
 **Current catalog:** 16 suites / 75 reference cases; 74 behavioral external cases; one `harness_only` case.
 

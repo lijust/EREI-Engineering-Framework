@@ -31,6 +31,7 @@ class BlindExternalTransportTests(unittest.TestCase):
         a = exact_target_run._blinded_request(suite, suite["cases"][0])
         b = exact_target_run._blinded_request(suite, suite["cases"][0])
         self.assertEqual(set(a), {"protocol_version", "suite_id", "case_id", "artifact", "input", "context"})
+        self.assertEqual(a["protocol_version"], "2.0")
         self.assertRegex(a["suite_id"], r"^blind-suite-[0-9a-f]{16}$")
         self.assertRegex(a["case_id"], r"^blind-case-[0-9a-f]{16}$")
         self.assertNotEqual(a["suite_id"], b["suite_id"])
@@ -51,6 +52,7 @@ class BlindExternalTransportTests(unittest.TestCase):
                 "import json,sys\n"
                 "r=json.loads(sys.stdin.read())\n"
                 "assert set(r)=={'protocol_version','suite_id','case_id','artifact','input','context'}\n"
+                "assert r['protocol_version']=='2.0'\n"
                 "assert r['suite_id'].startswith('blind-suite-')\n"
                 "assert r['case_id'].startswith('blind-case-')\n"
                 "assert 'L3' not in json.dumps(r)\n"

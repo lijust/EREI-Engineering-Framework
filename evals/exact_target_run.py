@@ -66,7 +66,7 @@ def _blinded_request(suite: dict[str, Any], case: dict[str, Any]) -> dict[str, A
     if not isinstance(case_input, dict) or not isinstance(context, dict):
         raise ExactTargetRunError("case input/context must be objects")
     return {
-        "protocol_version": "1.0",
+        "protocol_version": "2.0",
         "suite_id": f"blind-suite-{secrets.token_hex(8)}",
         "case_id": f"blind-case-{secrets.token_hex(8)}",
         "artifact": artifact,

@@ -12,7 +12,7 @@ from evals.adapters import copilot_cli_exact_target as adapter
 class CopilotCliExactTargetTests(unittest.TestCase):
     def request(self, artifact="skills/example"):
         return {
-            "protocol_version": "1.0",
+            "protocol_version": "2.0",
             "suite_id": "blind-suite-0123456789abcdef",
             "case_id": "blind-case-fedcba9876543210",
             "artifact": artifact,
@@ -82,6 +82,8 @@ class CopilotCliExactTargetTests(unittest.TestCase):
     def test_request_requires_blinded_ids_and_no_extra_fields(self):
         valid = self.request()
         self.assertEqual(adapter.validate_request(valid), valid)
+        with self.assertRaisesRegex(adapter.CopilotExactTargetError, "protocol_version"):
+            adapter.validate_request(dict(valid, protocol_version="1.0"))
         bad = dict(valid, tags=["L3"])
         with self.assertRaisesRegex(adapter.CopilotExactTargetError, "exactly"):
             adapter.validate_request(bad)

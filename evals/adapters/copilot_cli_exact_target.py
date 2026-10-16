@@ -4,7 +4,7 @@ import argparse, json, os, re, subprocess, sys, tempfile
 from pathlib import Path
 from typing import Any
 
-PROTOCOL_VERSION = "1.0"
+PROTOCOL_VERSION = "2.0"
 DEFAULT_MODEL = "gpt-5.4"
 MAX_ARTIFACT_BYTES = 131072
 ALLOWED_PREFIXES = ("skills/", "workflows/", "schemas/")
