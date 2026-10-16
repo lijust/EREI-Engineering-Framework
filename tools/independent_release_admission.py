@@ -1,0 +1,277 @@
+#!/usr/bin/env python3
+"""Candidate-only independent two-party SSH signature admission for frozen VNext carriers.
+
+IMPORTANT: This checks signatures and exact Git objects. It does NOT establish
+server branch protection, independently audited trusted-code execution, authentic
+GitHub Actions, equivalent enforcement or Stable V2 eligibility.
+"""
+from __future__ import annotations
+
+import argparse
+import base64
+import hashlib
+import json
+import re
+import shutil
+import subprocess
+import sys
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+from typing import Any
+
+REPOSITORY = "lijust/EREI-Engineering-Framework"
+PURPOSE = "erei-framework-v2-trusted-carrier-admission"
+NAMESPACE = "erei-framework-admission@erei.invalid"
+SHA40 = re.compile(r"^[0-9a-f]{40}$")
+SHA256 = re.compile(r"^[0-9a-f]{64}$")
+TARGET_ID = re.compile(r"^vnext-rc[1-9][0-9]*$")
+PUBLIC_KEY = re.compile(r"^ssh-ed25519 ([A-Za-z0-9+/]+={0,2})$")
+ROLES = {
+    "release-owner": "release-owner@erei.invalid",
+    "independent-security": "independent-security@erei.invalid",
+}
+FIELDS = {
+    "schema_version", "purpose", "repository", "target_id", "target_ref",
+    "target_tree", "carrier_ref", "carrier_tree", "scope_sha256",
+    "source_assurance", "issued_at", "expires_at",
+}
+MAX_PACKET_BYTES = 32 * 1024
+
+
+class AdmissionError(RuntimeError):
+    pass
+
+
+def _git(repo: Path, *args: str) -> bytes:
+    result = subprocess.run(
+        ["git", "-C", str(repo), *args], capture_output=True, check=False
+    )
+    if result.returncode:
+        raise AdmissionError("unavailable or inconsistent exact Git object")
+    return result.stdout
+
+
+def _sha(value: Any, label: str) -> str:
+    if not isinstance(value, str) or not SHA40.fullmatch(value):
+        raise AdmissionError(f"{label} must be exact lowercase 40-hex commit/tree")
+    return value
+
+
+def _sha256(value: Any, label: str) -> str:
+    if not isinstance(value, str) or not SHA256.fullmatch(value):
+        raise AdmissionError(f"{label} must be lowercase SHA-256")
+    return value
+
+
+def _timestamp(value: Any, label: str) -> datetime:
+    if not isinstance(value, str) or not value.endswith("Z"):
+        raise AdmissionError(f"{label} must be UTC RFC3339 ending in Z")
+    try:
+        timestamp = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise AdmissionError(f"{label} is not an RFC3339 timestamp") from exc
+    if timestamp.utcoffset() != timedelta(0):
+        raise AdmissionError(f"{label} must be UTC")
+    return timestamp
+
+
+def _external_folder(repo: Path, folder: Path, label: str) -> Path:
+    root = repo.resolve(strict=True)
+    try:
+        original = folder.absolute()
+        resolved = original.resolve(strict=True)
+    except OSError as exc:
+        raise AdmissionError(f"{label} is unavailable") from exc
+    if original != resolved or not resolved.is_dir():
+        raise AdmissionError(f"{label} must be an existing non-symlink directory")
+    if resolved == root or root in resolved.parents:
+        raise AdmissionError(f"{label} must be outside the Git worktree")
+    return resolved
+
+
+def _single_file(path: Path, max_size: int = MAX_PACKET_BYTES) -> bytes:
+    if path.is_symlink() or not path.is_file():
+        raise AdmissionError(f"missing or linked independent evidence file: {path.name}")
+    try:
+        if path.stat().st_size < 1 or path.stat().st_size > max_size:
+            raise AdmissionError(f"independent evidence file size invalid: {path.name}")
+        return path.read_bytes()
+    except OSError as exc:
+        raise AdmissionError(f"independent evidence file unavailable: {path.name}") from exc
+
+
+def _envelope(raw: bytes, now: datetime) -> dict[str, Any]:
+    try:
+        parsed = json.loads(raw)
+    except (ValueError, UnicodeError) as exc:
+        raise AdmissionError("non-JSON admission envelope") from exc
+    if not isinstance(parsed, dict) or set(parsed) != FIELDS:
+        raise AdmissionError("admission envelope requires an exact governed field set")
+    canonical = (json.dumps(parsed, sort_keys=True, separators=(",", ":"), ensure_ascii=False) + "\n").encode("utf-8")
+    if raw != canonical:
+        raise AdmissionError("admission envelope must use canonical UTF-8 JSON bytes")
+    if type(parsed["schema_version"]) is not int or parsed["schema_version"] != 1:
+        raise AdmissionError("unsupported admission version")
+    if parsed["purpose"] != PURPOSE or parsed["repository"] != REPOSITORY:
+        raise AdmissionError("admission scope or repository mismatch")
+    if not isinstance(parsed["target_id"], str) or not TARGET_ID.fullmatch(parsed["target_id"]):
+        raise AdmissionError("invalid release target id")
+    for key in ("target_ref", "target_tree", "carrier_ref", "carrier_tree"):
+        _sha(parsed[key], key)
+    _sha256(parsed["scope_sha256"], "scope_sha256")
+    assurance = parsed["source_assurance"]
+    if not isinstance(assurance, dict) or set(assurance) != {"workflow", "run_id", "run_attempt", "event", "conclusion"}:
+        raise AdmissionError("source_assurance must contain exact run identity")
+    if assurance["workflow"] != "Framework Assurance Gate" or assurance["event"] != "push" or assurance["conclusion"] != "success":
+        raise AdmissionError("source assurance must describe successful push-side gate")
+    if type(assurance["run_id"]) is not int or assurance["run_id"] < 1:
+        raise AdmissionError("source assurance run_id must be positive")
+    if type(assurance["run_attempt"]) is not int or assurance["run_attempt"] < 1:
+        raise AdmissionError("source assurance attempt must be positive")
+    issued = _timestamp(parsed["issued_at"], "issued_at")
+    expires = _timestamp(parsed["expires_at"], "expires_at")
+    if expires <= issued or expires - issued > timedelta(hours=72):
+        raise AdmissionError("admission lifetime must be positive and no more than 72 hours")
+    if now < issued - timedelta(minutes=5) or now >= expires:
+        raise AdmissionError("admission is not currently valid")
+    return parsed
+
+
+def _verify_release_objects(repo: Path, data: dict[str, Any], target: str, carrier: str) -> None:
+    root = repo.resolve(strict=True)
+    if _git(root, "rev-parse", "--show-toplevel").decode().strip() != str(root):
+        raise AdmissionError("release checkout must be the actual Git worktree root")
+    if data["target_ref"] != target or data["carrier_ref"] != carrier:
+        raise AdmissionError("admission does not bind expected exact target/carrier")
+    if target == carrier:
+        raise AdmissionError("release target cannot equal the evidence carrier")
+    for label, revision, recorded_tree in (
+        ("target", target, data["target_tree"]),
+        ("carrier", carrier, data["carrier_tree"]),
+    ):
+        if _git(root, "rev-parse", f"{revision}^{{commit}}").decode().strip() != revision:
+            raise AdmissionError(f"{label} does not resolve to its exact immutable Git commit")
+        if _git(root, "rev-parse", f"{revision}^{{tree}}").decode().strip() != recorded_tree:
+            raise AdmissionError(f"{label} tree does not match signed admission")
+    parent_line = _git(root, "rev-list", "--parents", "-n", "1", carrier).decode().split()
+    if parent_line != [carrier, target]:
+        raise AdmissionError("carrier must be one direct single-parent commit above target")
+    changes = _git(root, "diff-tree", "--no-commit-id", "--name-status", "-r", carrier).decode().splitlines()
+    if changes != ["A\treleases/VNEXT_TARGET.json"]:
+        raise AdmissionError("initial trusted carrier may only first-add the frozen target record")
+    try:
+        frozen = json.loads(_git(root, "show", f"{carrier}:releases/VNEXT_TARGET.json"))
+        scope = _git(root, "show", f"{target}:releases/VNEXT_RELEASE_SCOPE.json")
+    except (ValueError, UnicodeError) as exc:
+        raise AdmissionError("invalid frozen target or release scope") from exc
+    if not isinstance(frozen, dict):
+        raise AdmissionError("frozen target must be a JSON object")
+    if (
+        frozen.get("target_id") != data["target_id"]
+        or frozen.get("framework_ref") != target
+        or frozen.get("target_tree") != data["target_tree"]
+        or frozen.get("status") != "frozen_candidate"
+        or frozen.get("promotion_authorized") is not False
+        or frozen.get("source_branch") != "main"
+    ):
+        raise AdmissionError("carrier frozen target differs from signed immutable admission")
+    if hashlib.sha256(scope).hexdigest() != data["scope_sha256"]:
+        raise AdmissionError("release scope hash differs from signed target scope")
+    expected_assurance = frozen.get("assurance")
+    signed_assurance = data["source_assurance"]
+    if not isinstance(expected_assurance, dict) or any(
+        expected_assurance.get(key) != signed_assurance[key]
+        for key in ("workflow", "run_id", "event", "conclusion")
+    ):
+        raise AdmissionError("frozen target and signed push assurance metadata differ")
+
+
+def _authorized_key(allowed: bytes, principal: str) -> str:
+    try:
+        lines = [line.strip() for line in allowed.decode("ascii").splitlines() if line.strip() and not line.startswith("#")]
+    except UnicodeError as exc:
+        raise AdmissionError("allowed signer keys are not ASCII") from exc
+    if len(lines) != 1:
+        raise AdmissionError("each role must have exactly one externally pinned authorized key")
+    columns = lines[0].split()
+    if len(columns) != 3 or columns[0] != principal:
+        raise AdmissionError("allowed signer principal must exactly match the independent role")
+    if not PUBLIC_KEY.fullmatch(" ".join(columns[1:])):
+        raise AdmissionError("only one explicit ssh-ed25519 public key is allowed per role")
+    try:
+        blob = base64.b64decode(columns[2], validate=True)
+    except ValueError as exc:
+        raise AdmissionError("malformed signer public key") from exc
+    if len(blob) < 40:
+        raise AdmissionError("too-short signer public key")
+    return columns[1] + " " + columns[2]
+
+
+def verify_candidate(
+    repo_root: Path, packet_dir: Path, trust_dir: Path, *,
+    expected_target: str, expected_carrier: str,
+    at: datetime | None = None, ssh_keygen: str = "ssh-keygen",
+) -> dict[str, Any]:
+    """Verify offline signatures only; always return stable_enforcement_satisfied=false."""
+    target, carrier = _sha(expected_target, "expected_target"), _sha(expected_carrier, "expected_carrier")
+    repo = Path(repo_root).resolve(strict=True)
+    packet = _external_folder(repo, Path(packet_dir), "packet_dir")
+    trust = _external_folder(repo, Path(trust_dir), "trust_dir")
+    if packet == trust or packet in trust.parents or trust in packet.parents:
+        raise AdmissionError("trust directory and submitted packet must be independent")
+    envelope_bytes = _single_file(packet / "admission.json")
+    now = at or datetime.now(timezone.utc)
+    if now.tzinfo is None:
+        raise AdmissionError("verification clock must be timezone-aware")
+    data = _envelope(envelope_bytes, now.astimezone(timezone.utc))
+    _verify_release_objects(repo, data, target, carrier)
+    pinned_keys: dict[str, str] = {}
+    for role, principal in ROLES.items():
+        allowed = trust / f"{role}.allowed_signers"
+        key = _authorized_key(_single_file(allowed), principal)
+        if key in pinned_keys.values():
+            raise AdmissionError("release owner and independent security cannot share one key")
+        pinned_keys[role] = key
+    for role, principal in ROLES.items():
+        executable = shutil.which(ssh_keygen)
+        if not executable:
+            raise AdmissionError("OpenSSH ssh-keygen -Y verification is unavailable")
+        result = subprocess.run(
+            [executable, "-Y", "verify", "-f", str(trust / f"{role}.allowed_signers"),
+             "-I", principal, "-n", NAMESPACE, "-s", str(packet / f"{role}.sig")],
+            input=envelope_bytes, capture_output=True, timeout=20, check=False
+        )
+        if result.returncode:
+            raise AdmissionError(f"detached independent SSH signature invalid for {role}")
+    return {
+        "status": "verified_offline_signatures_only",
+        "target_ref": target, "carrier_ref": carrier,
+        "signed_envelope_sha256": hashlib.sha256(envelope_bytes).hexdigest(),
+        "verified_roles": list(ROLES),
+        "stable_enforcement_satisfied": False,
+        "live_actions_run_authenticated": False,
+        "trusted_verifier_host_attested": False,
+    }
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description="Candidate-only out-of-band release admission verification")
+    parser.add_argument("--repo-root", required=True, type=Path)
+    parser.add_argument("--packet-dir", required=True, type=Path)
+    parser.add_argument("--trust-dir", required=True, type=Path)
+    parser.add_argument("--expected-target", required=True)
+    parser.add_argument("--expected-carrier", required=True)
+    args = parser.parse_args(argv)
+    try:
+        print(json.dumps(verify_candidate(
+            args.repo_root, args.packet_dir, args.trust_dir,
+            expected_target=args.expected_target, expected_carrier=args.expected_carrier,
+        ), sort_keys=True))
+    except (AdmissionError, OSError, subprocess.TimeoutExpired) as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 2
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
