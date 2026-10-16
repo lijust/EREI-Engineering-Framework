@@ -63,16 +63,32 @@ class LiveServerEnforcementTests(unittest.TestCase):
             "_github_json",
             side_effect=pair,
         ) as api:
-            result = assurance_enforcement.verify_live_server_enforcement(
-                record(), token="test-token"
-            )
-        self.assertEqual(api.call_count, 2)
-        self.assertEqual(result["status"], "verified_live_server_enforcement")
-        self.assertEqual(result["required_check"], "assurance")
-        return result
+            try:
+                return assurance_enforcement.verify_live_server_enforcement(
+                    record(), token="test-token"
+                )
+            finally:
+                self.assertEqual(api.call_count, 2)
 
-    def test_clean_classic_protection_can_be_authenticated(self):
-        self.verify(responses())
+    def test_classic_protection_cannot_authenticate_mutable_workflow_identity(self):
+        with self.assertRaisesRegex(assurance_enforcement.EnforcementError, "trusted assurance workflow identity"):
+            self.verify(responses())
+
+    def test_green_context_and_trusted_app_cannot_prove_workflow_code(self):
+        # Simulates malicious PR changing assurance-gate.yml while retaining
+        # the same status check name and GitHub Actions application identity.
+        # GitHub's classic protection API returns the same valid-looking data.
+        pair = responses()
+        self.assertEqual(pair[1]["required_status_checks"]["checks"][0], {"context": "assurance", "app_id": 15368})
+        with self.assertRaisesRegex(assurance_enforcement.EnforcementError, "server equivalence is blocked"):
+            self.verify(pair)
+
+    def test_server_only_promotion_rejects_even_fully_valid_classic_controls(self):
+        with mock.patch.object(assurance_enforcement.github_review_provenance, "_github_json", side_effect=responses()):
+            with self.assertRaisesRegex(assurance_enforcement.EnforcementError, "trusted assurance workflow identity"):
+                assurance_enforcement.verify_effective_enforcement(
+                    __import__("pathlib").Path("."), record(), expected_target="a" * 40, token="test-token"
+                )
 
     def test_self_asserted_server_flags_rejected_without_authentication(self):
         with mock.patch.dict("os.environ", {"GITHUB_TOKEN": "", "GH_TOKEN": ""}):

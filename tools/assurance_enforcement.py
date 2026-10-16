@@ -197,16 +197,16 @@ def verify_live_server_enforcement(value: dict, *, token: str | None = None) -> 
         if not isinstance(setting, dict) or setting.get("enabled") is not False:
             raise EnforcementError(f"branch protection must explicitly disable {key}")
 
-    return {
-        "status": "verified_live_server_enforcement",
-        "repository": value["repository"],
-        "branch": branch,
-        "required_check": "assurance",
-        "github_app_id": 15368,
-        "strict_status_checks": True,
-        "administrator_enforcement": True,
-        "stale_review_dismissal": True,
-    }
+    # A GitHub status-check context and App ID authenticate only the
+    # producer/name, NOT the workflow file that generated the check.
+    # A PR can replace the "assurance" job with a no-op and produce the
+    # same green check. Classic branch protection alone is insufficient
+    # evidence of immutable trusted workflow identity. Fail closed until
+    # an independently enforceable workflow-identity control is available.
+    raise EnforcementError(
+        "classic status-check protection cannot authenticate trusted "
+        "assurance workflow identity; server equivalence is blocked"
+    )
 
 
 def verify_effective_enforcement(
