@@ -144,9 +144,13 @@ def verify_precheck(
         raise ConsumerGateError("independent Actions policy path/pin invalid") from exc
     with tempfile.TemporaryDirectory(prefix="erei-consumer-verified-") as temp:
         snapshot = Path(temp).resolve(strict=True)
-        if snapshot == root or root in snapshot.parents or snapshot.stat().st_mode & 0o077:
-            raise ConsumerGateError("private trust snapshot directory is not isolated")
-        original_paths = (packet, trust, admitted_packet, admitted_trust)
+        if snapshot == root or root in snapshot.parents:
+            raise ConsumerGateError("private trust snapshot directory is inside release checkout")
+        # POSIX owner-only mode is testable here. Windows ACL independence
+        # requires separately audited trusted-host configuration; do not
+        # pretend that Windows st_mode is a portable ACL attestation.
+        if os.name != "nt" and snapshot.stat().st_mode & 0o077:
+            raise ConsumerGateError("private trust snapshot directory is not owner-only")
         names = ("permit", "consumer-trust", "admission-packet", "admission-trust")
         locations = tuple(snapshot / name for name in names)
         for folder in locations:
