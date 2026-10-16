@@ -1,5 +1,6 @@
 import json
 import tempfile
+from contextlib import contextmanager
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -53,7 +54,7 @@ class ReleaseAssuranceTests(unittest.TestCase):
 
     def enforcement(self, *, equivalent=False):
         return {
-            "schema_version": 1,
+            "schema_version": 2,
             "repository": "lijust/EREI-Engineering-Framework",
             "main_branch": "main",
             "status": "enforced" if equivalent else "candidate_control",
@@ -73,6 +74,13 @@ class ReleaseAssuranceTests(unittest.TestCase):
                 "exact_target_runtime_evidence_required": True,
                 "complete_prospective_cycle_required": True,
                 "equivalent_enforcement_verified": equivalent,
+                "equivalence_target_ref": "a" * 40 if equivalent else None,
+                "review_provenance": ({
+                    "provider": "github_codex_review",
+                    "reviewer_login": "chatgpt-codex-connector[bot]",
+                    "review_type": "code_review",
+                    "purpose": "enforcement_equivalence",
+                } if equivalent else None),
                 "stable_promotion_policy": "blocked_until_server_or_equivalent_enforcement",
             },
             "evidence": ["test-evidence"],
@@ -122,7 +130,7 @@ class ReleaseAssuranceTests(unittest.TestCase):
         suffix = "A1B2C3D4" if approval_type == "architecture" else "E5F6A7B8"
         role = "system-architect" if approval_type == "architecture" else "security-engineer"
         return {
-            "schema_version": 1,
+            "schema_version": 2,
             "approval_id": f"EAPP-20260907T123000Z-{suffix}",
             "approval_type": approval_type,
             "target_framework_ref": "a" * 40,
@@ -130,6 +138,12 @@ class ReleaseAssuranceTests(unittest.TestCase):
             "decision": "approved",
             "recorded_at": "2026-09-07T12:30:00Z",
             "reviewer": {"kind": "framework_role", "id": role},
+            "review_provenance": {
+                "provider": "github_codex_review",
+                "reviewer_login": "chatgpt-codex-connector[bot]",
+                "review_type": "code_review",
+                "purpose": f"{approval_type}_approval",
+            },
             "evidence": ["test-evidence", "release-target:vnext-rc9"],
             "rationale": f"{approval_type} approval for immutable test target.",
         }
@@ -191,6 +205,21 @@ class ReleaseAssuranceTests(unittest.TestCase):
             "load_target_bound_scope",
             return_value=(self.frozen_scope(), self.frozen_scope_summary()),
         )
+
+    @contextmanager
+    def stable_patches(self):
+        with self.stable_patches(), \
+             mock.patch.object(
+                 release_assurance.assurance_enforcement,
+                 "verify_authenticated_equivalence",
+                 return_value={"status": "verified", "stable_enforcement_satisfied": True},
+             ), \
+             mock.patch.object(
+                 release_assurance.github_review_provenance,
+                 "verify_artifact_review",
+                 return_value={"status": "verified"},
+             ):
+            yield
 
     def write_scope_root(self, root: Path):
         (root / "evals" / "cases").mkdir(parents=True, exist_ok=True)
@@ -277,7 +306,7 @@ class ReleaseAssuranceTests(unittest.TestCase):
             (root / "security" / "ASSURANCE_ENFORCEMENT.json").write_text(
                 json.dumps(self.enforcement(equivalent=False)), encoding="utf-8"
             )
-            with self.scope_patch(), \
+            with self.stable_patches(), \
                  self.assertRaisesRegex(release_assurance.ReleaseError, "server branch/status-check enforcement"):
                 release_assurance.validate_manifest(self.stable(), repo_root=root)
 
@@ -289,7 +318,7 @@ class ReleaseAssuranceTests(unittest.TestCase):
             (root / "security" / "ASSURANCE_ENFORCEMENT.json").write_text(
                 json.dumps(self.enforcement(equivalent=True)), encoding="utf-8"
             )
-            with self.scope_patch(), \
+            with self.stable_patches(), \
                  self.assertRaises((FileNotFoundError, release_assurance.ReleaseError)):
                 release_assurance.validate_manifest(self.stable(), repo_root=root)
 
@@ -297,7 +326,7 @@ class ReleaseAssuranceTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             self.write_stable_root(root)
-            with self.scope_patch(), \
+            with self.stable_patches(), \
                  mock.patch.object(release_assurance, "_load_runner", return_value=self.FakeRunner):
                 with self.assertRaisesRegex(release_assurance.ReleaseError, "baseline"):
                     release_assurance.validate_manifest(
@@ -314,7 +343,7 @@ class ReleaseAssuranceTests(unittest.TestCase):
                 "capability_activation_governance": "v1",
                 "learning_to_development": "candidate-v1",
             }
-            with self.scope_patch(), \
+            with self.stable_patches(), \
                  mock.patch.object(release_assurance, "_load_runner", return_value=self.FakeRunner):
                 with self.assertRaisesRegex(release_assurance.ReleaseError, "capabilities"):
                     release_assurance.validate_manifest(
@@ -339,7 +368,7 @@ class ReleaseAssuranceTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             self.write_stable_root(root)
-            with self.scope_patch(), \
+            with self.stable_patches(), \
                  mock.patch.object(release_assurance, "_load_runner", return_value=self.FakeRunner), \
                  mock.patch.object(
                      release_assurance.exact_target_evidence,
@@ -356,7 +385,7 @@ class ReleaseAssuranceTests(unittest.TestCase):
             security = self.approval("security")
             security["decision"] = "rejected"
             (root / "releases" / "approvals" / "security.json").write_text(json.dumps(security), encoding="utf-8")
-            with self.scope_patch(), \
+            with self.stable_patches(), \
                  mock.patch.object(release_assurance, "_load_runner", return_value=self.FakeRunner):
                 with self.assertRaisesRegex(release_assurance.ReleaseError, "security release approval"):
                     release_assurance.validate_manifest(self.stable(), repo_root=root)
@@ -368,7 +397,7 @@ class ReleaseAssuranceTests(unittest.TestCase):
             architecture = self.approval("architecture")
             architecture["target_tree"] = "9" * 40
             (root / "releases" / "approvals" / "architecture.json").write_text(json.dumps(architecture), encoding="utf-8")
-            with self.scope_patch(), \
+            with self.stable_patches(), \
                  mock.patch.object(release_assurance, "_load_runner", return_value=self.FakeRunner):
                 with self.assertRaisesRegex(release_assurance.ReleaseError, "architecture release approval"):
                     release_assurance.validate_manifest(self.stable(), repo_root=root)
@@ -377,7 +406,7 @@ class ReleaseAssuranceTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             self.write_stable_root(root)
-            with self.scope_patch(), \
+            with self.stable_patches(), \
                  mock.patch.object(release_assurance, "_load_runner", return_value=self.FakeRunner), \
                  mock.patch.object(release_assurance.exact_target_evidence, "validate_binding", return_value={}):
                 result = release_assurance.validate_manifest(self.stable(), repo_root=root)
