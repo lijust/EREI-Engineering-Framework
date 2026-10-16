@@ -305,6 +305,34 @@ class AdmissionIntegrationTests(unittest.TestCase):
         with self.assertRaisesRegex(admission.AdmissionError, "ordinary non-executable blob"):
             self._verify()
 
+    def test_canonical_frozen_manifest_shape_rejects_mutated_fields(self):
+        original = json.loads(self._git("show", f"{self.carrier}:releases/VNEXT_TARGET.json"))
+        bad = [
+            ("unsupported version", lambda x: x.update(schema_version=999)),
+            ("missing selected_at", lambda x: x.pop("selected_at")),
+            ("malformed selected_at", lambda x: x.update(selected_at="not a timestamp")),
+            ("missing stable_baseline", lambda x: x.pop("stable_baseline")),
+            ("invalid stable ref", lambda x: x["stable_baseline"].update(framework_ref="not-a-sha")),
+            ("unknown extra field", lambda x: x.update(unexpected_source="trusted")),
+            ("extra baseline field", lambda x: x["stable_baseline"].update(unknown=True)),
+            ("invalid run number", lambda x: x["assurance"].update(run_id=True)),
+        ]
+        for title, mutate in bad:
+            with self.subTest(case=title):
+                self._git("reset", "--hard", self.target)
+                altered = json.loads(json.dumps(original))
+                mutate(altered)
+                self._write("releases/VNEXT_TARGET.json", json.dumps(altered, sort_keys=True) + "\n")
+                self._git("add", "releases/VNEXT_TARGET.json")
+                self._git("commit", "-q", "-m", "candidate altered complete target schema")
+                self.carrier = self._git("rev-parse", "HEAD")
+                self.carrier_tree = self._git("rev-parse", f"{self.carrier}^{{tree}}")
+                self.data["carrier_ref"] = self.carrier
+                self.data["carrier_tree"] = self.carrier_tree
+                self._save_packet()
+                with self.assertRaisesRegex(admission.AdmissionError, "authoritative schema"):
+                    self._verify()
+
     def test_carrier_with_extra_file_is_rejected(self):
         self._write("unexpected.txt", "extra mutation\n")
         self._git("add", "-A")
