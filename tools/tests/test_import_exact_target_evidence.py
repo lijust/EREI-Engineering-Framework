@@ -212,7 +212,7 @@ class ExactTargetEvidenceImportTests(unittest.TestCase):
     def test_carrier_drift_is_rejected(self):
         self._write("notes.txt", "carrier moved\n")
         self._commit("move carrier")
-        with self.assertRaisesRegex(import_exact_target_evidence.ExactTargetImportError, "exact release carrier"):
+        with self.assertRaisesRegex(import_exact_target_evidence.ExactTargetImportError, "invalid or drifted frozen release carrier"):
             import_exact_target_evidence.validate_package(self.repo, self.package)
 
     def test_existing_any_destination_prevents_import(self):
