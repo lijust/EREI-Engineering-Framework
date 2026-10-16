@@ -12,13 +12,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: dce4cda03a409c3ffafe0ef8af4c921073432ae6
+          ref: e9e02672c42dabe0d683af7f3695864a95ab8ca2
           fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
       - name: Assert exact PR source SHA
-        run: test "$(git rev-parse HEAD)" = "dce4cda03a409c3ffafe0ef8af4c921073432ae6"
+        run: test "$(git rev-parse HEAD)" = "e9e02672c42dabe0d683af7f3695864a95ab8ca2"
       - name: Compile Framework and adapter
         run: python -m compileall -q tools evals validation_contract.py
       - name: Run independent authenticated-run negative tests
