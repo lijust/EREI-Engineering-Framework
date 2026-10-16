@@ -232,6 +232,23 @@ class ExactTargetEvidenceImportTests(unittest.TestCase):
         self.assertEqual((self.repo / result["evidence_destination"]).read_bytes(), original_evidence)
         self.assertEqual((self.repo / result["identity_destination"]).read_bytes(), original_identity)
 
+    def test_runtime_cli_version_prefix_collision_is_rejected(self):
+        identity_file = self.package / "runtime-identity.json"
+        identity = json.loads(identity_file.read_text(encoding="utf-8"))
+        identity["runtime_version"] = "GitHub Copilot CLI 1.2.30"
+        identity_file.write_text(json.dumps(identity), encoding="utf-8")
+        with self.assertRaisesRegex(import_exact_target_evidence.ExactTargetImportError, "exact requested CLI version token"):
+            import_exact_target_evidence.validate_package(self.repo, self.package)
+
+    def test_nested_identity_path_is_rejected(self):
+        identity_file = self.package / "runtime-identity.json"
+        identity = json.loads(identity_file.read_text(encoding="utf-8"))
+        identity["run_manifest_path"] = "evals/exact-target-runs/nested/copilot-123-1.json"
+        identity["runtime_identity_path"] = "evals/exact-target-runs/nested/copilot-123-1.identity.json"
+        identity_file.write_text(json.dumps(identity), encoding="utf-8")
+        with self.assertRaisesRegex(import_exact_target_evidence.ExactTargetImportError, "single relative JSON filename"):
+            import_exact_target_evidence.validate_package(self.repo, self.package)
+
     def test_hash_tamper_is_rejected_before_any_write(self):
         path = self.package / "execution-evidence.json"
         path.write_text(path.read_text(encoding="utf-8") + "\n", encoding="utf-8")
