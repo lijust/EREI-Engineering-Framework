@@ -203,8 +203,14 @@ def _verify_release_objects(repo: Path, data: dict[str, Any], target: str, carri
         or SHA40.fullmatch(fields[2]) is None or fields[3] != "releases/VNEXT_TARGET.json"):
         raise AdmissionError("frozen target manifest must be an ordinary non-executable blob")
     try:
-        frozen = json.loads(_git(root, "show", f"{carrier}:releases/VNEXT_TARGET.json"))
+        # json.loads(bytes) silently auto-detects UTF-16/UTF-32. The actual
+        # governed release_target loader requires UTF-8, so admit only that.
+        manifest_bytes = _git(root, "show", f"{carrier}:releases/VNEXT_TARGET.json")
+        frozen = json.loads(manifest_bytes.decode("utf-8"))
         scope = _git(root, "show", f"{target}:releases/VNEXT_RELEASE_SCOPE.json")
+        target_capabilities = json.loads(
+            _git(root, "show", f"{target}:CAPABILITIES.json").decode("utf-8")
+        )
     except (ValueError, UnicodeError) as exc:
         raise AdmissionError("invalid frozen target or release scope") from exc
     # Schema parity is mandatory: validating a subset of fields lets a validly
@@ -215,6 +221,14 @@ def _verify_release_objects(repo: Path, data: dict[str, Any], target: str, carri
         release_target.validate_manifest_shape(frozen)
     except release_target.ReleaseTargetError as exc:
         raise AdmissionError(f"frozen target manifest fails authoritative schema: {exc}") from exc
+    stable = target_capabilities.get("stable_release") if isinstance(target_capabilities, dict) else None
+    if (
+        not isinstance(stable, dict)
+        or frozen["stable_baseline"]["baseline"] != stable.get("baseline")
+        or frozen["stable_baseline"]["framework_ref"] != stable.get("framework_ref")
+        or frozen["framework_ref"] == frozen["stable_baseline"]["framework_ref"]
+    ):
+        raise AdmissionError("frozen baseline does not match authenticated target CAPABILITIES stable release")
     if (
         frozen.get("target_id") != data["target_id"]
         or frozen.get("framework_ref") != target
