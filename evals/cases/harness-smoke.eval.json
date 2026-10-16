@@ -2,6 +2,7 @@
   "schema_version": "1.0",
   "suite_id": "harness-smoke",
   "artifact": "evals/runner.py",
+  "assurance_scope": "harness_only",
   "cases": [
     {
       "id": "SMOKE-001",

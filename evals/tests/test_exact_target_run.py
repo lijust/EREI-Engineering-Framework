@@ -8,12 +8,13 @@ from evals import exact_target_run
 
 
 class ExactTargetRunTests(unittest.TestCase):
-    def suite(self, root: Path) -> Path:
-        path = root / "one.eval.json"
+    def suite(self, root: Path, *, assurance_scope: str = "behavioral_runtime", suite_id: str = "target-smoke") -> Path:
+        path = root / f"{suite_id}.eval.json"
         path.write_text(json.dumps({
             "schema_version": "1.0",
-            "suite_id": "target-smoke",
+            "suite_id": suite_id,
             "artifact": "skills/impact-analysis",
+            "assurance_scope": assurance_scope,
             "cases": [{
                 "id": "CASE-1",
                 "input": {"prompt": "hello"},
@@ -56,6 +57,49 @@ class ExactTargetRunTests(unittest.TestCase):
             self.assertEqual(row["assurance_level"], "exact_target_runtime")
             self.assertTrue(row["independent_runtime"])
             self.assertEqual(row["evidence_ref"], "exact-target-run:evals/exact-target-runs/test.json#target-smoke/CASE-1")
+
+    def test_harness_only_suite_is_not_sent_to_external_runtime(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            harness = self.suite(root, assurance_scope="harness_only", suite_id="harness-only")
+            behavioral = self.suite(root, assurance_scope="behavioral_runtime", suite_id="behavioral")
+            adapter = self.adapter(root)
+            manifest, evidence = exact_target_run.run_suites(
+                [str(harness), str(behavioral)],
+                adapter_command=f"{sys.executable} {adapter}",
+                adapter_id="external-test-adapter",
+                adapter_revision="a" * 40,
+                runtime_id="external-runtime",
+                runtime_version="1",
+                runtime_evidence=["test-runtime:external-process"],
+                framework_ref="b" * 40,
+                manifest_relpath="evals/exact-target-runs/test.json",
+                produced_at="2026-09-07T12:00:00Z",
+                run_id="ETR-20260907T120000Z-ABCDEF12",
+            )
+            manifest_keys = {(item["suite_id"], item["case_id"]) for item in manifest["executions"]}
+            evidence_keys = {(item["suite_id"], item["case_id"]) for item in evidence["executions"]}
+            self.assertEqual(manifest_keys, {("behavioral", "CASE-1")})
+            self.assertEqual(evidence_keys, {("behavioral", "CASE-1")})
+
+    def test_harness_only_selection_fails_instead_of_emitting_empty_success(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            harness = self.suite(root, assurance_scope="harness_only", suite_id="harness-only")
+            with self.assertRaisesRegex(exact_target_run.ExactTargetRunError, "no behavioral_runtime"):
+                exact_target_run.run_suites(
+                    [str(harness)],
+                    adapter_command=f"{sys.executable} {self.adapter(root)}",
+                    adapter_id="external-test-adapter",
+                    adapter_revision="a" * 40,
+                    runtime_id="external-runtime",
+                    runtime_version="1",
+                    runtime_evidence=["test-runtime:external-process"],
+                    framework_ref="b" * 40,
+                    manifest_relpath="evals/exact-target-runs/test.json",
+                    produced_at="2026-09-07T12:00:00Z",
+                    run_id="ETR-20260907T120000Z-ABCDEF12",
+                )
 
     def test_rejects_reference_oracle_as_exact_target(self):
         with self.assertRaisesRegex(exact_target_run.ExactTargetRunError, "reference/mock"):

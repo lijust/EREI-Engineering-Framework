@@ -2,6 +2,7 @@
   "schema_version": "1.0",
   "suite_id": "semantic-assurance-design-v1",
   "artifact": "skills/semantic-assurance-design",
+  "assurance_scope": "behavioral_runtime",
   "cases": [
     {
       "id": "T-SAD-001-REPEATED-HARNESS-FRICTION",

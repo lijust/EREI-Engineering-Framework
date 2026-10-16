@@ -31,6 +31,18 @@ ASSURANCE_LEVELS = {
     "exact_target_runtime": 3,
 }
 
+ASSURANCE_SCOPES = {"behavioral_runtime", "harness_only"}
+RUNTIME_ASSURANCE_LEVELS = {"managed_runtime", "exact_target_runtime"}
+SCORER_FIELDS = {
+    "output_contains_all": {"type", "values"},
+    "output_contains_none": {"type", "values"},
+    "output_regex": {"type", "pattern"},
+    "metadata_equals": {"type", "key", "value"},
+    "trace_tool_called": {"type", "tool"},
+    "trace_tool_not_called": {"type", "tool"},
+    "max_trace_steps": {"type", "value"},
+}
+
 
 def load_json(path: Path) -> Any:
     return json.loads(path.read_text(encoding="utf-8"))
@@ -46,11 +58,24 @@ def _valid_datetime(value: Any) -> bool:
     return True
 
 
+def suite_assurance_scope(data: dict[str, Any]) -> str:
+    scope = data.get("assurance_scope")
+    if scope not in ASSURANCE_SCOPES:
+        raise RuntimeError("suite assurance_scope must be explicitly declared")
+    return scope
+
+
+def suite_required_for_level(data: dict[str, Any], minimum_level: str) -> bool:
+    if minimum_level not in ASSURANCE_LEVELS:
+        raise RuntimeError(f"unknown assurance level: {minimum_level}")
+    return not (minimum_level in RUNTIME_ASSURANCE_LEVELS and suite_assurance_scope(data) == "harness_only")
+
+
 def validate_suite(data: Any, source: str = "<memory>") -> list[str]:
     errors: list[str] = []
     if not isinstance(data, dict):
         return [f"{source}: root must be an object"]
-    allowed_root = {"schema_version", "suite_id", "artifact", "cases"}
+    allowed_root = {"schema_version", "suite_id", "artifact", "assurance_scope", "cases"}
     unknown_root = sorted(set(data) - allowed_root)
     if unknown_root:
         errors.append(f"{source}: unknown root fields: {unknown_root}")
@@ -60,6 +85,11 @@ def validate_suite(data: Any, source: str = "<memory>") -> list[str]:
         errors.append(f"{source}: suite_id is required")
     if not isinstance(data.get("artifact"), str) or not data.get("artifact"):
         errors.append(f"{source}: artifact is required")
+
+    if "assurance_scope" not in data:
+        errors.append(f"{source}: assurance_scope is required")
+    elif data["assurance_scope"] not in ASSURANCE_SCOPES:
+        errors.append(f"{source}: assurance_scope must be one of {sorted(ASSURANCE_SCOPES)}")
 
     cases = data.get("cases")
     if not isinstance(cases, list) or not cases:
@@ -101,6 +131,9 @@ def validate_suite(data: Any, source: str = "<memory>") -> list[str]:
             if scorer_type not in SUPPORTED_SCORERS:
                 errors.append(f"{ep}.type unsupported: {scorer_type!r}")
                 continue
+            unknown_expectation = sorted(set(expectation) - SCORER_FIELDS[scorer_type])
+            if unknown_expectation:
+                errors.append(f"{ep} unknown fields: {unknown_expectation}")
             if scorer_type in {"output_contains_all", "output_contains_none"}:
                 values = expectation.get("values")
                 if not isinstance(values, list) or not values or not all(isinstance(v, str) for v in values):
@@ -318,13 +351,15 @@ def command_run(args: argparse.Namespace) -> int:
     return 1 if failed else 0
 
 
-def _expected_cases(paths: list[str]) -> set[tuple[str, str]]:
+def _expected_cases(paths: list[str], minimum_level: str = "harness_smoke") -> set[tuple[str, str]]:
     expected: set[tuple[str, str]] = set()
     for path in discover_suites(paths):
         data = load_json(path)
         errors = validate_suite(data, str(path))
         if errors:
             raise RuntimeError("; ".join(errors))
+        if not suite_required_for_level(data, minimum_level):
+            continue
         for case in data["cases"]:
             expected.add((data["suite_id"], case["id"]))
     return expected
@@ -398,7 +433,7 @@ def validate_execution_evidence(data: Any) -> dict[str, Any]:
 
 def command_coverage(args: argparse.Namespace) -> int:
     try:
-        expected = _expected_cases(args.paths)
+        expected = _expected_cases(args.paths, minimum_level=args.minimum_level)
         evidence = validate_execution_evidence(load_json(Path(args.evidence)))
     except Exception as exc:
         print(f"FAIL coverage evidence: {exc}", file=sys.stderr)

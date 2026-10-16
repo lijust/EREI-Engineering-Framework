@@ -2,6 +2,7 @@
   "schema_version": "1.0",
   "suite_id": "domain-language-modeling-v1",
   "artifact": "skills/domain-language-modeling",
+  "assurance_scope": "behavioral_runtime",
   "cases": [
     {
       "id": "T-DLM-001-OVERLOADED-CLIENT",

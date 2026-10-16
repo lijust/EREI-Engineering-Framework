@@ -2,6 +2,7 @@
   "schema_version": "1.0",
   "suite_id": "framework-feedback-capture-v1",
   "artifact": "skills/framework-feedback-capture",
+  "assurance_scope": "behavioral_runtime",
   "cases": [
     {
       "id": "FFC-001-CAPTURE-WORKFLOW-GAP",
