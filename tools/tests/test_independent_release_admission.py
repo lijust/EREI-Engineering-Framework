@@ -220,6 +220,30 @@ class AdmissionIntegrationTests(unittest.TestCase):
         with self.assertRaisesRegex(admission.AdmissionError, "scope hash differs"):
             self._verify()
 
+    def test_all_git_provenance_reads_disable_untrusted_commit_graph(self):
+        from unittest import mock
+        original_run = subprocess.run
+        with mock.patch.object(admission.subprocess, "run", wraps=original_run) as calls:
+            out = self._verify()
+        self.assertEqual(out["status"], "verified_offline_signatures_only")
+        git_reads = [
+            call.args[0] for call in calls.call_args_list
+            if call.args and call.args[0][0] == "git"
+        ]
+        self.assertGreaterEqual(len(git_reads), 8)
+        for args in git_reads:
+            self.assertEqual(args[3:5], ["-c", "core.commitGraph=false"])
+
+    def test_corrupted_commit_graph_does_not_change_raw_commit_verification(self):
+        self._git("commit-graph", "write", "--reachable")
+        graph = self.repo / ".git" / "objects" / "info" / "commit-graph"
+        if not graph.exists():
+            self.skipTest("Git build did not produce a commit-graph")
+        payload = bytearray(graph.read_bytes())
+        payload[len(payload) // 2] ^= 0x01
+        graph.write_bytes(bytes(payload))
+        self.assertEqual(self._verify()["status"], "verified_offline_signatures_only")
+
     def test_git_replace_object_cannot_rewrite_signed_carrier_history(self):
         self._git("replace", "--graft", self.carrier)
         with self.assertRaisesRegex(admission.AdmissionError, "replace refs"):
