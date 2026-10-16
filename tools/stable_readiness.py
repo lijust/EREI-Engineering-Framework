@@ -391,19 +391,17 @@ def report(repo_root: Path, *, target_ref: str | None = None) -> dict[str, Any]:
     enforcement_review = None
     enforcement_server_proof = None
     enforcement_review_error = None
+    authenticated_enforcement_proof = None
     if enforcement["stable_enforcement_satisfied"]:
         try:
-            if enforcement["server_enforcement_satisfied"]:
-                enforcement_server_proof = assurance_enforcement.verify_live_server_enforcement(
-                    enforcement_record
-                )
-            if enforcement["fallback_equivalent_verified"]:
-                enforcement_review = assurance_enforcement.verify_authenticated_equivalence(
-                    repo_root,
-                    enforcement_record,
-                    expected_target=selected_target,
-                    closure_ref="HEAD",
-                )
+            authenticated_enforcement_proof = assurance_enforcement.verify_effective_enforcement(
+                repo_root,
+                enforcement_record,
+                expected_target=selected_target,
+                closure_ref="HEAD",
+            )
+            enforcement_server_proof = authenticated_enforcement_proof["server"]
+            enforcement_review = authenticated_enforcement_proof["fallback"]
         except assurance_enforcement.EnforcementError as exc:
             enforcement_review_error = str(exc)
 
@@ -433,6 +431,7 @@ def report(repo_root: Path, *, target_ref: str | None = None) -> dict[str, Any]:
                 **enforcement,
                 "live_server_proof": enforcement_server_proof,
                 "authenticated_review": enforcement_review,
+                "authenticated_enforcement_proof": authenticated_enforcement_proof,
                 "authenticated_review_error": enforcement_review_error,
             },
             "final_architecture_security_approvals": approvals,

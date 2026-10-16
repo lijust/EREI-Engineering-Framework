@@ -191,8 +191,8 @@ def verify_live_server_enforcement(value: dict, *, token: str | None = None) -> 
         raise EnforcementError("pull-request approval has explicit bypass actors")
     for key in ("allow_force_pushes", "allow_deletions"):
         setting = protection.get(key)
-        if isinstance(setting, dict) and setting.get("enabled") is True:
-            raise EnforcementError(f"branch protection allows {key}")
+        if not isinstance(setting, dict) or setting.get("enabled") is not False:
+            raise EnforcementError(f"branch protection must explicitly disable {key}")
 
     return {
         "status": "verified_live_server_enforcement",
@@ -204,6 +204,50 @@ def verify_live_server_enforcement(value: dict, *, token: str | None = None) -> 
         "administrator_enforcement": True,
         "stale_review_dismissal": True,
     }
+
+
+def verify_effective_enforcement(
+    repo_root: Path,
+    value: dict,
+    *,
+    expected_target: str,
+    closure_ref: str = "HEAD",
+    token: str | None = None,
+) -> dict:
+    """Authenticate at least one asserted enforcement path.
+
+    Classic server enforcement and independent fallback equivalence are
+    alternatives, not cumulative requirements. Never treat an assertion,
+    missing API response, or unverifiable reviewer as a valid proof.
+    """
+    declared = validate_enforcement(value, expected_target=expected_target)
+    if not declared["stable_enforcement_satisfied"]:
+        raise EnforcementError("no verified Stable enforcement mode has been asserted")
+
+    errors: list[str] = []
+    if declared["server_enforcement_satisfied"]:
+        try:
+            proof = verify_live_server_enforcement(value, token=token)
+            return {"status": "verified", "mode": "server", "server": proof, "fallback": None}
+        except EnforcementError as exc:
+            errors.append(f"server: {exc}")
+
+    if declared["fallback_equivalent_verified"]:
+        try:
+            proof = verify_authenticated_equivalence(
+                repo_root,
+                value,
+                expected_target=expected_target,
+                closure_ref=closure_ref,
+                token=token,
+            )
+            if proof.get("status") != "verified":
+                raise EnforcementError("fallback review did not yield verified provenance")
+            return {"status": "verified", "mode": "fallback", "server": None, "fallback": proof}
+        except EnforcementError as exc:
+            errors.append(f"fallback: {exc}")
+
+    raise EnforcementError("all asserted enforcement proofs failed: " + "; ".join(errors))
 
 
 def load_and_validate(path: Path, *, expected_target: str | None = None) -> dict:

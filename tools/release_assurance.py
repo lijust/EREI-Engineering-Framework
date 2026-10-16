@@ -187,10 +187,8 @@ def validate_manifest(
                 enforcement_path,
                 expected_target=manifest["framework_ref"],
             )
-            if enforcement["server_enforcement_satisfied"]:
-                assurance_enforcement.verify_live_server_enforcement(enforcement_record)
-            if enforcement["fallback_equivalent_verified"]:
-                assurance_enforcement.verify_authenticated_equivalence(
+            if enforcement["stable_enforcement_satisfied"]:
+                assurance_enforcement.verify_effective_enforcement(
                     scope_repo,
                     enforcement_record,
                     expected_target=manifest["framework_ref"],
