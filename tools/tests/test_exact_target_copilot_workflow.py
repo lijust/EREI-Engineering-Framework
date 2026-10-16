@@ -55,7 +55,7 @@ class ExactTargetCopilotWorkflowTests(unittest.TestCase):
         execute = text.split("- name: Execute frozen release-scoped behavioral cases against target", 1)[1]
         execute = execute.split("- name: Write evidence package identity", 1)[0]
         self.assertIn("COPILOT_GITHUB_TOKEN", execute)
-        self.assertNotIn("GITHUB_TOKEN:", execute)
+        self.assertNotRegex(execute, r"(?m)^\s+GITHUB_TOKEN:")
 
     def test_copilot_install_uses_only_byte_verified_local_tarball(self):
         text = WORKFLOW.read_text(encoding="utf-8")
