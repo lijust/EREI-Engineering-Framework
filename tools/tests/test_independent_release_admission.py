@@ -39,6 +39,24 @@ class AdmissionShapeTests(unittest.TestCase):
         self.assertEqual(admission.PURPOSE, "erei-framework-v2-trusted-carrier-admission")
         self.assertEqual(len(admission.ROLES), 2)
 
+    def test_untrusted_git_subprocess_times_out_fail_closed(self):
+        from unittest import mock
+        with mock.patch.object(admission.subprocess, "run", side_effect=subprocess.TimeoutExpired(
+            cmd=["git", "fsck"], timeout=admission.GIT_PROVENANCE_TIMEOUT_SECONDS
+        )) as run:
+            with self.assertRaisesRegex(admission.AdmissionError, "bounded timeout"):
+                admission._git(Path("."), "fsck", "--full")
+        self.assertEqual(run.call_count, 1)
+        self.assertEqual(run.call_args.kwargs["timeout"], admission.GIT_PROVENANCE_TIMEOUT_SECONDS)
+        self.assertIn("protocol.allow=never", run.call_args.args[0])
+
+    def test_all_untrusted_git_reads_use_bounded_timeout(self):
+        from unittest import mock
+        completed = subprocess.CompletedProcess(args=["git"], returncode=0, stdout=b"")
+        with mock.patch.object(admission.subprocess, "run", return_value=completed) as run:
+            admission._git(Path("."), "rev-parse", "HEAD")
+        self.assertEqual(run.call_args.kwargs["timeout"], admission.GIT_PROVENANCE_TIMEOUT_SECONDS)
+
 
 @unittest.skipUnless(shutil.which("ssh-keygen") and shutil.which("git"), "OpenSSH git integration test requires ssh-keygen and git")
 class AdmissionIntegrationTests(unittest.TestCase):
