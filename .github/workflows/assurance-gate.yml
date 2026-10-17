@@ -1,12 +1,21 @@
 name: Framework Assurance Gate
 
+# PRs are verified by pull_request; main/release push assurance is retained
+# for separately authenticated exact-sha release evidence. A feature/hardening
+# branch with an open PR MUST NOT start a duplicate push-side assurance run.
 on:
   pull_request:
   push:
     branches:
       - main
-      - 'hardening/**'
       - 'release/**'
+
+# Cancel obsolete PR reviews, not push evidence. GitHub replaces older pending
+# runs within any shared concurrency group even with cancel-in-progress=false:
+# a distinct group per push run_id retains *every* main/release push run.
+concurrency:
+  group: assurance-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || format('push-run-{0}', github.run_id) }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
