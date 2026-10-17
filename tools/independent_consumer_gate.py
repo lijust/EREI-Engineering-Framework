@@ -15,6 +15,7 @@ import json
 import os
 import re
 import shutil
+import stat
 import subprocess
 import sys
 import tempfile
@@ -100,6 +101,43 @@ def _permit(raw: bytes, now: datetime) -> dict[str, Any]:
     return item
 
 
+def _read_unlinked_external_file(path: Path, max_size: int) -> bytes:
+    """Read one regular, singly linked external file through the SAME descriptor.
+
+    Hard links can make a trust file outside the checkout share an inode with
+    attacker-controlled content inside the checkout. This source-only defense
+    is mandatory before copying independent trust material into a snapshot.
+    A separately controlled verifier host is still required in production.
+    """
+    try:
+        before_path = path.lstat()
+        if not stat.S_ISREG(before_path.st_mode):
+            raise ConsumerGateError("independent trust input must be a regular file, not a symlink")
+        if before_path.st_nlink != 1:
+            raise ConsumerGateError("independent trust input must not have additional hard links")
+        flags = os.O_RDONLY | getattr(os, "O_BINARY", 0) | getattr(os, "O_NOFOLLOW", 0)
+        fd = os.open(path, flags)
+        with os.fdopen(fd, "rb") as handle:
+            before = os.fstat(handle.fileno())
+            if (not stat.S_ISREG(before.st_mode) or before.st_nlink != 1
+                or (before.st_dev, before.st_ino) != (before_path.st_dev, before_path.st_ino)):
+                raise ConsumerGateError("independent trust input changed or is hard linked")
+            if not 0 < before.st_size <= max_size:
+                raise ConsumerGateError("independent trust input size is invalid")
+            raw = handle.read(max_size + 1)
+            after = os.fstat(handle.fileno())
+        if (
+            not stat.S_ISREG(after.st_mode) or after.st_nlink != 1
+            or (before.st_dev, before.st_ino, before.st_size, before.st_mtime_ns, before.st_ctime_ns)
+            != (after.st_dev, after.st_ino, after.st_size, after.st_mtime_ns, after.st_ctime_ns)
+            or len(raw) != before.st_size
+        ):
+            raise ConsumerGateError("independent trust input mutated during snapshot")
+        return raw
+    except OSError as exc:
+        raise ConsumerGateError("independent trust input cannot be read securely") from exc
+
+
 def verify_precheck(
     repo_root: Path,
     permit_dir: Path,
@@ -163,15 +201,9 @@ def verify_precheck(
             (admitted_trust, snapshot_admission_trust, tuple(role + ".allowed_signers" for role in carrier.ROLES)),
         ):
             for name in filenames:
-                try:
-                    raw = carrier._single_file(source / name)
-                except carrier.AdmissionError as exc:
-                    raise ConsumerGateError("unavailable independent evidence snapshot: " + str(exc)) from exc
+                raw = _read_unlinked_external_file(source / name, carrier.MAX_PACKET_BYTES)
                 (destination / name).write_bytes(raw)
-        try:
-            raw_policy = carrier._single_file(Path(actions_policy_file), actions.MAX_POLICY_BYTES)
-        except carrier.AdmissionError as exc:
-            raise ConsumerGateError("unable to snapshot independent Actions policy") from exc
+        raw_policy = _read_unlinked_external_file(Path(actions_policy_file), actions.MAX_POLICY_BYTES)
         snapshot_policy = snapshot / "actions-policy.json"
         snapshot_policy.write_bytes(raw_policy)
         if hashlib.sha256(raw_policy).hexdigest() != policy_sha:
