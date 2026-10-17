@@ -10,6 +10,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[2]
 ASSURANCE = ROOT / ".github" / "workflows" / "assurance-gate.yml"
 BOOTSTRAP = ROOT / ".github" / "workflows" / "project-bootstrap-tests.yml"
+GOVERNANCE = ROOT / "governance" / "ASSURANCE_ENFORCEMENT.md"
 
 
 class CIEvidencePreservationTests(unittest.TestCase):
@@ -17,6 +18,15 @@ class CIEvidencePreservationTests(unittest.TestCase):
     def setUpClass(cls):
         cls.assurance = ASSURANCE.read_text(encoding="utf-8")
         cls.bootstrap = BOOTSTRAP.read_text(encoding="utf-8")
+        cls.governance = GOVERNANCE.read_text(encoding="utf-8")
+
+    def test_public_governance_description_matches_actual_trigger_semantics(self):
+        self.assertIn("all pull requests", self.governance)
+        self.assertIn("without** an open/synchronized pull request", self.governance)
+        self.assertIn("main/release push run", self.governance)
+        self.assertIn("75 synthetic cases", self.governance)
+        self.assertIn("13 exact-target behavioral cases", self.governance)
+        self.assertNotIn("pushes to `main`, `hardening/**`", self.governance)
 
     def test_assurance_has_pr_trigger_and_required_push_evidence_only(self):
         header = self.assurance.split("\npermissions:", 1)[0]
