@@ -175,6 +175,7 @@ def verify_source(
     if (
         not isinstance(run.get("repository"), dict)
         or not isinstance(run.get("head_repository"), dict)
+        or not isinstance(run.get("path"), str)
     ):
         raise ActionsSourceError("official Actions repository metadata malformed")
     if (
