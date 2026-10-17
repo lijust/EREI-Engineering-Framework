@@ -6,7 +6,7 @@ VNext assurance hardening provides repository-enforced validation gates, but Git
 
 ## In-repository enforcement
 
-The Framework carries an always-running `Framework Assurance Gate` for pull requests and for pushes to `main`, `hardening/**`, and `release/**`.
+The Framework runs `Framework Assurance Gate` on **all pull requests** (not path-filtered), plus on pushes to **`main`** and **`release/**`** for exact-commit assurance evidence. A direct push to `hardening/**` **without** an open/synchronized pull request does **not** trigger this gate; once a PR exists, its `pull_request` event receives the gate. The previous duplicate `hardening/**` push trigger is deliberately removed for CI efficiency. For superseded PR heads, only the latest check is retained; every main/release push run stays eligible and receives its own concurrency key. A successful PR check does not substitute for an authenticated successful `main` push or independent external admission.
 
 It verifies, at minimum:
 
@@ -15,7 +15,7 @@ It verifies, at minimum:
 - all Framework tool unit tests;
 - eval harness unit tests;
 - validation of every machine-readable eval suite;
-- execution of all 44 published eval cases at the explicitly labeled `reference_contract` assurance level;
+- execution of published evaluation cases at the explicitly labeled `reference_contract` assurance level (the current full reference suite reports **75 synthetic cases**, not real model proof);
 - a separate report of retained `exact_target_runtime` behavioral evidence coverage;
 - structured central feedback decisions;
 - the last Stable release manifest;
@@ -38,7 +38,7 @@ This limitation is **not** treated as an application or Framework code defect, a
 
 Until branch/ruleset enforcement becomes available and is enabled, the next assurance release remains `candidate`.
 
-A future V2 Stable declaration also requires all other V2 Stable gates, including complete independent `exact_target_runtime` behavioral evidence and one genuine prospective learning cycle from capture through measured post-adoption outcome.
+A future V2 Stable declaration also requires all other V2 Stable gates, including **13 exact-target behavioral cases in the frozen two-suite Task Learning V2 scope**, authenticated independent runtime evidence, a genuine measured prospective learning cycle, and externally enforced release/consumer admission accepted by independent Architecture and Security reviewers. CI and reference-contract checks alone are insufficient.
 
 ## Safe fallback while unavailable
 
