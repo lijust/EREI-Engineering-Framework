@@ -82,6 +82,56 @@ class ConsumerPermitShapeTests(unittest.TestCase):
             gate._permit(self.raw(), self.now.replace(tzinfo=None))
 
 
+@unittest.skipUnless(os.name == "nt", "Win32 share-mode security is Windows-only")
+class WindowsSnapshotSharingTests(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.source = Path(self.temp.name) / "trust.allowed_signers"
+        self.source.write_bytes(b"source-only public trust anchor\\n")
+
+    def test_snapshot_reader_denies_new_writers_through_same_path(self):
+        fd = gate._open_snapshot_fd(self.source)
+        with os.fdopen(fd, "rb") as reader:
+            self.assertEqual(reader.read(), b"source-only public trust anchor\\n")
+            with self.assertRaises(OSError):
+                with self.source.open("r+b") as writer:
+                    writer.write(b"hostile")
+            self.assertEqual(reader.seek(0), 0)
+            self.assertEqual(reader.read(), b"source-only public trust anchor\\n")
+        self.assertEqual(gate._read_unlinked_external_file(self.source, 1024),
+                         b"source-only public trust anchor\\n")
+
+    def test_snapshot_reader_refuses_preexisting_writable_handle(self):
+        with self.source.open("r+b") as writer:
+            with self.assertRaisesRegex(gate.ConsumerGateError, "read securely|sharing lock"):
+                gate._read_unlinked_external_file(self.source, 1024)
+            writer.flush()
+        self.assertEqual(gate._read_unlinked_external_file(self.source, 1024),
+                         b"source-only public trust anchor\\n")
+
+    def test_snapshot_reader_denies_writes_through_hard_link_alias(self):
+        alias = self.source.parent / "same-inode-trust-alias"
+        try:
+            os.link(self.source, alias)
+        except (OSError, NotImplementedError):
+            self.skipTest("hard links not available")
+        fd = gate._open_snapshot_fd(self.source)
+        with os.fdopen(fd, "rb"):
+            with self.assertRaises(OSError):
+                with alias.open("r+b") as writer:
+                    writer.write(b"hostile")
+        with self.assertRaisesRegex(gate.ConsumerGateError, "hard link"):
+            gate._read_unlinked_external_file(self.source, 1024)
+
+    def test_snapshot_reader_denies_unlink_during_read(self):
+        fd = gate._open_snapshot_fd(self.source)
+        with os.fdopen(fd, "rb"):
+            with self.assertRaises(OSError):
+                self.source.unlink()
+        self.assertTrue(self.source.is_file())
+
+
 @unittest.skipUnless(shutil.which("ssh-keygen"), "real OpenSSH required for consumer crypto contract")
 class ConsumerGateIntegrationTests(unittest.TestCase):
     def setUp(self):
