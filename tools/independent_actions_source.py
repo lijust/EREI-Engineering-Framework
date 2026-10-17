@@ -169,6 +169,15 @@ def verify_source(
     if hashlib.sha256(source).hexdigest() != policy["workflow_sha256"]:
         raise ActionsSourceError("target assurance workflow source not externally pinned")
     run = _request_json(f"{API_ROOT}/actions/runs/{run_id}", token)
+    # GitHub may legitimately return nested nulls; adversarial JSON can
+    # contain truthy scalars here. Never allow an AttributeError to escape
+    # the fail-closed ActionsSourceError contract.
+    if (
+        not isinstance(run.get("repository"), dict)
+        or not isinstance(run.get("head_repository"), dict)
+        or not isinstance(run.get("path"), str)
+    ):
+        raise ActionsSourceError("official Actions repository metadata malformed")
     if (
         run.get("id") != run_id or run.get("run_attempt") != run_attempt
         or run.get("workflow_id") != policy["workflow_id"]
