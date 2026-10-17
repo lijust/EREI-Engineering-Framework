@@ -34,6 +34,12 @@ on:
       - 'workflows/project-integration-bootstrap/**'
       - 'adr/ADR-0002-PROJECT-INTEGRATION-CONTRACT.md'
 
+# Preserve every main push evidence run; retire only superseded PR matrix jobs.
+# A separate push run-id also prevents GitHub replacing an older pending push.
+concurrency:
+  group: bootstrap-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || format('push-run-{0}', github.run_id) }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 permissions:
   contents: read
 
