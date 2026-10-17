@@ -101,12 +101,61 @@ def _permit(raw: bytes, now: datetime) -> dict[str, Any]:
     return item
 
 
+def _open_snapshot_fd(path: Path) -> int:
+    """Open source for reading while denying concurrent writes and deletions.
+
+    Windows CRT os.open() does not provide a controllable share mask. Windows
+    st_ctime_ns is creation time, not an unforgeable modification counter. Use
+    CreateFileW with FILE_SHARE_READ *only*, excluding pre-existing writable
+    handles and new writes/rename/delete while this handle is open. Missing
+    Win32 support must fail closed; never silently revert to os.open().
+    """
+    if os.name != "nt":
+        return os.open(path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
+    try:
+        import ctypes
+        import msvcrt
+        from ctypes import wintypes
+
+        kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+        create_file = kernel.CreateFileW
+        create_file.argtypes = (
+            wintypes.LPCWSTR, wintypes.DWORD, wintypes.DWORD,
+            wintypes.LPVOID, wintypes.DWORD, wintypes.DWORD,
+            wintypes.HANDLE,
+        )
+        create_file.restype = wintypes.HANDLE
+        # GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING,
+        # FILE_FLAG_OPEN_REPARSE_POINT. Never share WRITE or DELETE.
+        handle = create_file(str(path), 0x80000000, 0x00000001,
+                             None, 3, 0x00200000, None)
+        if handle == ctypes.c_void_p(-1).value or handle is None:
+            error = ctypes.get_last_error()
+            raise OSError(error, "Windows exclusive-write snapshot handle unavailable")
+        try:
+            return msvcrt.open_osfhandle(
+                handle, os.O_RDONLY | os.O_BINARY | getattr(os, "O_NOINHERIT", 0)
+            )
+        except BaseException:
+            close_handle = kernel.CloseHandle
+            close_handle.argtypes = (wintypes.HANDLE,)
+            close_handle.restype = wintypes.BOOL
+            close_handle(handle)
+            raise
+    except (OSError, ImportError, AttributeError, ValueError, TypeError) as exc:
+        raise ConsumerGateError(
+            "Windows snapshot cannot establish mandatory read-only sharing lock"
+        ) from exc
+
+
 def _read_unlinked_external_file(path: Path, max_size: int) -> bytes:
     """Read one regular, singly linked external file through the SAME descriptor.
 
     Hard links can make a trust file outside the checkout share an inode with
-    attacker-controlled content inside the checkout. This source-only defense
-    is mandatory before copying independent trust material into a snapshot.
+    attacker-controlled content inside the checkout. On Windows the opened
+    file must also prohibit any concurrent writes/deletes via CreateFileW
+    share-mode enforcement, not forgeable st_ctime/st_mtime comparisons.
+    This source-only defense is mandatory before copying to a snapshot.
     A separately controlled verifier host is still required in production.
     """
     try:
@@ -115,8 +164,7 @@ def _read_unlinked_external_file(path: Path, max_size: int) -> bytes:
             raise ConsumerGateError("independent trust input must be a regular file, not a symlink")
         if before_path.st_nlink != 1:
             raise ConsumerGateError("independent trust input must not have additional hard links")
-        flags = os.O_RDONLY | getattr(os, "O_BINARY", 0) | getattr(os, "O_NOFOLLOW", 0)
-        fd = os.open(path, flags)
+        fd = _open_snapshot_fd(path)
         with os.fdopen(fd, "rb") as handle:
             before = os.fstat(handle.fileno())
             if (not stat.S_ISREG(before.st_mode) or before.st_nlink != 1
