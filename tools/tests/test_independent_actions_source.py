@@ -152,6 +152,12 @@ class IndependentActionsSourceTests(unittest.TestCase):
                     with self.assertRaises(src.ActionsSourceError):
                         self._verify(run=run)
 
+    def test_github_workflow_path_wrong_json_types_denied(self):
+        for malformed in ([".github/workflows/assurance-gate.yml"], {"path": src.WORKFLOW_PATH}, True, 23, None):
+            with self.subTest(path=malformed):
+                with self.assertRaises(src.ActionsSourceError):
+                    self._verify(run={**self.run, "path": malformed})
+
     def test_github_run_wrong_workflow_id_rejected(self):
         with self.assertRaisesRegex(src.ActionsSourceError, "run metadata"):
             self._verify(run={**self.run, "workflow_id": 999})
