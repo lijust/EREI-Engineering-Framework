@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import shutil
 import subprocess
 import tempfile
@@ -347,6 +348,42 @@ class ConsumerGateIntegrationTests(unittest.TestCase):
     def test_cannot_upcast_component_to_stable_enforcement(self):
         with self.assertRaisesRegex(gate.ConsumerGateError, "contract mismatch"):
             self._verify(signed_carrier_override={"stable_enforcement_satisfied": True})
+
+    def test_hardlinked_consumer_trust_anchor_into_repo_denied(self):
+        file = self.trust / "consumer-architecture.allowed_signers"
+        forged = self.repo / "attacker-controlled-consumer-architecture.allowed_signers"
+        forged.write_bytes(file.read_bytes())
+        file.unlink()
+        try:
+            os.link(forged, file)
+        except (OSError, NotImplementedError):
+            self.skipTest("hard links not supported for this test filesystem")
+        with self.assertRaisesRegex(gate.ConsumerGateError, "hard link"):
+            self._verify()
+
+    def test_hardlinked_release_trust_anchor_into_repo_denied(self):
+        file = self.admission_trust / "independent-security.allowed_signers"
+        forged = self.repo / "attacker-controlled-release-security.allowed_signers"
+        forged.write_bytes(file.read_bytes())
+        file.unlink()
+        try:
+            os.link(forged, file)
+        except (OSError, NotImplementedError):
+            self.skipTest("hard links not supported for this test filesystem")
+        with self.assertRaisesRegex(gate.ConsumerGateError, "hard link"):
+            self._verify()
+
+    def test_hardlinked_actions_policy_into_repo_denied(self):
+        file = self.root / "actions-policy.json"
+        forged = self.repo / "attacker-controlled-actions-policy.json"
+        forged.write_bytes(file.read_bytes())
+        file.unlink()
+        try:
+            os.link(forged, file)
+        except (OSError, NotImplementedError):
+            self.skipTest("hard links not supported for this test filesystem")
+        with self.assertRaisesRegex(gate.ConsumerGateError, "hard link"):
+            self._verify()
 
     def test_untrusted_repo_packet_location_denied(self):
         (self.repo / "permit").mkdir()
