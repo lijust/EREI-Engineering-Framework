@@ -48,8 +48,21 @@ python -B tests/test_framework_integration_gate.py -v
 
 ## نتيجة CI المتاحة
 
-رأس #83 `6054baf7f9b926203d47f94db1adf909810b88ef` أعاد عمليتي run `39185654385` و`39185680855` بنتيجة `startup_failure`، وjob count = 0. تعذر استرجاع check-suite details عبر connector. لا سبب جذري مؤكد ولا CI PASS. يجب قراءة السبب في GitHub أو بوسيلة مصرح بها ثم معالجة السبب وإعادة التحقق؛ لا تعديل إعدادات أمني تلقائي.
+لقطة 2026-10-19 على رؤوس #83–#91 الحالية: 19 محاولة startup_failure و0 jobs في جميعها. لا تتوفر تفاصيل السبب عبر connector. لا CI PASS ولا نسبة إلى billing أو YAML أو runner دون دليل. المعرّفات والرؤوس والنتائج محفوظة في [verification-20261019.json](evidence/verification-20261019.json).
 
 ## حدود الاستنتاج
 
 لا توجد مقارنة V1/V2 متكافئة منفذة، ولا قياس cost per verified task، ولا دليل causal على خفض rework أو escapes. اكتمال دورة prospective القديمة يثبت انتقال findings وتنفيذ adoption في نطاقها، ولا يثبت أثرًا بعد exposure كافٍ. لا يعد EPOCH-024 الفارغ تحسنًا. تبقى المقاييس المفقودة unknown، ولا تعاد كتابة التاريخ لتوليد baseline مرغوب.
+
+## دفعة التحقق المجمع وF06/F12
+
+- F06: [Draft #91](https://github.com/lijust/EREI-Engineering-Framework/pull/91)، head 106181a254e72b23f950e05d435b7e00b5a354fe؛ 49 اختبارًا محليًا. مراجعة مستقلة معلقة، ولا positive authority path.
+- F12: [Draft #92](https://github.com/lijust/EREI-Engineering-Framework/pull/92)، head a42f9413a98d829ce51b48bed38d7294f931bae3؛ 41 اختبارًا على كل من Python 3.11 و3.12. بني فوق PR #67، tree الأصل beaf9e612c2f2aecc4ccd50f5712cbe76e6e5b11؛ 307 blobs غير معدلة طابقت الأصل.
+- تجميع #83–#89 و#91: 144 tool tests + 78 eval tests = 222، وأربع standalone scripts ناجحة. SHA-256 لكل ملف متغير وأوامر المجموعات في سجل التحقق. ليس commit إصدارًا؛ يجب إعادة qualification على SHA ثابت بعد المراجعة.
+- طابقت 52 مقارنة Git blob الملفات المعدلة المنشورة في عشرة PRs المصدرية؛ لا mismatches. لا تجمع أعداد الاختبارات المتداخلة كاختبارات فريدة.
+
+أمر F12، مع تكراره على -3.12:
+
+```text
+py "-3.11" -B -m unittest tools.tests.test_ci_test_partition tools.tests.test_ci_event_dedup_contract tools.tests.test_bootstrap_project tools.tests.test_capability_activation -v
+```

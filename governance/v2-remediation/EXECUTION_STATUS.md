@@ -1,48 +1,67 @@
-# حالة تنفيذ إصلاحات EREI V2
+# EREI V2 REMEDIATION STATUS
 
-لقطة 2026-10-19، Africa/Cairo. [Issue #68](https://github.com/lijust/EREI-Engineering-Framework/issues/68) وIssues/PRs هي مرجع الحالة الحية؛ هذه الوثيقة تلخص الأدلة عند إعدادها.
+Date: 2026-10-19، 19:04 UTC / 22:04 Africa/Cairo.
+Repository: `lijust/EREI-Engineering-Framework`؛ تكامل منفصل مع `lijust/EREI-3.2`.
+Current main SHA: `72d49658524fbce6145783cd52297c53edbb2c95`.
+Active milestone: مراجعة M1–M4؛ مسودة تصحيح حدود السلطة ضمن M6.
 
-## القرار الحالي
+Overall implementation progress: 17 مهمة؛ 11 IN_REVIEW، و3 BACKLOG، و3 BLOCKED. تقدم التسليم المقبول الموزون 0/237؛ لا يمثل نسبة كتابة الكود.
+Internal readiness: لم يتأهل؛ ينتظر قبول الإصلاحات ونسخة مجمعة ذات SHA ثابت واختبار rollback.
+Stable readiness: BLOCKED؛ سلطة الإنفاذ والتقييم الحقيقي والموافقات لم تستوفَ.
 
-لم يُعتمد Internal Release أو Stable V2. بقي Framework main عند `72d49658524fbce6145783cd52297c53edbb2c95`. نُشرت ثمانية PRs مصدرية للمراجعة دون دمج، مع وثائق البرنامج في PR مستقل. لا تغييرات في بيانات المشاريع الحية أو pins أو الإنتاج أو إعدادات GitHub أو credentials أو paid AI workflows.
+Completed tasks: 0 DONE.
+Verified tasks: 0 VERIFIED؛ نجاح محلي لا يستوفي وحده شرط المراجعة وCI.
+In-progress tasks: 11 تحت المراجعة؛ لا مهمة حاليًا بحالة IN_PROGRESS.
+Blocked tasks: T11 وT15 وT16؛ وتعوق مشاكل CI قبول PRs المفتوحة.
+Remaining P1: 7 Findings على main.
+Remaining P2: 7 Findings على main.
 
-| المهمة | الحالة | PR / الرأس | الدليل وحدوده |
+Current critical path: T01 → T02 → T03 → T14، مع T04/T05/T07/T08. T06 شرط تبني 3.2، وليس التأهيل المعزول. Stable-only infrastructure لا يضاف إلى هذا المسار.
+
+Changes delivered: عشرة PRs مصدرية مفتوحة، منها مسودتا #91 و#92، ووثائق البرنامج في #90. آخر دفعة أضافت F12 وتحققت من توافق ثمانية إصلاحات Framework معًا.
+PRs created: 11 إجمالًا في البرنامج؛ Framework #83–#92 و3.2 #174. PR #67 سابقة للبرنامج.
+PRs merged: 0.
+
+Tests executed: 222 اختبارًا في تجميع Framework المعزول؛ أربع standalone scripts؛ 41 اختبارًا لـF12 على كل من Python 3.11 و3.12. و13 اختبارًا سابقًا مستقل النطاق في 3.2.
+Tests passed: كل المجموعات النهائية المذكورة نجحت. أعداد المجموعات متداخلة؛ لا تجمعها بوصفها اختبارات فريدة.
+Tests failed: 0 في التشغيل المحلي النهائي لهذه المجموعات. CI الرسمي مختلف: 19 محاولة على رؤوس #83–#91 أعادت startup_failure دون Jobs؛ ليست نتائج unit tests.
+
+Verified complexity reduction: مسودة #92 تستبدل full discovery المكرر على 3.12 بفحص bootstrap/activation، مع بقاء full 3.12 في Assurance وfull 3.11 في Bootstrap. التنفيذ التشغيلي والتوفير لم يثبتا بعد.
+Measured CI savings: غير متاحة. عينة #67 التاريخية 506 job-seconds ليست تجربة مقارنة لهذا التغيير.
+Measured quality improvements: رفض حالات الخلل المعروفة في regression fixtures؛ لا دليل بعد على خفض rework أو escapes أو cost per verified task في الإنتاج.
+
+Outstanding risks: سبب startup_failure غير معلوم؛ مراجعة مستقلة جديدة لـ#91/#92 معلقة؛ الوكلاء المساعدون بلغوا حد الاستخدام. التجميع المحلي ليس release commit. App به أربع anomalies و35 authority records ناقصة. لا يوجد benchmark V1/V2 منفذ.
+Decisions requiring owner approval: لاحقًا، اختيار وتجهيز سلطة Stable، أو تشغيل model مدفوع، أو تعديل live ledger/pins، أو نشر Stable. لم تُنفذ هذه العمليات ولم يُفترض تفويضها.
+
+Next 3 execution tasks:
+1. تشخيص سبب startup_failure من تفاصيل Actions المتاحة ثم التحقق الرسمي على الرؤوس الدقيقة؛ لا تغيير إعدادات أمني تلقائي.
+2. استكمال المراجعة المستقلة، ومعالجة ملاحظاتها، ثم إعادة التحقق عند retarget للفروع المتراكبة.
+3. تأهيل نسخة Internal معزولة ذات SHA ثابت وتمرين rollback يحفظ الأدلة، بعد قبول الإصلاحات المطلوبة.
+
+Estimated remaining effort: لا يوجد سجل ساعات منفذة يسمح بحساب متبقٍ موثوق؛ تقدير البرنامج الأصلي 150–324 ساعة هندسية. لم تُطرح منه ساعات افتراضية.
+NEXT ACTION: إزالة عائق CI والحصول على مراجعة مستقلة قبل نقل أي مهمة إلى VERIFIED؛ تستمر الأعمال المصدرية التي لا تعتمد على هذين الشرطين.
+
+## الرؤوس المنشورة
+
+| المهمة | Finding | PR | الرأس الحالي |
 |---|---|---|---|
-| T00 / M0 | IN_REVIEW | [Issue](https://github.com/lijust/EREI-Engineering-Framework/issues/68) | وثائق الخطة والتتبع قيد المراجعة. |
-| T01 / F01 | IN_REVIEW | [PR](https://github.com/lijust/EREI-Engineering-Framework/pull/83) · `6054baf7f9b926203d47f94db1adf909810b88ef` | اجتاز 29 اختبارًا محددًا مع إعادة تشغيل مستقلة. بقيت أربع anomalies تاريخية في App محجوبة دون تعديل. |
-| T02 / F02 | IN_REVIEW | [PR](https://github.com/lijust/EREI-Engineering-Framework/pull/84) · `3545df37a90695a588ce5ced4a5a1327ea3d803d` | بعد ملاحظة المراجعة المستقلة، أضيف رفض فقد ترتيب projection مع legacy reviews. اجتاز الرأس الحالي 37 اختبارًا؛ F03 فوقه اجتاز 48 اختبارًا. لم يُعد بناء تاريخ مفقود بالتخمين. |
-| T03 / F03 | IN_REVIEW | [PR](https://github.com/lijust/EREI-Engineering-Framework/pull/88) · `9ca0fd14ca2e4a60def23f9e7df11c827a961135` | اجتاز 48 اختبارًا مع تبعياته. App: BLOCKED، و35 سجلًا بلا authority وأربع anomalies؛ لا proposed writes. 3.2: NO_IMPORT_REQUIRED. هذا تسليم planner فقط. |
-| T04 / F04 | IN_REVIEW | [PR](https://github.com/lijust/EREI-Engineering-Framework/pull/86) · `0555feb863412db1032b229c48073b2a9eb83479` | اجتاز 62 اختبارًا محددًا وأربع standalone scripts. الفحص التنفيذي يخص نقاط دخول Python؛ Markdown سياسة للـagent ولا يُعد سلطة إنفاذ مستقلة. |
-| T05 / F05 | IN_REVIEW | [PR](https://github.com/lijust/EREI-Engineering-Framework/pull/89) · `0b2f9a517215a5b0070617e9c9312c6377d0c218` | اجتاز 52 اختبارًا محددًا، و75 reference cases اصطناعية. الدمج المعزول مع F11 اجتاز 78 اختبارًا. عقد output منظم؛ لا natural-language judge ولا تشغيل نموذج حقيقي. |
-| T06 / F07 | IN_REVIEW | [PR](https://github.com/lijust/EREI-3.2/pull/174) · `50cc659415af535e1b20a45a3a2453d0aa07afa3` | اجتاز 13 اختبارًا يعيد تنفيذ مقاطع workflow الفعلية في مستودعات Git مؤقتة. لا تغيير pin أو بيانات أو application code. |
-| T07 / F10 | IN_REVIEW | [PR](https://github.com/lijust/EREI-Engineering-Framework/pull/87) · `e779b5fdaa347665355e89439b72820313dfcf20` | اجتازت الاختبارات العددية التسعة وgovernance script، مع مراجعة مستقلة. الدمج مع F04 اجتاز 25 اختبارًا. PR مبني على F04 ويحفظ activation guard. |
-| T08 / F11 | IN_REVIEW | [PR](https://github.com/lijust/EREI-Engineering-Framework/pull/85) · `084c3ab0bf0dd9e5afcadf074c723533fe190561` | اجتاز 65 اختبار eval؛ المراجع المستقل أعاد 11 اختبارًا في الملفين المعدلين. POSIX parser فقط، وليس POSIX runtime. |
-| T09 / F12 | READY | [Issue](https://github.com/lijust/EREI-Engineering-Framework/issues/76) | PR #67 قائم؛ لا توفير مقاس بعد التطبيق ولا دمج. |
-| T10 / F06 | READY | [Issue](https://github.com/lijust/EREI-Engineering-Framework/issues/77) | إصلاح الفصل بين review وauthority لم يُنفذ بعد. |
-| T11 / F08, F13 | BLOCKED | [Issue](https://github.com/lijust/EREI-Engineering-Framework/issues/78) | اختيار السلطة وإعدادها والتحقق الحي يحتاج قرارًا منفصلًا؛ لا enforcement مثبت. |
-| T12 / F09 | BACKLOG | [Issue](https://github.com/lijust/EREI-Engineering-Framework/issues/79) | يعتمد تصميم archive receipt على عقد السلطة المختار. |
-| T13 / F14 | BACKLOG | [Issue](https://github.com/lijust/EREI-Engineering-Framework/issues/80) | مقاييس intervention/exposure محددة في الخطة؛ عقد التنفيذ لم يكتمل. |
-| T14 / M5 | BACKLOG | [Issue](https://github.com/lijust/EREI-Engineering-Framework/issues/81) | يتطلب aggregate SHA مُراجعًا واختبار rollback قبل التأهيل. |
-| T15 / M7 | BLOCKED | [Issue](https://github.com/lijust/EREI-Engineering-Framework/issues/82) | يمكن تجهيز configuration؛ تشغيل النموذج المدفوع يحتاج ميزانية معتمدة. |
-| T16 / M8 | BLOCKED | [Issue](https://github.com/lijust/EREI-Engineering-Framework/issues/31) | بوابات #31 والسلطة وأدلة runtime والموافقات لم تستوفَ. |
+| T01 | F01 | [#83](https://github.com/lijust/EREI-Engineering-Framework/pull/83) | `6054baf7f9b926203d47f94db1adf909810b88ef` |
+| T02 | F02 | [#84](https://github.com/lijust/EREI-Engineering-Framework/pull/84) | `3545df37a90695a588ce5ced4a5a1327ea3d803d` |
+| T03 | F03 | [#88](https://github.com/lijust/EREI-Engineering-Framework/pull/88) | `9ca0fd14ca2e4a60def23f9e7df11c827a961135` |
+| T04 | F04 | [#86](https://github.com/lijust/EREI-Engineering-Framework/pull/86) | `0555feb863412db1032b229c48073b2a9eb83479` |
+| T05 | F05 | [#89](https://github.com/lijust/EREI-Engineering-Framework/pull/89) | `0b2f9a517215a5b0070617e9c9312c6377d0c218` |
+| T06 | F07 | [3.2 #174](https://github.com/lijust/EREI-3.2/pull/174) | `50cc659415af535e1b20a45a3a2453d0aa07afa3` |
+| T07 | F10 | [#87](https://github.com/lijust/EREI-Engineering-Framework/pull/87) | `e779b5fdaa347665355e89439b72820313dfcf20` |
+| T08 | F11 | [#85](https://github.com/lijust/EREI-Engineering-Framework/pull/85) | `084c3ab0bf0dd9e5afcadf074c723533fe190561` |
+| T09 | F12 | [#92 draft](https://github.com/lijust/EREI-Engineering-Framework/pull/92)، فوق #67 | `a42f9413a98d829ce51b48bed38d7294f931bae3` |
+| T10 | F06 | [#91 draft](https://github.com/lijust/EREI-Engineering-Framework/pull/91) | `106181a254e72b23f950e05d435b7e00b5a354fe` |
 
-## التحقق والقيود
+T00 ووثائق الخطة في [#90](https://github.com/lijust/EREI-Engineering-Framework/pull/90). ترتيب الطبقات: #83 → #84 → #88، و#86 → #87، و#67 → #92. يعاد التحقق بعد تغيير الرأس أو base؛ لا يُنفذ merge بموجب هذه الوثيقة.
 
-- ظهرت على رأس PR #83 عمليتا GitHub Actions بنتيجة `startup_failure`: [push](https://github.com/lijust/EREI-Engineering-Framework/actions/runs/39185654385) و[pull_request](https://github.com/lijust/EREI-Engineering-Framework/actions/runs/39185680855). لم تُنشأ jobs، ولم يتيح connector تفاصيل السبب. لا دليل على CI PASS، ولا يُفترض أن السبب billing أو runner أو YAML دون بيانات.
-- F02 عولج مرة أخرى بعد أن أثبت المراجع المستقل أن فقد صف V2 من projection قد يخفي escape عبر legacy cutoff. الرأس المنشور الآن يرفض الحالة المبهمة. إعادة التحقق: 37 اختبارًا؛ ومع F03: 48 اختبارًا. استعادة التاريخ المفقود تحتاج دليله الأصلي.
-- F04 وF10 معًا: 25 اختبارًا ناجحًا، مع بقاء guard قبل قراءة مدخلات المقارنة. Pure validation لا تمنح إذنًا بالتنفيذ في المشروع.
-- F05 وF11 معًا: 78 اختبارًا ناجحًا. الحالات المرجعية الـ75 synthetic؛ لا نموذج مستقل ولا tool trajectory فعلي، ولا ادعاء تحسن إنتاجي.
-- F07: 13 اختبارًا يعيد تنفيذ مقاطع workflow في مستودعات مؤقتة؛ ليس attestation من GitHub runner.
-- تُعاد الاختبارات المناسبة عند أي تعديل أو retarget؛ لا تنتقل شهادة رأس قديم تلقائيًا إلى رأس جديد.
+## حدود الأدلة
 
-## البيانات الحية
+طابقت 52 مقارنة Git blob للملفات المعدلة عبر PRs المصدرية العشرة النسخ المحلية المستخدمة في الاختبارات، دون mismatch. التجميع ذو 44 ملفًا متغيرًا يجمع #83–#89 و#91؛ احتاج دمج قسمين توثيقيين في learning/README.md، ولم يتطلب حل تعارض تنفيذي. اجتاز 144 tool tests و78 eval tests. لا يتضمن #92 أو تغيير 3.2، ولا يمثل RC مجمدًا.
 
-App: 155 حدثًا، منها 120 من V1 و35 من V2. يقبل إصلاح F01 السجلات الصحيحة، لكن record 7 له task_id غير صالح، والسجلات 12 و14 و15 بها fingerprint mismatch مستقل. يبقى planner `BLOCKED`، مع 35 authority records ناقصة وصفر proposed writes. لم تتغير bytes المصدر. نتيجة نسخة 3.2 هي `NO_IMPORT_REQUIRED`؛ ليست موافقة ترقية.
+F02 يرفض فقد ترتيب projection مع legacy reviews بدل تخمين العضوية. F03 planner للقراءة فقط: App BLOCKED، وصفر proposed writes؛ 3.2 NO_IMPORT_REQUIRED. لم تتغير bytes الأدلة الحية. F04 يحمي نقاط دخول Python؛ تعليمات Markdown لا تعادل تنفيذ agent مستقلًا. F05 يستخدم typed simulation؛ 75 reference cases اصطناعية ليست 13 حالة genuine model evaluation. F06 يرفض review-only authority دون إضافة سلطة إيجابية أو نشر verifier.
 
-## التقدم والعوائق
-
-إجمالي المهام 17؛ DONE = 0؛ VERIFIED = 0؛ IN_REVIEW = 9 بما فيها وثائق البرنامج؛ READY = 2؛ BACKLOG = 3؛ BLOCKED = 3. لا يعني IN_REVIEW اكتمال القبول. تقدم التسليم الموزون 0/237؛ تقدير البرنامج الأصلي 150–324 ساعة هندسية، وليس وقتًا فعليًا مسجلًا أو توقعًا مضمونًا للانتهاء.
-
-تبقى Findings الأصلية على main: 7 من P1 و7 من P2. وجود إصلاح في فرع لا يغلق Finding تشغيليًا. العائق الحالي للمسار الداخلي هو قبول الإصلاحات على رؤوسها الدقيقة وإكمال التحقق المجمع والرجوع؛ البيانات الحقيقية ذات anomalies مستبعدة. Stable يتطلب أيضًا معالجة F06 والإنفاذ الفعلي والعمر الطويل للأدلة والتقييم والموافقات.
-
-ترتيب الدمج المقترح بعد قبول المراجعات: #83 ثم #84 ثم #88؛ و#86 قبل #87. يعاد retarget والتحقق بعد كل طبقة. #85 و#89 مستقلان مصدريًا مع تحقق دمجهما. 3.2 #174 منفصل. لا تُنفذ merges أو upgrades من هذه الوثيقة.
+الأدلة والأوامر في [EVIDENCE_INDEX.md](EVIDENCE_INDEX.md) و[سجل التحقق المحلي](evidence/verification-20261019.json). هذه أدلة محلية مسجلة، لا attestation خارجية. [Issue #68](https://github.com/lijust/EREI-Engineering-Framework/issues/68) هو مرجع الحالة الحية؛ تبقى [#31](https://github.com/lijust/EREI-Engineering-Framework/issues/31) مرجع Stable.
