@@ -69,4 +69,15 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Run bootstrap unit tests
         shell: powershell
-        run: py "-${{ matrix.python-version }}" -m unittest discover -s tools/tests -p 'test_*.py' -v
+        # Assurance already runs full tool discovery on 3.12 for every PR and
+        # main push. Keep full 3.11 coverage plus a focused 3.12 bootstrap check.
+        # The independent Assurance status remains required for acceptance.
+        run: |
+          if ('${{ matrix.python-version }}' -eq '3.11') {
+            py "-3.11" -m unittest discover -s tools/tests -p 'test_*.py' -v
+          } elseif ('${{ matrix.python-version }}' -eq '3.12') {
+            py "-3.12" -m unittest tools.tests.test_bootstrap_project tools.tests.test_capability_activation -v
+          } else {
+            throw 'No test coverage allocation for this Python version'
+          }
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
