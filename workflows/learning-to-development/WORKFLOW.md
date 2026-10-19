@@ -5,6 +5,12 @@
 **Release boundary:** Outside Task Learning V2 Core Stable scope.  
 **Purpose:** Turn Task Learning evidence into bounded engineering-development outputs without letting metrics self-modify the Framework.
 
+## Entry gate
+
+Before entering this workflow, including invocation from Learning Review or the router, run `tools/capability_activation.py --target <project> --capability learning_to_development`. Proceed only on `ACTIVE_STABLE` or `ACTIVE_CANDIDATE`. On `DORMANT_CANDIDATE`, return to Core review findings/actions/closure without creating or persisting an LDO. On `BLOCK_*` or resolution failure, stop translation and repair the activation evidence.
+
+Resolve each subordinate capability separately immediately before use. This workflow's adoption does not authorize `learning_pattern_analysis`, `framework_effectiveness_measurement`, or `learning_review_debt_guard`. No workflow authority, project pin upgrade, or source artifact validation substitutes for exact capability/ref/version adoption.
+
 ## Ownership
 
 The **Chief Engineer owns translation and interpretation** of learning evidence, with QA and the relevant specialist roles supplying evidence and challenge.
@@ -62,7 +68,7 @@ Bind the exact project, epoch/review, Framework ref and evidence set.
 
 ### 2. Compute deterministic patterns
 
-Run Learning Pattern Analysis.
+Resolve `learning_pattern_analysis` separately, then run `tools/learning_pattern_analysis.py --target <project>` (or guarded `analyze_target`) only when active. If dormant, use the Core review's retained evidence and explicitly record that optional analysis was skipped; if the requested outcome requires it, stop that outcome. Activation failure prohibits analyzer dispatch.
 
 ### 3. Interpret each material signal
 
@@ -112,7 +118,7 @@ The canonical project-local location is:
 .erei/learning/development-outputs/<LDO-ID>.json
 ```
 
-The source project owns this provenance record.
+The source project owns this provenance record. Re-resolve `learning_to_development` immediately before project output generation/persistence if the invocation resumes later or its approval may have expired. Validate project outputs with `tools/learning_development_output.py --target <project> --input <output>`. The validator's standalone `--input` form only checks retained artifact structure; it does not generate outputs or activate this workflow.
 
 When a Framework-relevant output is accepted into central intake, the Framework may retain a generalized copy under:
 
@@ -157,7 +163,7 @@ Do not optimize for fewer failing tests by weakening verification.
 
 After Candidate adoption, use a bounded real cohort.
 
-Compare before/after using `tools/learning_effectiveness.py` or equivalent.
+Resolve `framework_effectiveness_measurement` separately. Only when active, compare before/after using `tools/learning_effectiveness.py --target <project> --before <report> --after <report>` or guarded `compare_target`. A dormant measurement capability is skipped and recorded as unmeasured, never reported as evidence of effectiveness. Activation failure prohibits the comparison dispatch; translation adoption alone is insufficient.
 
 No causal claim is allowed solely from a raw metric delta. Task/risk/workflow comparability and confounders must be reviewed.
 
@@ -168,6 +174,8 @@ Only normal Knowledge Promotion and Stable release governance may promote a Fram
 ## Review-debt rule
 
 Before applying review-debt policy, derive the current Learning State from the authoritative Task Learning event/review ledgers using `tools/task_learning.py status --target <project>` or equivalent locked derivation. Never trust a stale or absent `LEARNING_STATE.json` projection as evidence that review debt is clear.
+
+Use `tools/learning_review_debt_gate.py --target <project> --state <derived-state>` (optional `--defer <record>`). Core state validation and security/data stops remain unconditional. The following ordinary debt/defer policy applies only when the gate resolves `learning_review_debt_guard` as active. When dormant, retain Core trigger handling and underlying security/data/verification stops without requiring or applying a bounded defer. Activation failure prohibits Candidate policy use.
 
 If authoritative derivation reaches `IMMEDIATE_REVIEW` — or the debt gate derives an effective immediate-review requirement from escape/critical metrics — the default is to close the Learning Review before accumulating a large new material cohort.
 

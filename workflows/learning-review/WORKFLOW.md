@@ -79,9 +79,9 @@ Analyze as applicable by:
 
 Look for both strengths and weaknesses. A workflow with 40 clean executions is learning evidence too.
 
-### 4.1 Run deterministic pattern analysis when available
+### 4.1 Run deterministic pattern analysis only when active
 
-Run `tools/learning_pattern_analysis.py --target <project>` or equivalent Candidate behavior before assigning root cause.
+Resolve `learning_pattern_analysis` using `tools/capability_activation.py --target <project> --capability learning_pattern_analysis` before dispatch. Run `tools/learning_pattern_analysis.py --target <project>` (or guarded `analyze_target`) only on `ACTIVE_STABLE` or `ACTIVE_CANDIDATE`. `DORMANT_CANDIDATE` skips this optional analyzer and continues Core review of the evidence; `BLOCK_*` or resolution failure stops analyzer dispatch. Availability in the source tree or adoption of another workflow does not activate it.
 
 Use the report to surface:
 
@@ -150,7 +150,7 @@ A closed review starts the next project-local epoch without deleting historical 
 
 ### 10. Translate findings into Learning Development Outputs
 
-After the review has a durable `review_id`, invoke `workflows/learning-to-development/WORKFLOW.md` for every finding classified as:
+After the review has a durable `review_id`, resolve `learning_to_development` with `tools/capability_activation.py --target <project> --capability learning_to_development` before generating/persisting any LDO or invoking `workflows/learning-to-development/WORKFLOW.md`. On `DORMANT_CANDIDATE`, retain Core findings/actions/feedback and closure without requiring LDOs. On `BLOCK_*` or resolution failure, do not enter translation. Only `ACTIVE_STABLE` or `ACTIVE_CANDIDATE` permits translation for findings classified as:
 
 - `PROJECT_LOCAL_ACTION`,
 - `FRAMEWORK_FEEDBACK`,
@@ -166,7 +166,7 @@ Persist project-local outputs under:
 .erei/learning/development-outputs/<LDO-ID>.json
 ```
 
-Validate each output against `schemas/learning-development-output.schema.json` or equivalent deterministic validation.
+For an active project invocation, validate each output with `tools/learning_development_output.py --target <project> --input <output>`. Standalone `--input` validation is a pure retained-artifact check and grants no authorization to generate, persist, or dispatch project LDO behavior.
 
 A Framework-relevant output may later be generalized/copied into the Framework repository during central intake, but the project-local source remains the provenance authority.
 
@@ -207,4 +207,4 @@ Next epoch:
 - Framework findings routed through feedback/Knowledge Promotion,
 - review closure recorded with evidence,
 - next epoch initialized deterministically,
-- every material nontrivial finding has an explicit Learning Development Output or a documented reason why no output is needed.
+- when `learning_to_development` is active, every material nontrivial finding has an explicit Learning Development Output or a documented reason why no output is needed; otherwise record the activation outcome and retain the Core review/actions without an LDO requirement.

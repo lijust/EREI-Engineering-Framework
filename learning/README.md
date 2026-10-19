@@ -118,4 +118,4 @@ The Chief Engineer owns interpretation; deterministic tooling supplies evidence 
 
 ## Immediate-review debt
 
-Candidate governance now defines a bounded defer contract for unresolved `IMMEDIATE_REVIEW` debt. The default remains: review promptly. A defer is time-limited, task-count-limited and evidence-backed; it never authorizes security/data/release risk.
+Candidate governance defines a bounded defer contract for unresolved `IMMEDIATE_REVIEW` debt, applied only when `learning_review_debt_guard` resolves active for the exact project pin/version. A dormant Candidate does not require or apply a defer. Core authoritative-state validation, prompt review of signals, and security/data/verification stops remain in effect. An active defer is time-limited, task-count-limited and evidence-backed; it never authorizes security/data/release risk.
