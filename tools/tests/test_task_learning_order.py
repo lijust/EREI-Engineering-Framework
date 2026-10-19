@@ -4,6 +4,8 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
+from unittest import mock
 
 from tools import task_learning
 from tools.tests.test_task_learning_legacy import legacy_events
@@ -85,7 +87,7 @@ class LegacyOrderTests(unittest.TestCase):
             middle = v2_event()
             appended = v2_event(escape=True, suffix="44444444")
             original = [first, middle, last]
-            self.project(target, original, [legacy_review(2)], [middle, appended])
+            self.project(target, original + [appended], [legacy_review(2)], [middle, appended])
             snapshot = task_learning.authoritative_snapshot(target)
             self.assertEqual(snapshot["events"], original + [appended])
             reviewed, _ = task_learning._reviewed_occurrences(snapshot["events"], snapshot["reviews"])
@@ -108,6 +110,68 @@ class LegacyOrderTests(unittest.TestCase):
             self.project(target, [], [], [later, earlier])
             snapshot = task_learning.authoritative_snapshot(target)
             self.assertEqual(snapshot["events"], [earlier, later])
+            rebuilt = task_learning.status(target)
+            self.assertEqual(rebuilt["total_events"], 2)
+
+    def test_missing_mixed_position_blocks_every_entrypoint_without_ledger_writes(self):
+        operations = {
+            "snapshot": task_learning.authoritative_snapshot,
+            "validate": task_learning.validate_ledgers,
+            "status": task_learning.status,
+            "capture": lambda target: task_learning.capture(target, v2_event(suffix="55555555")),
+            "close_review": lambda target: task_learning.close_review(target, SimpleNamespace(
+                evidence=["audit:synthetic"], review_id=None, findings="Review findings",
+                decision="Review decision", action=[],
+            )),
+        }
+        for name, operation in operations.items():
+            with self.subTest(operation=name), tempfile.TemporaryDirectory() as directory:
+                target = Path(directory)
+                first, last = legacy_events()
+                last["verification_escape"] = True
+                last["fingerprint"] = task_learning._fingerprint(last)
+                middle = v2_event()
+                self.project(target, [first, middle, last], [legacy_review(2)], [middle])
+                original = task_learning.authoritative_snapshot(target)
+                self.assertEqual(original["state"]["trigger"]["level"], "IMMEDIATE_REVIEW")
+                ledger = target / ".erei/learning/TASK_EVENTS.jsonl"
+                ledger.write_text("".join(json.dumps(row) + "\n" for row in [first, last]), encoding="utf-8")
+                before = {p.relative_to(target): p.read_bytes() for p in target.rglob("*") if p.is_file()}
+                with self.assertRaisesRegex(task_learning.LearningError, "legacy review membership.*recovery required"):
+                    operation(target)
+                after = {p.relative_to(target): p.read_bytes() for p in target.rglob("*") if p.is_file()}
+                self.assertEqual(after, before)
+
+    def test_retry_after_capture_crash_requires_projection_recovery(self):
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory)
+            self.project(target, legacy_events(), [legacy_review(2)])
+            event = v2_event(escape=True)
+            ledger = target / ".erei/learning/TASK_EVENTS.jsonl"
+            before = ledger.read_bytes()
+            with mock.patch.object(task_learning, "_persist_projections", side_effect=OSError("simulated crash")):
+                with self.assertRaisesRegex(OSError, "simulated crash"):
+                    task_learning.capture(target, event)
+            self.assertTrue((target / ".erei/learning/events" / (event["occurrence_id"] + ".json")).is_file())
+            with self.assertRaisesRegex(task_learning.LearningError, "legacy review membership.*recovery required"):
+                task_learning.capture(target, event)
+            self.assertEqual(ledger.read_bytes(), before)
+
+    def test_capture_admission_does_not_cover_other_immutable_only_occurrences(self):
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory)
+            self.project(target, legacy_events(), [legacy_review(2)])
+            event, other = v2_event(), v2_event(escape=True, suffix="44444444")
+            original_write = task_learning._write_immutable_json
+            def concurrent_unprojected_write(path, value):
+                original_write(path, value)
+                original_write(path.parent / (other["occurrence_id"] + ".json"), other)
+            ledger = target / ".erei/learning/TASK_EVENTS.jsonl"
+            before = ledger.read_bytes()
+            with mock.patch.object(task_learning, "_write_immutable_json", side_effect=concurrent_unprojected_write):
+                with self.assertRaisesRegex(task_learning.LearningError, "legacy review membership.*recovery required"):
+                    task_learning.capture(target, event)
+            self.assertEqual(ledger.read_bytes(), before)
 
 
 if __name__ == "__main__":

@@ -3,7 +3,8 @@
 
 Authoritative V2 events/reviews are individual immutable JSON files so parallel Git
 branches normally merge without editing one shared ledger. JSONL, state and Markdown
-are rebuildable projections. Legacy V1 JSONL remains readable for compatibility.
+are rebuildable projections except that V1 positional review membership requires
+the original complete event projection. Legacy V1 JSONL remains readable.
 """
 from __future__ import annotations
 
@@ -331,16 +332,26 @@ def _merge_legacy_projection_with_immutable(
     )
 
 
-def _load_events(paths: dict[str, Path]) -> list[dict]:
+def _load_events(paths: dict[str, Path], *, admitted_new_occurrence: str | None = None) -> list[dict]:
     projection = _read_jsonl(paths["events"])
     immutable = _immutable_records(paths["event_dir"], _occurrence, "event")
+    immutable_only = {_occurrence(item) for item in immutable} - {_occurrence(item) for item in projection}
+    # A V1 cutoff binds positions, which cannot be recovered by sorting or
+    # appending missing rows. Only capture may admit its one just-written event,
+    # after validating the complete prior snapshot under the same lock.
+    ambiguous = immutable_only - ({admitted_new_occurrence} if admitted_new_occurrence else set())
+    if ambiguous and any(review["schema_version"] == 1 for review in _load_reviews(paths)):
+        raise LearningError(
+            "legacy review membership cannot be proven for immutable-only events; "
+            "original projection recovery required: " + ", ".join(sorted(ambiguous))
+        )
     events = _merge_legacy_projection_with_immutable(
         projection,
         immutable,
         key_fn=_occurrence,
         label="event",
         # Legacy review cutoffs address append positions, not lexicographic IDs.
-        # Keep known positions; append only previously unseen immutable events.
+        # Keep known positions; missing legacy positions are rejected above.
         preserve_projection_order=True,
     )
     seen_task_ids: dict[str, str] = {}
@@ -581,7 +592,7 @@ def _render_summary(state: dict) -> str:
     lines += [f"- `{reason}`" for reason in trigger["reasons"]] if trigger["reasons"] else ["- None."]
     lines += [
         "",
-        "JSONL/state/summary files are projections. V2 event/review JSON files are immutable authoritative occurrences.",
+        "V2 event/review JSON files are immutable authority. Legacy positional reviews also require the original complete event projection.",
         "Task Learning never authorizes Framework self-modification.",
         "",
     ]
@@ -691,7 +702,7 @@ def capture(target: Path, event: dict) -> tuple[dict, bool]:
         candidate_events = events + [event]
         state = derive_state(candidate_events, reviews)
         _write_immutable_json(paths["event_dir"] / f"{occurrence}.json", event)
-        persisted_events = _load_events(paths)
+        persisted_events = _load_events(paths, admitted_new_occurrence=occurrence)
         state = derive_state(persisted_events, reviews)
         _persist_projections(paths, persisted_events, reviews, state)
     return state, False
