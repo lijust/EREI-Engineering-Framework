@@ -96,11 +96,16 @@ def _fingerprint(event: dict) -> str:
         "feedback_ids": event.get("feedback_ids", []),
         "feedback_fingerprints": event.get("feedback_fingerprints", []),
         "tags": event.get("tags", []),
-        "task_group": event.get("task_group", ""),
-        "failure_stage": event.get("failure_stage", "unknown"),
-        "failure_subject": event.get("failure_subject", ""),
-        "signal_assessment": event.get("signal_assessment", {}),
     }
+    # V1 fingerprints are a frozen wire contract. Adding absent V2 fields would
+    # invalidate historical evidence produced by the Stable V1 implementation.
+    if event.get("schema_version") == 2:
+        semantic.update({
+            "task_group": event.get("task_group", ""),
+            "failure_stage": event.get("failure_stage", "unknown"),
+            "failure_subject": event.get("failure_subject", ""),
+            "signal_assessment": event.get("signal_assessment", {}),
+        })
     canonical = json.dumps(semantic, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 

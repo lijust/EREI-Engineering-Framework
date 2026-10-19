@@ -1,0 +1,68 @@
+{
+  "producer_ref": "69079018606750312344cb3c648952b9ab72d35b",
+  "producer_path": "tools/task_learning.py",
+  "description": "Synthetic fixtures frozen with the Stable V1 _fingerprint function; expected fingerprints must not be regenerated with the current implementation.",
+  "events": [
+    {
+      "schema_version": 1,
+      "task_id": "ETASK-20261001T090000Z-11111111",
+      "recorded_at": "2026-10-01T09:00:00Z",
+      "project": {
+        "repository": "example/demo",
+        "name": "Legacy demo"
+      },
+      "framework_ref": "69079018606750312344cb3c648952b9ab72d35b",
+      "workflow": "bug-fix",
+      "risk": "L2",
+      "terminal_state": "COMPLETE_VERIFIED",
+      "outcome_class": "verified_success",
+      "material": true,
+      "rework_cycles": 0,
+      "verification_failures": 0,
+      "verification_escape": false,
+      "framework_feedback_created": false,
+      "manual_workaround": false,
+      "context_gap": false,
+      "unexpected_scope_growth": false,
+      "security_or_data_critical_event": false,
+      "duration_class": "short",
+      "fingerprint": "7b779606acfd9efacfe87808061077ffe0885e59f58bbe60ab52dde6eeab05cf"
+    },
+    {
+      "schema_version": 1,
+      "task_id": "ETASK-20261001T080000Z-22222222",
+      "recorded_at": "2026-10-01T08:00:00Z",
+      "project": {
+        "repository": "example/demo",
+        "name": "Legacy demo"
+      },
+      "framework_ref": "69079018606750312344cb3c648952b9ab72d35b",
+      "workflow": "bug-fix",
+      "risk": "L2",
+      "terminal_state": "COMPLETE_VERIFIED",
+      "outcome_class": "verified_success",
+      "material": true,
+      "rework_cycles": 2,
+      "verification_failures": 1,
+      "verification_escape": false,
+      "framework_feedback_created": true,
+      "manual_workaround": false,
+      "context_gap": false,
+      "unexpected_scope_growth": false,
+      "security_or_data_critical_event": false,
+      "duration_class": "short",
+      "fingerprint": "3f8fa41865291ea7e80b34fa6499938c2403a089433893d095fe48de6dd6d9a2",
+      "tags": [
+        "zeta",
+        "alpha"
+      ],
+      "feedback_ids": [
+        "EFF-20261001T090000Z-AAAAAAAA"
+      ],
+      "feedback_fingerprints": [
+        "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      ]
+    }
+  ]
+}
+
