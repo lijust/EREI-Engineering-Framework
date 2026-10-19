@@ -264,14 +264,14 @@ def validate_event(event: dict) -> None:
         raise LearningError(f"task event fingerprint mismatch: {event.get('task_id', 'UNKNOWN')}")
 
 
-def _deduplicate_records(records: list[dict], key_fn, label: str) -> list[dict]:
+def _deduplicate_records(records: list[dict], key_fn, label: str, *, preserve_order: bool = False) -> list[dict]:
     result: dict[str, dict] = {}
     for item in records:
         key = key_fn(item)
         if key in result and result[key] != item:
             raise LearningError(f"conflicting duplicate {label}: {key}")
         result[key] = item
-    return sorted(result.values(), key=key_fn)
+    return list(result.values()) if preserve_order else sorted(result.values(), key=key_fn)
 
 
 def _immutable_records(directory: Path, key_fn, label: str) -> list[dict]:
@@ -295,13 +295,20 @@ def _merge_legacy_projection_with_immutable(
     *,
     key_fn,
     label: str,
+    preserve_projection_order: bool = False,
 ) -> list[dict]:
     immutable_by_key = {key_fn(item): item for item in immutable}
     legacy: list[dict] = []
+    projected_keys: set[str] = set()
     for item in projection:
         version = item.get("schema_version")
         if type(version) is not int:
             raise LearningError(f"{label} schema_version must be an integer")
+        if preserve_projection_order:
+            key = key_fn(item)
+            if key in projected_keys:
+                raise LearningError(f"duplicate {label} projection identity: {key}")
+            projected_keys.add(key)
         if version == 1:
             legacy.append(item)
             continue
@@ -314,10 +321,14 @@ def _merge_legacy_projection_with_immutable(
                 )
             if authoritative != item:
                 raise LearningError(f"V2 {label} projection does not match immutable authority: {key}")
+            if preserve_projection_order:
+                legacy.append(authoritative)
             continue
         # Preserve unsupported projection records so strict schema validation reports the real contract error.
         legacy.append(item)
-    return _deduplicate_records(legacy + immutable, key_fn, f"{label} identity")
+    return _deduplicate_records(
+        legacy + immutable, key_fn, f"{label} identity", preserve_order=preserve_projection_order
+    )
 
 
 def _load_events(paths: dict[str, Path]) -> list[dict]:
@@ -328,6 +339,9 @@ def _load_events(paths: dict[str, Path]) -> list[dict]:
         immutable,
         key_fn=_occurrence,
         label="event",
+        # Legacy review cutoffs address append positions, not lexicographic IDs.
+        # Keep known positions; append only previously unseen immutable events.
+        preserve_projection_order=True,
     )
     seen_task_ids: dict[str, str] = {}
     for event in events:
