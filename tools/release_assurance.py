@@ -78,6 +78,7 @@ def _validate_structured_approvals(
     target_tree = target_manifest["target_tree"]
 
     validated = 0
+    records = []
     for approval_type, relative_path in release_approval.APPROVAL_PATHS.items():
         try:
             record = release_approval.load_and_validate(
@@ -101,7 +102,12 @@ def _validate_structured_approvals(
             github_review_provenance.ReviewProvenanceError,
         ) as exc:
             raise ReleaseError(f"invalid {approval_type} release approval: {exc}") from exc
+        records.append(record)
         validated += 1
+    try:
+        release_approval.verify_approval_authority(records)
+    except release_approval.ReleaseApprovalError as exc:
+        raise ReleaseError(f"release approval authority is not verified: {exc}") from exc
     return validated
 
 
