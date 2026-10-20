@@ -68,7 +68,7 @@
 
 ### M7 — قياس أثر التعلم
 
-**T13 / F14 — [#80](https://github.com/lijust/EREI-Engineering-Framework/issues/80) — P2، L2، 8–16 ساعة؛ يعتمد على T01 وT02 وT04.** اكتمال سلسلة التنفيذ لا يثبت تحسن النتيجة. النطاق عقود التعلم و`PROSPECTIVE_CYCLE_STATUS.json` وربط LDO. يُضاف سجل تدخل صغير باستخدام JSON الموجود: finding/root cause ثم LDO وimplementation SHA وadoption وcohort وeligible exposure وoutcome. القبول: merge وحده ليس improved؛ zero exposure ليس نجاحًا؛ unknown لا يتحول إلى zero؛ assessment الصريح منفصل عن legacy assumptions. الرجوع بإصدار للعقد دون إعادة كتابة التاريخ. الفائدة تمكين قياس recurrence لكل exposure والتكلفة لكل نتيجة موثقة.
+**T13 / F14 — [#80](https://github.com/lijust/EREI-Engineering-Framework/issues/80) — P2، L2، 8–16 ساعة؛ يعتمد على T01 وT02 وT04 وT07.** اكتمال سلسلة التنفيذ لا يثبت تحسن النتيجة. النطاق عقود التعلم و`PROSPECTIVE_CYCLE_STATUS.json` وربط LDO. يُضاف سجل تدخل صغير باستخدام JSON الموجود: finding/root cause ثم LDO وimplementation SHA وadoption وcohort وeligible exposure وoutcome. القبول: merge وحده ليس improved؛ zero exposure ليس نجاحًا؛ unknown لا يتحول إلى zero؛ assessment الصريح منفصل عن legacy assumptions. الرجوع بإصدار للعقد دون إعادة كتابة التاريخ. الفائدة تمكين قياس recurrence لكل exposure والتكلفة لكل نتيجة موثقة.
 
 **T15 — [#82](https://github.com/lijust/EREI-Engineering-Framework/issues/82) — P2، L2، 16–32 ساعة؛ يعتمد على T05 وT13 وT14.** إعداد benchmark متكافئ وفق القسم 7. النطاق dataset وconfiguration وhidden acceptance وعقد المقاييس. يمكن إعدادها دون استهلاك model credits؛ التشغيل المدفوع محجوب حتى اعتماد runtime وbudget. القبول: تثبيت المصدر والبيئة، عدّ جميع المحاولات والإخفاقات، مراجعة عمياء، ونشر النتائج وحدود عدم اليقين. الرجوع يوقف trial ويحفظ كل المحاولات؛ الفائدة قياس الفرق بدل توقعه.
 

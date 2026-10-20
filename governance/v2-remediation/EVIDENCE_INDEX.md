@@ -66,3 +66,13 @@ python -B tests/test_framework_integration_gate.py -v
 ```text
 py "-3.11" -B -m unittest tools.tests.test_ci_test_partition tools.tests.test_ci_event_dedup_contract tools.tests.test_bootstrap_project tools.tests.test_capability_activation -v
 ```
+
+## أدلة 2026-10-20 — تحل محل الادعاء الحالي للرأس السابق فقط
+
+[سجل الدفعة](evidence/verification-20261020.json) يحفظ 193 tool tests و78 eval tests على تجميع مصدر معزول، وهويات 50 ملفًا متغيرًا. ليس release target مجمدًا.
+
+- #91 الحالي: a132e104c6881d7dc4f1002862741bc33a0da748؛ 73 اختبارًا. فشلت حالتا readiness قبل الإصلاح ثم نجحتا. نتائج 49 اختبارًا السابقة تاريخية.
+- #93: 85ead2121ecb03454495200a475ca9f3f129398e؛ 50 اختبارًا على 3.11 و3.12، وgovernance standalone ومثال العقد ناجحة. 306 blobs غير معدلة تطابق parent #87، وخمسة ملفات منشورة تطابق المصدر المختبر.
+- Cycle complete بقي كما هو؛ المخرج يوضح DECLARED_STEP_REFERENCES وeffectiveness=NOT_ESTABLISHED، دون تعديل ملف الدورة.
+- سبب billing للمحاولة 39185680855 من نص Annotation الذي نقله المالك، وليس قراءة بيانات الحساب أو تحققًا مستقلًا من سبب بقية المحاولات. لم تتغير settings أو spending limits.
+- المراجعة المستقلة وCI الرسمي معلقان؛ الأعداد المتداخلة لا تجمع.
