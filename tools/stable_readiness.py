@@ -332,6 +332,7 @@ def approval_gate(repo_root: Path, target_ref: str, preapproval_ready: bool) -> 
         }
     target_tree = _tree_for(repo_root, target_ref)
     details: dict[str, Any] = {}
+    approval_records: list[dict[str, Any]] = []
     pairs = (
         ("architecture", "approval_ref"),
         ("security", "security_review_ref"),
@@ -372,6 +373,15 @@ def approval_gate(repo_root: Path, target_ref: str, preapproval_ready: bool) -> 
             "recorded_at": record["recorded_at"],
             **history,
             "review_provenance": review,
+        }
+        approval_records.append(record)
+    try:
+        release_approval.verify_approval_authority(approval_records)
+    except release_approval.ReleaseApprovalError as exc:
+        return {
+            "status": "blocked",
+            "reason": f"release approval authority invalid: {exc}",
+            "manifest_path": manifest_path.relative_to(repo_root).as_posix(),
         }
     return {
         "status": "pass",

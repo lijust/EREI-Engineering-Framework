@@ -17,6 +17,12 @@ regardless of distinct role labels. Distinct names also deny because no independ
 approval-authority verifier is connected. This deliberately has no positive authority
 path until the separately reviewed deployment/trust design is implemented.
 
+Both `release_assurance` and `stable_readiness.approval_gate` call the same
+approval-authority verifier after record/history/review validation. A readiness
+report must not report a passing approval gate that release admission would deny.
+The readiness tests retain a separately labeled synthetic authority stub only
+for immutable-history checks; review-only and missing-authority regressions deny.
+
 No authority is installed or activated by this change. Existing Candidate validation
 and V1 compatibility remain; V2 Stable stays blocked. Never edit the truth record to
 claim enforcement merely to satisfy a test. The corresponding tests mock authority
