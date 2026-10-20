@@ -83,3 +83,9 @@ py "-3.11" -B -m unittest tools.tests.test_ci_test_partition tools.tests.test_ci
 - 3 حالات على كل من Python 3.11 و3.12 و48 regression tests؛ 315 ملفًا منشورًا مطابقًا للنسخة المختبرة.
 - [سجل مستقل لهذه الدفعة](evidence/verification-rollback-20261020.json)؛ لا يغير أدلة التجميع السابق أو يدعي Internal qualification.
 - إثبات استعادة baseline مع بقاء أرشيف V2 كاملًا وعضوية المراجعات والتنبيه المعلق؛ ليس downgrade in-place أو reconciliation تلقائيًا.
+
+## إعداد T15 / benchmark — 2026-10-20
+
+- [Draft #95](https://github.com/lijust/EREI-Engineering-Framework/pull/95)، head b6d421c03b5d0f4967c524a15fd734f9759fe758؛ tree 11177ce326f3ec7160931f64a4563008bd23e5e9.
+- [السجل](evidence/verification-benchmark-20261020.json): 17 اختبارًا على Python 3.11 و3.12؛ CLI جاف بـ48 slot وصفر observations؛ 311 published blobs و12 reference blobs مطابقة.
+- المصدر public calibration proposals؛ fixture/prompt/hidden acceptance غير مجهزة. لا consumer tests أو model executions أو paid AI أو دليل effectiveness.
