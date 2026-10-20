@@ -1,0 +1,235 @@
+{
+  "schema_version": 1,
+  "plan_id": "EREI-V1-V2-PILOT-DRAFT-01",
+  "state": "DRAFT_NOT_EXECUTABLE",
+  "purpose": "Offline preparation only; public source-derived proposals, not held-out tasks or a comparative result",
+  "allocation_seed": "EREI-PILOT-20261020-01",
+  "repetitions": 2,
+  "framework_refs": {
+    "V1": "69079018606750312344cb3c648952b9ab72d35b",
+    "V2": null
+  },
+  "execution": {
+    "authorized": false,
+    "model_id": null,
+    "model_revision": null,
+    "runtime_digest": null,
+    "environment_digest": null,
+    "tool_permissions_digest": null,
+    "per_run_token_cap": null,
+    "per_run_time_cap_seconds": null,
+    "total_budget_usd": null,
+    "budget_approval_ref": null
+  },
+  "review": {
+    "independent_reviewer": null,
+    "hidden_acceptance_package_sha256": null,
+    "analysis_preregistration_sha256": null
+  },
+  "tasks": [
+    {
+      "task_id": "APP-01",
+      "family": "idempotent-io",
+      "risk": "L1",
+      "proposed_task": "Preserve no-write behavior for an already-correct sheet, and repair only missing headers in mocked storage.",
+      "fixture_preparation": "Inject an unnecessary header/style write in an isolated fixture.",
+      "state": "PROPOSAL_FIXTURE_NOT_PREPARED",
+      "source": {
+        "repository": "lijust/EREI-App-Google",
+        "commit": "6d32e7a14a4324dbdea228f695d6b75e0b8bd246",
+        "path": "tests/developer-validation-idempotent-sheet-ensure.test.js",
+        "git_blob": "8b51f8d033c1216261944375e6a5381f50aba18c"
+      },
+      "fixture_sha256": null,
+      "prompt_sha256": null,
+      "hidden_acceptance_sha256": null
+    },
+    {
+      "task_id": "APP-02",
+      "family": "numeric-consensus",
+      "risk": "L1",
+      "proposed_task": "Compare equivalent coordinates numerically while retaining conflicts and missing-evidence states.",
+      "fixture_preparation": "Inject string-only coordinate comparison in a fixture.",
+      "state": "PROPOSAL_FIXTURE_NOT_PREPARED",
+      "source": {
+        "repository": "lijust/EREI-App-Google",
+        "commit": "6d32e7a14a4324dbdea228f695d6b75e0b8bd246",
+        "path": "tests/developer-validation-field-consensus.test.js",
+        "git_blob": "99ff5520076c176b3f1389d2081241f030c2e406"
+      },
+      "fixture_sha256": null,
+      "prompt_sha256": null,
+      "hidden_acceptance_sha256": null
+    },
+    {
+      "task_id": "APP-03",
+      "family": "provenance-boundary",
+      "risk": "L2",
+      "proposed_task": "Keep external source identities blank for local-origin proposals and preserve the separate write authorization gate.",
+      "fixture_preparation": "Inject a false provenance claim in a fixture; no real writes.",
+      "state": "PROPOSAL_FIXTURE_NOT_PREPARED",
+      "source": {
+        "repository": "lijust/EREI-App-Google",
+        "commit": "6d32e7a14a4324dbdea228f695d6b75e0b8bd246",
+        "path": "tests/developer-validation-source-provenance-policy.test.js",
+        "git_blob": "90ae74e4bbd7939731cce4fc4e0d7c94ebee0883"
+      },
+      "fixture_sha256": null,
+      "prompt_sha256": null,
+      "hidden_acceptance_sha256": null
+    },
+    {
+      "task_id": "APP-04",
+      "family": "allocation-boundary",
+      "risk": "L2",
+      "proposed_task": "Keep proposed IDs unreserved until write-time recomputation under the same lock.",
+      "fixture_preparation": "Inject gap reuse or preview reservation in a fixture; no real allocation.",
+      "state": "PROPOSAL_FIXTURE_NOT_PREPARED",
+      "source": {
+        "repository": "lijust/EREI-App-Google",
+        "commit": "6d32e7a14a4324dbdea228f695d6b75e0b8bd246",
+        "path": "tests/developer-validation-project-id-policy.test.js",
+        "git_blob": "3f0c48f0b98d180fd242d1affed87ff0d87d6418"
+      },
+      "fixture_sha256": null,
+      "prompt_sha256": null,
+      "hidden_acceptance_sha256": null
+    },
+    {
+      "task_id": "APP-05",
+      "family": "compatible-refactor",
+      "risk": "L1",
+      "proposed_task": "Separate provider reads from the error service while preserving error fields, fallback and one-load caching.",
+      "fixture_preparation": "Prepare a bounded refactor task from the source contract.",
+      "state": "PROPOSAL_FIXTURE_NOT_PREPARED",
+      "source": {
+        "repository": "lijust/EREI-App-Google",
+        "commit": "6d32e7a14a4324dbdea228f695d6b75e0b8bd246",
+        "path": "tests/error-catalog-repository-candidate.test.js",
+        "git_blob": "68c41b198d0a3d634fd84cfc7f417e8b5d6807b8"
+      },
+      "fixture_sha256": null,
+      "prompt_sha256": null,
+      "hidden_acceptance_sha256": null
+    },
+    {
+      "task_id": "APP-06",
+      "family": "context-validation",
+      "risk": "L2",
+      "proposed_task": "Consume one authority snapshot and reject mismatched selectors or missing identity.",
+      "fixture_preparation": "Inject a context mismatch acceptance into a mocked repository fixture.",
+      "state": "PROPOSAL_FIXTURE_NOT_PREPARED",
+      "source": {
+        "repository": "lijust/EREI-App-Google",
+        "commit": "6d32e7a14a4324dbdea228f695d6b75e0b8bd246",
+        "path": "tests/prd03-production-edge-context-resolver.test.js",
+        "git_blob": "6c69478e0b03b435fbc4a26a0175023c5c288658"
+      },
+      "fixture_sha256": null,
+      "prompt_sha256": null,
+      "hidden_acceptance_sha256": null
+    },
+    {
+      "task_id": "PY-01",
+      "family": "provider-recovery",
+      "risk": "L2",
+      "proposed_task": "Preserve evidence and reject unsupported or provider-error normalization without real provider calls.",
+      "fixture_preparation": "Inject one error-to-success mapping in a fixture with FakeProvider.",
+      "state": "PROPOSAL_FIXTURE_NOT_PREPARED",
+      "source": {
+        "repository": "lijust/EREI-3.2",
+        "commit": "87d730ddc3547f863de2a6895e91f9b83e9c6e72",
+        "path": "tests/unit/test_payment_plan_semantic_normalizer.py",
+        "git_blob": "8a737ebd879d1ee3757f12adf00c473c434d29e6"
+      },
+      "fixture_sha256": null,
+      "prompt_sha256": null,
+      "hidden_acceptance_sha256": null
+    },
+    {
+      "task_id": "PY-02",
+      "family": "cache-integrity",
+      "risk": "L1",
+      "proposed_task": "Retain the first successful semantic result and keep failed attempts out of the reusable cache.",
+      "fixture_preparation": "Inject failure caching in an in-memory fixture.",
+      "state": "PROPOSAL_FIXTURE_NOT_PREPARED",
+      "source": {
+        "repository": "lijust/EREI-3.2",
+        "commit": "87d730ddc3547f863de2a6895e91f9b83e9c6e72",
+        "path": "tests/unit/test_erei_semantic_harvest_cache.py",
+        "git_blob": "ff2a5512ab62bc57620857cec3e27152d586a683"
+      },
+      "fixture_sha256": null,
+      "prompt_sha256": null,
+      "hidden_acceptance_sha256": null
+    },
+    {
+      "task_id": "PY-03",
+      "family": "parsing-boundary",
+      "risk": "L1",
+      "proposed_task": "Trim exact page-chrome boundaries in both locales while preserving similar phrases inside evidence.",
+      "fixture_preparation": "Inject substring-based boundary matching in offline HTML fixtures.",
+      "state": "PROPOSAL_FIXTURE_NOT_PREPARED",
+      "source": {
+        "repository": "lijust/EREI-3.2",
+        "commit": "87d730ddc3547f863de2a6895e91f9b83e9c6e72",
+        "path": "tests/unit/test_nawy_payment_section_boundary.py",
+        "git_blob": "2a1353992f626bdf9d8b58db9a0d18f3c15be4c6"
+      },
+      "fixture_sha256": null,
+      "prompt_sha256": null,
+      "hidden_acceptance_sha256": null
+    },
+    {
+      "task_id": "PY-04",
+      "family": "registry-maintenance",
+      "risk": "L1",
+      "proposed_task": "Derive full update tokens from the registry and retain unavailable/partial source semantics.",
+      "fixture_preparation": "Prepare a registry-extension task that exposes duplicate allowlists.",
+      "state": "PROPOSAL_FIXTURE_NOT_PREPARED",
+      "source": {
+        "repository": "lijust/EREI-3.2",
+        "commit": "87d730ddc3547f863de2a6895e91f9b83e9c6e72",
+        "path": "tests/unit/test_project_update_presets.py",
+        "git_blob": "5317a2b368150bd81031815dcc389db81d61334d"
+      },
+      "fixture_sha256": null,
+      "prompt_sha256": null,
+      "hidden_acceptance_sha256": null
+    },
+    {
+      "task_id": "PY-05",
+      "family": "resource-cleanup",
+      "risk": "L1",
+      "proposed_task": "Close mapping connections, retain fallback behavior and normalize invalid unit labels.",
+      "fixture_preparation": "Inject missing cleanup or a faulty room-count fallback in a fake connection fixture.",
+      "state": "PROPOSAL_FIXTURE_NOT_PREPARED",
+      "source": {
+        "repository": "lijust/EREI-3.2",
+        "commit": "87d730ddc3547f863de2a6895e91f9b83e9c6e72",
+        "path": "tests/unit/test_launcher_unit_type_normalizer.py",
+        "git_blob": "a137cfe8107a7f400da9546681198e4595efe130"
+      },
+      "fixture_sha256": null,
+      "prompt_sha256": null,
+      "hidden_acceptance_sha256": null
+    },
+    {
+      "task_id": "PY-06",
+      "family": "evidence-grounding",
+      "risk": "L2",
+      "proposed_task": "Accept explicit number words while rejecting unsupported derived arithmetic.",
+      "fixture_preparation": "Inject an implicit years-to-months evidence conversion in a fake provider fixture.",
+      "state": "PROPOSAL_FIXTURE_NOT_PREPARED",
+      "source": {
+        "repository": "lijust/EREI-3.2",
+        "commit": "87d730ddc3547f863de2a6895e91f9b83e9c6e72",
+        "path": "tests/unit/test_payment_plan_explicit_number_word_grounding.py",
+        "git_blob": "c47d6aed4edc16a24149be9472c153f0cff1a8c6"
+      },
+      "fixture_sha256": null,
+      "prompt_sha256": null,
+      "hidden_acceptance_sha256": null
+    }
+  ]
+}
