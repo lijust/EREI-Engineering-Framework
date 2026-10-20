@@ -1,0 +1,138 @@
+"""Guard the offline calibration checker; no consumer/model execution."""
+import copy
+import hashlib
+import importlib.util
+import json
+from pathlib import Path
+import tempfile
+import unittest
+from unittest.mock import patch
+
+
+SPEC = importlib.util.spec_from_file_location(
+    "calibration", Path(__file__).resolve().parents[1] / "benchmarks/check_calibration.py")
+calibration = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(calibration)
+
+
+class CalibrationTests(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name)
+        self.source = b"value = 1\n"
+        target = self.root / "py/module.py"
+        target.parent.mkdir()
+        target.write_bytes(self.source)
+        blob = hashlib.sha1(b"blob 10\0" + self.source).hexdigest()
+        self.package = {
+            "source": {"export_directory": "py"},
+            "files": [{"path": "module.py", "git_blob": blob},
+                      {"path": "test.py", "git_blob": blob}],
+            "test_path": "test.py",
+            "mutation": {"path": "module.py", "before": "value = 1", "after": "value = 2"},
+            "starter_file_sha256": {
+                "module.py": hashlib.sha256(b"value = 2\n").hexdigest(),
+                "test.py": hashlib.sha256(self.source).hexdigest()},
+        }
+        (target.parent / "test.py").write_bytes(self.source)
+
+    def test_verified_bytes_are_reused_without_mutating_source_export(self):
+        reference = calibration.read_inputs(self.package, self.root)
+        # An external change after the read cannot replace bytes used by the checker.
+        (self.root / "py/module.py").write_bytes(b"changed after read")
+        starter = calibration.starter_inputs(self.package, reference)
+        self.assertEqual(reference["module.py"], self.source)
+        self.assertEqual(starter["module.py"], b"value = 2\n")
+        self.assertEqual(reference["test.py"], starter["test.py"])
+        self.assertEqual((self.root / "py/module.py").read_bytes(), b"changed after read")
+
+    def test_source_mismatch_fails_before_consumer_execution(self):
+        (self.root / "py/module.py").write_bytes(b"tampered")
+        with self.assertRaisesRegex(ValueError, "blob mismatch"):
+            calibration.read_inputs(self.package, self.root)
+
+    def test_unsafe_paths_are_rejected(self):
+        for value in ("", "../a", "/a", "C:/a", "a\\b", "a/../b", "a//b"):
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                calibration.relative_path(value)
+
+    def test_duplicate_inputs_are_rejected(self):
+        self.package["files"].append(self.package["files"][0])
+        with self.assertRaisesRegex(ValueError, "Duplicate"):
+            calibration.read_inputs(self.package, self.root)
+
+    def test_mutation_cannot_modify_tests_or_silently_drift(self):
+        reference = calibration.read_inputs(self.package, self.root)
+        changed = copy.deepcopy(self.package)
+        changed["mutation"]["path"] = "test.py"
+        with self.assertRaisesRegex(ValueError, "cannot change the test"):
+            calibration.starter_inputs(changed, reference)
+        for before in ("missing", "", "value"):
+            changed = copy.deepcopy(self.package)
+            changed["mutation"]["before"] = before
+            with self.subTest(before=before), self.assertRaises(ValueError):
+                calibration.starter_inputs(changed, reference)
+
+    def test_python_errors_missing_tests_and_wrong_assertions_do_not_count(self):
+        package = {"runtime": "python", "python_tests": ["test_a", "test_b"],
+                   "expected_assertion": "test_a"}
+        reference = {"returncode": 0, "checks": {
+            "tests": 2, "failures": [], "errors": [], "skipped": 0}}
+        starter = {"returncode": 1, "checks": {
+            "tests": 2, "failures": ["test_a"], "errors": [], "skipped": 0}}
+        self.assertTrue(calibration.assess(package, reference, starter))
+        for field, value in (("tests", 1), ("errors", ["test_b"]),
+                             ("skipped", 1), ("failures", ["test_b"])):
+            invalid = copy.deepcopy(starter)
+            invalid["checks"][field] = value
+            self.assertFalse(calibration.assess(package, reference, invalid))
+
+    def test_node_startup_errors_are_not_successful_mutant_detection(self):
+        package = {"runtime": "node", "expected_assertion": "Missing expected rejection."}
+        reference = {"returncode": 0}
+        for message in ("Cannot find module", "SyntaxError", "Missing expected rejection."):
+            self.assertFalse(calibration.assess(package, reference,
+                             {"returncode": 1, "stderr": message}))
+        self.assertTrue(calibration.assess(package, reference, {"returncode": 1,
+                        "stderr": "AssertionError [ERR_ASSERTION]: Missing expected rejection."}))
+
+    def test_timeout_is_not_converted_to_a_successful_calibration(self):
+        self.package.update(runtime="python", python_tests=[])
+        with patch.object(calibration.subprocess, "run",
+                          side_effect=calibration.subprocess.TimeoutExpired("check", 30)):
+            with self.assertRaises(calibration.subprocess.TimeoutExpired):
+                calibration.run_copy(self.package, {"test.py": b""}, None)
+
+    def test_prepared_catalog_remains_public_and_has_no_execution_authority(self):
+        catalog = json.loads(calibration.CATALOG.read_text(encoding="utf-8"))
+        self.assertIs(catalog["execution_authorized"], False)
+        self.assertEqual(catalog["purpose"], "PUBLIC_CALIBRATION_NOT_HIDDEN_ACCEPTANCE")
+        ids = [package["task_id"] for package in catalog["packages"]]
+        self.assertEqual(len(ids), len(set(ids)))
+        for package in catalog["packages"]:
+            self.assertEqual(package["state"], "PUBLIC_CALIBRATION_ONLY")
+            self.assertEqual(package["prompt_sha256"],
+                             hashlib.sha256(package["prompt"].encode()).hexdigest())
+
+    def test_plan_digests_bind_prepared_starters_without_removing_pending_slots(self):
+        catalog = json.loads(calibration.CATALOG.read_text(encoding="utf-8"))
+        plan = json.loads(calibration.CATALOG.with_name("v1-v2-pilot.json").read_text(
+            encoding="utf-8"))
+        self.assertEqual(len(plan["tasks"]), 12)
+        by_id = {package["task_id"]: package for package in catalog["packages"]}
+        for task in plan["tasks"]:
+            self.assertIsNone(task["hidden_acceptance_sha256"])
+            if task["task_id"] in by_id:
+                package = by_id[task["task_id"]]
+                encoded = json.dumps(package["starter_file_sha256"],
+                                     sort_keys=True, separators=(",", ":")).encode()
+                self.assertEqual(task["fixture_sha256"], hashlib.sha256(encoded).hexdigest())
+                self.assertEqual(task["prompt_sha256"], package["prompt_sha256"])
+            else:
+                self.assertIsNone(task["fixture_sha256"])
+                self.assertIsNone(task["prompt_sha256"])
+
+
+if __name__ == "__main__":
+    unittest.main()

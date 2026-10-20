@@ -32,34 +32,42 @@
       "family": "idempotent-io",
       "risk": "L1",
       "proposed_task": "Preserve no-write behavior for an already-correct sheet, and repair only missing headers in mocked storage.",
-      "fixture_preparation": "Inject an unnecessary header/style write in an isolated fixture.",
-      "state": "PROPOSAL_FIXTURE_NOT_PREPARED",
+      "fixture_preparation": "Pinned source export plus one exact mutation; public calibration only. Original tests remain unchanged.",
+      "state": "PUBLIC_CALIBRATION_RECIPE_PREPARED",
       "source": {
         "repository": "lijust/EREI-App-Google",
         "commit": "6d32e7a14a4324dbdea228f695d6b75e0b8bd246",
         "path": "tests/developer-validation-idempotent-sheet-ensure.test.js",
         "git_blob": "8b51f8d033c1216261944375e6a5381f50aba18c"
       },
-      "fixture_sha256": null,
-      "prompt_sha256": null,
-      "hidden_acceptance_sha256": null
+      "fixture_sha256": "207d17e9cc1ad56bb6b7d17c142c2659ed04d2f736040c53f048d4ccaea6065e",
+      "prompt_sha256": "2e8373692329444fc0114fd3bf5751e5aa47eca790e396d1652f36dcd5683b03",
+      "hidden_acceptance_sha256": null,
+      "calibration_package": {
+        "path": "evals/benchmarks/calibration-packages.json",
+        "task_id": "APP-01"
+      }
     },
     {
       "task_id": "APP-02",
       "family": "numeric-consensus",
       "risk": "L1",
       "proposed_task": "Compare equivalent coordinates numerically while retaining conflicts and missing-evidence states.",
-      "fixture_preparation": "Inject string-only coordinate comparison in a fixture.",
-      "state": "PROPOSAL_FIXTURE_NOT_PREPARED",
+      "fixture_preparation": "Pinned source export plus one exact mutation; public calibration only. Original tests remain unchanged.",
+      "state": "PUBLIC_CALIBRATION_RECIPE_PREPARED",
       "source": {
         "repository": "lijust/EREI-App-Google",
         "commit": "6d32e7a14a4324dbdea228f695d6b75e0b8bd246",
         "path": "tests/developer-validation-field-consensus.test.js",
         "git_blob": "99ff5520076c176b3f1389d2081241f030c2e406"
       },
-      "fixture_sha256": null,
-      "prompt_sha256": null,
-      "hidden_acceptance_sha256": null
+      "fixture_sha256": "f99350436e65109a61c67e40d10270ea6d66d477d74e09806f3db5bab44d708d",
+      "prompt_sha256": "fcea4198709f4398817f8f3f1563e416667e327a024c2ac923f5501ce000bf3c",
+      "hidden_acceptance_sha256": null,
+      "calibration_package": {
+        "path": "evals/benchmarks/calibration-packages.json",
+        "task_id": "APP-02"
+      }
     },
     {
       "task_id": "APP-03",
@@ -117,17 +125,21 @@
       "family": "context-validation",
       "risk": "L2",
       "proposed_task": "Consume one authority snapshot and reject mismatched selectors or missing identity.",
-      "fixture_preparation": "Inject a context mismatch acceptance into a mocked repository fixture.",
-      "state": "PROPOSAL_FIXTURE_NOT_PREPARED",
+      "fixture_preparation": "Pinned source export plus one exact mutation; public calibration only. Original tests remain unchanged.",
+      "state": "PUBLIC_CALIBRATION_RECIPE_PREPARED",
       "source": {
         "repository": "lijust/EREI-App-Google",
         "commit": "6d32e7a14a4324dbdea228f695d6b75e0b8bd246",
         "path": "tests/prd03-production-edge-context-resolver.test.js",
         "git_blob": "6c69478e0b03b435fbc4a26a0175023c5c288658"
       },
-      "fixture_sha256": null,
-      "prompt_sha256": null,
-      "hidden_acceptance_sha256": null
+      "fixture_sha256": "7a03357f324878946abbfd9b7b7d5037b504c59336a6d814b1c6b9ba144594d3",
+      "prompt_sha256": "21d3e80de02de316d4e9812bbaea95ceee22956716c00eb20244803f114b86e4",
+      "hidden_acceptance_sha256": null,
+      "calibration_package": {
+        "path": "evals/benchmarks/calibration-packages.json",
+        "task_id": "APP-06"
+      }
     },
     {
       "task_id": "PY-01",
@@ -151,17 +163,21 @@
       "family": "cache-integrity",
       "risk": "L1",
       "proposed_task": "Retain the first successful semantic result and keep failed attempts out of the reusable cache.",
-      "fixture_preparation": "Inject failure caching in an in-memory fixture.",
-      "state": "PROPOSAL_FIXTURE_NOT_PREPARED",
+      "fixture_preparation": "Pinned source export plus one exact mutation; public calibration only. Original tests remain unchanged.",
+      "state": "PUBLIC_CALIBRATION_RECIPE_PREPARED",
       "source": {
         "repository": "lijust/EREI-3.2",
         "commit": "87d730ddc3547f863de2a6895e91f9b83e9c6e72",
         "path": "tests/unit/test_erei_semantic_harvest_cache.py",
         "git_blob": "ff2a5512ab62bc57620857cec3e27152d586a683"
       },
-      "fixture_sha256": null,
-      "prompt_sha256": null,
-      "hidden_acceptance_sha256": null
+      "fixture_sha256": "50d48ffe6ae62f81bafedd21f0fed7d45e1cbc47558235c39648cca7be130fcf",
+      "prompt_sha256": "f013a16254d62f77bf47df9b33dd323d627ea852328b0ae1922ead0e0a68f44e",
+      "hidden_acceptance_sha256": null,
+      "calibration_package": {
+        "path": "evals/benchmarks/calibration-packages.json",
+        "task_id": "PY-02"
+      }
     },
     {
       "task_id": "PY-03",
@@ -185,34 +201,42 @@
       "family": "registry-maintenance",
       "risk": "L1",
       "proposed_task": "Derive full update tokens from the registry and retain unavailable/partial source semantics.",
-      "fixture_preparation": "Prepare a registry-extension task that exposes duplicate allowlists.",
-      "state": "PROPOSAL_FIXTURE_NOT_PREPARED",
+      "fixture_preparation": "Pinned source export plus one exact mutation; public calibration only. Original tests remain unchanged.",
+      "state": "PUBLIC_CALIBRATION_RECIPE_PREPARED",
       "source": {
         "repository": "lijust/EREI-3.2",
         "commit": "87d730ddc3547f863de2a6895e91f9b83e9c6e72",
         "path": "tests/unit/test_project_update_presets.py",
         "git_blob": "5317a2b368150bd81031815dcc389db81d61334d"
       },
-      "fixture_sha256": null,
-      "prompt_sha256": null,
-      "hidden_acceptance_sha256": null
+      "fixture_sha256": "b99221e41fbd67e36745563c4a5398b72ff8b349997097a7a7f76202a0ac56de",
+      "prompt_sha256": "deb8c562b6732b0cddc342b89ca628fd637d4a047c91339e5de31e101003212c",
+      "hidden_acceptance_sha256": null,
+      "calibration_package": {
+        "path": "evals/benchmarks/calibration-packages.json",
+        "task_id": "PY-04"
+      }
     },
     {
       "task_id": "PY-05",
       "family": "resource-cleanup",
       "risk": "L1",
       "proposed_task": "Close mapping connections, retain fallback behavior and normalize invalid unit labels.",
-      "fixture_preparation": "Inject missing cleanup or a faulty room-count fallback in a fake connection fixture.",
-      "state": "PROPOSAL_FIXTURE_NOT_PREPARED",
+      "fixture_preparation": "Pinned source export plus one exact mutation; public calibration only. Original tests remain unchanged.",
+      "state": "PUBLIC_CALIBRATION_RECIPE_PREPARED",
       "source": {
         "repository": "lijust/EREI-3.2",
         "commit": "87d730ddc3547f863de2a6895e91f9b83e9c6e72",
         "path": "tests/unit/test_launcher_unit_type_normalizer.py",
         "git_blob": "a137cfe8107a7f400da9546681198e4595efe130"
       },
-      "fixture_sha256": null,
-      "prompt_sha256": null,
-      "hidden_acceptance_sha256": null
+      "fixture_sha256": "1698c34553c6c390c36673976130b0ffdd3363fc8c607bfbba2dcfaa6d400a5d",
+      "prompt_sha256": "5ddd47f6f5ff395fc69a600ccb51469fa6a59d0f1a5220505d0c4a97e636d015",
+      "hidden_acceptance_sha256": null,
+      "calibration_package": {
+        "path": "evals/benchmarks/calibration-packages.json",
+        "task_id": "PY-05"
+      }
     },
     {
       "task_id": "PY-06",

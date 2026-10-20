@@ -2,13 +2,13 @@
 
 الحالة: **DRAFT_NOT_EXECUTABLE**. لا تشغيل نموذج أو ميزانية معتمدة أو نتيجة
 مقارنة. `v1-v2-pilot.json` يحتوي 12 مقترحًا من اختبارات فعلية في المشروعين،
-مع commit وGit blob لكل مرجع. طوبقت bytes المراجع عند إعداد المقترحات؛
-لم تُشغّل اختبارات المشروعين ولم تُعدّل مصادرهما.
+مع commit وGit blob لكل مرجع. أُعدت ست وصفات معايرة عامة، وشُغّلت اختبارات
+مصادرها المثبتة في نسخ مؤقتة. لم تُعدّل مصادر المشروعين أو بياناتهما.
 
-هذه المراجع عقود عامة سبق نشرها، وليست hidden acceptance. أوصاف mutations
-مقترحات لإعداد fixtures لاحقًا، ولا تعني وجود العيوب في المصدر الحالي.
-لم تُجهز fixture/prompt/hidden acceptance packages؛ قيم hashes الخاصة بها
-`null` عمدًا. لا يجوز عرض المقترحات بوصفها dataset تشغيل مكتملة.
+هذه المراجع عقود عامة سبق نشرها، وليست hidden acceptance. mutations عيوب
+محَقونة في نسخ المعايرة، ولا تعني وجودها في المصدر الحالي. ست مهام ما زالت
+مقترحات؛ جميع `hidden_acceptance_sha256` تبقى `null`. لا يجوز عرض إعداد
+المعايرة بوصفه dataset مقارنة مكتملة أو دليل تفوق V2.
 
 ## أصغر جزء تنفيذي
 
@@ -87,6 +87,72 @@ runner-seconds. لا يستنتج مجموعها زمن نهاية إلى نها
   الخطة ربط محتوى، وليس توقيع سلطة أو إثبات تنفيذ.
 - المخرجات تبقى `comparability=NOT_VERIFIED` و
   `evidence_authenticity=NOT_VERIFIED` و`effectiveness=NOT_ESTABLISHED`.
+
+## معايرة ست مهام من المصدر الفعلي
+
+`calibration-packages.json` يربط كل prompt بالمصدر والاختبار وmutation واحدة
+وGit blobs لجميع الملفات المطلوبة. لا ينسخ كود المشروعين داخل Framework.
+`fixture_sha256` في الخطة هو SHA-256 للـJSON compact ذي المفاتيح المرتبة
+أبجديًا لخريطة `starter_file_sha256`؛ كل قيمة فيها hash لبايتات ملف starter.
+`prompt_sha256` يخص UTF-8 للنص دون newline إضافية. هذه روابط محتوى وليست
+إثبات قبول مستقل.
+
+| المهمة | العيب المحقون | دليل المعايرة المحلي |
+|---|---|---|
+| APP-01 | كتابة/style غير ضروريين عند تطابق headers | سكربت fake sheet الأصلي |
+| APP-02 | مقارنة spelling بدل القيمة الرقمية | سكربت consensus الأصلي |
+| APP-06 | إعادة snapshot عند اختلاف السياق | سكربت fake repository الأصلي |
+| PY-02 | إدخال failed attempt في reusable cache | 4 دوال اختبار أصلية |
+| PY-04 | إسقاط آخر token من full preset | 6 دوال اختبار أصلية |
+| PY-05 | ترك connection دون close | 6 دوال اختبار أصلية |
+
+الكود الأصلي ينجح والـstarter يفشل في assertion متوقع لكل مهمة. هذا اختبار
+صلاحية للمعايرة، وليس محاولة حل أجراها نموذج. المهام صغيرة ومتعمدة العيب،
+وقد يسهل عكس mutation؛ لا تمثل وحدها تطوير ميزات أو productivity فعلية.
+الاختبارات العامة لا تغطي كل قبول لاحق: مثل cleanup عند فشل قراءة DB
+في PY-05، أو أنواع context إضافية في APP-06.
+
+لإعادة الإنتاج، جهّز exports محلية موثوقة من المصدرين المثبتين في الخطة:
+`app/` لـApp Google و`py/` لـEREI-3.2، مع الحفاظ على مسارات الملفات والبايتات.
+يكفي توفير الملفات المدرجة في `files` لكل وصفة. لا تستخدم working tree
+متغيرًا أو تنزيلًا غير مثبت. الأداة لا تنزل ملفات ولا تثبت تبعيات.
+
+```text
+python -B evals/benchmarks/check_calibration.py --source-exports <exports-directory> --node <absolute-node-executable>
+python -B evals/benchmarks/check_calibration.py --source-exports <exports-directory> --task PY-02
+python -B -m unittest discover -s evals/tests -p test_calibration_packages.py -v
+```
+
+الأداة opt-in وخارج تشغيل CI المعتاد. تتحقق أولًا من جميع Git blobs المختارة،
+ثم تستخدم البايتات نفسها لإنشاء reference وstarter منفصلين في temp directories.
+لا تعدّل الاختبارات ولا export الإدخال. تعمل Python بـ`-I -S -B` دون
+site packages؛ تُستدعى دوال الاختبار المثبتة عبر `unittest` مع دعم `tmp_path`
+فقط. لا تدّعي هذه الطريقة تشغيل pytest أو conftest أو كامل اختبارات المستهلك.
+تعمل سكربتات Node الأصلية مباشرة. المصدر المقروء راجعه مؤلف الإعداد قبل
+التنفيذ؛ الأداة ليست sandbox لتشغيل كود وكيل غير موثوق.
+
+لا يُحسب timeout أو import/syntax error أو عدم جمع الاختبارات ككشف ناجح
+للعيب. المخرجات تشمل الأصل والنسخة المحقونة وتبقى
+`PUBLIC_CALIBRATION_ONLY / independent_review=NOT_PERFORMED`.
+لا تشغّل الأداة نموذجًا أو provider أو خدمة إنتاج؛ SQLite هنا in-memory/temp.
+يجب مراجعة أي وصفة جديدة أو dependency قبل توسيع هذا المسار.
+
+المقترحات المتبقية تحتاج عملًا حقيقيًا قبل تجميد dataset:
+
+- APP-03: إعداد كامل dependencies وmutation سلوكية لحدود provenance.
+- APP-04: استكمال assertion سلوكية لتخصيص ID؛ الاختبار الحالي يفحص نص
+  المصدر والسياسات أساسًا، ويمكن أن يمر مع معادلة خاطئة إذا بقي النص المتوقع.
+- APP-05: فصل قبول refactor السلوكي عن شرط builder المثبت لـsource blob؛
+  لا تجعل تجاوز فحص الهوية حلًا مقبولًا للمهمة.
+- PY-01/PY-06: تجميد dependency environment لـ`jsonschema` والمكونات
+  المستوردة، مع FakeProvider فقط؛ التبعية غير متاحة في Python المحلي الحالي.
+- PY-03: حصر سلسلة extractor imports وHTML dependencies قبل تنفيذها؛
+  لا تحوّل اختبار parser إلى تشغيل extraction أو شبكة.
+
+عدم اكتمال هذه الست لا يغير مقام الخطة إلى ست مهام ولا يسمح بحذف slots بعد
+النتائج. أي تغيير لاحق في dataset يتطلب خطة جديدة مثبتة قبل جمع المقارنة.
+قبل إرسال starter لوكيل، يفصل المنسق recipe/reference/mutation metadata
+عن workspace المهمة؛ الملف الحالي علني ولا يوفر blinding تلقائيًا.
 
 ## استكمال التجربة قبل طلب اعتماد التكلفة
 
