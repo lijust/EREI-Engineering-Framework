@@ -1,45 +1,45 @@
 # EREI V2 REMEDIATION STATUS
 
-Date: 2026-10-20، Africa/Cairo.
+Date: 2026-10-20، Africa/Cairo؛ تحقق GitHub في هذه الدفعة 08:31 UTC.
 Repository: `lijust/EREI-Engineering-Framework`؛ تكامل منفصل مع `lijust/EREI-3.2`.
 Current main SHA: `72d49658524fbce6145783cd52297c53edbb2c95`.
-Active milestone: M7 — سجل intervention؛ تصحيح إضافي لحدود السلطة في M6؛ مراجعة الإصلاحات السابقة.
+Active milestone: M5 — إعداد تمرين rollback؛ مراجعة إصلاحات M1–M7.
 
-Overall implementation progress: 17 مهمة؛ 12 IN_REVIEW، و2 BACKLOG، و3 BLOCKED. تقدم التسليم المقبول الموزون 0/237؛ لا يمثل نسبة كتابة الكود.
-Internal readiness: لم يتأهل؛ ينتظر قبول الإصلاحات ونسخة مجمعة ذات SHA ثابت واختبار rollback.
+Overall implementation progress: 17 مهمة؛ 13 IN_REVIEW، و1 BACKLOG، و3 BLOCKED. تقدم التسليم المقبول الموزون 0/237؛ لا يمثل نسبة كتابة الكود.
+Internal readiness: لم يتأهل؛ نجح تمرين rollback مصطنع، وتبقى مراجعة مستقلة وقبول الإصلاحات والتحقق على commit/tree موحدين.
 Stable readiness: BLOCKED؛ سلطة الإنفاذ والتقييم الحقيقي والموافقات لم تستوفَ.
 
 Completed tasks: 0 DONE.
 Verified tasks: 0 VERIFIED؛ نجاح محلي لا يستوفي وحده شرط المراجعة وCI.
-In-progress tasks: 12 تحت المراجعة؛ لا مهمة حاليًا بحالة IN_PROGRESS.
+In-progress tasks: 13 تحت المراجعة؛ لا مهمة حاليًا بحالة IN_PROGRESS.
 Blocked tasks: T11 وT15 وT16؛ وCI الرسمي يعوق قبول PRs. عائق فوترة مسجل للمحاولة 39185680855 وفق Annotation نقلها المالك.
 Remaining P1: 7 Findings على main.
 Remaining P2: 7 Findings على main.
 
 Current critical path: T01 → T02 → T03 → T14، مع T04/T05/T07/T08. T06 شرط تبني 3.2، وليس التأهيل المعزول. Stable-only infrastructure لا يضاف إلى هذا المسار.
 
-Changes delivered: مسودة #93 لسجل exposure/recurrence، وتصحيح stable_readiness داخل #91؛ تحديث التتبع بسبب عائق الفوترة. إحدى عشرة PR مصدرية ووثائق البرنامج في #90.
-PRs created: 12 إجمالًا في البرنامج؛ Framework #83–#93 و3.2 #174. واحدة جديدة في هذه الدفعة؛ PR #67 سابقة للبرنامج.
+Changes delivered: Draft #94 لاختبار الرجوع إلى V1 مع حفظ تجربة V2 كاملة، ودليل تشغيل عربي؛ تحديث Issue #81 ووثائق #90. لا تغيير في أدوات المنتج ضمن هذه الدفعة.
+PRs created: 13 إجمالًا في البرنامج؛ Framework #83–#94 و3.2 #174. واحدة جديدة في هذه الدفعة؛ PR #67 سابقة للبرنامج.
 PRs merged: 0.
 
-Tests executed: 271 اختبارًا في التجميع المحلي الجديد (193 tools و78 evals). وبنطاقات متداخلة: 50 اختبارًا لـF14 على Python 3.11 و3.12، و73 اختبارًا لـF06 بعد تصحيحه.
-Tests passed: نجحت المجموعات النهائية المذكورة، وgovernance standalone ومثال سجل التدخل. الأعداد متداخلة ولا تُجمع كاختبارات فريدة.
-Tests failed: 0 فشل متبقٍ في التشغيل المحلي النهائي. فشل اختبارا readiness قبل تصحيح #91 ثم نجحا. لا CI رسمي ناجح مثبت؛ لقطة المحاولات السابقة startup_failure قبل Jobs.
+Tests executed: في هذه الدفعة: 3 rollback cases على كل من Python 3.11 و3.12، و48 اختبارًا لـF01–F03. التجميع السابق اجتاز 271 اختبارًا؛ لم يُعد تشغيله هنا لأنه لم يتغير.
+Tests passed: 3/3 على كل Python version، و48/48 regression. الأعداد متداخلة بين الدفعات ولا تجمع كاختبارات فريدة.
+Tests failed: 0 في التشغيل النهائي. فشل إخراج التقرير الأول بسبب اسم ملف خاطئ بعد نجاح الحالات الثلاث؛ صُحح قبل النشر. لا CI رسمي ناجح مثبت لهذه الرؤوس.
 
 Verified complexity reduction: مسودة #92 تستبدل full discovery المكرر على 3.12 بفحص bootstrap/activation، مع بقاء full 3.12 في Assurance وfull 3.11 في Bootstrap. التنفيذ التشغيلي والتوفير لم يثبتا بعد.
 Measured CI savings: غير متاحة. عينة #67 التاريخية 506 job-seconds ليست تجربة مقارنة لهذا التغيير.
 Measured quality improvements: رفض حالات الخلل المعروفة في regression fixtures؛ لا دليل بعد على خفض rework أو escapes أو cost per verified task في الإنتاج.
 
-Outstanding risks: CI محجوب؛ رسالة المحاولة المذكورة تطرح فشل دفع أو حد إنفاق دون تحديد أيهما. المراجعة المستقلة الجديدة معلقة. التجميع ليس release commit. App ما زال به أربع anomalies و35 authority records ناقصة. سجل intervention يراجع الاتساق ولا يصادق على cohort/exposure أو يثبت causation.
+Outstanding risks: المراجعة المستقلة وCI الرسمي معلقان؛ عائق فوترة مثبت للمحاولة التي أرسلها المالك فقط. تمرين rollback ساكن ومصطنع ولا يغطي writers متزامنة أو disaster recovery أو target الإصدار المجمع. App به أربع anomalies و35 authority records ناقصة. أرشفة V2 لا تغلق مراجعاته المعلقة.
 Decisions requiring owner approval: معالجة فوترة الحساب إجراء للمالك؛ لم تُقرأ بيانات دفع أو تُغير limits. لاحقًا، اختيار سلطة Stable وميزانية model وقرارات live ledger/pins/Stable تبقى منفصلة.
 
 Next 3 execution tasks:
 1. يعالج المالك عائق فوترة GitHub بعد تحديد فشل الدفع أو حد الإنفاق، ثم يُتحقق رسميًا من الرؤوس الدقيقة ضمن التفويض المناسب.
 2. استكمال المراجعة المستقلة، ومعالجة ملاحظاتها، ثم إعادة التحقق عند retarget للفروع المتراكبة.
-3. تأهيل نسخة Internal معزولة ذات SHA ثابت وتمرين rollback يحفظ الأدلة، بعد قبول الإصلاحات المطلوبة.
+3. إعادة تشغيل تمرين #94 على نسخة Internal معزولة ذات SHA ثابت بعد قبول الإصلاحات المطلوبة؛ التمرين الحالي إعداد ولا يحقق هذا القبول.
 
 Estimated remaining effort: لا يوجد سجل ساعات منفذة يسمح بحساب متبقٍ موثوق؛ تقدير البرنامج الأصلي 150–324 ساعة هندسية. لم تُطرح منه ساعات افتراضية.
-NEXT ACTION: معالجة المالك لحظر حساب GitHub، ثم التحقق الرسمي على الرؤوس الحالية واستكمال المراجعة المستقلة؛ لا VERIFIED أو merge قبل استيفاء القبول.
+NEXT ACTION: مراجعة #94 وبقية الإصلاحات بصورة مستقلة، ثم إعادة qualification والرجوع على target موحد بعد قبول التبعيات؛ يعالج المالك عائق الفوترة بصورة منفصلة.
 
 ## الرؤوس المنشورة
 
@@ -56,8 +56,9 @@ NEXT ACTION: معالجة المالك لحظر حساب GitHub، ثم التح�
 | T09 | F12 | [#92 draft](https://github.com/lijust/EREI-Engineering-Framework/pull/92)، فوق #67 | `a42f9413a98d829ce51b48bed38d7294f931bae3` |
 | T10 | F06 | [#91 draft](https://github.com/lijust/EREI-Engineering-Framework/pull/91) | `a132e104c6881d7dc4f1002862741bc33a0da748` |
 | T13 | F14 | [#93 draft](https://github.com/lijust/EREI-Engineering-Framework/pull/93)، فوق #87 | `85ead2121ecb03454495200a475ca9f3f129398e` |
+| T14 | Internal rollback | [#94 draft](https://github.com/lijust/EREI-Engineering-Framework/pull/94)، فوق #88 | `a20cccf9447b46bc87e38b568bae5662c84acf02` |
 
-T00 ووثائق الخطة في [#90](https://github.com/lijust/EREI-Engineering-Framework/pull/90). ترتيب الطبقات: #83 → #84 → #88، و#86 → #87 → #93، و#67 → #92. يعاد التحقق بعد تغيير الرأس أو base؛ لا يُنفذ merge بموجب هذه الوثيقة.
+T00 ووثائق الخطة في [#90](https://github.com/lijust/EREI-Engineering-Framework/pull/90). ترتيب الطبقات: #83 → #84 → #88 → #94، و#86 → #87 → #93، و#67 → #92. يعاد التحقق بعد تغيير الرأس أو base؛ لا يُنفذ merge بموجب هذه الوثيقة.
 
 ## حدود الأدلة
 
@@ -74,3 +75,9 @@ F02 يرفض فقد ترتيب projection مع legacy reviews بدل تخمين 
 التجميع الجديد يضم 50 ملفًا متغيرًا واجتاز 271 اختبارًا، ولا يشمل #92 أو 3.2. حُفظت اللقطة القديمة دون تعديل، والأدلة الجديدة في [verification-20261020.json](evidence/verification-20261020.json). لا يوجد SHA إصدار مجمد أو قبول مستقل بعد.
 
 نقل المالك Annotation المحاولة 39185680855 التي تحدد قيد فوترة: فشل دفع حديث أو حد إنفاق. لم تُفحص فوترة الحساب، ولم يُحدد أي البديلين، ولم تُعمم علة هذه المحاولة كحقيقة مستقلة على جميع المحاولات الأخرى. لا تتطلب هذه الرسالة بحد ذاتها شراء GitHub Pro.
+
+## تمرين rollback — 2026-10-20
+
+Draft #94 يضيف ملفي اختبار ودليل تشغيل فقط. طابقت ملفات الرأس الـ315 Git blobs النسخة المختبرة. أداة V1 الأصلية مطابقة للـblob عند Stable commit، وتُرفض bytes معدلة قبل التنفيذ. بقيت أربع أحداث ومراجعتان وescape معلّق في أرشيف V2، واستُعيد baseline V1 في مجلد جديد. لا إعادة ترقيم أو دمج للتاريخين، ولا إغلاق ضمني لالتزام IMMEDIATE_REVIEW.
+
+[الأوامر والهويات والنتائج](evidence/verification-rollback-20261020.json) تثبت تكاملًا محليًا مصطنعًا فقط. لا تتغير readiness إلى مؤهلة؛ المراجعة المستقلة والهدف النهائي باقيان.

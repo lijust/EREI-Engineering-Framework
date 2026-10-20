@@ -76,3 +76,10 @@ py "-3.11" -B -m unittest tools.tests.test_ci_test_partition tools.tests.test_ci
 - Cycle complete بقي كما هو؛ المخرج يوضح DECLARED_STEP_REFERENCES وeffectiveness=NOT_ESTABLISHED، دون تعديل ملف الدورة.
 - سبب billing للمحاولة 39185680855 من نص Annotation الذي نقله المالك، وليس قراءة بيانات الحساب أو تحققًا مستقلًا من سبب بقية المحاولات. لم تتغير settings أو spending limits.
 - المراجعة المستقلة وCI الرسمي معلقان؛ الأعداد المتداخلة لا تجمع.
+
+## إعداد T14 / rollback — 2026-10-20
+
+- [Draft #94](https://github.com/lijust/EREI-Engineering-Framework/pull/94)، head a20cccf9447b46bc87e38b568bae5662c84acf02، tree 49fb8a5e0ae6cc8dfe8071bae75283901ea2fcdf؛ فوق #88.
+- 3 حالات على كل من Python 3.11 و3.12 و48 regression tests؛ 315 ملفًا منشورًا مطابقًا للنسخة المختبرة.
+- [سجل مستقل لهذه الدفعة](evidence/verification-rollback-20261020.json)؛ لا يغير أدلة التجميع السابق أو يدعي Internal qualification.
+- إثبات استعادة baseline مع بقاء أرشيف V2 كاملًا وعضوية المراجعات والتنبيه المعلق؛ ليس downgrade in-place أو reconciliation تلقائيًا.

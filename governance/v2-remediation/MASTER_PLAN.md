@@ -76,6 +76,8 @@
 
 **T14 — [#81](https://github.com/lijust/EREI-Engineering-Framework/issues/81) — P1، L2، 8–24 ساعة؛ يعتمد على T01 وT02 وT03 وT04 وT05 وT07 وT08.** تأهيل Internal Release محدود على SHA مجمع ثابت وبيانات معزولة صحيحة، مع اختبار رجوع للكود والبيانات. القبول في checklist أدناه؛ لا P1 غير محلول يؤثر في النطاق المعتمد. T06 شرط لتجربة 3.2 إذا شملها النطاق، وليس شرطًا لتجربة Framework معزولة. بيانات App المتناقضة مستبعدة حتى معالجة موثقة. الفائدة تمكين قياس داخلي محدود، دون ادعاء Stable أو منح pin upgrade.
 
+إعداد T14 المنشور: [Draft #94](https://github.com/lijust/EREI-Engineering-Framework/pull/94)، واختباره opt-in في `tools/tests/drill_task_learning_rollback.py` ودليله `learning/INTERNAL_ROLLBACK_DRILL.md`. استعادة V1 تتم إلى نسخة جديدة مع حفظ أرشيف V2 والتزامات مراجعته. لا يعتبر هذا تحققًا على target موحد أو قبول dependencies.
+
 **T16 — [#31](https://github.com/lijust/EREI-Engineering-Framework/issues/31) — P1، L3، 8–24 ساعة؛ يعتمد على T10 وT11 وT12 وT14 وT15.** تجميد RC بعد اكتمال الإصلاحات، وتقييم genuine runtime للحالات الـ13، وأدلة موثقة وموافقات مستقلة ثم Stable. التبني اللاحق منفصل لكل مشروع. القبول: استيفاء بوابات #31 على target/tree محددين، ومعالجة App بقرار موثق قبل ترحيله، واختبارات تكامل ورجوع 3.2. لا تفويض حالي بالنشر أو تغيير pins. الرجوع يشمل الكود والبيانات مع حفظ الأحداث الجديدة وإجراءات revocation المعتمدة عند الحاجة.
 
 ## 4. ترتيب التنفيذ والجهد
