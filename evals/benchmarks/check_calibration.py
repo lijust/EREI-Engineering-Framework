@@ -9,6 +9,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 from pathlib import Path, PurePosixPath
 import shutil
 import subprocess
@@ -128,8 +129,16 @@ def assess(package: dict, reference: dict, starter: dict) -> bool:
     if reference["returncode"] != 0 or starter["returncode"] != 1:
         return False
     if package["runtime"] == "node":
-        return ("AssertionError [ERR_ASSERTION]" in starter["stderr"]
-                and package["expected_assertion"] in starter["stderr"])
+        line = package.get("expected_assertion_line")
+        if type(line) is not int or line <= 0:
+            return False
+        # The test blob is pinned: bind detection to its expected assertion site,
+        # not any unrelated ERR_ASSERTION from another line or source file.
+        location = re.escape("/" + package["test_path"]) + f":{line}:" + r"\d+\)?\s*$"
+        stderr = starter["stderr"].replace("\\", "/")
+        return ("AssertionError [ERR_ASSERTION]" in stderr
+                and package["expected_assertion"] in stderr
+                and re.search(r"(?m)^ +at [^\r\n]*" + location, stderr) is not None)
     expected_count = len(package["python_tests"])
     for record in (reference, starter):
         checks = record["checks"]

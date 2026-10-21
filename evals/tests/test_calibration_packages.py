@@ -89,13 +89,35 @@ class CalibrationTests(unittest.TestCase):
             self.assertFalse(calibration.assess(package, reference, invalid))
 
     def test_node_startup_errors_are_not_successful_mutant_detection(self):
-        package = {"runtime": "node", "expected_assertion": "Missing expected rejection."}
+        package = {"runtime": "node", "expected_assertion": "Missing expected rejection.",
+                   "test_path": "tests/behavior.test.js", "expected_assertion_line": 57}
         reference = {"returncode": 0}
         for message in ("Cannot find module", "SyntaxError", "Missing expected rejection."):
             self.assertFalse(calibration.assess(package, reference,
                              {"returncode": 1, "stderr": message}))
         self.assertTrue(calibration.assess(package, reference, {"returncode": 1,
-                        "stderr": "AssertionError [ERR_ASSERTION]: Missing expected rejection."}))
+                        "stderr": "AssertionError [ERR_ASSERTION]: Missing expected rejection.\n"
+                        "    at async /tmp/fixture/tests/behavior.test.js:57:3\n"}))
+
+
+    def test_node_unrelated_assertions_do_not_count_as_detection(self):
+        package = {"runtime": "node", "expected_assertion": "AssertionError [ERR_ASSERTION]",
+                   "test_path": "tests/behavior.test.js", "expected_assertion_line": 41}
+        reference = {"returncode": 0}
+        for location in ("tests/behavior.test.js:40:10", "tests/other.test.js:41:10"):
+            with self.subTest(location=location):
+                self.assertFalse(calibration.assess(package, reference, {
+                    "returncode": 1, "stderr": "AssertionError [ERR_ASSERTION]: unrelated\n"
+                    "    at Object.<anonymous> (/tmp/fixture/" + location + ")\n"}))
+        self.assertFalse(calibration.assess(package, reference, {
+            "returncode": 1, "stderr": "AssertionError [ERR_ASSERTION]: "
+            "mention /tmp/fixture/tests/behavior.test.js:41:10 without a stack frame"}))
+        for frame in ("    at Object.<anonymous> (/tmp/fixture/tests/behavior.test.js:41:10)",
+                      r"    at Object.<anonymous> (C:\temp\fixture\tests\behavior.test.js:41:10)",
+                      "    at async /tmp/fixture/tests/behavior.test.js:41:10"):
+            with self.subTest(frame=frame):
+                self.assertTrue(calibration.assess(package, reference, {
+                    "returncode": 1, "stderr": "AssertionError [ERR_ASSERTION]\n" + frame + "\n"}))
 
     def test_timeout_is_not_converted_to_a_successful_calibration(self):
         self.package.update(runtime="python", python_tests=[])

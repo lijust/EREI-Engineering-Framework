@@ -35,7 +35,8 @@
       "starter_file_sha256": {
         "apps/developer-validation-intake/Code.gs": "8af9b57eb8cab1c6e4dea335f31da7f36aa767beb2c1c4c6396b0ccff2b59855",
         "tests/developer-validation-idempotent-sheet-ensure.test.js": "d56711a42700079d37b646e2e6d38dbd44d88a1f60078f560030f330dbb534be"
-      }
+      },
+      "expected_assertion_line": 41
     },
     {
       "task_id": "APP-02",
@@ -74,7 +75,8 @@
         "apps/developer-validation-intake/Code.gs": "2b441a94f5567ee9fa8f9dd868d7f8e943f07b719c7c9cfffac177c72718a8a5",
         "architecture/data-validation/developer-sales-validation-contract.v1.json": "778024e97b6ea842248794f60879abe67840ee46564528da519aefbfbafdbe50",
         "tests/developer-validation-field-consensus.test.js": "6e0fad36834d24af0790023fba10778ba5a176fd3fcb993b008ee3a943128115"
-      }
+      },
+      "expected_assertion_line": 32
     },
     {
       "task_id": "APP-06",
@@ -108,7 +110,8 @@
       "starter_file_sha256": {
         "runtime/node/ProductionEdgeContextResolver.js": "b01b260aaad343c48dfddff573cf3aadb19bee9a53e26155938df2dbb72f3d12",
         "tests/prd03-production-edge-context-resolver.test.js": "5e5615ed030dacbdafe9c01a0bba4afd2013afac6f46815741421a2cbafd79be"
-      }
+      },
+      "expected_assertion_line": 57
     },
     {
       "task_id": "PY-02",
