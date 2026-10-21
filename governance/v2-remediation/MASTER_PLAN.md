@@ -130,7 +130,7 @@ Learning Operations تبقى Candidate مستقلة. يبدأ تبنيها لا�
 
 يُجهز pilot من 12 مهمة ممثلة، لكل منها ذراع V1 وذراع V2 وتكراران: 48 تشغيلًا. تشمل المهام عيوبًا معروفة، تعديلات عادية، تعافيًا من verification failure، سياقًا ناقصًا، وقيودًا أمنية. تُختار من المشروعين وتُصنف حسب risk وworkflow family قبل التشغيل. هذا pilot للتحقق من المنهج وتقدير التباين، وليس حجمًا مضمونًا لإثبات تفوق إحصائي.
 
-إعداد الحساب منشور في [Draft #95](https://github.com/lijust/EREI-Engineering-Framework/pull/95): `evals/benchmark_accounting.py` و`evals/benchmarks/v1-v2-pilot.json`. المهام public proposals وليست fixtures أو hidden acceptance جاهزة؛ الحساب لا يمنح إذن تشغيل ولا يصادق على الأدلة.
+إعداد الحساب منشور في [Draft #95](https://github.com/lijust/EREI-Engineering-Framework/pull/95): `evals/benchmark_accounting.py` و`evals/benchmarks/v1-v2-pilot.json`. أُعدت ست public calibration recipes وأثبتت الاختبارات المحلية نجاح الأصل وكشف العيب المحقون؛ ست مقترحات وhidden acceptance المستقلة غير مكتملة. الحساب لا يمنح إذن تشغيل ولا يصادق على الأدلة.
 
 يُثبت model/version وruntime وOS وtool permissions وميزانية الوقت والتوكنز وproject SHA. تُشغّل الأزواج بترتيب عشوائي في workspaces نظيفة، مع hidden acceptance ومراجعة لا تعرف ذراع التنفيذ. يُحسب timeout والإخفاق والتدخل البشري وإعادة المحاولة ضمن النتائج والتكلفة. يمنع استبعاد المهمة بعد رؤية نتيجتها أو تحسين prompt لذراع واحد فقط.
 

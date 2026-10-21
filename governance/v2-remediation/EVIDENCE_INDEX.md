@@ -84,8 +84,15 @@ py "-3.11" -B -m unittest tools.tests.test_ci_test_partition tools.tests.test_ci
 - [سجل مستقل لهذه الدفعة](evidence/verification-rollback-20261020.json)؛ لا يغير أدلة التجميع السابق أو يدعي Internal qualification.
 - إثبات استعادة baseline مع بقاء أرشيف V2 كاملًا وعضوية المراجعات والتنبيه المعلق؛ ليس downgrade in-place أو reconciliation تلقائيًا.
 
-## إعداد T15 / benchmark — 2026-10-20
+## إعداد T15 الأولي / benchmark — لقطة تاريخية 2026-10-20
 
 - [Draft #95](https://github.com/lijust/EREI-Engineering-Framework/pull/95)، head b6d421c03b5d0f4967c524a15fd734f9759fe758؛ tree 11177ce326f3ec7160931f64a4563008bd23e5e9.
 - [السجل](evidence/verification-benchmark-20261020.json): 17 اختبارًا على Python 3.11 و3.12؛ CLI جاف بـ48 slot وصفر observations؛ 311 published blobs و12 reference blobs مطابقة.
 - المصدر public calibration proposals؛ fixture/prompt/hidden acceptance غير مجهزة. لا consumer tests أو model executions أو paid AI أو دليل effectiveness.
+
+## معايرة T15 — مصدر 2026-10-20، متابعة 2026-10-21
+
+- [Draft #95](https://github.com/lijust/EREI-Engineering-Framework/pull/95): head cf6fd76635f4417137b2babc5e1fc28a7291b95a؛ tree d89f51e2d5d79cfcdbc802cd2323dbc172fba792. طابقت 314 published blobs النسخة المختبرة، وبقيت 13 consumer input blobs دون تغيير.
+- [الأدلة](evidence/verification-calibration-20261020.json): 27 unit tests على كل Python 3.11/3.12؛ ست معايرات مع Node 24.20.0. لكل إصدار: 3 Node scripts و16 Python functions مرجعية ناجحة؛ mutants الست تفشل في assertions المتوقعة.
+- public calibration فقط؛ لا paid AI أو hidden acceptance أو comparative result. ست مقترحات باقية، والمراجعة المستقلة معلقة.
+- CI في السجل يخص 20 أكتوبر؛ لا يُستخدم لإثبات استمرار عائق الفوترة بعد إفادة المالك يوم 21 أكتوبر. وافق المالك على إعادة CI العادي لاحقًا؛ رفض GitHub إعادة المحاولة القديمة بـ403 لأنها غير قابلة للإعادة. لا نتيجة تشغيل جديدة حتى هذه اللقطة.

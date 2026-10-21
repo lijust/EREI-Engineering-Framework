@@ -1,45 +1,44 @@
 # EREI V2 REMEDIATION STATUS
 
-Date: 2026-10-20، Africa/Cairo؛ تحقق GitHub في هذه الدفعة 08:31 UTC.
+Date: 2026-10-21، Africa/Cairo؛ معايرة المصدر في 2026-10-20، وإعادة فحص GitHub في 2026-10-21.
 Repository: `lijust/EREI-Engineering-Framework`؛ تكامل منفصل مع `lijust/EREI-3.2`.
 Current main SHA: `72d49658524fbce6145783cd52297c53edbb2c95`.
-Active milestone: M7 — إعداد benchmark offline، مع بقاء تشغيل T15 محجوبًا؛ مراجعة دفعة rollback السابقة.
+Active milestone: M7 — معايرة مهام T15؛ والتحقق من استئناف CI بعد إفادة المالك.
 
-Overall implementation progress: 17 مهمة؛ 13 IN_REVIEW، و1 BACKLOG، و3 BLOCKED. تقدم التسليم المقبول الموزون 0/237؛ لا يمثل نسبة كتابة الكود.
-Internal readiness: لم يتأهل؛ نجح تمرين rollback مصطنع، وتبقى مراجعة مستقلة وقبول الإصلاحات والتحقق على commit/tree موحدين.
+Overall implementation progress: 17 مهمة؛ 13 IN_REVIEW، و1 BACKLOG، و3 BLOCKED. التسليم المقبول الموزون 0/237؛ ليس نسبة كتابة الكود.
+Internal readiness: لم يتأهل؛ قبول الإصلاحات والمراجعة المستقلة والتحقق على commit/tree موحدين باقيان.
 Stable readiness: BLOCKED؛ سلطة الإنفاذ والتقييم الحقيقي والموافقات لم تستوفَ.
 
 Completed tasks: 0 DONE.
-Verified tasks: 0 VERIFIED؛ نجاح محلي لا يستوفي وحده شرط المراجعة وCI.
-In-progress tasks: 13 تحت المراجعة؛ لا مهمة حاليًا بحالة IN_PROGRESS.
-Blocked tasks: T11 وT15 وT16؛ وCI الرسمي يعوق قبول PRs. عائق فوترة مسجل للمحاولة 39185680855 وفق Annotation نقلها المالك.
+Verified tasks: 0 VERIFIED.
+In-progress tasks: 13 تحت المراجعة؛ T15 محجوب للتشغيل رغم تقدم إعداد المصدر.
+Blocked tasks: T11 وT15 وT16. عودة CI أبلغ بها المالك ولم تثبت بمحاولة جديدة حتى هذه اللقطة.
 Remaining P1: 7 Findings على main.
 Remaining P2: 7 Findings على main.
 
-Current critical path: T01 → T02 → T03 → T14، مع T04/T05/T07/T08. T06 شرط تبني 3.2، وليس التأهيل المعزول. Stable-only infrastructure لا يضاف إلى هذا المسار.
+Current critical path: T01 → T02 → T03 → T14، مع T04/T05/T07/T08. T06 شرط تبني 3.2؛ Stable-only infrastructure خارج مسار التأهيل المعزول.
 
-Changes delivered: Draft #95: جدول وحساب محلي للمقارنة، 12 مقترح مهمة مرتبطة بمصادر ثابتة، عقد عربي و17 اختبارًا. لا runtime أو نموذج جديد.
-PRs created: 14 إجمالًا في البرنامج؛ Framework #83–#95 و3.2 #174. واحدة جديدة في هذه الدفعة؛ PR #67 سابقة للبرنامج.
+Changes delivered: تحديث Draft #95 إلى `cf6fd76635f4417137b2babc5e1fc28a7291b95a`؛ ست وصفات معايرة عامة مرتبطة بالمصدر الفعلي، checker محلي opt-in، prompts وhashes، وتوثيق فجوات المقترحات الست الباقية.
+PRs created: لا جديدة في دفعة المعايرة؛ 14 إجمالًا في البرنامج، Framework #83–#95 و3.2 #174.
 PRs merged: 0.
 
-Tests executed: 17 اختبار accounting على كل من Python 3.11 و3.12، وتشغيل CLI جاف. نتائج rollback السابقة 3 حالات على كلا الإصدارين و48 regression؛ التجميع السابق 271 اختبارًا ولم يُعد هنا.
-Tests passed: 17/17 على كل Python version؛ أنتج التشغيل الجاف 48 slot وصفر observations ونسبًا وتكلفة كلية غير معلومة.
-Tests failed: صفر في التشغيل المحلي النهائي لهذه الدفعة. CI لا يزال بلا دليل نجاح على الرؤوس الحالية؛ محاولتا #95 (39397068049 و39397006581) startup_failure وjobs=0؛ السبب التفصيلي لم يُقرأ.
+Tests executed: 27 unit tests (17 accounting +10 checker) على كل من Python 3.11 و3.12؛ ست معايرات على الإصدارين مع Node 24.20.0؛ CLI جاف.
+Tests passed: 27/27 على كل إصدار؛ لكل إصدار نجحت 3 سكربتات Node أصلية و16 دالة Python أصلية، وكُشفت mutants الست بالـassertions المتوقعة.
+Tests failed: صفر غير متوقع في النتائج المحلية النهائية. إخفاق mutants مقصود. محاولات CI على رأس #95 الجديد: 39464515437 و39464431976 و39464422011؛ startup_failure وjobs=0 من 20 أكتوبر، وليست تجربة بعد إفادة التعافي.
+Verified complexity reduction: إعادة استخدام اختبارات المستهلك دون نسخ كوده إلى Framework أو إضافة dependencies؛ ليس قياسًا لتخفيض maintenance. لا model runtime أو خدمة جديدة.
+Measured CI savings: غير متاحة.
+Measured quality improvements: كشف ستة عيوب محقونة؛ لا قياس لتحسن جودة الوكيل أو rework أو escapes أو تكلفة مهمة متحققة.
 
-Verified complexity reduction: الحساب داخل evals وبـPython standard library، دون runner أو provider أو خدمة جديدة. تقليل تكرار CI في #92 ما زال غير مقاس تشغيليًا.
-Measured CI savings: غير متاحة. عينة #67 التاريخية 506 job-seconds ليست تجربة مقارنة لهذا التغيير.
-Measured quality improvements: رفض حالات الخلل المعروفة في regression fixtures؛ لا دليل بعد على خفض rework أو escapes أو cost per verified task في الإنتاج.
-
-Outstanding risks: المراجعة المستقلة وCI معلقان. 12 task proposals عامة، ولم تجهز fixture/prompt/hidden acceptance packages بعد؛ لا تصادق أداة الحساب على traces أو تكلفة أو comparability. rollback يحتاج target مجمعًا؛ App به أربع anomalies و35 authority records ناقصة.
-Decisions requiring owner approval: معالجة فوترة الحساب إجراء للمالك؛ لم تُقرأ بيانات دفع أو تُغير limits. لاحقًا، اختيار سلطة Stable وميزانية model وقرارات live ledger/pins/Stable تبقى منفصلة.
+Outstanding risks: ست مقترحات غير مكتملة؛ hidden acceptance مستقلة غير مجهزة؛ المراجعة المستقلة معلقة؛ لا نموذج أو نتائج مقارنة. App به أربع anomalies و35 authority records ناقصة.
+Decisions requiring owner approval: وافق المالك يوم 21 أكتوبر على إعادة CI العادي واستمرار التوصيات. GitHub رفض retry للمحاولة القديمة بـ403: This workflow run cannot be retried. لا طلب إذن جديد لنفس CI؛ Copilot خارج التنفيذ، وبوابات Stable والبيانات الحية لا تزال غير مستوفاة.
 
 Next 3 execution tasks:
-1. يعالج المالك عائق فوترة GitHub بعد تحديد فشل الدفع أو حد الإنفاق، ثم يُتحقق رسميًا من الرؤوس الدقيقة ضمن التفويض المناسب.
-2. استكمال المراجعة المستقلة، ومعالجة ملاحظاتها، ثم إعادة التحقق عند retarget للفروع المتراكبة.
-3. إعادة تشغيل تمرين #94 على نسخة Internal معزولة ذات SHA ثابت بعد قبول الإصلاحات المطلوبة؛ التمرين الحالي إعداد ولا يحقق هذا القبول.
+1. التحقق من CI جديد بعد نشر التوثيق المجهز؛ المحاولة القديمة startup_failure غير قابلة لإعادة التشغيل عبر API. ثم استكمال الرؤوس المطلوبة دون تكرار أو AI.
+2. إكمال ست وصفات dataset المتبقية، وإضافة acceptance سلوكية لـAPP-04 بدل الاكتفاء بفحص نص السياسات.
+3. استكمال المراجعة المستقلة ثم تأهيل Internal على target مجمد، مع اختبار rollback #94.
 
-Estimated remaining effort: لا يوجد سجل ساعات منفذة يسمح بحساب متبقٍ موثوق؛ تقدير البرنامج الأصلي 150–324 ساعة هندسية. لم تُطرح منه ساعات افتراضية.
-NEXT ACTION: مراجعة #95 واستكمال feasible task packages وhidden acceptance المستقلة؛ تبقى بيانات التشغيل والنموذج والميزانية غير معتمدة. قبول الإصلاحات وCI يسبقان qualification.
+Estimated remaining effort: لا سجل ساعات فعلي لحساب متبقٍ موثوق؛ تقدير البرنامج الأصلي 150–324 ساعة هندسية.
+NEXT ACTION: نشر توثيق المعايرة المجهز وفحص CI الجديد؛ الإذن متاح، وT15 لا يزال BLOCKED للتقييم الحقيقي.
 
 ## الرؤوس المنشورة
 
@@ -57,7 +56,7 @@ NEXT ACTION: مراجعة #95 واستكمال feasible task packages وhidden a
 | T10 | F06 | [#91 draft](https://github.com/lijust/EREI-Engineering-Framework/pull/91) | `a132e104c6881d7dc4f1002862741bc33a0da748` |
 | T13 | F14 | [#93 draft](https://github.com/lijust/EREI-Engineering-Framework/pull/93)، فوق #87 | `85ead2121ecb03454495200a475ca9f3f129398e` |
 | T14 | Internal rollback | [#94 draft](https://github.com/lijust/EREI-Engineering-Framework/pull/94)، فوق #88 | `a20cccf9447b46bc87e38b568bae5662c84acf02` |
-| T15 | Benchmark preparation؛ التنفيذ BLOCKED | [#95 draft](https://github.com/lijust/EREI-Engineering-Framework/pull/95) | `b6d421c03b5d0f4967c524a15fd734f9759fe758` |
+| T15 | Benchmark preparation؛ التنفيذ BLOCKED | [#95 draft](https://github.com/lijust/EREI-Engineering-Framework/pull/95) | `cf6fd76635f4417137b2babc5e1fc28a7291b95a` |
 
 T00 ووثائق الخطة في [#90](https://github.com/lijust/EREI-Engineering-Framework/pull/90). ترتيب الطبقات: #83 → #84 → #88 → #94، و#86 → #87 → #93، و#67 → #92. يعاد التحقق بعد تغيير الرأس أو base؛ لا يُنفذ merge بموجب هذه الوثيقة.
 
@@ -83,6 +82,6 @@ Draft #94 يضيف ملفي اختبار ودليل تشغيل فقط. طابق�
 
 [الأوامر والهويات والنتائج](evidence/verification-rollback-20261020.json) تثبت تكاملًا محليًا مصطنعًا فقط. لا تتغير readiness إلى مؤهلة؛ المراجعة المستقلة والهدف النهائي باقيان.
 
-## إعداد benchmark — 2026-10-20
+## إعداد benchmark الأولي — لقطة تاريخية 2026-10-20
 
 [أدلة #95](evidence/verification-benchmark-20261020.json): 311 ملفًا منشورًا مطابقًا للمصدر المفحوص، و12 reference blobs من المشروعين. نتائج الاختبارات تخص الحساب deterministic فقط؛ لا مقارنة V1/V2 ولا 48 تشغيلًا فعليًا. T15 ما زال BLOCKED للتنفيذ رغم أن إعداده المصدري IN_REVIEW؛ لذلك لا تتغير أعداد حالات المهام.
