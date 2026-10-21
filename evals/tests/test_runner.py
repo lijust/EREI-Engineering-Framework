@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 import importlib.util
+import os
+import shlex
+import shutil
+import tempfile
 import subprocess
 import sys
 import unittest
@@ -27,7 +31,7 @@ class EvalHarnessSelfTest(unittest.TestCase):
 
     def test_run_smoke_suite(self):
         result = subprocess.run(
-            [sys.executable, str(RUNNER), "run", str(SMOKE), "--adapter", f"{sys.executable} {MOCK}"],
+            [sys.executable, str(RUNNER), "run", str(SMOKE), "--adapter", (subprocess.list2cmdline([sys.executable, str(MOCK)]) if os.name == "nt" else shlex.join([sys.executable, str(MOCK)]))],
             text=True,
             capture_output=True,
             check=False,
@@ -35,6 +39,23 @@ class EvalHarnessSelfTest(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("PASS harness-smoke/SMOKE-001", result.stdout)
         self.assertIn("Summary: 1 passed, 0 failed, 1 total", result.stdout)
+
+    def test_adapter_script_path_with_spaces_and_non_ascii(self):
+        with tempfile.TemporaryDirectory(prefix="EREI adapter مسار ") as directory:
+            adapter = Path(directory) / "mock adapter.py"
+            shutil.copyfile(MOCK, adapter)
+            argv = [sys.executable, str(adapter)]
+            command = subprocess.list2cmdline(argv) if os.name == "nt" else shlex.join(argv)
+            result = subprocess.run(
+                [sys.executable, str(RUNNER), "run", str(SMOKE), "--adapter", command],
+                text=True, capture_output=True, check=False,
+            )
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertIn("Summary: 1 passed, 0 failed, 1 total", result.stdout)
+
+    def test_posix_adapter_command_roundtrip(self):
+        argv = ["/opt/Python tools/python3", "/tmp/مسار adapter/mock script.py"]
+        self.assertEqual(runner.split_adapter_command(shlex.join(argv), platform_name="posix"), argv)
 
     def test_windows_adapter_command_preserves_backslashes_and_spaces(self):
         command = r'"C:\Program Files\Python312\python.exe" "C:\repo path\mock_adapter.py"'

@@ -2,11 +2,11 @@
 
 الحالة: **DRAFT_NOT_EXECUTABLE**. لا تشغيل نموذج أو ميزانية معتمدة أو نتيجة
 مقارنة. `v1-v2-pilot.json` يحتوي 12 مقترحًا من اختبارات فعلية في المشروعين،
-مع commit وGit blob لكل مرجع. أُعدت ست وصفات معايرة عامة، وشُغّلت اختبارات
+مع commit وGit blob لكل مرجع. أُعدت سبع وصفات معايرة عامة، وشُغّلت اختبارات
 مصادرها المثبتة في نسخ مؤقتة. لم تُعدّل مصادر المشروعين أو بياناتهما.
 
 هذه المراجع عقود عامة سبق نشرها، وليست hidden acceptance. mutations عيوب
-محَقونة في نسخ المعايرة، ولا تعني وجودها في المصدر الحالي. ست مهام ما زالت
+محَقونة في نسخ المعايرة، ولا تعني وجودها في المصدر الحالي. خمس مهام ما زالت
 مقترحات؛ جميع `hidden_acceptance_sha256` تبقى `null`. لا يجوز عرض إعداد
 المعايرة بوصفه dataset مقارنة مكتملة أو دليل تفوق V2.
 
@@ -88,7 +88,7 @@ runner-seconds. لا يستنتج مجموعها زمن نهاية إلى نها
 - المخرجات تبقى `comparability=NOT_VERIFIED` و
   `evidence_authenticity=NOT_VERIFIED` و`effectiveness=NOT_ESTABLISHED`.
 
-## معايرة ست مهام من المصدر الفعلي
+## معايرة سبع مهام من المصدر الفعلي
 
 `calibration-packages.json` يربط كل prompt بالمصدر والاختبار وmutation واحدة
 وGit blobs لجميع الملفات المطلوبة. لا ينسخ كود المشروعين داخل Framework.
@@ -101,6 +101,7 @@ runner-seconds. لا يستنتج مجموعها زمن نهاية إلى نها
 |---|---|---|
 | APP-01 | كتابة/style غير ضروريين عند تطابق headers | سكربت fake sheet الأصلي |
 | APP-02 | مقارنة spelling بدل القيمة الرقمية | سكربت consensus الأصلي |
+| APP-03 | نسخ master developer ID إلى external source identity | سكربت provenance الأصلي، مع بقاء write blockers |
 | APP-06 | إعادة snapshot عند اختلاف السياق | سكربت fake repository الأصلي |
 | PY-02 | إدخال failed attempt في reusable cache | 4 دوال اختبار أصلية |
 | PY-04 | إسقاط آخر token من full preset | 6 دوال اختبار أصلية |
@@ -139,7 +140,6 @@ site packages؛ تُستدعى دوال الاختبار المثبتة عبر `
 
 المقترحات المتبقية تحتاج عملًا حقيقيًا قبل تجميد dataset:
 
-- APP-03: إعداد كامل dependencies وmutation سلوكية لحدود provenance.
 - APP-04: استكمال assertion سلوكية لتخصيص ID؛ الاختبار الحالي يفحص نص
   المصدر والسياسات أساسًا، ويمكن أن يمر مع معادلة خاطئة إذا بقي النص المتوقع.
 - APP-05: فصل قبول refactor السلوكي عن شرط builder المثبت لـsource blob؛
@@ -149,7 +149,7 @@ site packages؛ تُستدعى دوال الاختبار المثبتة عبر `
 - PY-03: حصر سلسلة extractor imports وHTML dependencies قبل تنفيذها؛
   لا تحوّل اختبار parser إلى تشغيل extraction أو شبكة.
 
-عدم اكتمال هذه الست لا يغير مقام الخطة إلى ست مهام ولا يسمح بحذف slots بعد
+عدم اكتمال المقترحات الخمس لا يغير مقام الخطة من 12 مهمة ولا يسمح بحذف slots بعد
 النتائج. أي تغيير لاحق في dataset يتطلب خطة جديدة مثبتة قبل جمع المقارنة.
 قبل إرسال starter لوكيل، يفصل المنسق recipe/reference/mutation metadata
 عن workspace المهمة؛ الملف الحالي علني ولا يوفر blinding تلقائيًا.
@@ -223,4 +223,21 @@ expected_assertion_line داخل frame فعلية، مع تطبيع فواصل W
 وكُشفت mutants الست في المواضع المقصودة، وبقيت 13 input blobs دون تغيير.
 دليل CI للرأس e10d3c345062d166c4447ed7ca7131470bcc1448 يخص ما قبل هذا
 التصحيح؛ يلزم CI ومراجعة على الرأس الجديد. لا يتغير plan digest أو fixtures
-أو prompts أو عدد AI runs (صفر). تبقى المراجعة المستقلة الكاملة غير مكتملة.
+أو prompts أو عدد AI runs (صفر). اكتملت المراجعة المستقلة الكاملة لإعداد المصدر عند
+`da9b5160d8fc9789fb878683b24d3f287e759483`؛ توسعات dataset اللاحقة
+تحتاج مراجعتها وأدلتها الخاصة.
+
+## إضافة APP-03 — 2026-10-21
+
+تضم الوصفة سبعة source/test/contract blobs مثبتة من App Google.
+تُحقن هوية master developer في الحقل الخارجي source_developer_id، بينما
+الاختبار الأصلي يشترط بقاءه فارغًا لمقترح DVI-origin. يكتشف assertion
+في السطر 59 هذه الهوية الخاطئة؛ يفحص المرجع أيضًا بقاء حقلي provenance
+فارغين وwrite authorization وaudit-linkage blockers وعدم حجز project ID.
+لا تُنقل أرقام الأدلة التاريخية في ملفات العقود إلى بيانات live جديدة.
+
+هذا يجهز 7/12 وصفة للمعايرة العامة، مع بقاء 5 مقترحات وhidden acceptance
+غير مكتملة. تغير plan digest بسبب إضافة fixture/prompt، قبل أي AI run.
+تظل snapshots ذات ست وصفات وdigest السابق محفوظة. تمت مزامنة ملفي
+اختبارات quoting من main64f9d97230f95d4e663369b6d4a54e941964effa
+الذي دمج #85، كي يتبع فرع الإعداد المصدر المعتمد.

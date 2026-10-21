@@ -79,6 +79,66 @@
       "expected_assertion_line": 32
     },
     {
+      "task_id": "APP-03",
+      "state": "PUBLIC_CALIBRATION_ONLY",
+      "source": {
+        "repository": "lijust/EREI-App-Google",
+        "commit": "6d32e7a14a4324dbdea228f695d6b75e0b8bd246",
+        "export_directory": "app"
+      },
+      "runtime": "node",
+      "files": [
+        {
+          "path": "apps/developer-validation-intake/MissingProjectInsertReadiness.gs",
+          "git_blob": "6c2b8b02afa9044f21c547f1f19a93820ce7c9ff"
+        },
+        {
+          "path": "apps/developer-validation-intake/MissingProjectStaging.gs",
+          "git_blob": "5d9e632e949ae0ad561c9f064ff9f77aae427dd5"
+        },
+        {
+          "path": "apps/developer-validation-intake/ResidualMutationReadiness.gs",
+          "git_blob": "a058b10142976e1720a6a4bf7853f036be2c3e5d"
+        },
+        {
+          "path": "architecture/data-validation/developer-sales-validation-contract.v1.json",
+          "git_blob": "4990213eace39476c14f502d80d3b71677597658"
+        },
+        {
+          "path": "architecture/data-validation/developer-validation-candidate-runtime-package.v1.json",
+          "git_blob": "94fc797ad9939a00d7b18fd4b1cecffe2cecef7b"
+        },
+        {
+          "path": "architecture/data-validation/developer-validation-source-provenance-policy-review.2026-09-27.json",
+          "git_blob": "2c037a8f4f3c57ad9929e50a6dbf2eadcab54a61"
+        },
+        {
+          "path": "tests/developer-validation-source-provenance-policy.test.js",
+          "git_blob": "90ae74e4bbd7939731cce4fc4e0d7c94ebee0883"
+        }
+      ],
+      "test_path": "tests/developer-validation-source-provenance-policy.test.js",
+      "python_tests": [],
+      "mutation": {
+        "path": "apps/developer-validation-intake/MissingProjectInsertReadiness.gs",
+        "before": "    p.mappingStatus==='Master'?'Master':'',\n    '',\n    '',\n    '',",
+        "after": "    p.mappingStatus==='Master'?'Master':'',\n    p.masterDeveloperId||'',\n    '',\n    '',"
+      },
+      "expected_assertion": "source_developer_id must stay blank for DVI-origin",
+      "expected_assertion_line": 59,
+      "prompt": "Repair missing-project insert planning so DVI-origin proposals leave external source_developer_id and source_developer_name blank. Do not copy the local master developer identity into external provenance. Preserve the separate write authorization and audit-linkage blockers, the unreserved project ID, and the rest of the planned row. Use only the offline fake-context provenance test; do not call Apps Script or write Master data.",
+      "prompt_sha256": "097571abfe8ed8d1b42e564fd08b8e99bd5b8a0008f582cdd019d6b81c658d5c",
+      "starter_file_sha256": {
+        "apps/developer-validation-intake/MissingProjectInsertReadiness.gs": "e8402451187baa48c40e28e47c78b92c37f2c1b39ea0cda96b3926c7a56b1fc5",
+        "apps/developer-validation-intake/MissingProjectStaging.gs": "9994d74e2df95a4fb91e1a11a93588a080ba55ca967d4ea2ba375d24bac61da8",
+        "apps/developer-validation-intake/ResidualMutationReadiness.gs": "e65c5522f7391bdbdbd98019a5f2a601d6d6ef9c173f761646e1285badd38c85",
+        "architecture/data-validation/developer-sales-validation-contract.v1.json": "778024e97b6ea842248794f60879abe67840ee46564528da519aefbfbafdbe50",
+        "architecture/data-validation/developer-validation-candidate-runtime-package.v1.json": "ff3341aa3c74acb38a788cca197974f77b8608317c944872631ea27bdfb832ce",
+        "architecture/data-validation/developer-validation-source-provenance-policy-review.2026-09-27.json": "db965682677f4b1e126dd3fe39e0a4e2b88b455ef2f3271cf10f2477aa4fc5e9",
+        "tests/developer-validation-source-provenance-policy.test.js": "d5ca6735096b4be4c2ec0edceb953b1db949260bf54420e320e3810cd35ddcd6"
+      }
+    },
+    {
       "task_id": "APP-06",
       "state": "PUBLIC_CALIBRATION_ONLY",
       "source": {

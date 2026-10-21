@@ -75,15 +75,15 @@
       "risk": "L2",
       "proposed_task": "Keep external source identities blank for local-origin proposals and preserve the separate write authorization gate.",
       "fixture_preparation": "Inject a false provenance claim in a fixture; no real writes.",
-      "state": "PROPOSAL_FIXTURE_NOT_PREPARED",
+      "state": "PUBLIC_CALIBRATION_RECIPE_PREPARED",
       "source": {
         "repository": "lijust/EREI-App-Google",
         "commit": "6d32e7a14a4324dbdea228f695d6b75e0b8bd246",
         "path": "tests/developer-validation-source-provenance-policy.test.js",
         "git_blob": "90ae74e4bbd7939731cce4fc4e0d7c94ebee0883"
       },
-      "fixture_sha256": null,
-      "prompt_sha256": null,
+      "fixture_sha256": "9582b70289b552c12e4306cdeb1972baae525a1fc5334bb01d6458ab4901f39b",
+      "prompt_sha256": "097571abfe8ed8d1b42e564fd08b8e99bd5b8a0008f582cdd019d6b81c658d5c",
       "hidden_acceptance_sha256": null
     },
     {
