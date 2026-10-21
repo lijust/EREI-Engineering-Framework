@@ -1,6 +1,6 @@
 # فهرس الأدلة — EREI V2
 
-لقطة 2026-10-19، Africa/Cairo. هذا الفهرس يميز بين source identity واختبارات محلية وCI رسمي وبين authority تشغيلية. مراجعة agent للمصدر لا تصبح جهة إصدار مستقلة.
+سجل متتابع؛ آخر دفعة 2026-10-21، Africa/Cairo. الفقرات المؤرخة السابقة تاريخية ويعلوها آخر تحديث. هذا الفهرس يميز بين source identity واختبارات محلية وCI رسمي وبين authority تشغيلية. مراجعة agent للمصدر لا تصبح جهة إصدار مستقلة.
 
 ## المصادر الدائمة
 
@@ -96,3 +96,13 @@ py "-3.11" -B -m unittest tools.tests.test_ci_test_partition tools.tests.test_ci
 - [الأدلة](evidence/verification-calibration-20261020.json): 27 unit tests على كل Python 3.11/3.12؛ ست معايرات مع Node 24.20.0. لكل إصدار: 3 Node scripts و16 Python functions مرجعية ناجحة؛ mutants الست تفشل في assertions المتوقعة.
 - public calibration فقط؛ لا paid AI أو hidden acceptance أو comparative result. ست مقترحات باقية، والمراجعة المستقلة معلقة.
 - CI في السجل يخص 20 أكتوبر؛ لا يُستخدم لإثبات استمرار عائق الفوترة بعد إفادة المالك يوم 21 أكتوبر. وافق المالك على إعادة CI العادي لاحقًا؛ رفض GitHub إعادة المحاولة القديمة بـ403 لأنها غير قابلة للإعادة. لا نتيجة تشغيل جديدة حتى هذه اللقطة.
+
+## قبول المصدر واستئناف CI — 2026-10-21
+
+- [نتائج CI](evidence/ci-recovery-results-20261021.json): 18 workflow runs، منها 17 نجاحًا و21 jobs ناجحة؛ workflow Ubuntu واحد ممنوع بالفوترة قبل التنفيذ. يشمل الرأس المصحح لـ#95 وCI ناجحًا له.
+- ربط checkouts بـGit trees يثبت تطابق source content مع الرؤوس، ولا يحوّل merge SHA إلى HEAD نفسه.
+- [المراجعات المستقلة](evidence/independent-source-reviews-20261021.json): #91 و#92 و#93 و#94 كاملة في نطاقها؛ #95 narrow delta فقط، أما الكتالوج الكامل و#88 الجديد فلم يكتمل قبولهما.
+- T08 وT10 صارا VERIFIED source-only بعد المراجعة وCI؛ DONE=0، ومجموع وزن VERIFIED=27/237 منفصل عن وزن DONE=0/237. لا صلاحية إصدار أو deployment.
+- [تصحيح assertion](evidence/verification-calibration-20261021.json): رأس #95 الجديد da9b5160d8fc9789fb878683b24d3f287e759483، tree6842fc1ce6834fd2f70d62c3a8fb400c8a671349؛314blobs مطابقة،28tests وست معايرات لكل Python version. Plan digest السابق لم يتغير.
+- السبب الحالي لـUbuntu مثبت من API annotations لوظيفتي118970186983 و118970187171 في run39522736910. لا حاجة لتخمين السبب أو نسبته إلى Copilot. لا تعديل حساب أو استبدال Linux بWindows.
+- نتائج75reference cases اصطناعية؛ genuine exact-target model cases=0/13، Stable=false.

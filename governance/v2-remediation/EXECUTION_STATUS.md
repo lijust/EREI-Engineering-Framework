@@ -1,44 +1,50 @@
 # EREI V2 REMEDIATION STATUS
 
-Date: 2026-10-21، Africa/Cairo؛ معايرة المصدر في 2026-10-20، وإعادة فحص GitHub في 2026-10-21.
-Repository: `lijust/EREI-Engineering-Framework`؛ تكامل منفصل مع `lijust/EREI-3.2`.
-Current main SHA: `72d49658524fbce6145783cd52297c53edbb2c95`.
-Active milestone: M7 — معايرة مهام T15؛ والتحقق من استئناف CI بعد إفادة المالك.
+Date: 2026-10-21، Africa/Cairo؛ snapshot UTC 2026-10-21T12:40:42.390Z.
+Repository: lijust/EREI-Engineering-Framework؛ تكامل منفصل مع lijust/EREI-3.2.
+Current main SHA: 72d49658524fbce6145783cd52297c53edbb2c95.
+Active milestone: M4/M6 قبول مصدر، وM7 تصحيح معايرة benchmark.
 
-Overall implementation progress: 17 مهمة؛ 13 IN_REVIEW، و1 BACKLOG، و3 BLOCKED. التسليم المقبول الموزون 0/237؛ ليس نسبة كتابة الكود.
-Internal readiness: لم يتأهل؛ قبول الإصلاحات والمراجعة المستقلة والتحقق على commit/tree موحدين باقيان.
-Stable readiness: BLOCKED؛ سلطة الإنفاذ والتقييم الحقيقي والموافقات لم تستوفَ.
+Overall implementation progress: 17 مهمة؛ 11 IN_REVIEW، و2 VERIFIED، و1 BACKLOG، و3 BLOCKED. تقدم التسليم DONE الموزون 0/237؛ وزن المصدر VERIFIED هو 27/237، ولا يمثل جاهزية تشغيلية.
+Internal readiness: غير مؤهل؛ قبول تبعيات سلامة البيانات والهدف الموحد وتمرين rollback النهائي باقٍ.
+Stable readiness: BLOCKED؛ exact-target model evidence 0/13، وسلطة الإنفاذ والموافقات غير مكتملة.
 
 Completed tasks: 0 DONE.
-Verified tasks: 0 VERIFIED.
-In-progress tasks: 13 تحت المراجعة؛ T15 محجوب للتشغيل رغم تقدم إعداد المصدر.
-Blocked tasks: T11 وT15 وT16. عودة CI أبلغ بها المالك ولم تثبت بمحاولة جديدة حتى هذه اللقطة.
-Remaining P1: 7 Findings على main.
-Remaining P2: 7 Findings على main.
+Verified tasks: T08/F11 وT10/F06؛ قبول مصدر على الرأسين المثبتين مع مراجعة مستقلة وCI رسمي. لا deployment أو merge.
+In-progress tasks: 11 IN_REVIEW.
+Blocked tasks: T11 وT15 وT16. GitHub-hosted Ubuntu محجوب أيضًا في Task Learning Tests لـ#93.
+Remaining P1: 7 على main غير المتغير.
+Remaining P2: 7 على main غير المتغير.
 
-Current critical path: T01 → T02 → T03 → T14، مع T04/T05/T07/T08. T06 شرط تبني 3.2؛ Stable-only infrastructure خارج مسار التأهيل المعزول.
+Current critical path: T01 → T02 → T03 → T14، مع T04/T05/T07/T08. T06 شرط تبني 3.2؛ لا يُضاف Stable-only infrastructure للتأهيل المعزول.
 
-Changes delivered: تحديث Draft #95 إلى `cf6fd76635f4417137b2babc5e1fc28a7291b95a`؛ ست وصفات معايرة عامة مرتبطة بالمصدر الفعلي، checker محلي opt-in، prompts وhashes، وتوثيق فجوات المقترحات الست الباقية.
-PRs created: لا جديدة في دفعة المعايرة؛ 14 إجمالًا في البرنامج، Framework #83–#95 و3.2 #174.
+Changes delivered: نشر تصحيح CAL-01 في #95 عند da9b5160d8fc9789fb878683b24d3f287e759483؛ ربط فشل معايرة Node بمسار الاختبار وسطر assertion المثبتين. تحديث القبول والمراجعات وأدلة استئناف CI.
+PRs created: لا جديدة في هذه الدفعة؛ 14 إجمالًا، Framework #83–#95 و3.2 #174.
 PRs merged: 0.
+Tests executed: انظر سجل CI لكل رأس؛ الأعداد متداخلة ولا تُجمع كاختبارات فريدة. المراجعات المستقلة: #91=29؛ #92=11 لكل Python version؛ #93=72 لكل version؛ #94=3 لكل version؛ تصحيح #95=28 لكل version.
+Tests passed: 17 workflows من أصل 18 في دفعة التعافي؛ 21 jobs ناجحة، بما فيها رأس #95 المصحح. محليًا بعد التصحيح: 28/28 على 3.11 و3.12، وست مراجع وست mutants لكل إصدار.
+Tests failed: workflow واحد على Ubuntu منعته الفوترة قبل أي test؛ وظيفتان failure وواحدة cancelled. لا فشل اختبار مصدر في دفعة CI المنفذة. الاختبار الرجعي قبل تصحيح #95 فشل عمدًا بثلاث assertions ثم نجح.
 
-Tests executed: 27 unit tests (17 accounting +10 checker) على كل من Python 3.11 و3.12؛ ست معايرات على الإصدارين مع Node 24.20.0؛ CLI جاف.
-Tests passed: 27/27 على كل إصدار؛ لكل إصدار نجحت 3 سكربتات Node أصلية و16 دالة Python أصلية، وكُشفت mutants الست بالـassertions المتوقعة.
-Tests failed: صفر غير متوقع في النتائج المحلية النهائية. إخفاق mutants مقصود. محاولات CI على رأس #95 الجديد: 39464515437 و39464431976 و39464422011؛ startup_failure وjobs=0 من 20 أكتوبر، وليست تجربة بعد إفادة التعافي.
-Verified complexity reduction: إعادة استخدام اختبارات المستهلك دون نسخ كوده إلى Framework أو إضافة dependencies؛ ليس قياسًا لتخفيض maintenance. لا model runtime أو خدمة جديدة.
-Measured CI savings: غير متاحة.
-Measured quality improvements: كشف ستة عيوب محقونة؛ لا قياس لتحسن جودة الوكيل أو rework أو escapes أو تكلفة مهمة متحققة.
+Verified complexity reduction: #92 يحذف full 3.12 discovery المكرر من Bootstrap، مع بقائه في Assurance وبقاء full 3.11. لا runtime أو service جديدة.
+Measured CI savings: لا مقارنة سببية مضبوطة. في #92 رُصدت 371 job-seconds (196 Assurance +155 Bootstrap3.11 +20 Bootstrap3.12)؛ خطوة full 3.12=149s وsmoke=2s في الرأس نفسه. فرق الخطوتين وصفي، وليس وفرًا إنتاجيًا مثبتًا مقابل baseline مكافئة.
+Measured quality improvements: منع false-positive معايرة محدد؛ لا قياس لتحسن rework/escapes/cost per verified task أو تفوق V2.
 
-Outstanding risks: ست مقترحات غير مكتملة؛ hidden acceptance مستقلة غير مجهزة؛ المراجعة المستقلة معلقة؛ لا نموذج أو نتائج مقارنة. App به أربع anomalies و35 authority records ناقصة.
-Decisions requiring owner approval: وافق المالك يوم 21 أكتوبر على إعادة CI العادي واستمرار التوصيات. GitHub رفض retry للمحاولة القديمة بـ403: This workflow run cannot be retried. لا طلب إذن جديد لنفس CI؛ Copilot خارج التنفيذ، وبوابات Stable والبيانات الحية لا تزال غير مستوفاة.
+Outstanding risks: مراجعة #88 الجديدة لم تكتمل بسبب حد استخدام المراجع؛ مراجعة #95 الكاملة غير مكتملة رغم اكتمال مراجعة التصحيح الضيقة. App به أربع anomalies و35 immutable authority records ناقصة؛ لا migration مقترحة. Linux coverage غير مكتملة؛ full benchmark configuration والـhidden acceptance باقيان.
+Decisions requiring owner approval: CI العادي معتمد بالفعل. يحتاج مالك الحساب معالجة annotation الدفع/حد الإنفاق لـUbuntu؛ لا طلب لشراء Pro ولا تغيير مالي نُفذ. تبقى موافقات live data/pins/authority/Stable والميزانية المحددة للنموذج منفصلة.
 
 Next 3 execution tasks:
-1. التحقق من CI جديد بعد نشر التوثيق المجهز؛ المحاولة القديمة startup_failure غير قابلة لإعادة التشغيل عبر API. ثم استكمال الرؤوس المطلوبة دون تكرار أو AI.
-2. إكمال ست وصفات dataset المتبقية، وإضافة acceptance سلوكية لـAPP-04 بدل الاكتفاء بفحص نص السياسات.
-3. استكمال المراجعة المستقلة ثم تأهيل Internal على target مجمد، مع اختبار rollback #94.
+1. استكمال مراجعة إعداد benchmark الكاملة ومراجعة #88 عند توفر المراجع؛ CI للرأس الجديد لـ#95 نجح.
+2. معالجة قيد GitHub-hosted Ubuntu ثم إعادة الوظائف الفاشلة فقط، وتشغيل بوابة 3.2 بعد ذلك.
+3. قبول تبعيات Internal وتجميد commit/tree موحدين وإعادة regression/rollback؛ واستكمال وصفات dataset الست المتبقية دون AI مدفوع.
 
-Estimated remaining effort: لا سجل ساعات فعلي لحساب متبقٍ موثوق؛ تقدير البرنامج الأصلي 150–324 ساعة هندسية.
-NEXT ACTION: نشر توثيق المعايرة المجهز وفحص CI الجديد؛ الإذن متاح، وT15 لا يزال BLOCKED للتقييم الحقيقي.
+Estimated remaining effort: لا سجل ساعات فعلي يتيح تقديرًا محدثًا موثوقًا؛ التقدير الأصلي 150–324 ساعة هندسية.
+NEXT ACTION: استكمال قبول المصدر المتبقي وحزم benchmark؛ الحالة الحية في Issue #68. لا إعلان Internal أو Stable جاهزة.
+
+## حدود الأدلة
+
+[سجل CI](evidence/ci-recovery-results-20261021.json) يربط jobs وtimestamps وcheckouts وGit trees. رؤوس #85/#89/#91/#92/#93/#94/#95 السابقة نفذت merge checkouts ذات trees مطابقة للرؤوس المقصودة. نجاح CI لا يثبت branch protection أو isolated runner أو release authority.
+
+[المراجعات المستقلة](evidence/independent-source-reviews-20261021.json) هي مراجعات subagents داخل المهمة، وليست موافقات GitHub من principal مستقل. [تصحيح المعايرة](evidence/verification-calibration-20261021.json) يحتفظ بإثبات red/green وحدود التغيير. الأدلة التاريخية السابقة محفوظة دون إعادة كتابة.
 
 ## الرؤوس المنشورة
 
@@ -56,32 +62,9 @@ NEXT ACTION: نشر توثيق المعايرة المجهز وفحص CI الج�
 | T10 | F06 | [#91 draft](https://github.com/lijust/EREI-Engineering-Framework/pull/91) | `a132e104c6881d7dc4f1002862741bc33a0da748` |
 | T13 | F14 | [#93 draft](https://github.com/lijust/EREI-Engineering-Framework/pull/93)، فوق #87 | `85ead2121ecb03454495200a475ca9f3f129398e` |
 | T14 | Internal rollback | [#94 draft](https://github.com/lijust/EREI-Engineering-Framework/pull/94)، فوق #88 | `a20cccf9447b46bc87e38b568bae5662c84acf02` |
-| T15 | Benchmark preparation؛ التنفيذ BLOCKED | [#95 draft](https://github.com/lijust/EREI-Engineering-Framework/pull/95) | `cf6fd76635f4417137b2babc5e1fc28a7291b95a` |
+| T15 | Benchmark preparation؛ التنفيذ BLOCKED | [#95 draft](https://github.com/lijust/EREI-Engineering-Framework/pull/95) | `da9b5160d8fc9789fb878683b24d3f287e759483` |
 
 T00 ووثائق الخطة في [#90](https://github.com/lijust/EREI-Engineering-Framework/pull/90). ترتيب الطبقات: #83 → #84 → #88 → #94، و#86 → #87 → #93، و#67 → #92. يعاد التحقق بعد تغيير الرأس أو base؛ لا يُنفذ merge بموجب هذه الوثيقة.
 
-## حدود الأدلة
 
-في لقطة 2026-10-19، طابقت 52 مقارنة Git blob للملفات المعدلة عبر PRs المصدرية العشرة النسخ المحلية المستخدمة في الاختبارات، دون mismatch. التجميع التاريخي ذو 44 ملفًا متغيرًا يجمع #83–#89 و#91؛ احتاج دمج قسمين توثيقيين في learning/README.md، ولم يتطلب حل تعارض تنفيذي. اجتاز 144 tool tests و78 eval tests. لا يتضمن #92 أو تغيير 3.2، ولا يمثل RC مجمدًا.
-
-F02 يرفض فقد ترتيب projection مع legacy reviews بدل تخمين العضوية. F03 planner للقراءة فقط: App BLOCKED، وصفر proposed writes؛ 3.2 NO_IMPORT_REQUIRED. لم تتغير bytes الأدلة الحية. F04 يحمي نقاط دخول Python؛ تعليمات Markdown لا تعادل تنفيذ agent مستقلًا. F05 يستخدم typed simulation؛ 75 reference cases اصطناعية ليست 13 حالة genuine model evaluation. F06 يرفض review-only authority دون إضافة سلطة إيجابية أو نشر verifier.
-
-الأدلة والأوامر في [EVIDENCE_INDEX.md](EVIDENCE_INDEX.md) و[سجل التحقق المحلي](evidence/verification-20261019.json). هذه أدلة محلية مسجلة، لا attestation خارجية. [Issue #68](https://github.com/lijust/EREI-Engineering-Framework/issues/68) هو مرجع الحالة الحية؛ تبقى [#31](https://github.com/lijust/EREI-Engineering-Framework/issues/31) مرجع Stable.
-
-## دفعة 2026-10-20
-
-#93 يربط التدخل بالمهام المؤهلة والمتعرضة والنتائج، مع فصل legacy_assumed وunknown. اجتاز 50 اختبارًا على 3.11 و3.12، دون ادعاء تحقق مصدر أو أثر. عولج أيضًا مسار readiness إضافي في #91؛ كان يرجع pass دون فحص السلطة، وثبت باختبارين قبل الإصلاح. الرأس الجديد اجتاز 73 اختبارًا. طابقت ملفات #93 الخمسة و#91 العشرة النسخ المختبرة.
-
-التجميع الجديد يضم 50 ملفًا متغيرًا واجتاز 271 اختبارًا، ولا يشمل #92 أو 3.2. حُفظت اللقطة القديمة دون تعديل، والأدلة الجديدة في [verification-20261020.json](evidence/verification-20261020.json). لا يوجد SHA إصدار مجمد أو قبول مستقل بعد.
-
-نقل المالك Annotation المحاولة 39185680855 التي تحدد قيد فوترة: فشل دفع حديث أو حد إنفاق. لم تُفحص فوترة الحساب، ولم يُحدد أي البديلين، ولم تُعمم علة هذه المحاولة كحقيقة مستقلة على جميع المحاولات الأخرى. لا تتطلب هذه الرسالة بحد ذاتها شراء GitHub Pro.
-
-## تمرين rollback — 2026-10-20
-
-Draft #94 يضيف ملفي اختبار ودليل تشغيل فقط. طابقت ملفات الرأس الـ315 Git blobs النسخة المختبرة. أداة V1 الأصلية مطابقة للـblob عند Stable commit، وتُرفض bytes معدلة قبل التنفيذ. بقيت أربع أحداث ومراجعتان وescape معلّق في أرشيف V2، واستُعيد baseline V1 في مجلد جديد. لا إعادة ترقيم أو دمج للتاريخين، ولا إغلاق ضمني لالتزام IMMEDIATE_REVIEW.
-
-[الأوامر والهويات والنتائج](evidence/verification-rollback-20261020.json) تثبت تكاملًا محليًا مصطنعًا فقط. لا تتغير readiness إلى مؤهلة؛ المراجعة المستقلة والهدف النهائي باقيان.
-
-## إعداد benchmark الأولي — لقطة تاريخية 2026-10-20
-
-[أدلة #95](evidence/verification-benchmark-20261020.json): 311 ملفًا منشورًا مطابقًا للمصدر المفحوص، و12 reference blobs من المشروعين. نتائج الاختبارات تخص الحساب deterministic فقط؛ لا مقارنة V1/V2 ولا 48 تشغيلًا فعليًا. T15 ما زال BLOCKED للتنفيذ رغم أن إعداده المصدري IN_REVIEW؛ لذلك لا تتغير أعداد حالات المهام.
+CI للرأس المصحح لـ#95: Assurance39600674348 وEvals39600674371 ناجحان؛369tool tests و91eval tests، وtree checkout مطابق للرأس. لا يُعاد استخدام نتيجة e10d3c السابقة لقبول التصحيح.

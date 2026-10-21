@@ -1,0 +1,78 @@
+{
+  "recorded_at": "2026-10-21T12:36:52.888Z",
+  "finding": "CAL-01: generic Node ERR_ASSERTION accepted unrelated assertion as intended mutant detection",
+  "severity": "P2 preparation validity",
+  "base": "e10d3c345062d166c4447ed7ca7131470bcc1448",
+  "head": "da9b5160d8fc9789fb878683b24d3f287e759483",
+  "tree": "6842fc1ce6834fd2f70d62c3a8fb400c8a671349",
+  "all_published_blobs_matched": 314,
+  "red_test": {
+    "command": "py -3.12 -B -m unittest evals.tests.test_calibration_packages.CalibrationTests.test_node_unrelated_assertions_do_not_count_as_detection -v",
+    "exit_code": 1,
+    "failed_assertions": 3,
+    "reason": "wrong test line, wrong test file, non-frame mention accepted before correction"
+  },
+  "green": {
+    "command": "py -3.11/-3.12 -B -m unittest evals.tests.test_benchmark_accounting evals.tests.test_calibration_packages -v",
+    "tests_per_version": 28,
+    "exit_codes": [
+      0,
+      0
+    ]
+  },
+  "calibration": {
+    "command": "py -3.11/-3.12 -B evals/benchmarks/check_calibration.py --source-exports <pinned exports> --node <absolute Node executable>",
+    "python_versions": [
+      "3.11.9",
+      "3.12.10"
+    ],
+    "node_version": "24.20.0",
+    "reference_packages_passed_per_version": 6,
+    "mutants_detected_at_expected_sites_per_version": 6,
+    "consumer_input_blobs": 13,
+    "inputs_unchanged": true,
+    "model_executions": 0
+  },
+  "independent_review": {
+    "pr": 95,
+    "head": "da9b5160d8fc9789fb878683b24d3f287e759483",
+    "base": "e10d3c345062d166c4447ed7ca7131470bcc1448",
+    "reviewer": "intervention_review_20261021",
+    "status": "NARROW_FIX_REVIEW_COMPLETE_NO_NEW_ACTIONABLE_FINDINGS",
+    "changed_blobs_matched": 4,
+    "command": "python.exe -B -m unittest evals.tests.test_benchmark_accounting evals.tests.test_calibration_packages",
+    "python_versions": [
+      "3.11.9",
+      "3.12.10"
+    ],
+    "tests_per_version": 28,
+    "seconds": [
+      0.216,
+      0.273
+    ],
+    "exit_codes": [
+      0,
+      0
+    ],
+    "limits": [
+      "Only assertion-site delta reviewed",
+      "Full benchmark preparation review remains incomplete",
+      "No hostile-output authentication or model evaluation"
+    ]
+  },
+  "limitations": [
+    "Prior e10 CI does not verify new head",
+    "Public calibration only",
+    "Full preparation review and hidden acceptance remain incomplete"
+  ],
+  "ci": {
+    "assurance_run": 39600674348,
+    "eval_run": 39600674371,
+    "status": "PASS",
+    "tool_tests": 369,
+    "eval_tests": 91,
+    "checkout": "1d35c679f32c3f75a6206a2e5db9886f9097033b",
+    "tree": "6842fc1ce6834fd2f70d62c3a8fb400c8a671349",
+    "tree_matches_head": true
+  }
+}
