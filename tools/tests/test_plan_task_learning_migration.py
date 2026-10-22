@@ -31,7 +31,9 @@ class MigrationPlanTests(unittest.TestCase):
             target = Path(directory)
             first, last = legacy_events()
             middle = v2_event()
-            self.setup_project(target, [first, middle, last], [legacy_review(2)])
+            review = legacy_review(2)
+            review["closed_at"] = "2026-10-02T10:00:00Z"
+            self.setup_project(target, [first, middle, last], [review])
             before = self.files(target)
             report = migration.plan(target)
             self.assertEqual(report["status"], "REVIEW_REQUIRED")
