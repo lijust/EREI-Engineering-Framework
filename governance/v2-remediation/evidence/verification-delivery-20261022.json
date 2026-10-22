@@ -1,0 +1,208 @@
+{
+  "recorded_at": "2026-10-22T00:44:52.152Z",
+  "scope": "Additional six workflow runs; preserves 2026-10-21 recovery snapshot",
+  "groups": [
+    {
+      "scope": "PR85_POST_MERGE",
+      "head": "64f9d97230f95d4e663369b6d4a54e941964effa",
+      "checkout": "64f9d97230f95d4e663369b6d4a54e941964effa",
+      "ids": [
+        39602341219,
+        39602341345
+      ],
+      "head_tree": "c246f6220b532c94fac81820214eee6d3862cd0b",
+      "checkout_tree": "c246f6220b532c94fac81820214eee6d3862cd0b",
+      "tree_matches_head": true,
+      "runs": [
+        {
+          "id": 39602341219,
+          "url": "https://github.com/lijust/EREI-Engineering-Framework/actions/runs/39602341219",
+          "jobs": [
+            {
+              "id": 119229719126,
+              "name": "assurance",
+              "conclusion": "success",
+              "started_at": "2026-10-21T12:46:49Z",
+              "completed_at": "2026-10-21T12:50:24Z",
+              "occupancy_seconds": 215,
+              "test_summaries": [
+                {
+                  "tests": 369,
+                  "seconds": 160.922
+                },
+                {
+                  "tests": 65,
+                  "seconds": 8.482
+                }
+              ],
+              "logged_checkout": true
+            }
+          ]
+        },
+        {
+          "id": 39602341345,
+          "url": "https://github.com/lijust/EREI-Engineering-Framework/actions/runs/39602341345",
+          "jobs": [
+            {
+              "id": 119229719488,
+              "name": "harness-self-test",
+              "conclusion": "success",
+              "started_at": "2026-10-21T12:50:26Z",
+              "completed_at": "2026-10-21T12:50:53Z",
+              "occupancy_seconds": 27,
+              "test_summaries": [
+                {
+                  "tests": 65,
+                  "seconds": 8.107
+                }
+              ],
+              "logged_checkout": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "scope": "PR95_APP03",
+      "head": "d62246a8ab77c89d0732efc0152411b5350d2581",
+      "checkout": "ccddbbdaa28d13764d47ddf5ba5a106346157e3d",
+      "ids": [
+        39660380549,
+        39660380565
+      ],
+      "head_tree": "3c427b1e3c42d147cc3f4a6388d65b4659120ce2",
+      "checkout_tree": "3c427b1e3c42d147cc3f4a6388d65b4659120ce2",
+      "tree_matches_head": true,
+      "runs": [
+        {
+          "id": 39660380549,
+          "url": "https://github.com/lijust/EREI-Engineering-Framework/actions/runs/39660380549",
+          "jobs": [
+            {
+              "id": 119431504595,
+              "name": "assurance",
+              "conclusion": "success",
+              "started_at": "2026-10-21T19:18:35Z",
+              "completed_at": "2026-10-21T19:21:44Z",
+              "occupancy_seconds": 189,
+              "test_summaries": [
+                {
+                  "tests": 369,
+                  "seconds": 140.941
+                },
+                {
+                  "tests": 93,
+                  "seconds": 8.031
+                }
+              ],
+              "logged_checkout": true
+            }
+          ]
+        },
+        {
+          "id": 39660380565,
+          "url": "https://github.com/lijust/EREI-Engineering-Framework/actions/runs/39660380565",
+          "jobs": [
+            {
+              "id": 119431504329,
+              "name": "harness-self-test",
+              "conclusion": "success",
+              "started_at": "2026-10-21T19:17:53Z",
+              "completed_at": "2026-10-21T19:18:32Z",
+              "occupancy_seconds": 39,
+              "test_summaries": [
+                {
+                  "tests": 93,
+                  "seconds": 8.522
+                }
+              ],
+              "logged_checkout": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "scope": "PR88_PREFLIGHT",
+      "head": "9ca0fd14ca2e4a60def23f9e7df11c827a961135",
+      "checkout": "f1a8c6aaf5c628c577dec75cc24176cf1bcffeb2",
+      "ids": [
+        39660703112,
+        39660703149
+      ],
+      "head_tree": "08690d6172156d46f52b43ce84f50c476b1bae11",
+      "checkout_tree": "08690d6172156d46f52b43ce84f50c476b1bae11",
+      "tree_matches_head": true,
+      "runs": [
+        {
+          "id": 39660703112,
+          "url": "https://github.com/lijust/EREI-Engineering-Framework/actions/runs/39660703112",
+          "jobs": [
+            {
+              "id": 119432620851,
+              "name": "assurance",
+              "conclusion": "success",
+              "started_at": "2026-10-21T19:21:47Z",
+              "completed_at": "2026-10-21T19:24:52Z",
+              "occupancy_seconds": 185,
+              "test_summaries": [
+                {
+                  "tests": 393,
+                  "seconds": 136.883
+                },
+                {
+                  "tests": 63,
+                  "seconds": 8.065
+                }
+              ],
+              "logged_checkout": true
+            }
+          ]
+        },
+        {
+          "id": 39660703149,
+          "url": "https://github.com/lijust/EREI-Engineering-Framework/actions/runs/39660703149",
+          "jobs": [
+            {
+              "id": 119432621123,
+              "name": "bootstrap-self-test (3.11)",
+              "conclusion": "success",
+              "started_at": "2026-10-21T19:27:36Z",
+              "completed_at": "2026-10-21T19:30:16Z",
+              "occupancy_seconds": 160,
+              "test_summaries": [
+                {
+                  "tests": 393,
+                  "seconds": 139.738
+                }
+              ],
+              "logged_checkout": true
+            },
+            {
+              "id": 119432621540,
+              "name": "bootstrap-self-test (3.12)",
+              "conclusion": "success",
+              "started_at": "2026-10-21T19:24:55Z",
+              "completed_at": "2026-10-21T19:27:34Z",
+              "occupancy_seconds": 159,
+              "test_summaries": [
+                {
+                  "tests": 393,
+                  "seconds": 139.918
+                }
+              ],
+              "logged_checkout": true
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "Green CI does not prove branch enforcement, runner isolation, release authority or AI readiness.",
+    "393/369 tool suites and 93/65/63 eval suites overlap; counts are not additive unique test totals.",
+    "No controlled CI saving measurement.",
+    "Only PR85 was merged with explicit owner approval. All other PRs remain unmerged.",
+    "Hosted Ubuntu restriction remains last verified at run39522736910; no billing settings accessed or changed."
+  ]
+}

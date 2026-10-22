@@ -106,3 +106,12 @@ py "-3.11" -B -m unittest tools.tests.test_ci_test_partition tools.tests.test_ci
 - [تصحيح assertion](evidence/verification-calibration-20261021.json): رأس #95 الجديد da9b5160d8fc9789fb878683b24d3f287e759483، tree6842fc1ce6834fd2f70d62c3a8fb400c8a671349؛314blobs مطابقة،28tests وست معايرات لكل Python version. Plan digest السابق لم يتغير.
 - السبب الحالي لـUbuntu مثبت من API annotations لوظيفتي118970186983 و118970187171 في run39522736910. لا حاجة لتخمين السبب أو نسبته إلى Copilot. لا تعديل حساب أو استبدال Linux بWindows.
 - نتائج75reference cases اصطناعية؛ genuine exact-target model cases=0/13، Stable=false.
+
+## متابعة 2026-10-22 — نتائج أحدث دون إعادة كتابة التاريخ
+
+- [أدلة التسليم وCI](evidence/verification-delivery-20261022.json): main64f9بعد#85، ورأس#88، ورأس#95d622؛ ستةworkflows وسبعjobs ناجحة، معtestcounts وcheckout/head tree bindings.
+- [المراجعات المستقلة الجديدة](evidence/independent-source-reviews-20261022.json): اكتمال مراجعة#88، والإعداد الكامل السابق لـ#95، وإضافةAPP03؛ وحدودAPP04. السجل السابق يحتفظ بموقفه وقت إنشائه.
+- [معايرةAPP03](evidence/verification-app03-20261022.json): 93evaltests على كلPython3.11/3.12،7reference/mutant pairs،19inputblobsunchanged؛314publishedblobs مطابقة. plan909f427b…؛48slots وصفرobservations.
+- T05/T08=DONE،T03/T10=VERIFIEDsource-only؛ أوزانDONE27/237 وVERIFIED36/237. لاقياسcausal لتوفيرCI أوeffectiveness، ولاgenuine13-case evidence. الحالة الحية في[EXECUTION_STATUS.md](EXECUTION_STATUS.md) وIssue#68.
+
+- [تصحيح F05-R1 وتسليمه](evidence/verification-f05-reason-20261022.json): RED ثماني حالات، GREEN80evaltests لكل إصدار، مراجعة15focused tests لكل إصدار،309blobs مطابقة؛ CI قبل الدمج وبعده PASS عندmain9b7fa4e2. الموافقة الصريحة تخص#89 فقط، والسلطة التشغيلية غير متحققة.
