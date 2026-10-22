@@ -94,6 +94,33 @@ class LegacyOrderTests(unittest.TestCase):
             self.assertEqual(reviewed, {first["task_id"], middle["occurrence_id"]})
             self.assertEqual(snapshot["state"]["metrics_since_last_review"]["verification_escapes"], 1)
 
+    def test_late_v1_cutoff_cannot_reclose_an_earlier_v2_review(self):
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory)
+            first, last = legacy_events()
+            metrics = task_learning._metrics([first])
+            early = {
+                "schema_version": 2,
+                "review_id": "ELR-20261001T090000Z-11111111",
+                "closed_at": "2026-10-01T09:00:00Z",
+                "epoch_id": "EPOCH-001",
+                "reviewed_occurrence_ids": [first["task_id"]],
+                "event_digest": task_learning._event_digest([first]),
+                "trigger": task_learning._trigger(metrics),
+                "metrics": metrics,
+                "findings": "Synthetic explicitly reviewed occurrence.",
+                "decision": "Protect explicit review membership.",
+                "evidence": ["audit:synthetic"],
+            }
+            later = legacy_review(1)
+            later["epoch_id"] = "EPOCH-002"
+            self.project(target, [first, last], [early, later])
+            ledger = target / ".erei/learning/TASK_EVENTS.jsonl"
+            before = ledger.read_bytes()
+            with self.assertRaisesRegex(task_learning.LearningError, "review re-closes occurrences"):
+                task_learning.authoritative_snapshot(target)
+            self.assertEqual(ledger.read_bytes(), before)
+
     def test_duplicate_projection_identity_is_rejected_instead_of_shifting_cutoff(self):
         with tempfile.TemporaryDirectory() as directory:
             target = Path(directory)

@@ -517,6 +517,11 @@ def _reviewed_occurrences(events: list[dict], reviews: list[dict]) -> tuple[set[
             if cutoff < legacy_cutoff or cutoff > len(events):
                 raise LearningError("invalid legacy learning review cutoff")
             selected = events[legacy_cutoff:cutoff]
+            # A V1 positional cutoff must not re-close occurrences explicitly
+            # reviewed by an earlier V2 review in a mixed review history.
+            overlap = sorted({_occurrence(event) for event in selected} & reviewed)
+            if overlap:
+                raise LearningError("review re-closes occurrences: " + ", ".join(overlap))
             legacy_cutoff = cutoff
         else:
             ids = review["reviewed_occurrence_ids"]
