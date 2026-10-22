@@ -174,6 +174,9 @@ def score_simulation(expectation: dict[str, Any], response: dict[str, Any], case
         }
         if ops != required_ops[output["decision"]]:
             raise ValueError("decision/action contradiction or additional unauthorized effects")
+        # Blocking reasons collapse to DORMANT/BLOCKED in state; verify the typed cause too.
+        if output["decision"] == "block_capability" and output["actions"] != expectation.get("reference_actions"):
+            raise ValueError("capability blocking reason contradicts the required behavior")
     except (ValueError, TypeError, KeyError) as exc:
         return False, str(exc)
     return True, "structured action effects and state verified in simulation; not live tool execution"

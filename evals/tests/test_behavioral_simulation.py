@@ -110,6 +110,20 @@ class BehavioralSimulationTests(unittest.TestCase):
             result["output"]["state"] = runner.simulate_actions(case["input"]["initial_state"], result["output"]["actions"])
             self.assertFalse(scored(case, result), case["id"])
 
+    def test_block_reason_substitutions_fail_even_when_denial_state_matches(self):
+        reasons = {"no_adoption", "pin_upgrade_without_adoption", "expired_or_mismatched", "mutable_pin"}
+        for _, case in all_cases():
+            if case["expectations"][0]["decision"] != "block_capability":
+                continue
+            expected = response(case)
+            self.assertTrue(scored(case, expected), case["id"])
+            for reason in sorted(reasons - {expected["output"]["actions"][0]["reason"]}):
+                with self.subTest(case=case["id"], wrong_reason=reason):
+                    result = copy.deepcopy(expected)
+                    result["output"]["actions"][0]["reason"] = reason
+                    result["output"]["state"] = runner.simulate_actions(case["input"]["initial_state"], result["output"]["actions"])
+                    self.assertFalse(scored(case, result))
+
     def test_bound_input_occurrence_prevents_fixture_answer_reuse(self):
         case = copy.deepcopy(all_cases()[0][1])
         case["input"]["facts"]["occurrence_id"] = "other-occurrence"
@@ -184,6 +198,35 @@ class BehavioralSimulationTests(unittest.TestCase):
                         exact_target_evidence.validate_binding(root, retained.FRAMEWORK_REF, helper.execution())
                 else:
                     exact_target_evidence.validate_binding(root, retained.FRAMEWORK_REF, helper.execution())
+
+
+    def test_retained_replay_rejects_wrong_block_reason(self):
+        helper = retained.ExactTargetEvidenceTests()
+        reasons = {"no_adoption", "pin_upgrade_without_adoption", "expired_or_mismatched", "mutable_pin"}
+        for _, original in all_cases():
+            if original["expectations"][0]["decision"] != "block_capability":
+                continue
+            case = copy.deepcopy(original)
+            case["id"] = "case"
+            suite = {"schema_version": "1.0", "suite_id": "suite", "artifact": "workflows/candidate-capability-adoption", "assurance_scope": "behavioral_runtime", "cases": [case]}
+            for reason in sorted(reasons):
+                with self.subTest(case=original["id"], reason=reason), tempfile.TemporaryDirectory() as tmp:
+                    root = Path(tmp)
+                    manifest = helper.manifest()
+                    result = response(case)
+                    correct = result["output"]["actions"][0]["reason"] == reason
+                    result["output"]["actions"][0]["reason"] = reason
+                    result["output"]["state"] = runner.simulate_actions(case["input"]["initial_state"], result["output"]["actions"])
+                    row = manifest["executions"][0]
+                    row["response"] = result
+                    row["response_digest"] = exact_target_evidence._canonical_digest(result)
+                    helper.write_bound_files(root, manifest=manifest)
+                    (root / "evals/cases/suite.eval.json").write_text(json.dumps(suite), encoding="utf-8")
+                    if correct:
+                        exact_target_evidence.validate_binding(root, retained.FRAMEWORK_REF, helper.execution())
+                    else:
+                        with self.assertRaisesRegex(exact_target_evidence.ExactTargetEvidenceError, "rescoring mismatch"):
+                            exact_target_evidence.validate_binding(root, retained.FRAMEWORK_REF, helper.execution())
 
 
 if __name__ == "__main__":
