@@ -1,3 +1,2 @@
-# Interpreter-generated Python caches are not source modifications.
+# Only CPython import caches; never ignore loose .pyc source artifacts.
 __pycache__/
-*.py[cod]
