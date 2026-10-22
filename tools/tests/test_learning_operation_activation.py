@@ -200,10 +200,33 @@ class LearningOperationActivationTests(unittest.TestCase):
             debt.evaluate_target(self.target, {})
         self.clean.assert_not_called()
 
+    def test_active_candidate_rejects_stale_healthy_state_against_real_escape(self):
+        self.adopt(["learning_review_debt_guard"])
+        self.capture_event(verification_escape=True)
+        events_path = self.target / ".erei/learning/TASK_EVENTS.jsonl"
+        before = events_path.read_bytes()
+        # An old LEARNING_HEALTHY projection cannot conceal a newer event.
+        with self.assertRaisesRegex(debt.ReviewDebtError, "does not match authoritative ledgers"):
+            debt.evaluate_target(self.target, self.state)
+        code, output = self.cli(debt.main, ["--target", str(self.target), "--state", str(self.state_path)])
+        self.assertEqual(code, 2)
+        self.assertIn("does not match authoritative ledgers", output)
+        self.assertEqual(events_path.read_bytes(), before)
+
+    def test_active_candidate_rejects_invalid_authority_without_defer_read(self):
+        self.adopt(["learning_review_debt_guard"])
+        learning = self.target / ".erei/learning"
+        learning.mkdir(parents=True, exist_ok=True)
+        (learning / "TASK_EVENTS.jsonl").write_text("invalid-json\\n", encoding="utf-8")
+        bad_defer = self.target / "missing_defer.json"
+        with self.assertRaisesRegex(debt.ReviewDebtError, "cannot verify authoritative learning state"):
+            debt.evaluate_target(self.target, self.state, defer_path=bad_defer)
+        self.assertFalse(bad_defer.exists())
+
     def test_active_debt_policy_still_blocks_escape_and_accepts_bounded_defer(self):
         self.adopt(["learning_review_debt_guard"])
-        state = copy.deepcopy(self.state)
-        state["metrics_since_last_review"].update(material_tasks=1, tasks=1, verification_escapes=1)
+        self.capture_event(verification_escape=True)
+        state = pattern.authoritative_task_learning.authoritative_snapshot(self.target)["state"]
         self.assertEqual(debt.evaluate_target(self.target, state)["status"], "BLOCK_IMMEDIATE_REVIEW_DEBT")
         record = {
             "schema_version": 1, "defer_id": "ELD-20261015T000000Z-ABCDEF12",
@@ -219,13 +242,13 @@ class LearningOperationActivationTests(unittest.TestCase):
         write_json(path, record)
         self.assertEqual(debt.evaluate_target(self.target, state, defer_path=path, now=self.now)["status"], "PASS_BOUNDED_REVIEW_DEFER")
 
-    def capture_event(self):
+    def capture_event(self, *, verification_escape=False):
         args = argparse.Namespace(
             task_id=None, occurrence_id=None, task_group="activation-regression",
             project_repository="example/repo", project_name="Fixture", framework_ref=PIN,
             workflow="feature-development", risk="L2", terminal_state="COMPLETE_VERIFIED",
             outcome_class="verified_success", material=True, rework_cycles=0,
-            verification_failures=0, verification_escape=False, framework_feedback_created=False,
+            verification_failures=0, verification_escape=verification_escape, framework_feedback_created=False,
             manual_workaround=False, context_gap=False, unexpected_scope_growth=False,
             security_or_data_critical_event=False, duration_class="medium", failure_stage="none",
             failure_subject=None, feedback_id=[], feedback_fingerprint=[], tag=[],
@@ -262,6 +285,7 @@ class LearningOperationActivationTests(unittest.TestCase):
         write_json(output_path, self.output_fixture())
         code, stdout = self.cli(ldo.main, ["--target", str(self.target), "--input", str(output_path)])
         self.assertEqual((code, json.loads(stdout)["status"]), (0, "VALID"))
+        write_json(self.state_path, pattern.authoritative_task_learning.authoritative_snapshot(self.target)["state"])
         code, stdout = self.cli(debt.main, ["--target", str(self.target), "--state", str(self.state_path)])
         self.assertEqual((code, json.loads(stdout)["status"]), (0, "PASS_NO_IMMEDIATE_REVIEW"))
 
