@@ -110,6 +110,9 @@ def plan(target: Path) -> dict:
 
         combined_events = inspect(events, immutable_events, learning._occurrence, learning.validate_event, "event", paths["event_dir"])
         combined_reviews = inspect(reviews, immutable_reviews, learning._review_identity, learning.validate_learning_review_shape, "review", paths["review_dir"])
+        # Mirror _load_reviews: epoch validation must use canonical review-ID order,
+        # not the possibly noncanonical source JSONL projection order.
+        combined_reviews.sort(key=learning._review_identity)
         if any(row.get("schema_version") == 1 for row in combined_reviews) and len(combined_events) != len(events):
             issues.append({
                 "kind": "legacy_order",

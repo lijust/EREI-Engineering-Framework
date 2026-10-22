@@ -147,6 +147,28 @@ class MigrationPlanTests(unittest.TestCase):
             self.assertEqual(report["proposed_immutable_files"], [])
             self.assertEqual(report["issues"][0]["kind"], "source_changed")
 
+    def test_out_of_order_review_ids_block_instead_of_approving_wrong_epoch(self):
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory)
+            first, second = legacy_events()
+            initial = legacy_review(1)
+            later = copy.deepcopy(initial)
+            later["review_id"] = "ELR-20260930T100000Z-BBBBBBBB"
+            later["epoch_id"] = "EPOCH-002"
+            later["through_event_count"] = 2
+            self.setup_project(target, [first, second], [initial, later])
+            before = self.files(target)
+            report = migration.plan(target)
+            # The real ledger loader sorts review IDs, so the epoch sequence
+            # fails there. The planner must fail the same way, without writes.
+            self.assertEqual(report["status"], "BLOCKED")
+            self.assertEqual(report["proposed_immutable_files"], [])
+            self.assertTrue(any(
+                "epoch sequence mismatch" in issue["error"]
+                for issue in report["issues"]
+            ))
+            self.assertEqual(self.files(target), before)
+
     def test_apply_flag_does_not_exist(self):
         with contextlib.redirect_stderr(io.StringIO()):
             with self.assertRaises(SystemExit) as caught:
