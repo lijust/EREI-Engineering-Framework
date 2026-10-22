@@ -14,6 +14,7 @@ The harness evaluates:
 - normalized metadata such as risk/route decisions,
 - tool-call traces,
 - bounded step behavior,
+- structured proposed actions and their recomputed state effects,
 - regression scenarios promoted from real failures.
 
 ## Core design
@@ -100,6 +101,12 @@ V1 supports:
 - `trace_tool_called`
 - `trace_tool_not_called`
 - `max_trace_steps`
+- `behavioral_simulation` (versioned, bounded action simulation)
+
+The 13 Task Learning V2 Core cases use `behavioral_simulation`; see
+[`BEHAVIORAL_SIMULATION.md`](BEHAVIORAL_SIMULATION.md) for the strict response
+contract, adversarial checks, and assurance limits. Passing synthetic reference
+fixtures verifies the scorer, not model behavior or real tool execution.
 
 Semantic/model-graded scorers may be provided later through optional adapters/extensions. They must not silently replace deterministic security/data invariants.
 
