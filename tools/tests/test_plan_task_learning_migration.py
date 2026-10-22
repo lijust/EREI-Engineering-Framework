@@ -147,6 +147,30 @@ class MigrationPlanTests(unittest.TestCase):
             self.assertEqual(report["proposed_immutable_files"], [])
             self.assertEqual(report["issues"][0]["kind"], "source_changed")
 
+    def test_noncanonical_projection_order_reports_canonical_review_membership(self):
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory)
+            first, second = legacy_events()
+            earlier = legacy_review(1)
+            later = copy.deepcopy(earlier)
+            later["review_id"] = "ELR-20261002T100000Z-BBBBBBBB"
+            later["epoch_id"] = "EPOCH-002"
+            later["closed_at"] = "2026-10-02T10:00:00Z"
+            later["through_event_count"] = 2
+            # The source rows are not canonical, but the real loader sorts
+            # reviews by ID. The planner must sort both state and the report.
+            self.setup_project(target, [first, second], [later, earlier])
+            before = self.files(target)
+            report = migration.plan(target)
+            self.assertEqual(report["status"], "NO_IMPORT_REQUIRED")
+            self.assertEqual(report["proposed_immutable_files"], [])
+            memberships = report["legacy_review_memberships"]
+            self.assertEqual([r["review_id"] for r in memberships],
+                             [earlier["review_id"], later["review_id"]])
+            self.assertEqual([r["reviewed_occurrence_ids"] for r in memberships],
+                             [[first["task_id"]], [second["task_id"]]])
+            self.assertEqual(self.files(target), before)
+
     def test_out_of_order_review_ids_block_instead_of_approving_wrong_epoch(self):
         with tempfile.TemporaryDirectory() as directory:
             target = Path(directory)

@@ -133,7 +133,7 @@ def plan(target: Path) -> dict:
                 raise learning.LearningError("prospective event ledger contains multiple source projects")
             report["project_repositories"] = sorted(repositories)
             cutoff = 0
-            for review in reviews:
+            for review in combined_reviews:
                 if review["schema_version"] == 1:
                     selected = events[cutoff:review["through_event_count"]]
                     report["legacy_review_memberships"].append({
