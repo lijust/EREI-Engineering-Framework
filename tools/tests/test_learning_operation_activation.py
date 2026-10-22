@@ -315,12 +315,19 @@ class LearningOperationActivationTests(unittest.TestCase):
             cache = repo / "tools/__pycache__"
             cache.mkdir(parents=True)
             (cache / "capability_activation.cpython-312.pyc").write_bytes(b"compiled")
-            (repo / "tools/activation_probe.pyc").write_bytes(b"compiled")
             status = subprocess.run(
                 ["git", "status", "--porcelain=v1", "--untracked-files=all"],
                 cwd=repo, capture_output=True, text=True, check=True,
             )
             self.assertEqual(status.stdout.strip(), "A  .gitignore")
+            # A loose compiled file outside __pycache__ is not ordinary
+            # interpreter import cache; keep it visible to the clean gate.
+            (repo / "tools/activation_probe.pyc").write_bytes(b"compiled")
+            loose = subprocess.run(
+                ["git", "status", "--porcelain=v1", "--untracked-files=all"],
+                cwd=repo, capture_output=True, text=True, check=True,
+            )
+            self.assertIn("activation_probe.pyc", loose.stdout)
             (repo / "tools/unsafe_untracked_source.py").write_text(
                 "print('probe')\\n", encoding="utf-8"
             )
