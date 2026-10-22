@@ -1,1 +1,3 @@
-# Interpreter-generated Python caches are not source modifications.\n__pycache__/\n*.py[cod]\n
+# Interpreter-generated Python caches are not source modifications.
+__pycache__/
+*.py[cod]
