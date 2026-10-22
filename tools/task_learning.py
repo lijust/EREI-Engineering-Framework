@@ -522,6 +522,16 @@ def _reviewed_occurrences(events: list[dict], reviews: list[dict]) -> tuple[set[
             overlap = sorted({_occurrence(event) for event in selected} & reviewed)
             if overlap:
                 raise LearningError("review re-closes occurrences: " + ", ".join(overlap))
+            # A past V1 cutoff cannot close an occurrence recorded after
+            # the review itself. This catches a common pre-sorted projection
+            # failure even when all row fingerprints and immutable files match.
+            closure = datetime.fromisoformat(review["closed_at"].replace("Z", "+00:00"))
+            future = sorted(
+                _occurrence(event) for event in selected
+                if datetime.fromisoformat(event["recorded_at"].replace("Z", "+00:00")) > closure
+            )
+            if future:
+                raise LearningError("legacy review covers event recorded after closure: " + ", ".join(future))
             legacy_cutoff = cutoff
         else:
             ids = review["reviewed_occurrence_ids"]

@@ -87,12 +87,28 @@ class LegacyOrderTests(unittest.TestCase):
             middle = v2_event()
             appended = v2_event(escape=True, suffix="44444444")
             original = [first, middle, last]
-            self.project(target, original + [appended], [legacy_review(2)], [middle, appended])
+            review = legacy_review(2)
+            review["closed_at"] = "2026-10-02T10:00:00Z"
+            self.project(target, original + [appended], [review], [middle, appended])
             snapshot = task_learning.authoritative_snapshot(target)
             self.assertEqual(snapshot["events"], original + [appended])
             reviewed, _ = task_learning._reviewed_occurrences(snapshot["events"], snapshot["reviews"])
             self.assertEqual(reviewed, {first["task_id"], middle["occurrence_id"]})
             self.assertEqual(snapshot["state"]["metrics_since_last_review"]["verification_escapes"], 1)
+
+    def test_legacy_review_must_not_consume_future_v2_occurrence(self):
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory)
+            old = legacy_events()[0]
+            late = v2_event(escape=True)
+            # This is exactly the dangerous EOCC-before-ETASK order a
+            # pre-fix identity sort could persist in a mixed projection.
+            self.project(target, [late, old], [legacy_review(1)], [late])
+            ledger = target / ".erei/learning/TASK_EVENTS.jsonl"
+            before = ledger.read_bytes()
+            with self.assertRaisesRegex(task_learning.LearningError, "recorded after closure"):
+                task_learning.authoritative_snapshot(target)
+            self.assertEqual(ledger.read_bytes(), before)
 
     def test_late_v1_cutoff_cannot_reclose_an_earlier_v2_review(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -164,7 +180,9 @@ class LegacyOrderTests(unittest.TestCase):
                 last["verification_escape"] = True
                 last["fingerprint"] = task_learning._fingerprint(last)
                 middle = v2_event()
-                self.project(target, [first, middle, last], [legacy_review(2)], [middle])
+                review = legacy_review(2)
+                review["closed_at"] = "2026-10-02T10:00:00Z"
+                self.project(target, [first, middle, last], [review], [middle])
                 original = task_learning.authoritative_snapshot(target)
                 self.assertEqual(original["state"]["trigger"]["level"], "IMMEDIATE_REVIEW")
                 ledger = target / ".erei/learning/TASK_EVENTS.jsonl"
