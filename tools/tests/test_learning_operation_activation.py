@@ -10,6 +10,7 @@ import argparse
 import copy
 import io
 import json
+import subprocess
 import tempfile
 import unittest
 from contextlib import ExitStack, redirect_stdout
@@ -301,6 +302,33 @@ class LearningOperationActivationTests(unittest.TestCase):
         self.assertEqual(effectiveness.compare(report, report)["causation"], "NOT_ESTABLISHED")
         self.assertEqual(debt.evaluate(self.state, None, self.now)["status"], "PASS_NO_IMMEDIATE_REVIEW")
         self.clean.assert_not_called()
+
+    def test_compiled_python_cache_does_not_dirty_repo_but_source_does(self):
+        # A Python import normally creates __pycache__, which must not make
+        # every subsequent governed CLI fail its clean-checkout boundary.
+        # Ignore interpreter artifacts, NOT arbitrary untracked source files.
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+            subprocess.run(["git", "init", "--quiet", str(repo)], check=True)
+            (repo / ".gitignore").write_bytes((ROOT / ".gitignore").read_bytes())
+            subprocess.run(["git", "add", ".gitignore"], cwd=repo, check=True)
+            cache = repo / "tools/__pycache__"
+            cache.mkdir(parents=True)
+            (cache / "capability_activation.cpython-312.pyc").write_bytes(b"compiled")
+            (repo / "tools/activation_probe.pyc").write_bytes(b"compiled")
+            status = subprocess.run(
+                ["git", "status", "--porcelain=v1", "--untracked-files=all"],
+                cwd=repo, capture_output=True, text=True, check=True,
+            )
+            self.assertEqual(status.stdout.strip(), "A  .gitignore")
+            (repo / "tools/unsafe_untracked_source.py").write_text(
+                "print('probe')\\n", encoding="utf-8"
+            )
+            changed = subprocess.run(
+                ["git", "status", "--porcelain=v1", "--untracked-files=all"],
+                cwd=repo, capture_output=True, text=True, check=True,
+            )
+            self.assertIn("unsafe_untracked_source.py", changed.stdout)
 
     def test_dirty_checkout_cannot_dispatch(self):
         self.adopt()
