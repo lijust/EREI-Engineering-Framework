@@ -123,6 +123,33 @@ class LegacyOrderTests(unittest.TestCase):
                 task_learning.authoritative_snapshot(target)
             self.assertEqual(ledger.read_bytes(), before)
 
+    def test_unproven_mixed_membership_blocks_all_entrypoints_without_writes(self):
+        operations = {
+            "snapshot": task_learning.authoritative_snapshot,
+            "validate": task_learning.validate_ledgers,
+            "status": task_learning.status,
+            "capture": lambda target: task_learning.capture(target, v2_event(suffix="55555555")),
+            "close_review": lambda target: task_learning.close_review(target, SimpleNamespace(
+                evidence=["audit:synthetic"], review_id=None, findings="Review findings",
+                decision="Review decision", action=[],
+            )),
+        }
+        for name, operation in operations.items():
+            with self.subTest(operation=name), tempfile.TemporaryDirectory() as directory:
+                target = Path(directory)
+                first = legacy_events()[0]
+                moved = v2_event(escape=True)
+                review = legacy_review(1)
+                # Backdating the V2 occurrence defeats timestamp-only checks,
+                # so all public entrypoints must require original-order proof.
+                review["closed_at"] = "2026-10-03T10:00:00Z"
+                self.project(target, [moved, first], [review], [moved])
+                before_bytes = {p.relative_to(target): p.read_bytes() for p in target.rglob("*") if p.is_file()}
+                with self.assertRaisesRegex(task_learning.LearningError, "without original-order provenance"):
+                    operation(target)
+                after_bytes = {p.relative_to(target): p.read_bytes() for p in target.rglob("*") if p.is_file()}
+                self.assertEqual(after_bytes, before_bytes)
+
     def test_late_v1_cutoff_cannot_reclose_an_earlier_v2_review(self):
         with tempfile.TemporaryDirectory() as directory:
             target = Path(directory)
