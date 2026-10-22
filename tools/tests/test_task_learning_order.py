@@ -115,6 +115,12 @@ class LegacyOrderTests(unittest.TestCase):
             later = legacy_review(1)
             later["epoch_id"] = "EPOCH-002"
             self.project(target, [first, last], [early, later])
+            # A V2 review must have immutable authority; otherwise loading
+            # fails for the unrelated authority rule before testing overlap.
+            task_learning._write_immutable_json(
+                target / ".erei/learning/reviews" / (early["review_id"] + ".json"),
+                early,
+            )
             ledger = target / ".erei/learning/TASK_EVENTS.jsonl"
             before = ledger.read_bytes()
             with self.assertRaisesRegex(task_learning.LearningError, "review re-closes occurrences"):
