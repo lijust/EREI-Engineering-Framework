@@ -1,4 +1,6 @@
 import copy
+import json
+from pathlib import Path
 import unittest
 
 from tools.prospective_cycle_status import CycleStatusError, STEP_ORDER, validate
@@ -79,6 +81,28 @@ class ProspectiveCycleStatusTests(unittest.TestCase):
         data["blockers"].append("measured_post_adoption_outcome_pending")
         with self.assertRaises(CycleStatusError):
             validate(data)
+
+    def test_complete_step_references_do_not_establish_effectiveness(self):
+        data = valid_status()
+        data["status"] = "complete"
+        data["steps"]["measured_outcome"] = completed(SHA_B)
+        data["blockers"] = []
+        result = validate(data)
+        self.assertEqual(result["status"], "complete")
+        self.assertEqual(result["evidence_level"], "DECLARED_STEP_REFERENCES")
+        self.assertEqual(result["cohort_exposure"], "NOT_ASSESSED")
+        self.assertEqual(result["effectiveness"], "NOT_ESTABLISHED")
+        self.assertEqual(result["causation"], "NOT_ESTABLISHED")
+
+    def test_retained_cycle_stays_readable_without_rewriting_history(self):
+        path = Path(__file__).resolve().parents[2] / "learning/PROSPECTIVE_CYCLE_STATUS.json"
+        original = path.read_bytes()
+        data = json.loads(original)
+        result = validate(data)
+        self.assertEqual(result["cycle_id"], data["cycle_id"])
+        self.assertEqual(result["status"], data["status"])
+        self.assertEqual(result["effectiveness"], "NOT_ESTABLISHED")
+        self.assertEqual(path.read_bytes(), original)
 
 
 if __name__ == "__main__":
