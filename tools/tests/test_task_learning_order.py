@@ -87,28 +87,68 @@ class LegacyOrderTests(unittest.TestCase):
             middle = v2_event()
             appended = v2_event(escape=True, suffix="44444444")
             original = [first, middle, last]
-            review = legacy_review(2)
+            review = legacy_review(1)
             review["closed_at"] = "2026-10-02T10:00:00Z"
             self.project(target, original + [appended], [review], [middle, appended])
             snapshot = task_learning.authoritative_snapshot(target)
             self.assertEqual(snapshot["events"], original + [appended])
             reviewed, _ = task_learning._reviewed_occurrences(snapshot["events"], snapshot["reviews"])
-            self.assertEqual(reviewed, {first["task_id"], middle["occurrence_id"]})
+            self.assertEqual(reviewed, {first["task_id"]})
             self.assertEqual(snapshot["state"]["metrics_since_last_review"]["verification_escapes"], 1)
 
-    def test_legacy_review_must_not_consume_future_v2_occurrence(self):
+    def test_legacy_review_must_not_consume_future_v1_occurrence(self):
         with tempfile.TemporaryDirectory() as directory:
             target = Path(directory)
-            old = legacy_events()[0]
-            late = v2_event(escape=True)
-            # This is exactly the dangerous EOCC-before-ETASK order a
-            # pre-fix identity sort could persist in a mixed projection.
-            self.project(target, [late, old], [legacy_review(1)], [late])
+            old, late = legacy_events()
+            late["recorded_at"] = "2026-10-02T09:00:00Z"
+            late["fingerprint"] = task_learning._fingerprint(late)
+            self.project(target, [late, old], [legacy_review(1)])
             ledger = target / ".erei/learning/TASK_EVENTS.jsonl"
             before = ledger.read_bytes()
             with self.assertRaisesRegex(task_learning.LearningError, "recorded after closure"):
                 task_learning.authoritative_snapshot(target)
             self.assertEqual(ledger.read_bytes(), before)
+
+    def test_previously_sorted_mixed_review_rejected_even_with_backdated_v2(self):
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory)
+            first = legacy_events()[0]
+            moving = v2_event(escape=True)
+            review = legacy_review(1)
+            review["closed_at"] = "2026-10-03T10:00:00Z"
+            self.project(target, [moving, first], [review], [moving])
+            ledger = target / ".erei/learning/TASK_EVENTS.jsonl"
+            before = ledger.read_bytes()
+            with self.assertRaisesRegex(task_learning.LearningError, "without original-order provenance"):
+                task_learning.authoritative_snapshot(target)
+            self.assertEqual(ledger.read_bytes(), before)
+
+    def test_unproven_mixed_membership_blocks_all_entrypoints_without_writes(self):
+        operations = {
+            "snapshot": task_learning.authoritative_snapshot,
+            "validate": task_learning.validate_ledgers,
+            "status": task_learning.status,
+            "capture": lambda target: task_learning.capture(target, v2_event(suffix="55555555")),
+            "close_review": lambda target: task_learning.close_review(target, SimpleNamespace(
+                evidence=["audit:synthetic"], review_id=None, findings="Review findings",
+                decision="Review decision", action=[],
+            )),
+        }
+        for name, operation in operations.items():
+            with self.subTest(operation=name), tempfile.TemporaryDirectory() as directory:
+                target = Path(directory)
+                first = legacy_events()[0]
+                moved = v2_event(escape=True)
+                review = legacy_review(1)
+                # Backdating the V2 occurrence defeats timestamp-only checks,
+                # so all public entrypoints must require original-order proof.
+                review["closed_at"] = "2026-10-03T10:00:00Z"
+                self.project(target, [moved, first], [review], [moved])
+                before_bytes = {p.relative_to(target): p.read_bytes() for p in target.rglob("*") if p.is_file()}
+                with self.assertRaisesRegex(task_learning.LearningError, "without original-order provenance"):
+                    operation(target)
+                after_bytes = {p.relative_to(target): p.read_bytes() for p in target.rglob("*") if p.is_file()}
+                self.assertEqual(after_bytes, before_bytes)
 
     def test_late_v1_cutoff_cannot_reclose_an_earlier_v2_review(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -180,7 +220,7 @@ class LegacyOrderTests(unittest.TestCase):
                 last["verification_escape"] = True
                 last["fingerprint"] = task_learning._fingerprint(last)
                 middle = v2_event()
-                review = legacy_review(2)
+                review = legacy_review(1)
                 review["closed_at"] = "2026-10-02T10:00:00Z"
                 self.project(target, [first, middle, last], [review], [middle])
                 original = task_learning.authoritative_snapshot(target)

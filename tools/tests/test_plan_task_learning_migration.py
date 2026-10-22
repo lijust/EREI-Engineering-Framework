@@ -31,7 +31,7 @@ class MigrationPlanTests(unittest.TestCase):
             target = Path(directory)
             first, last = legacy_events()
             middle = v2_event()
-            review = legacy_review(2)
+            review = legacy_review(1)
             review["closed_at"] = "2026-10-02T10:00:00Z"
             self.setup_project(target, [first, middle, last], [review])
             before = self.files(target)
@@ -39,8 +39,8 @@ class MigrationPlanTests(unittest.TestCase):
             self.assertEqual(report["status"], "REVIEW_REQUIRED")
             self.assertFalse(report["apply_supported"])
             self.assertEqual(len(report["proposed_immutable_files"]), 1)
-            self.assertEqual(report["legacy_review_memberships"][0]["reviewed_occurrence_ids"], [first["task_id"], middle["occurrence_id"]])
-            self.assertEqual(report["derived_summary"]["unreviewed_tasks"], 1)
+            self.assertEqual(report["legacy_review_memberships"][0]["reviewed_occurrence_ids"], [first["task_id"]])
+            self.assertEqual(report["derived_summary"]["unreviewed_tasks"], 2)
             self.assertEqual(report["source_files"][1]["git_blob_sha1"], __import__("hashlib").sha1(
                 b"blob " + str(len(before[".erei/learning/TASK_EVENTS.jsonl"])).encode() + b"\0" + before[".erei/learning/TASK_EVENTS.jsonl"]
             ).hexdigest())
@@ -48,6 +48,25 @@ class MigrationPlanTests(unittest.TestCase):
             # A dry-run must not make otherwise invalid live authority usable.
             with self.assertRaisesRegex(task_learning.LearningError, "without immutable authority"):
                 task_learning.validate_ledgers(target)
+
+    def test_unproven_v2_within_legacy_review_is_blocked_without_writes(self):
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory)
+            first, last = legacy_events()
+            middle = v2_event()
+            review = legacy_review(2)
+            review["closed_at"] = "2026-10-03T10:00:00Z"
+            self.setup_project(target, [first, middle, last], [review])
+            before = self.files(target)
+            report = migration.plan(target)
+            self.assertEqual(report["status"], "BLOCKED")
+            self.assertEqual(report["proposed_immutable_files"], [])
+            self.assertEqual(report["legacy_review_memberships"], [])
+            self.assertTrue(any(
+                "without original-order provenance" in issue["error"]
+                for issue in report["issues"]
+            ))
+            self.assertEqual(self.files(target), before)
 
     def test_historical_anomaly_blocks_all_proposals_without_repair(self):
         with tempfile.TemporaryDirectory() as directory:
