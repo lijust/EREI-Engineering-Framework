@@ -46,6 +46,17 @@ def _nested_set(mapping: dict[str, Any], dotted_key: str, value: Any) -> None:
 
 
 def build_response(case: dict[str, Any]) -> dict[str, Any]:
+    simulations = [item for item in case["expectations"] if item["type"] == "behavioral_simulation"]
+    if simulations:
+        if len(case["expectations"]) != 1:
+            raise RuntimeError("simulation fixture must have exactly one authoritative scorer")
+        expected = simulations[0]
+        return {
+            "output": {"contract": "erei-action-simulation-v1", "decision": expected["decision"],
+                       "actions": expected["reference_actions"], "state": expected["state"]},
+            "evidence": {"level": "reference_contract", "independent_runtime": False,
+                         "note": "Explicit synthetic action fixture; not model or real-tool execution."},
+        }
     output_parts: list[str] = []
     forbidden: list[str] = []
     metadata: dict[str, Any] = {}

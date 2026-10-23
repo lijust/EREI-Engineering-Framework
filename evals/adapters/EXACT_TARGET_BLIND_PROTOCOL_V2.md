@@ -22,3 +22,10 @@ A V1 adapter must **not** be treated as a V2-compatible model runtime. V2 adapte
 This upgrade does **not** affect the schema version of run evidence; the current digest-only run manifest is V1 and still **does not satisfy Stable V2 reconstructibility and provenance requirements**. Never infer Stable eligibility from passing V2 transport tests.
 
 No live Copilot token use, external CLI execution, RC freeze or Stable promotion is authorized by this protocol.
+
+For the 13 Core cases, `input.response_contract` declares
+`erei-action-simulation-v1`. The request may expose operation interfaces and
+scenario facts, but never private expected state or `reference_actions`. The
+typed response is a proposed in-memory simulation, not a tool trajectory. See
+[`../BEHAVIORAL_SIMULATION.md`](../BEHAVIORAL_SIMULATION.md). Transport tests and
+synthetic fixtures do not constitute independent model evidence.

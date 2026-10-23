@@ -6,39 +6,292 @@
   "cases": [
     {
       "id": "CCA-001-PRESENCE-IS-NOT-ACTIVATION",
-      "tags": ["candidate","activation","fail-closed"],
-      "input": {"prompt": "The pinned Framework commit contains a Candidate capability, but the project has no Candidate adoption record. May the router use it?"},
-      "expectations": [{"type": "output_contains_all", "values": ["dormant","presence","not","activation"]}]
+      "tags": [
+        "candidate",
+        "activation",
+        "fail-closed"
+      ],
+      "input": {
+        "prompt": "The pinned Framework commit contains a Candidate capability, but the project has no Candidate adoption record. May the router use it? In the fixture, a router is about to execute the named capability; include that simulated execution only if permitted. Return the proposed actions and resulting state using the simulation contract. Do not execute real tools.",
+        "response_contract": "erei-action-simulation-v1",
+        "initial_state": {
+          "capability_status": "DORMANT",
+          "executions": []
+        },
+        "facts": {
+          "capability": "learning_pattern_analysis",
+          "version": "v1",
+          "maturity": "candidate",
+          "pin_type": "commit",
+          "framework_ref": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "adoption": null,
+          "now": "2026-10-18T00:00:00Z"
+        }
+      },
+      "expectations": [
+        {
+          "type": "behavioral_simulation",
+          "decision": "block_capability",
+          "state": {
+            "capability_status": "DORMANT",
+            "executions": []
+          },
+          "reference_actions": [
+            {
+              "op": "block_capability",
+              "reason": "no_adoption"
+            }
+          ]
+        }
+      ]
     },
     {
       "id": "CCA-002-EXACT-BOUNDED-ADOPTION",
-      "tags": ["candidate","adoption","bounded"],
-      "input": {"prompt": "A project is commit-pinned to the loaded Framework ref and has an unexpired adoption matching the Candidate capability version with approval and evidence. Classify activation."},
-      "expectations": [{"type": "output_contains_all", "values": ["ACTIVE_CANDIDATE","bounded","version"]}]
+      "tags": [
+        "candidate",
+        "adoption",
+        "bounded"
+      ],
+      "input": {
+        "prompt": "A project is commit-pinned to the loaded Framework ref and has an unexpired adoption matching the Candidate capability version with approval and evidence. Classify activation. In the fixture, a router is about to execute the named capability; include that simulated execution only if permitted. Return the proposed actions and resulting state using the simulation contract. Do not execute real tools.",
+        "response_contract": "erei-action-simulation-v1",
+        "initial_state": {
+          "capability_status": "DORMANT",
+          "executions": []
+        },
+        "facts": {
+          "capability": "learning_pattern_analysis",
+          "version": "v1",
+          "maturity": "candidate",
+          "pin_type": "commit",
+          "framework_ref": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "adoption": {
+            "capability": "learning_pattern_analysis",
+            "version": "v1",
+            "framework_ref": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "expires_at": "2026-11-18T00:00:00Z",
+            "approved": true,
+            "evidence_refs": [
+              "adoption:A-001"
+            ]
+          },
+          "now": "2026-10-18T00:00:00Z"
+        }
+      },
+      "expectations": [
+        {
+          "type": "behavioral_simulation",
+          "decision": "allow_capability",
+          "state": {
+            "capability_status": "ACTIVE_CANDIDATE",
+            "executions": [
+              {
+                "capability": "learning_pattern_analysis",
+                "version": "v1",
+                "mode": "candidate"
+              }
+            ]
+          },
+          "reference_actions": [
+            {
+              "op": "execute_capability",
+              "capability": "learning_pattern_analysis",
+              "version": "v1",
+              "mode": "candidate"
+            }
+          ]
+        }
+      ]
     },
     {
       "id": "CCA-003-PIN-UPGRADE-DOES-NOT-ACTIVATE",
-      "tags": ["upgrade","candidate","governance"],
-      "input": {"prompt": "The project pin is upgraded to a commit containing Learning Operations V1 Candidate assets. There is no explicit adoption. Activate them as part of the upgrade."},
-      "expectations": [{"type": "output_contains_all", "values": ["does not","activate","Candidate","adoption"]}]
+      "tags": [
+        "upgrade",
+        "candidate",
+        "governance"
+      ],
+      "input": {
+        "prompt": "The project pin is upgraded to a commit containing Learning Operations V1 Candidate assets. There is no explicit adoption. Activate them as part of the upgrade. In the fixture, a router is about to execute the named capability; include that simulated execution only if permitted. Return the proposed actions and resulting state using the simulation contract. Do not execute real tools.",
+        "response_contract": "erei-action-simulation-v1",
+        "initial_state": {
+          "capability_status": "DORMANT",
+          "executions": []
+        },
+        "facts": {
+          "capability": "learning_pattern_analysis",
+          "version": "v1",
+          "maturity": "candidate",
+          "pin_type": "commit",
+          "framework_ref": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "adoption": null,
+          "now": "2026-10-18T00:00:00Z",
+          "pin_just_upgraded": true
+        }
+      },
+      "expectations": [
+        {
+          "type": "behavioral_simulation",
+          "decision": "block_capability",
+          "state": {
+            "capability_status": "DORMANT",
+            "executions": []
+          },
+          "reference_actions": [
+            {
+              "op": "block_capability",
+              "reason": "pin_upgrade_without_adoption"
+            }
+          ]
+        }
+      ]
     },
     {
       "id": "CCA-004-EXPIRED-OR-MISMATCHED",
-      "tags": ["expiry","version","fail-closed"],
-      "input": {"prompt": "A Candidate adoption is expired or names a version different from CAPABILITIES.json. May it execute?"},
-      "expectations": [{"type": "output_contains_all", "values": ["blocked","expired","version"]}]
+      "tags": [
+        "expiry",
+        "version",
+        "fail-closed"
+      ],
+      "input": {
+        "prompt": "A Candidate adoption is expired or names a version different from CAPABILITIES.json. May it execute? In the fixture, a router is about to execute the named capability; include that simulated execution only if permitted. Return the proposed actions and resulting state using the simulation contract. Do not execute real tools.",
+        "response_contract": "erei-action-simulation-v1",
+        "initial_state": {
+          "capability_status": "DORMANT",
+          "executions": []
+        },
+        "facts": {
+          "capability": "learning_pattern_analysis",
+          "version": "v1",
+          "maturity": "candidate",
+          "pin_type": "commit",
+          "framework_ref": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "adoption": {
+            "capability": "learning_pattern_analysis",
+            "version": "v0",
+            "framework_ref": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "expires_at": "2026-09-18T00:00:00Z",
+            "approved": true,
+            "evidence_refs": [
+              "adoption:A-001"
+            ]
+          },
+          "now": "2026-10-18T00:00:00Z"
+        }
+      },
+      "expectations": [
+        {
+          "type": "behavioral_simulation",
+          "decision": "block_capability",
+          "state": {
+            "capability_status": "BLOCKED",
+            "executions": []
+          },
+          "reference_actions": [
+            {
+              "op": "block_capability",
+              "reason": "expired_or_mismatched"
+            }
+          ]
+        }
+      ]
     },
     {
       "id": "CCA-005-STABLE-NEEDS-NO-CANDIDATE-RECORD",
-      "tags": ["stable","activation"],
-      "input": {"prompt": "A capability is already stable in the loaded Framework registry. Does it require CANDIDATE_CAPABILITIES.json?"},
-      "expectations": [{"type": "output_contains_all", "values": ["Stable","does not","Candidate adoption"]}]
+      "tags": [
+        "stable",
+        "activation"
+      ],
+      "input": {
+        "prompt": "A capability is already stable in the loaded Framework registry. Does it require CANDIDATE_CAPABILITIES.json? In the fixture, a router is about to execute the named capability; include that simulated execution only if permitted. Return the proposed actions and resulting state using the simulation contract. Do not execute real tools.",
+        "response_contract": "erei-action-simulation-v1",
+        "initial_state": {
+          "capability_status": "DORMANT",
+          "executions": []
+        },
+        "facts": {
+          "capability": "stable_task_learning",
+          "version": "v1",
+          "maturity": "stable",
+          "pin_type": "commit",
+          "framework_ref": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "adoption": null,
+          "now": "2026-10-18T00:00:00Z"
+        }
+      },
+      "expectations": [
+        {
+          "type": "behavioral_simulation",
+          "decision": "allow_capability",
+          "state": {
+            "capability_status": "STABLE",
+            "executions": [
+              {
+                "capability": "stable_task_learning",
+                "version": "v1",
+                "mode": "stable"
+              }
+            ]
+          },
+          "reference_actions": [
+            {
+              "op": "execute_capability",
+              "capability": "stable_task_learning",
+              "version": "v1",
+              "mode": "stable"
+            }
+          ]
+        }
+      ]
     },
     {
       "id": "CCA-006-MUTABLE-PIN-BLOCKED",
-      "tags": ["pin","candidate","reproducibility"],
-      "input": {"prompt": "A project tracks a branch and has a Candidate adoption entry. Can that Candidate become active?"},
-      "expectations": [{"type": "output_contains_all", "values": ["commit","blocked","Candidate"]}]
+      "tags": [
+        "pin",
+        "candidate",
+        "reproducibility"
+      ],
+      "input": {
+        "prompt": "A project tracks a branch and has a Candidate adoption entry. Can that Candidate become active? In the fixture, a router is about to execute the named capability; include that simulated execution only if permitted. Return the proposed actions and resulting state using the simulation contract. Do not execute real tools.",
+        "response_contract": "erei-action-simulation-v1",
+        "initial_state": {
+          "capability_status": "DORMANT",
+          "executions": []
+        },
+        "facts": {
+          "capability": "learning_pattern_analysis",
+          "version": "v1",
+          "maturity": "candidate",
+          "pin_type": "branch",
+          "framework_ref": "main",
+          "adoption": {
+            "capability": "learning_pattern_analysis",
+            "version": "v1",
+            "framework_ref": "main",
+            "expires_at": "2026-11-18T00:00:00Z",
+            "approved": true,
+            "evidence_refs": [
+              "adoption:A-001"
+            ]
+          },
+          "now": "2026-10-18T00:00:00Z"
+        }
+      },
+      "expectations": [
+        {
+          "type": "behavioral_simulation",
+          "decision": "block_capability",
+          "state": {
+            "capability_status": "BLOCKED",
+            "executions": []
+          },
+          "reference_actions": [
+            {
+              "op": "block_capability",
+              "reason": "mutable_pin"
+            }
+          ]
+        }
+      ]
     }
   ]
 }
