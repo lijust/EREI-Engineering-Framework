@@ -4,7 +4,11 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 from pathlib import Path
+
+
+
 
 if __package__:
     from . import capability_activation
@@ -42,25 +46,46 @@ MIN_ASSESSMENT_COVERAGE = 0.80
 MAX_COVERAGE_DELTA = 0.10
 
 
+def _reject_constant(value: str):
+    raise ValueError(f"non-finite JSON constant: {value}")
+
+
 def _load(path: Path) -> dict:
     try:
-        value = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
+        value = json.loads(path.read_text(encoding="utf-8"), parse_constant=_reject_constant)
+    except (OSError, ValueError) as exc:
         raise EffectivenessError(f"cannot read report {path}: {exc}") from exc
     if not isinstance(value, dict) or not isinstance(value.get("current_epoch"), dict):
         raise EffectivenessError("input must be a Learning Pattern Analysis report")
     return value
 
 
+def _epoch(report: dict) -> dict:
+    if not isinstance(report, dict) or not isinstance(report.get("current_epoch"), dict):
+        raise EffectivenessError("input must be a Learning Pattern Analysis report")
+    epoch = report["current_epoch"]
+    for key in PRIMARY + SECONDARY + tuple(set(COVERAGE_BY_METRIC.values())):
+        value = epoch.get(key)
+        if value is not None and (
+            type(value) not in {int, float}
+            or not 0 <= value <= 1
+            or not math.isfinite(value)
+        ):
+            raise EffectivenessError(f"{key} must be a finite rate between 0 and 1, or null")
+    count = epoch.get("material_tasks")
+    if count is not None and (type(count) is not int or count < 0):
+        raise EffectivenessError("material_tasks must be a nonnegative integer, or null")
+    return epoch
+
+
 def _dist(value: dict, key: str) -> dict[str, int]:
-    raw = value.get("current_epoch", {}).get(key, {})
+    raw = value["current_epoch"].get(key, {})
     if not isinstance(raw, dict):
-        return {}
-    result = {}
-    for name, count in raw.items():
-        if isinstance(count, int) and count >= 0:
-            result[str(name)] = count
-    return result
+        raise EffectivenessError(f"{key} must be an object of nonnegative integer counts")
+    if any(not isinstance(name, str) or type(count) is not int or count < 0
+           for name, count in raw.items()):
+        raise EffectivenessError(f"{key} must contain nonnegative integer counts")
+    return raw
 
 
 def _tvd(a: dict[str, int], b: dict[str, int]) -> float | None:
@@ -72,14 +97,15 @@ def _tvd(a: dict[str, int], b: dict[str, int]) -> float | None:
 
 
 def compare(before: dict, after: dict) -> dict:
-    b = before["current_epoch"]
-    a = after["current_epoch"]
-    bm, am = int(b.get("material_tasks",0)), int(a.get("material_tasks",0))
+    b, a = _epoch(before), _epoch(after)
+    bm, am = b.get("material_tasks"), a.get("material_tasks")
     risk_distance = _tvd(_dist(before,"risks"), _dist(after,"risks"))
     workflow_distance = _tvd(_dist(before,"workflows"), _dist(after,"workflows"))
     outcome_distance = _tvd(_dist(before,"outcomes"), _dist(after,"outcomes"))
     comparability_reasons = []
-    if bm < 5 or am < 5:
+    if bm is None or am is None:
+        comparability_reasons.append("material_task_count_unavailable")
+    elif bm < 5 or am < 5:
         comparability_reasons.append("sample_below_5_material_tasks")
     if risk_distance is None:
         comparability_reasons.append("risk_mix_unavailable")
@@ -115,7 +141,7 @@ def compare(before: dict, after: dict) -> dict:
     metrics = {}
     for key in PRIMARY + SECONDARY:
         bv, av = b.get(key), a.get(key)
-        if isinstance(bv,(int,float)) and isinstance(av,(int,float)):
+        if bv is not None and av is not None:
             metrics[key] = {
                 "before": bv,
                 "after": av,
@@ -124,7 +150,10 @@ def compare(before: dict, after: dict) -> dict:
 
     primary_direction = {}
     for key in PRIMARY:
-        if key in metrics:
+        if key not in metrics:
+            primary_direction[key] = "not_comparable"
+            comparability_reasons.append(key + "_unavailable")
+        else:
             coverage_key = COVERAGE_BY_METRIC.get(key)
             if coverage_key and not coverage.get(coverage_key, {}).get("comparable", False):
                 primary_direction[key] = "not_comparable"
@@ -170,7 +199,7 @@ def main(argv=None) -> int:
     except (capability_activation.ActivationError, OSError, EffectivenessError) as exc:
         print(json.dumps({"status":"ERROR","error":str(exc)},sort_keys=True))
         return 2
-    print(json.dumps(result,indent=2,sort_keys=True))
+    print(json.dumps(result,indent=2,sort_keys=True,allow_nan=False))
     return 0
 
 
