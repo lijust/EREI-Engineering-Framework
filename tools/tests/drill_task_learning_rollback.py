@@ -8,7 +8,9 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 import shutil
+import subprocess
 import sys
 import tempfile
 import types
@@ -23,8 +25,37 @@ from tools import task_learning as v2
 V1_COMMIT = "69079018606750312344cb3c648952b9ab72d35b"
 V1_TOOL_SHA256 = "336037ea356c91d780f61684889b7c92c5d2bde21a8fff2591fec95e559be8f2"
 # Fixture metadata only. Actual V2 source identity is emitted in the report.
-TRIAL_REF = "9ca0fd14ca2e4a60def23f9e7df11c827a961135"
+TRIAL_REF = None  # explicitly bound to the real Git checkout by --target-ref
 v1 = None
+
+
+
+def require_exact_clean_checkout(target_ref: str) -> str:
+    """Tie synthetic data drill to immutable real checkout identity, not a label."""
+    if not isinstance(target_ref, str) or not re.fullmatch(r"[a-f0-9]{40}", target_ref):
+        raise ValueError("--target-ref must be an exact lowercase 40-hex commit")
+
+    def checked_git(*args: str) -> str:
+        try:
+            result = subprocess.run(
+                ["git", *args], cwd=ROOT, capture_output=True, text=True,
+                timeout=15, check=False,
+            )
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            raise ValueError("cannot verify the exact Git checkout") from exc
+        if result.returncode:
+            raise ValueError("cannot verify exact Git checkout: " + result.stderr.strip())
+        return result.stdout.strip()
+
+    root = Path(checked_git("rev-parse", "--show-toplevel")).resolve()
+    if root != ROOT.resolve():
+        raise ValueError("rollback drill must run at the verified checkout root")
+    head = checked_git("rev-parse", "HEAD")
+    if head != target_ref:
+        raise ValueError("rollback drill target does not match checked-out Git HEAD")
+    if checked_git("status", "--porcelain=v1", "--untracked-files=all"):
+        raise ValueError("rollback drill source checkout is dirty")
+    return head
 
 
 def load_v1(source: bytes):
@@ -160,11 +191,13 @@ class RollbackDrill(unittest.TestCase):
 
 
 def main():
-    global v1
+    global v1, TRIAL_REF
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--v1-tool", type=Path, required=True)
+    parser.add_argument("--target-ref", required=True, help="Exact 40-hex Git HEAD of isolated drill checkout")
     args = parser.parse_args()
     try:
+        TRIAL_REF = require_exact_clean_checkout(args.target_ref)
         v1 = load_v1(args.v1_tool.read_bytes())
     except (OSError, ValueError) as exc:
         parser.error(str(exc))
@@ -175,6 +208,8 @@ def main():
         "evidence_kind": "LOCAL_SYNTHETIC_ROLLBACK_DRILL",
         "v1_commit": V1_COMMIT,
         "v1_tool_sha256": V1_TOOL_SHA256,
+        "isolated_checkout_ref": TRIAL_REF,
+        "checkout_identity_verified": True,
         "v2_source_sha256": {
             name: hashlib.sha256((ROOT / name).read_bytes()).hexdigest()
             for name in ("tools/task_learning.py", "tools/validation_contract.py",

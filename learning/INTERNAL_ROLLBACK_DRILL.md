@@ -1,5 +1,10 @@
 # تمرين rollback لـTask Learning
 
+## تحديث إعداد الهدف — 2026-10-23
+
+تمت محاذاة مسودة T14 على Framework main النهائي `58034ae3e6eca6b2e45f79453aa71a783beee07c`؛ PR #94 ما زال **DRAFT / غير مدمج**. يجب تشغيل التمرين من checkout معزول ونظيف عند SHA محدد؛ الأداة ترفض `--target-ref` المخالف لـ Git HEAD قبل تشغيل أي حالة. اسم V2 ref داخل بيانات الاختبار يمثل SHA الفعلي للـcheckout فقط، **ولا يثبت consumer pin أو activation**.
+
+
 النطاق: إعداد T14 في Issue #81. هذا تمرين تكامل ببيانات مصطنعة، وليس اعتماد
 Internal Release أو أمرًا لترحيل مشروع. يعتمد على إصلاحات F01–F03 في PR #88؛
 لا يثبت activation أو سلوك نموذج مستقل أو تكامل جميع إصلاحات الإصدار.
@@ -30,7 +35,7 @@ V1 Stable عند `69079018606750312344cb3c648952b9ab72d35b` يرفض
 من checkout معزول يحتوي إصلاحات PR #88:
 
 ```text
-python -B tools/tests/drill_task_learning_rollback.py --v1-tool <exact-export>/task_learning.py
+python -B tools/tests/drill_task_learning_rollback.py --v1-tool <exact-export>/task_learning.py --target-ref <exact-40-hex-checkout-HEAD>
 ```
 
 ملف V1 المطلوب هو bytes الأصلية لـ`tools/task_learning.py` من commit أعلاه:
@@ -58,6 +63,11 @@ print(destination)
 
 يرفض التمرين أي bytes مختلفة قبل تنفيذ أداة V1، وينفّذ النسخة التي تحقق
 منها مباشرة. لا يحمّل أداة V1 من الشبكة ولا يستدعي GitHub Actions.
+يتحقق من Git root وSHA الفعلي والنظافة باستخدام Git الحقيقي؛ وإلا يفشل قبل
+إنشاء بيانات fixtures. لا يثبت ذلك أن الـrunner أو مخزن الأرشيف أو مشغّل
+التطبيق آمن تشغيليًا. يلزم مراجعة نتيجة التمرين على نفس target الـInternal
+المثبت بعد قبول المصدر/المراجعات، دون الكتابة لأي consumer.
+
 يستعمل `TemporaryDirectory` لجميع مشاريع الاختبار، ولا يقبل project path
 من المستخدم. يختبر أداة V2 المجاورة للسكريبت ويطبع hashes المصدر؛ يجب
 ربطها بـcommit/tree المراجعة عند الاحتفاظ بالنتيجة.
