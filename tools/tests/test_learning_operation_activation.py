@@ -10,6 +10,7 @@ import argparse
 import copy
 import io
 import json
+import subprocess
 import tempfile
 import unittest
 from contextlib import ExitStack, redirect_stdout
@@ -22,6 +23,10 @@ from tools import learning_development_output as ldo
 from tools import learning_effectiveness as effectiveness
 from tools import learning_pattern_analysis as pattern
 from tools import learning_review_debt_gate as debt
+
+# Keep references to the real checkout guards before fixture-level mocking.
+REAL_CLEAN_CHECKOUT = activation.assert_clean_framework_checkout
+REAL_LOADED_REF = activation.detect_loaded_framework_ref
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -195,15 +200,91 @@ class LearningOperationActivationTests(unittest.TestCase):
             self.clean.assert_not_called()
             defer.assert_not_called()
 
+    def test_router_stage_zero_rederives_critical_ledger_before_dormant_candidate(self):
+        """Stage 0 contract: derive from immutable ledgers, never stale projection."""
+        # Candidate debt guard is NOT adopted.  Core critical evidence must
+        # still stop execution when the router follows its documented preflight.
+        self.capture_event(security_or_data_critical_event=True)
+        learning = self.target / ".erei/learning"
+        projected = learning / "LEARNING_STATE.json"
+        write_json(projected, self.state)  # simulate stale LEARNING_HEALTHY
+        before = (learning / "TASK_EVENTS.jsonl").read_bytes()
+        current_path = self.target / "router_derived_state.json"
+        code, stdout = self.cli(
+            pattern.authoritative_task_learning.main,
+            ["status", "--target", str(self.target)],
+        )
+        self.assertEqual(code, 0, stdout)
+        current = json.loads(stdout)
+        self.assertEqual(current["metrics_since_last_review"]["security_or_data_critical_events"], 1)
+        self.assertEqual(current["trigger"]["level"], "IMMEDIATE_REVIEW")
+        self.assertEqual(
+            json.loads(projected.read_text(encoding="utf-8"))["metrics_since_last_review"]["security_or_data_critical_events"], 1
+        )
+        write_json(current_path, current)
+        missing_defer = self.target / "no_defer.json"
+        # Actual Stage 0 sequence: ledger -> status -> CLI debt policy.
+        # A missing Candidate adoption must not suppress the Core critical stop.
+        code, output = self.cli(
+            debt.main,
+            ["--target", str(self.target), "--state", str(current_path), "--defer", str(missing_defer)],
+        )
+        self.assertEqual(code, 3, output)
+        self.assertEqual(json.loads(output)["status"], "BLOCK_CRITICAL_SECURITY_OR_DATA_REVIEW")
+        self.clean.assert_not_called()
+        self.assertFalse(missing_defer.exists())
+        self.assertEqual((learning / "TASK_EVENTS.jsonl").read_bytes(), before)
+
+    def test_router_stage_zero_dormant_escape_cannot_claim_candidate_policy_pass(self):
+        """Escapes remain Core review signals, not optional gate PASS."""
+        self.capture_event(verification_escape=True)
+        code, stdout = self.cli(
+            pattern.authoritative_task_learning.main,
+            ["status", "--target", str(self.target)],
+        )
+        self.assertEqual(code, 0, stdout)
+        current = json.loads(stdout)
+        self.assertEqual(current["metrics_since_last_review"]["verification_escapes"], 1)
+        self.assertEqual(current["trigger"]["level"], "IMMEDIATE_REVIEW")
+        write_json(self.state_path, current)
+        code, stdout = self.cli(debt.main, ["--target", str(self.target), "--state", str(self.state_path)])
+        self.assertEqual(code, 3, stdout)
+        self.assertEqual(json.loads(stdout)["status"], "DORMANT_CANDIDATE")
+        # Router's contract handles Core verification evidence separately;
+        # the dormant CLI does not enforce optional bounded debt policy.
+
     def test_invalid_core_state_fails_closed_before_optional_policy(self):
         with self.assertRaises(debt.ReviewDebtError):
             debt.evaluate_target(self.target, {})
         self.clean.assert_not_called()
 
+    def test_active_candidate_rejects_stale_healthy_state_against_real_escape(self):
+        self.adopt(["learning_review_debt_guard"])
+        self.capture_event(verification_escape=True)
+        events_path = self.target / ".erei/learning/TASK_EVENTS.jsonl"
+        before = events_path.read_bytes()
+        # An old LEARNING_HEALTHY projection cannot conceal a newer event.
+        with self.assertRaisesRegex(debt.ReviewDebtError, "does not match authoritative ledgers"):
+            debt.evaluate_target(self.target, self.state)
+        code, output = self.cli(debt.main, ["--target", str(self.target), "--state", str(self.state_path)])
+        self.assertEqual(code, 2)
+        self.assertIn("does not match authoritative ledgers", output)
+        self.assertEqual(events_path.read_bytes(), before)
+
+    def test_active_candidate_rejects_invalid_authority_without_defer_read(self):
+        self.adopt(["learning_review_debt_guard"])
+        learning = self.target / ".erei/learning"
+        learning.mkdir(parents=True, exist_ok=True)
+        (learning / "TASK_EVENTS.jsonl").write_text("invalid-json\\n", encoding="utf-8")
+        bad_defer = self.target / "missing_defer.json"
+        with self.assertRaisesRegex(debt.ReviewDebtError, "cannot verify authoritative learning state"):
+            debt.evaluate_target(self.target, self.state, defer_path=bad_defer)
+        self.assertFalse(bad_defer.exists())
+
     def test_active_debt_policy_still_blocks_escape_and_accepts_bounded_defer(self):
         self.adopt(["learning_review_debt_guard"])
-        state = copy.deepcopy(self.state)
-        state["metrics_since_last_review"].update(material_tasks=1, tasks=1, verification_escapes=1)
+        self.capture_event(verification_escape=True)
+        state = pattern.authoritative_task_learning.authoritative_snapshot(self.target)["state"]
         self.assertEqual(debt.evaluate_target(self.target, state)["status"], "BLOCK_IMMEDIATE_REVIEW_DEBT")
         record = {
             "schema_version": 1, "defer_id": "ELD-20261015T000000Z-ABCDEF12",
@@ -219,15 +300,15 @@ class LearningOperationActivationTests(unittest.TestCase):
         write_json(path, record)
         self.assertEqual(debt.evaluate_target(self.target, state, defer_path=path, now=self.now)["status"], "PASS_BOUNDED_REVIEW_DEFER")
 
-    def capture_event(self):
+    def capture_event(self, *, verification_escape=False, security_or_data_critical_event=False):
         args = argparse.Namespace(
             task_id=None, occurrence_id=None, task_group="activation-regression",
             project_repository="example/repo", project_name="Fixture", framework_ref=PIN,
             workflow="feature-development", risk="L2", terminal_state="COMPLETE_VERIFIED",
             outcome_class="verified_success", material=True, rework_cycles=0,
-            verification_failures=0, verification_escape=False, framework_feedback_created=False,
+            verification_failures=0, verification_escape=verification_escape, framework_feedback_created=False,
             manual_workaround=False, context_gap=False, unexpected_scope_growth=False,
-            security_or_data_critical_event=False, duration_class="medium", failure_stage="none",
+            security_or_data_critical_event=security_or_data_critical_event, duration_class="medium", failure_stage="none",
             failure_subject=None, feedback_id=[], feedback_fingerprint=[], tag=[],
         )
         event = pattern.authoritative_task_learning.build_event(args)
@@ -262,8 +343,49 @@ class LearningOperationActivationTests(unittest.TestCase):
         write_json(output_path, self.output_fixture())
         code, stdout = self.cli(ldo.main, ["--target", str(self.target), "--input", str(output_path)])
         self.assertEqual((code, json.loads(stdout)["status"]), (0, "VALID"))
+        write_json(self.state_path, pattern.authoritative_task_learning.authoritative_snapshot(self.target)["state"])
         code, stdout = self.cli(debt.main, ["--target", str(self.target), "--state", str(self.state_path)])
         self.assertEqual((code, json.loads(stdout)["status"]), (0, "PASS_NO_IMMEDIATE_REVIEW"))
+
+    def test_four_guarded_clis_use_real_clean_checkout_identity(self):
+        """Exercise all four guarded entrypoints using a real Git checkout."""
+        actual_ref = REAL_LOADED_REF(ROOT)
+        self.project["framework"]["ref"] = actual_ref
+        write_json(self.target / activation.MANIFEST_PATH, self.project)
+        self.adopt()
+        adoption_path = self.target / activation.ADOPTION_PATH
+        adoption = json.loads(adoption_path.read_text(encoding="utf-8"))
+        adoption["framework_ref"] = actual_ref
+        write_json(adoption_path, adoption)
+        self.capture_event()
+        with mock.patch.object(activation, "detect_loaded_framework_ref", REAL_LOADED_REF), \
+             mock.patch.object(activation, "assert_clean_framework_checkout", REAL_CLEAN_CHECKOUT):
+            REAL_CLEAN_CHECKOUT(ROOT)
+            report_path = self.target / "report.json"
+            code, output = self.cli(
+                pattern.main, ["--target", str(self.target), "--json-output", str(report_path)]
+            )
+            self.assertEqual(code, 0, output)
+            self.assertTrue(report_path.exists())
+            code, output = self.cli(effectiveness.main, [
+                "--target", str(self.target), "--before", str(report_path),
+                "--after", str(report_path),
+            ])
+            self.assertEqual(code, 0, output)
+            self.assertEqual(json.loads(output)["causation"], "NOT_ESTABLISHED")
+            ldo_path = self.target / "ldo.json"
+            write_json(ldo_path, self.output_fixture())
+            code, output = self.cli(ldo.main, [
+                "--target", str(self.target), "--input", str(ldo_path),
+            ])
+            self.assertEqual((code, json.loads(output)["status"]), (0, "VALID"))
+            authoritative = pattern.authoritative_task_learning.authoritative_snapshot(self.target)["state"]
+            write_json(self.state_path, authoritative)
+            code, output = self.cli(debt.main, [
+                "--target", str(self.target), "--state", str(self.state_path),
+            ])
+            self.assertEqual((code, json.loads(output)["status"]), (0, "PASS_NO_IMMEDIATE_REVIEW"))
+            REAL_CLEAN_CHECKOUT(ROOT)
 
     def test_pure_artifact_validation_and_calculations_do_not_activate_workflows(self):
         self.clean.side_effect = activation.ActivationError("no runtime checkout")
@@ -277,6 +399,40 @@ class LearningOperationActivationTests(unittest.TestCase):
         self.assertEqual(effectiveness.compare(report, report)["causation"], "NOT_ESTABLISHED")
         self.assertEqual(debt.evaluate(self.state, None, self.now)["status"], "PASS_NO_IMMEDIATE_REVIEW")
         self.clean.assert_not_called()
+
+    def test_compiled_python_cache_does_not_dirty_repo_but_source_does(self):
+        # A Python import normally creates __pycache__, which must not make
+        # every subsequent governed CLI fail its clean-checkout boundary.
+        # Ignore interpreter artifacts, NOT arbitrary untracked source files.
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+            subprocess.run(["git", "init", "--quiet", str(repo)], check=True)
+            (repo / ".gitignore").write_bytes((ROOT / ".gitignore").read_bytes())
+            subprocess.run(["git", "add", ".gitignore"], cwd=repo, check=True)
+            cache = repo / "tools/__pycache__"
+            cache.mkdir(parents=True)
+            (cache / "capability_activation.cpython-312.pyc").write_bytes(b"compiled")
+            status = subprocess.run(
+                ["git", "status", "--porcelain=v1", "--untracked-files=all"],
+                cwd=repo, capture_output=True, text=True, check=True,
+            )
+            self.assertEqual(status.stdout.strip(), "A  .gitignore")
+            # A loose compiled file outside __pycache__ is not ordinary
+            # interpreter import cache; keep it visible to the clean gate.
+            (repo / "tools/activation_probe.pyc").write_bytes(b"compiled")
+            loose = subprocess.run(
+                ["git", "status", "--porcelain=v1", "--untracked-files=all"],
+                cwd=repo, capture_output=True, text=True, check=True,
+            )
+            self.assertIn("activation_probe.pyc", loose.stdout)
+            (repo / "tools/unsafe_untracked_source.py").write_text(
+                "print('probe')\\n", encoding="utf-8"
+            )
+            changed = subprocess.run(
+                ["git", "status", "--porcelain=v1", "--untracked-files=all"],
+                cwd=repo, capture_output=True, text=True, check=True,
+            )
+            self.assertIn("unsafe_untracked_source.py", changed.stdout)
 
     def test_dirty_checkout_cannot_dispatch(self):
         self.adopt()
