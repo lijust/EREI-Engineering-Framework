@@ -13,7 +13,7 @@ permissions:
 jobs:
   isolated-drill:
     if: ${{ github.event.pull_request.number == 94 && github.event.pull_request.head.repo.full_name == github.repository }}
-    runs-on: [self-hosted, Windows, X64]
+    runs-on: windows-latest
     timeout-minutes: 15
     strategy:
       fail-fast: false
@@ -25,6 +25,10 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
 
       - name: Run opt-in synthetic rollback drill with frozen V1 bytes
         shell: powershell
@@ -55,10 +59,10 @@ jobs:
               raise SystemExit("Frozen V1 source bytes failed digest verification")
           Path(os.environ["EREI_T14_V1_PATH"]).write_bytes(original)
           print("PASS frozen V1 immutable source SHA256", expected)
-          '@ | py "-$env:PYTHON_VERSION" -B -
+          '@ | python -B -
             if ($LASTEXITCODE -ne 0) { throw 'frozen V1 export failed' }
 
-            $report = & py "-$env:PYTHON_VERSION" -B tools/tests/drill_task_learning_rollback.py --v1-tool $env:EREI_T14_V1_PATH --target-ref $env:EREI_T14_TARGET
+            $report = & python -B tools/tests/drill_task_learning_rollback.py --v1-tool $env:EREI_T14_V1_PATH --target-ref $env:EREI_T14_TARGET
             if ($LASTEXITCODE -ne 0) { throw 'rollback synthetic test suite failed' }
             $result = $report | ConvertFrom-Json
             if ($result.tests_run -ne 4 -or $result.failures -ne 0 -or $result.errors -ne 0 -or $result.passed -ne $true) {
