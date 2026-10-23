@@ -15,6 +15,14 @@ import sys
 from collections import Counter
 from pathlib import Path
 
+if __package__:
+    from . import capability_activation
+else:
+    import importlib.util
+    _activation_spec = importlib.util.spec_from_file_location("_erei_capability_activation", Path(__file__).with_name("capability_activation.py"))
+    capability_activation = importlib.util.module_from_spec(_activation_spec)
+    _activation_spec.loader.exec_module(capability_activation)
+
 TOOLS_DIR = Path(__file__).resolve().parent
 
 
@@ -374,6 +382,7 @@ def _render_markdown(report: dict) -> str:
 
 
 def analyze_target(target: Path) -> dict:
+    capability_activation.require_active(target, "learning_pattern_analysis")
     try:
         snapshot = authoritative_task_learning.authoritative_snapshot(target)
     except authoritative_task_learning.LearningError as exc:
@@ -405,7 +414,10 @@ def main(argv=None) -> int:
         if not args.json_output:
             print(payload, end="")
         return 0
-    except (LearningPatternError, OSError) as exc:
+    except capability_activation.InactiveCapabilityError as exc:
+        print(json.dumps(exc.result, sort_keys=True))
+        return 3
+    except (capability_activation.ActivationError, LearningPatternError, OSError) as exc:
         print(f"ERROR: {exc}")
         return 2
 

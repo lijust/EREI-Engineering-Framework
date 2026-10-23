@@ -1,0 +1,2 @@
+# Only CPython import caches; never ignore loose .pyc source artifacts.
+__pycache__/

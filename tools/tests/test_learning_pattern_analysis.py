@@ -2,6 +2,7 @@ import importlib.util
 import pathlib
 import tempfile
 import json
+from unittest import mock
 
 MODULE = pathlib.Path(__file__).resolve().parents[1] / "learning_pattern_analysis.py"
 spec = importlib.util.spec_from_file_location("learning_pattern_analysis", MODULE)
@@ -231,7 +232,10 @@ with tempfile.TemporaryDirectory() as tmp:
     )
     projection_before = (learning / "TASK_EVENTS.jsonl").read_bytes()
     state_before = (learning / "LEARNING_STATE.json").read_bytes()
-    loaded = mod.analyze_target(target)
+    # This fixture tests ledger authority; dispatch activation is covered with
+    # the real resolver in test_learning_operation_activation.
+    with mock.patch.object(mod.capability_activation, "require_active"):
+        loaded = mod.analyze_target(target)
     assert loaded["current_epoch"]["verification_escapes"] == 1
     assert (learning / "TASK_EVENTS.jsonl").read_bytes() == projection_before == b""
     assert (learning / "LEARNING_STATE.json").read_bytes() == state_before

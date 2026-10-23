@@ -37,6 +37,14 @@ class ActivationError(RuntimeError):
     pass
 
 
+class InactiveCapabilityError(ActivationError):
+    """A project operation was denied by the existing activation resolver."""
+
+    def __init__(self, result: dict):
+        self.result = result
+        super().__init__(f"{result['status']}: {result['capability']}")
+
+
 def _read_json(path: Path, label: str) -> dict:
     try:
         value = json.loads(path.read_text(encoding="utf-8"))
@@ -387,6 +395,18 @@ def parse_args(argv=None) -> argparse.Namespace:
     parser.add_argument("--target", required=True)
     parser.add_argument("--capability", required=True)
     return parser.parse_args(argv)
+
+
+def require_active(target: Path, capability: str) -> dict:
+    """Guard a project dispatch, including calls made by another workflow/tool.
+
+    Call before reading operational inputs or creating outputs. No parent
+    workflow's adoption authorizes a different subordinate capability.
+    """
+    result = resolve_target(Path(target).resolve(), capability)
+    if result["status"] not in ACTIVE_STATUSES:
+        raise InactiveCapabilityError(result)
+    return result
 
 
 def main(argv=None) -> int:
