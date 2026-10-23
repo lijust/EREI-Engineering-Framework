@@ -1,4 +1,4 @@
-name: Self-Hosted Runner Preflight
+name: GitHub-Hosted Windows Runner Preflight
 
 on:
   push:
@@ -13,9 +13,17 @@ permissions:
 
 jobs:
   preflight:
-    runs-on: [self-hosted, Windows, X64]
+    runs-on: windows-latest
     timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.11', '3.12']
     steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
       - name: Report runner identity
         shell: powershell
         run: |
@@ -25,14 +33,12 @@ jobs:
           Write-Host "machine_name=$env:COMPUTERNAME"
           [System.Environment]::OSVersion.VersionString
 
-      - name: Verify required local toolchain
+      - name: Verify GitHub-hosted toolchain
         shell: powershell
         run: |
           git --version
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          py "-3.11" -c "import sys, encodings, ssl; print(sys.version); print(sys.executable)"
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          py "-3.12" -c "import sys, encodings, ssl; print(sys.version); print(sys.executable)"
+          python -c "import sys, encodings, ssl; print(sys.version); print(sys.executable)"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           node --version
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
@@ -45,7 +51,7 @@ jobs:
           if ([string]::IsNullOrWhiteSpace($env:RUNNER_TEMP)) {
             throw 'RUNNER_TEMP is not set'
           }
-          $probe = Join-Path $env:RUNNER_TEMP "erei-self-hosted-preflight-$env:GITHUB_RUN_ID"
+          $probe = Join-Path $env:RUNNER_TEMP "erei-github-hosted-preflight-$env:GITHUB_RUN_ID"
           New-Item -ItemType Directory -Path $probe -Force | Out-Null
           $probeFile = Join-Path $probe 'probe.txt'
           Set-Content -LiteralPath $probeFile -Value 'ok' -Encoding ascii
@@ -53,4 +59,4 @@ jobs:
             throw 'RUNNER_TEMP probe read-back failed'
           }
           Remove-Item -LiteralPath $probe -Recurse -Force
-          Write-Host 'PASS: self-hosted runner preflight'
+          Write-Host 'PASS: GitHub-hosted runner preflight'
