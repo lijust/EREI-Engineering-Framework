@@ -6,8 +6,9 @@
 | D-20261023-02 | الاعتماد على موافقة المالك الواسعة لتنفيذ الدمج قبل إغلاق مراجعات P1 الثلاث | **استثناء حوكمي موثق** وليس `APPROVED` مستقلًا؛ threads #84/#86/#88 مفتوحة حتى reviewer disposition مرتبط بالـSHA، بلا إغلاق شكلي |
 | D-20261023-03 | قبول source fail-closed الخاص بـF02 لمنع membership خاطئة في التاريخ المختلط | **فقدان توافق غير مشروط مع App القديم**؛ 35 V2 وأربع anomalies تبقى BLOCKED وتتطلب سلطة/استعادة منفصلة |
 | D-20261023-04 | اختبارات DORMANT وReal Git checkout وF14 proof اجتازت source tree 3.11/3.12؛ لا تحويلها إلى دليل runtime model | router Stage0 في Markdown سياسة، لا dispatch تنفيذي كامل؛ F14 `effectiveness=NOT_ESTABLISHED`، `causation=NOT_ESTABLISHED` |
-| D-20261023-05 | فصل نتيجة exact-source tests عن final-main commit CI وعن صالحية الإصدار | final-main Windows queued؛ Ubuntu failed بلا خطوات؛ لا تخمين billing أو offline؛ الحصول على evidence الفعلي قبل تحديث الحالة |
+| D-20261023-05 | فصل نتيجة exact-source tests عن final-main commit CI وعن صالحية الإصدار | **Final-main 58034ae3**: Bootstrap **448 PASS لكل Python3.11/3.12**، Assurance **448 tools+80 eval PASS**، مع `stable_ready=false`. Ubuntu Task Learning failed بلا test steps؛ لا يعد فشل كود مثبتًا، ولا تعني نتائج CI سلطة إصدار. |
 | D-20261023-06 | بقاء `DONE=27/237` baseline وزني محفوظ حتى تسوية acceptance بعد merges | 6 source streams merged ≠ 6 DONE آليًا؛ **Internal NOT QUALIFIED، Stable BLOCKED**، لا تعديل pin/freeze/security/production |
+| D-20261023-07 | قبول **نتيجة** تجربة Rollback معزولة لا قبول إصدار Internal | PR #94 DRAFT؛ GitHub CI #39918441589 **4/4 PASS** على Python 3.11 **و** 3.12، source V1 SHA-256 مثبت، لكن external custody/concurrent writers/consumer rollback غير مثبتة؛ القبول الفني المستقل باقٍ |
 
 [Source tracker #68](https://github.com/lijust/EREI-Engineering-Framework/issues/68) هو الحالة التنفيذية الحية؛ [Stable authority #31](https://github.com/lijust/EREI-Engineering-Framework/issues/31) هو المرجع الحاكم. النصوص المؤرخة أدناه **تاريخية** ولا يصح اقتباس `CURRENT` منها دون ذكر تاريخها.
 
