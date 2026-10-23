@@ -1,4 +1,6 @@
 import json
+import os
+import shlex
 import subprocess
 import sys
 import unittest
@@ -27,7 +29,7 @@ class ReferenceOracleExecutionTests(unittest.TestCase):
                 "run",
                 str(CASES),
                 "--adapter",
-                f"{sys.executable} {ORACLE}",
+                (subprocess.list2cmdline([sys.executable, str(ORACLE)]) if os.name == "nt" else shlex.join([sys.executable, str(ORACLE)])),
             ],
             cwd=ROOT,
             text=True,

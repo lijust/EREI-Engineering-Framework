@@ -513,7 +513,14 @@ def validate_binding(
 
     try:
         response = runner.validate_adapter_response(match["response"], case["expectations"])
-        scorer_results = [runner.score(expectation, response) for expectation in case["expectations"]]
+        # New simulations need the bound scenario. Preserve replay of historical
+        # runners whose legacy scorer interface accepts only two arguments.
+        scorer_results = [
+            runner.score(expectation, response, case["input"])
+            if expectation["type"] == "behavioral_simulation"
+            else runner.score(expectation, response)
+            for expectation in case["expectations"]
+        ]
     except Exception as exc:
         raise ExactTargetEvidenceError(f"retained response cannot be revalidated: {exc}") from exc
     recomputed_status = "pass" if all(item[0] for item in scorer_results) else "fail"
