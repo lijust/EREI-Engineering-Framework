@@ -517,6 +517,34 @@ def _reviewed_occurrences(events: list[dict], reviews: list[dict]) -> tuple[set[
             if cutoff < legacy_cutoff or cutoff > len(events):
                 raise LearningError("invalid legacy learning review cutoff")
             selected = events[legacy_cutoff:cutoff]
+            # V1 positional cutoffs bind no occurrence IDs or digest.
+            # A pre-fix identity sort may have moved a V2 event inside
+            # this span. Without external original-order provenance,
+            # accepting it could silently re-close the wrong event.
+            unproven = sorted(
+                _occurrence(event) for event in selected
+                if event["schema_version"] == 2
+            )
+            if unproven:
+                raise LearningError(
+                    "legacy V1 review includes V2 occurrences without original-order provenance: "
+                    + ", ".join(unproven)
+                )
+            # A V1 positional cutoff must not re-close occurrences explicitly
+            # reviewed by an earlier V2 review in a mixed review history.
+            overlap = sorted({_occurrence(event) for event in selected} & reviewed)
+            if overlap:
+                raise LearningError("review re-closes occurrences: " + ", ".join(overlap))
+            # A past V1 cutoff cannot close an occurrence recorded after
+            # the review itself. This catches a common pre-sorted projection
+            # failure even when all row fingerprints and immutable files match.
+            closure = datetime.fromisoformat(review["closed_at"].replace("Z", "+00:00"))
+            future = sorted(
+                _occurrence(event) for event in selected
+                if datetime.fromisoformat(event["recorded_at"].replace("Z", "+00:00")) > closure
+            )
+            if future:
+                raise LearningError("legacy review covers event recorded after closure: " + ", ".join(future))
             legacy_cutoff = cutoff
         else:
             ids = review["reviewed_occurrence_ids"]
