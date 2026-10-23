@@ -3,6 +3,10 @@ name: Task Learning Tests
 on:
   pull_request:
     paths:
+      - "CAPABILITIES.json"
+      - "tools/capability_activation.py"
+      - "tools/tests/test_capability_activation.py"
+      - "tools/tests/test_learning_operation_activation.py"
       - "schemas/task-learning-event.schema.json"
       - "schemas/learning-state.schema.json"
       - "schemas/learning-review.schema.json"
@@ -31,6 +35,10 @@ on:
   push:
     branches: [main]
     paths:
+      - "CAPABILITIES.json"
+      - "tools/capability_activation.py"
+      - "tools/tests/test_capability_activation.py"
+      - "tools/tests/test_learning_operation_activation.py"
       - "schemas/task-learning-event.schema.json"
       - "schemas/learning-state.schema.json"
       - "schemas/learning-review.schema.json"
@@ -90,6 +98,9 @@ jobs:
 
       - name: Run task learning unit tests
         run: python -m unittest tools.tests.test_task_learning -v
+
+      - name: Run project capability activation boundary tests
+        run: python -m unittest tools.tests.test_capability_activation tools.tests.test_learning_operation_activation -v
 
       - name: Run learning pattern analysis tests
         run: python tools/tests/test_learning_pattern_analysis.py

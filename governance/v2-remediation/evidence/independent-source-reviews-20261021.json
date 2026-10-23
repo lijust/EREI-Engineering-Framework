@@ -1,0 +1,159 @@
+{
+  "recorded_at": "2026-10-21T12:33:28.764Z",
+  "kind": "Independent subagent source reviews; not GitHub principal approval or deployed enforcement",
+  "reviews": [
+    {
+      "pr": 91,
+      "head": "a132e104c6881d7dc4f1002862741bc33a0da748",
+      "reviewer": "authority_review_20261021",
+      "status": "COMPLETE_NO_NEW_ACTIONABLE_FINDINGS",
+      "changed_blobs_matched": 10,
+      "commands": [
+        "py -3.12 -B -m unittest tools.tests.test_release_authority_boundaries tools.tests.test_live_server_enforcement tools.tests.test_assurance_enforcement tools.tests.test_stable_readiness.StructuredApprovalReadinessTests.test_authenticated_reviews_do_not_pass_readiness_authority tools.tests.test_stable_readiness.StructuredApprovalReadinessTests.test_readiness_propagates_missing_independent_authority -v"
+      ],
+      "tests": 29,
+      "seconds": 3.304,
+      "exit_code": 0,
+      "limits": [
+        "Source-only deny-by-default correction",
+        "No positive authority verifier or deployed policy established"
+      ]
+    },
+    {
+      "pr": 92,
+      "head": "a42f9413a98d829ce51b48bed38d7294f931bae3",
+      "reviewer": "authority_review_20261021",
+      "status": "COMPLETE_NO_NEW_ACTIONABLE_FINDINGS",
+      "changed_blobs_matched": 3,
+      "commands": [
+        "py -3.11 -B -m unittest tools.tests.test_ci_test_partition tools.tests.test_ci_event_dedup_contract -v",
+        "py -3.12 -B -m unittest tools.tests.test_ci_test_partition tools.tests.test_ci_event_dedup_contract -v"
+      ],
+      "tests_per_version": 11,
+      "seconds": [
+        2.657,
+        2.645
+      ],
+      "exit_codes": [
+        0,
+        0
+      ],
+      "limits": [
+        "No live rapid-update cancellation experiment",
+        "No controlled causal CI saving measurement",
+        "No branch enforcement or runner isolation verified"
+      ]
+    },
+    {
+      "pr": 93,
+      "head": "85ead2121ecb03454495200a475ca9f3f129398e",
+      "reviewer": "intervention_review_20261021",
+      "status": "COMPLETE_NO_NEW_ACTIONABLE_FINDINGS",
+      "all_blobs_matched": 311,
+      "command": "python.exe -B -m unittest tools.tests.test_learning_intervention tools.tests.test_learning_effectiveness_validation tools.tests.test_prospective_cycle_status tools.tests.test_learning_operation_activation tools.tests.test_capability_activation",
+      "python_versions": [
+        "3.11.9",
+        "3.12.10"
+      ],
+      "tests_per_version": 72,
+      "seconds": [
+        0.374,
+        0.37
+      ],
+      "exit_codes": [
+        0,
+        0
+      ],
+      "additional_adversarial_sweep": {
+        "cases_per_version": 5832,
+        "dimensions": "3 rows; prospective/legacy_assumed and true/false/null exposure and recurrence",
+        "status": "PASS_REPORTED_BY_REVIEWER",
+        "raw_script_retained_in_subagent_transcript_only": true
+      },
+      "limits": [
+        "No evidence authenticity or omitted-cohort detection",
+        "No causal effectiveness proof",
+        "Linux CI remains billing-blocked"
+      ]
+    },
+    {
+      "pr": 94,
+      "head": "a20cccf9447b46bc87e38b568bae5662c84acf02",
+      "reviewer": "rollback_review_20261021",
+      "status": "COMPLETE_NO_NEW_ACTIONABLE_FINDINGS",
+      "all_blobs_matched_before_and_after": 315,
+      "v1_tool_sha256": "336037ea356c91d780f61684889b7c92c5d2bde21a8fff2591fec95e559be8f2",
+      "command": "python.exe -B tools/tests/drill_task_learning_rollback.py --v1-tool <verified V1 tools/task_learning.py>",
+      "python_versions": [
+        "3.11.9",
+        "3.12.10"
+      ],
+      "tests_per_version": 3,
+      "seconds": [
+        0.401,
+        0.449
+      ],
+      "exit_codes": [
+        0,
+        0
+      ],
+      "limits": [
+        "Opt-in drill; not executed by ordinary CI discovery",
+        "Not final immutable Internal target qualification",
+        "No concurrent-writer/disk-full/disaster-recovery proof"
+      ]
+    },
+    {
+      "pr": 95,
+      "head": "e10d3c345062d166c4447ed7ca7131470bcc1448",
+      "reviewer": "benchmark_source_review_20261021",
+      "status": "INCOMPLETE_USAGE_LIMIT",
+      "changed_blobs_matched": 7,
+      "reported_unit_tests_per_version": 27,
+      "reported_python_versions": [
+        "3.11",
+        "3.12"
+      ],
+      "limits": [
+        "No final independent review verdict",
+        "Subsequent assertion-site fix requires new review"
+      ]
+    },
+    {
+      "pr": 88,
+      "head": "9ca0fd14ca2e4a60def23f9e7df11c827a961135",
+      "reviewer": "authority_review_20261021",
+      "status": "NOT_COMPLETED_USAGE_LIMIT",
+      "limits": [
+        "No new review acceptance claimed"
+      ]
+    },
+    {
+      "pr": 95,
+      "head": "da9b5160d8fc9789fb878683b24d3f287e759483",
+      "base": "e10d3c345062d166c4447ed7ca7131470bcc1448",
+      "reviewer": "intervention_review_20261021",
+      "status": "NARROW_FIX_REVIEW_COMPLETE_NO_NEW_ACTIONABLE_FINDINGS",
+      "changed_blobs_matched": 4,
+      "command": "python.exe -B -m unittest evals.tests.test_benchmark_accounting evals.tests.test_calibration_packages",
+      "python_versions": [
+        "3.11.9",
+        "3.12.10"
+      ],
+      "tests_per_version": 28,
+      "seconds": [
+        0.216,
+        0.273
+      ],
+      "exit_codes": [
+        0,
+        0
+      ],
+      "limits": [
+        "Only assertion-site delta reviewed",
+        "Full benchmark preparation review remains incomplete",
+        "No hostile-output authentication or model evaluation"
+      ]
+    }
+  ]
+}

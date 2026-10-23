@@ -139,6 +139,12 @@ def validate(data: object) -> dict:
         "completed_steps": sum(status == "completed" for status in statuses),
         "pending_steps": sum(status == "pending" for status in statuses),
         "blockers": blockers,
+        # This validator checks the declared step-reference contract. A merged
+        # implementation/adoption and a referenced outcome do not prove effect.
+        "evidence_level": "DECLARED_STEP_REFERENCES",
+        "cohort_exposure": "NOT_ASSESSED",
+        "effectiveness": "NOT_ESTABLISHED",
+        "causation": "NOT_ESTABLISHED",
     }
 
 

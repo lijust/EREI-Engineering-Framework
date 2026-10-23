@@ -1,51 +1,23 @@
 # Assurance Enforcement Boundary
 
-## Status
+## Verified in-repository state (2026-10-23)
 
-VNext assurance hardening provides repository-enforced validation gates, but GitHub branch-level enforcement is not currently available for this private repository on the active GitHub plan.
+The public `lijust/EREI-Engineering-Framework` `main` branch is protected by the active GitHub Ruleset **EREI-Main-Protection** (ID `25712179`). It blocks deletion and non-fast-forward updates, requires a pull request, and enforces the **GitHub Actions app-authenticated `assurance` check** with `strict_required_status_checks_policy=true`. There are no bypass actors. The Ruleset currently requires **zero independent approving reviews**. This is real repository/PR CI enforcement, **not proof of a protected immutable workflow identity, protected release authority, independent security approval or consumer-side release admission**.
 
-## In-repository enforcement
+## In-repository enforcement and scheduling
 
-The Framework runs `Framework Assurance Gate` on **all pull requests** (not path-filtered), plus on pushes to **`main`** and **`release/**`** for exact-commit assurance evidence. A direct push to `hardening/**` **without** an open/synchronized pull request does **not** trigger this gate; once a PR exists, its `pull_request` event receives the gate. The previous duplicate `hardening/**` push trigger is deliberately removed for CI efficiency. For superseded PR heads, only the latest check is retained; every main/release push run stays eligible and receives its own concurrency key. A successful PR check does not substitute for an authenticated successful `main` push or independent external admission.
+The Framework runs `Framework Assurance Gate` on **all pull requests** (not path-filtered), and each push to **`main`** and **`release/**`**. A direct push to `hardening/**` **without** an open/synchronized pull request does not trigger this workflow; with a PR, the `pull_request` event runs the required aggregate check. The previous extra `hardening/**` push event is removed to prevent duplicate checks. A distinct **main/release push run** retains its own unique `run_id` concurrency group, while an updated PR cancels only its superseded PR check. No cross-event cancellation of immutable push-side evidence is authorized.
 
-It verifies, at minimum:
+All Framework public PR Windows checks execute on GitHub-hosted `windows-latest` rather than personal self-hosted runners. Python setup and read-only checkout remain scoped as in [the hosted CI runbook](../runbooks/PUBLIC_GITHUB_HOSTED_CI.md). `Project Bootstrap Tests` retains its two Python 3.11/3.12 matrix jobs and path-filtered triggers; Bootstrap is **not** a global required status check because it does not run on every PR.
 
-- Python compilation for Framework tooling;
-- parseability of published JSON contracts;
-- all Framework tool unit tests;
-- eval harness unit tests;
-- validation of every machine-readable eval suite;
-- execution of published evaluation cases at the explicitly labeled `reference_contract` assurance level (the current full reference suite reports **75 synthetic cases**, not real model proof);
-- a separate report of retained `exact_target_runtime` behavioral evidence coverage;
-- structured central feedback decisions;
-- the last Stable release manifest;
-- the Stable/Candidate capability registry.
+The aggregate `assurance` check performs compilation, machine contract verification, full tool unit tests, eval harness tests, release evidence/readiness checks, and publishes **75 synthetic cases** at `reference_contract` level. Those 75 are *not* model-executed target evaluations. For VNext Task Learning V2, the frozen scope requires **13 exact-target behavioral cases**, signed independent evidence, verified effective release enforcement and final Architecture/Security approvals. Historical evidence is not silently upgraded.
 
-The workflow is intentionally not path-filtered. A governance-only change cannot avoid this aggregate gate.
+## Independent release authority and limitation
 
-## External enforcement limitation
+GitHub's branch Ruleset validates the mutable named `assurance` check but is **not by itself** an immutable workflow-source trust anchor. An attacker with appropriate repository permissions could attempt to change the workflow while preserving the same check name. The external verifier must independently bind trusted workflow contents, run/attempt/job/source identity, actual candidate SHA, separated approvers and consumer-side rejection; `tools/independent_actions_source.py` intentionally does not claim consumer enforcement or runner hardware attestation. The live `server_enforcement_satisfied` remains false until authenticated, governed T11 evidence exists.
 
-As observed on 2026-09-07:
+Do not infer Stable qualification or Internal adoption from green checks. The current genuine model evidence is 0/13, effective Stable enforcement remains unsatisfied, and independent final approvals are deferred. A real measured prospective cycle is also required before any claim of improved effectiveness or causality.
 
-- `main` reports `protected=false` and required status-check enforcement is off;
-- repository ruleset access returns GitHub HTTP 403 with the platform response: `Upgrade to GitHub Pro or make this repository public to enable this feature.`
+## Safe operation and rollback
 
-Therefore the repository can define and run CI gates, but cannot currently prove that GitHub itself prevents a maintainer from bypassing them when writing/merging to `main`.
-
-This limitation is **not** treated as an application or Framework code defect, and it must not be hidden by describing CI presence as branch protection.
-
-## Release consequence
-
-Until branch/ruleset enforcement becomes available and is enabled, the next assurance release remains `candidate`.
-
-A future V2 Stable declaration also requires all other V2 Stable gates, including **13 exact-target behavioral cases in the frozen two-suite Task Learning V2 scope**, authenticated independent runtime evidence, a genuine measured prospective learning cycle, and externally enforced release/consumer admission accepted by independent Architecture and Security reviewers. CI and reference-contract checks alone are insufficient.
-
-## Safe fallback while unavailable
-
-Until GitHub enforcement becomes available:
-
-1. use pull requests for Framework changes;
-2. require the aggregate Assurance Gate to be green before an approved merge;
-3. keep VNext status machine-readably `candidate`;
-4. never treat a successful direct push as equivalent to an approved release;
-5. record any exceptional bypass explicitly in release evidence rather than silently normalizing it.
+Always merge through a PR with a fresh green exact-head `assurance` check. Do not grant unqualified bypasses, delete source pins, or promote private project/consumer data through this repository. The CI dedup source change only affects event scheduling; a rollback restores the `hardening/**` push trigger and removes the two concurrency blocks, leaving Ruleset protections and both Python coverage unchanged.

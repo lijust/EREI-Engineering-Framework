@@ -28,8 +28,8 @@ permissions:
 
 jobs:
   runtime-adapter-contract:
-    runs-on: [self-hosted, Windows, X64]
-    timeout-minutes: 5
+    runs-on: windows-latest
+    timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
@@ -37,21 +37,27 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
-      - name: Verify local Python
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Verify GitHub-hosted Python
         shell: powershell
         run: |
-          py "-${{ matrix.python-version }}" -c "import sys, encodings, ssl; print(sys.version); print(sys.executable)"
+          python -c "import sys, encodings, ssl; print(sys.version); print(sys.executable)"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Compile validator
         shell: powershell
-        run: py "-${{ matrix.python-version }}" -m py_compile tools/validate_runtime_adapter.py tools/tests/test_validate_runtime_adapter.py
+        run: python -m py_compile tools/validate_runtime_adapter.py tools/tests/test_validate_runtime_adapter.py
 
       - name: Run validator unit tests
         shell: powershell
-        run: py "-${{ matrix.python-version }}" -m unittest tools.tests.test_validate_runtime_adapter -v
+        run: python -m unittest tools.tests.test_validate_runtime_adapter -v
 
       - name: Validate candidate fixture
         shell: powershell
-        run: py "-${{ matrix.python-version }}" tools/validate_runtime_adapter.py evals/fixtures/runtime-adapter-candidate.json
+        run: python tools/validate_runtime_adapter.py evals/fixtures/runtime-adapter-candidate.json
