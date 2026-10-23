@@ -1,0 +1,96 @@
+{
+  "recorded_at": "2026-10-22T00:44:52.094Z",
+  "kind": "Subagent source review; not release principal approval",
+  "reviews": [
+    {
+      "pr": 88,
+      "head": "9ca0fd14ca2e4a60def23f9e7df11c827a961135",
+      "base": "3545df37a90695a588ce5ced4a5a1327ea3d803d",
+      "reviewer": "authority_review_20261021",
+      "status": "COMPLETE_NO_NEW_ACTIONABLE_FINDINGS",
+      "verified_local_tree": "verification/f03",
+      "all_blobs_matched": 313,
+      "changed_blobs": {
+        "tools/plan_task_learning_migration.py": "737624d6fa2a7abbec63c9def81673ddb7bf9a40",
+        "tools/tests/test_plan_task_learning_migration.py": "0bf271f31602c0da27a57e7926be13c803e53e60",
+        "runbooks/TASK_LEARNING_MIGRATION_PREFLIGHT.md": "8c6586a54b7bda108725b0f7d958e343cf2174f0"
+      },
+      "command": "py -3.12 -B -m unittest tools.tests.test_plan_task_learning_migration tools.tests.test_task_learning_legacy tools.tests.test_task_learning_order -v",
+      "tests": 24,
+      "seconds": 0.351,
+      "exit_code": 0,
+      "retained_app": {
+        "records": 155,
+        "v1": 120,
+        "v2": 35,
+        "missing_immutable_authorities": 35,
+        "anomalies": [
+          7,
+          12,
+          14,
+          15
+        ],
+        "status": "BLOCKED",
+        "proposed_writes": 0,
+        "exit_code": 2,
+        "source_generation": "a5aaef2b757da95d4812f2b21d16c59cb29d74a7edff50419147813785c5c10f",
+        "snapshot_files_unchanged": 4
+      },
+      "limits": [
+        "Diagnostic preflight only; no apply mode or migration authorization",
+        "Historical authenticity not inferred from fingerprints/schema",
+        "Generation comparison is not an adversarial writer lock",
+        "workstreams/data contained stale files; not used for review or tests"
+      ]
+    },
+    {
+      "pr": 95,
+      "head": "da9b5160d8fc9789fb878683b24d3f287e759483",
+      "reviewer": "benchmark_source_review_20261021",
+      "status": "COMPLETE_NO_OPEN_BLOCKING_FINDINGS",
+      "scope": "All seven preparation files at e10 plus complete assertion-site delta to da9",
+      "tests": "27 per version at e10; delta read, plus 28 per version independently rerun by intervention reviewer",
+      "limits": [
+        "Source preparation only; execution remains BLOCKED",
+        "Reviewer did not rerun full consumer calibration or CI for this full review"
+      ]
+    },
+    {
+      "pr": 95,
+      "head": "d62246a8ab77c89d0732efc0152411b5350d2581",
+      "reviewer": "benchmark_source_review_20261021",
+      "status": "APP03_DELTA_COMPLETE_NO_BLOCKING_FINDINGS",
+      "evidence": "verification-app03-20261022.json"
+    },
+    {
+      "task": "APP-04",
+      "source_commit": "6d32e7a14a4324dbdea228f695d6b75e0b8bd246",
+      "reviewer": "benchmark_source_review_20261021",
+      "status": "KEEP_PROPOSAL_FIXTURE_NOT_PREPARED",
+      "scope": "34 developer-validation tests; not all 417 repository tests",
+      "evidence": [
+        "project-id-policy.test.js:20-21 checks source text; 67-69 reads historical JSON counts",
+        "missing-project-insert-contract-readiness.test.js:80-86 provides inventory instead of calling Inventory",
+        "master-write-execution-contract.test.js:130-143 tests parsing/materialization of preassigned IDs",
+        "MissingProjectInsertReadiness.gs:167-168 computes preview; MissingProjectMasterWriteContract.gs:170-174 is separate allocation path"
+      ],
+      "recommendation": "Add a small behavioral fake-sheet test for max+1, invalid/duplicate/safe-integer inputs before preparing this task. A plannedRow no-reservation test alone must not be called allocator proof.",
+      "execution": "Read-only source analysis; no mutation executed"
+    },
+    {
+      "pr": 89,
+      "reviewer": "scoring_review_20261022",
+      "old_head": "0b2f9a517215a5b0070617e9c9312c6377d0c218",
+      "head": "41a33eadd497bd6bd9795755a33bea14dd2850cb",
+      "status": "F05_R1_FIXED_AND_DELTA_REVIEW_ACCEPTED",
+      "evidence": "verification-f05-reason-20261022.json",
+      "limits": [
+        "Deterministic contract only; no genuine AI or release principal approval"
+      ]
+    }
+  ],
+  "limitations": [
+    "No independent release signing principal approval",
+    "No paid AI, workflow activation or source edits by reviewers"
+  ]
+}

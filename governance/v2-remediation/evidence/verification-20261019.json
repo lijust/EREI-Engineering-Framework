@@ -1,0 +1,707 @@
+{
+  "schema_version": 1,
+  "kind": "local-remediation-verification-not-release-attestation",
+  "recorded_at": "2026-10-19T19:06:18.488Z",
+  "base": "72d49658524fbce6145783cd52297c53edbb2c95",
+  "aggregate_source": {
+    "kind": "isolated-source-integration-not-release",
+    "base": "72d49658524fbce6145783cd52297c53edbb2c95",
+    "source_prs": [
+      83,
+      84,
+      85,
+      86,
+      87,
+      88,
+      89,
+      91
+    ],
+    "manual_merge": [
+      "learning/README.md: activation contract plus legacy positional review recovery section"
+    ],
+    "files": [
+      {
+        "path": ".github/workflows/task-learning-tests.yml",
+        "sha256": "ab57a8ff327a06ef286f9139bb61dd9b27b886589496641c767608fa0445e1dd"
+      },
+      {
+        "path": "agents/chief-engineer/AGENT.md",
+        "sha256": "b08fb6f32c295413bc6c0214d0ed811196556f2cd9b5738b4d56656365a393fb"
+      },
+      {
+        "path": "evals/BEHAVIORAL_SIMULATION.md",
+        "sha256": "dd9a5c4a533625eba9fbe05717acf8807efffadb4fb8d487be24136562c41307"
+      },
+      {
+        "path": "evals/README.md",
+        "sha256": "b59348af38237f2017b13d4ef6e2a2129093d321a58f52534a73a14ef480c8f4"
+      },
+      {
+        "path": "evals/adapters/EXACT_TARGET_BLIND_PROTOCOL_V2.md",
+        "sha256": "2a8dae7bdc6f34a1fd1c37d332e8cd1205917c04632230d850ed6c4d115167a9"
+      },
+      {
+        "path": "evals/adapters/copilot_cli_exact_target.py",
+        "sha256": "e2f76c067abe411355ab66ade6212f56bc13b1343d8a8a21c293563cb4dd9769"
+      },
+      {
+        "path": "evals/cases/candidate-capability-activation.eval.json",
+        "sha256": "603702f1b15e7388859e6907d4a4b3d77d95111e5445da49f34e1b6b81915dae"
+      },
+      {
+        "path": "evals/cases/learning-to-development.eval.json",
+        "sha256": "71033ca2cc18f98d1dfef58ebf903a7da29a1f7fc59c902916bac802fe110d58"
+      },
+      {
+        "path": "evals/cases/task-learning-review.eval.json",
+        "sha256": "9fb820e1f6c9dab308f116870e262c4b26c214726996b5b27839ff1450bfd38a"
+      },
+      {
+        "path": "evals/exact_target_run.py",
+        "sha256": "641c8dc416392e5a26baeeb4ae4385c4bd1678e2057a60f248cb3ca01f41edba"
+      },
+      {
+        "path": "evals/fixtures/reference_oracle_adapter.py",
+        "sha256": "58c59547cae8c6489c6a3acde3319b0d7f8f7938e259893b6c410f9deaa23cdc"
+      },
+      {
+        "path": "evals/runner.py",
+        "sha256": "8a1882807c5036b2a80cd4dbd7a254e712ebeb38833b54931db155aa8d13212f"
+      },
+      {
+        "path": "evals/schema/eval-case.schema.json",
+        "sha256": "defb675e933cadac5409c6489836b6970c1a88bfecda82118866421007969da7"
+      },
+      {
+        "path": "evals/tests/test_behavioral_simulation.py",
+        "sha256": "b50049914cfe6a494147a7ddbe98086032932254af5e0346f1c221011beb3f82"
+      },
+      {
+        "path": "evals/tests/test_reference_oracle.py",
+        "sha256": "8f6ccd40dfa8638f77295100c9ee6a7d8352a1a96d141877a6d687939f5b9ad1"
+      },
+      {
+        "path": "evals/tests/test_runner.py",
+        "sha256": "5d5332f8d72ddc561cf44ec9a5d81dd2c0f310007938b188e7c4b6877bb9917a"
+      },
+      {
+        "path": "learning/README.md",
+        "sha256": "90e35839810833d22460f273c24f05e98dd066ec62cd3e349db72b93645c35aa"
+      },
+      {
+        "path": "runbooks/RELEASE_AUTHORITY_BOUNDARIES.md",
+        "sha256": "84976384528172c3ad0cd03e6ee3cab198fded6f4c8f4ef6ac025111445378a2"
+      },
+      {
+        "path": "runbooks/TASK_LEARNING_MIGRATION_PREFLIGHT.md",
+        "sha256": "9e7d908c3f0db7f4e6c71487c4b75470633aed77dac359580e964081c1c76770"
+      },
+      {
+        "path": "tools/assurance_enforcement.py",
+        "sha256": "cc5e73502bbc78868b5815f0d5c349e424084abbda6fa395f6c37bc9453c3738"
+      },
+      {
+        "path": "tools/capability_activation.py",
+        "sha256": "6baa7a0d3d557665347c901d206479c1645dd6dd34673329f98153e5268b62ab"
+      },
+      {
+        "path": "tools/exact_target_evidence.py",
+        "sha256": "e8e0b9d80655e7b73278a245b4bee7e8b0c1a671f765c9e12a285757e0675f67"
+      },
+      {
+        "path": "tools/learning_development_output.py",
+        "sha256": "e96c27d9d8566828ccf744cafdd8b7bcd8184536c6b2f1896ecc561d0588a6e9"
+      },
+      {
+        "path": "tools/learning_effectiveness.py",
+        "sha256": "6996e371beea8d17437d0c0785f7c7b6e7b3607f4631d6475b61f47f020a4d59"
+      },
+      {
+        "path": "tools/learning_pattern_analysis.py",
+        "sha256": "77332afcd66e95b5d75fe63b378f415ed0b4db2fdce1c3f467df05e35b224e5c"
+      },
+      {
+        "path": "tools/learning_review_debt_gate.py",
+        "sha256": "66e08852dc2aed40ab55b2715548686c999a74d4039550574134a70239b58cd7"
+      },
+      {
+        "path": "tools/plan_task_learning_migration.py",
+        "sha256": "471272aacbc6fee88e992232aeeba356c91e0eb9120d585ce70d72b7df1a2a1f"
+      },
+      {
+        "path": "tools/release_approval.py",
+        "sha256": "9044e8fcc6339ab89576fd49e2dd87fc11895078116f293a81eca7c64ddf5197"
+      },
+      {
+        "path": "tools/release_assurance.py",
+        "sha256": "914df99a79352cc34eebd0d3c28c084efc57a76156917005a15f9676dceea3d2"
+      },
+      {
+        "path": "tools/task_learning.py",
+        "sha256": "84882c6cd0de34aa57cdb643fb5c1e2979426bbb0e6167805ad665cf1156464e"
+      },
+      {
+        "path": "tools/tests/fixtures/task-learning-v1.json",
+        "sha256": "1d566a6cb8b64f6e1cabb010e48d32eda77797bbb4442711db88a90c246d215f"
+      },
+      {
+        "path": "tools/tests/test_assurance_enforcement.py",
+        "sha256": "f90345c7ab3f6fdf27ac82c050172d1397ec98c7e3ddc862d6764140c1766379"
+      },
+      {
+        "path": "tools/tests/test_learning_effectiveness_validation.py",
+        "sha256": "41fd83286f38913fad32c2ee65d1920eb767387f614c3b7fb7fa2f4ce237faae"
+      },
+      {
+        "path": "tools/tests/test_learning_operation_activation.py",
+        "sha256": "01af269b7c1f40f480d5fc0bf900077410fa5253f30808050981170412b0e7a5"
+      },
+      {
+        "path": "tools/tests/test_learning_pattern_analysis.py",
+        "sha256": "abaf48ecf1556b944c53538631208446ebb8f0e861b0ea6065d0c3fd1cca689b"
+      },
+      {
+        "path": "tools/tests/test_live_server_enforcement.py",
+        "sha256": "3b63b303e204d79d6ee4a9db13b562b4836b2c7c3190c1278c1c9a4ddfd8db5e"
+      },
+      {
+        "path": "tools/tests/test_plan_task_learning_migration.py",
+        "sha256": "5abab509b84f3adb8c46dcf174ea719bf6319f8a0bb145a520ec271db7bcc6f1"
+      },
+      {
+        "path": "tools/tests/test_release_assurance.py",
+        "sha256": "0684fae1aa0000a09da3ba5d2a40bec161a11d4ad2fac175c7dd80c29246577a"
+      },
+      {
+        "path": "tools/tests/test_release_authority_boundaries.py",
+        "sha256": "b7f80a13793f33cafdfd71da75359c8ed8dc952c733ed2966e114e980f982206"
+      },
+      {
+        "path": "tools/tests/test_task_learning_legacy.py",
+        "sha256": "ff2fe57d20699348447319d25bc8819c905aa790c015a1723574ae3f44933843"
+      },
+      {
+        "path": "tools/tests/test_task_learning_order.py",
+        "sha256": "30ffde213cd78de8894128b6406cfa17f4a05f6e8524f02706db287c1c63029c"
+      },
+      {
+        "path": "workflows/learning-review/WORKFLOW.md",
+        "sha256": "9950d2007e238893ff64cfa27bc7eb479ced29e95a3f7fe9e6ac155ad7132adf"
+      },
+      {
+        "path": "workflows/learning-to-development/WORKFLOW.md",
+        "sha256": "5f1359d0f0331486a00095b3ea2ce0935ca9acfbfaf2a719cdfa95409467caae"
+      },
+      {
+        "path": "workflows/router/WORKFLOW.md",
+        "sha256": "5d3a5b77d0fc1dad5aa64b1569ab4f6a7635feda10f790459bcc5d9e776db601"
+      }
+    ],
+    "pr_heads": [
+      {
+        "pr": 83,
+        "sha": "6054baf7f9b926203d47f94db1adf909810b88ef"
+      },
+      {
+        "pr": 84,
+        "sha": "3545df37a90695a588ce5ced4a5a1327ea3d803d"
+      },
+      {
+        "pr": 85,
+        "sha": "084c3ab0bf0dd9e5afcadf074c723533fe190561"
+      },
+      {
+        "pr": 86,
+        "sha": "0555feb863412db1032b229c48073b2a9eb83479"
+      },
+      {
+        "pr": 87,
+        "sha": "e779b5fdaa347665355e89439b72820313dfcf20"
+      },
+      {
+        "pr": 88,
+        "sha": "9ca0fd14ca2e4a60def23f9e7df11c827a961135"
+      },
+      {
+        "pr": 89,
+        "sha": "0b2f9a517215a5b0070617e9c9312c6377d0c218"
+      },
+      {
+        "pr": 91,
+        "sha": "106181a254e72b23f950e05d435b7e00b5a354fe"
+      }
+    ]
+  },
+  "selected_checks": [
+    {
+      "command": "python -B -m unittest tools.tests.test_task_learning tools.tests.test_task_learning_legacy tools.tests.test_task_learning_order tools.tests.test_plan_task_learning_migration tools.tests.test_capability_activation tools.tests.test_learning_operation_activation tools.tests.test_learning_effectiveness_validation tools.tests.test_release_authority_boundaries tools.tests.test_live_server_enforcement tools.tests.test_release_approval tools.tests.test_release_assurance tools.tests.test_assurance_enforcement -q",
+      "tests": 144,
+      "exit_code": 0,
+      "output": "----------------------------------------------------------------------\r\nRan 144 tests in 2.833s\r\n\r\nOK\r\n"
+    },
+    {
+      "command": "python -B -m unittest discover -s evals/tests -q",
+      "tests": 78,
+      "exit_code": 0,
+      "output": "----------------------------------------------------------------------\r\nRan 78 tests in 8.511s\r\n\r\nOK\r\n"
+    }
+  ],
+  "standalone_scripts": [
+    {
+      "command": "python -B tools/tests/test_learning_pattern_analysis.py",
+      "exit_code": 0,
+      "output": "PASS: learning pattern analysis detects review debt, mixed evidence and escape clusters.\r\n"
+    },
+    {
+      "command": "python -B tools/tests/test_learning_governance_extensions.py",
+      "exit_code": 0,
+      "output": "PASS: review-debt and effectiveness semantics are fail-closed and causation-safe.\r\n"
+    },
+    {
+      "command": "python -B tools/tests/test_learning_development_output.py",
+      "exit_code": 0,
+      "output": "PASS: Learning Development Output validation preserves finite JSON schema, promotion boundary and taxonomy.\r\n"
+    },
+    {
+      "command": "python -B tools/tests/test_learning_health_dashboard.py",
+      "exit_code": 0,
+      "output": "PASS: learning health dashboard preserves metric semantics.\r\n"
+    }
+  ],
+  "ci_followup": {
+    "pr": 92,
+    "head": "a42f9413a98d829ce51b48bed38d7294f931bae3",
+    "parent": "69a2d6cfb3d42c70e467d1fd6fff283e817972bf",
+    "unchanged_blobs_matched": 307,
+    "changed": [
+      {
+        "path": ".github/workflows/project-bootstrap-tests.yml",
+        "sha256": "ed0492e8ad4b5595d045acf7a904afed23194e3a2f34daa37e080dbe8b3708f7",
+        "bytes": 3607
+      },
+      {
+        "path": "runbooks/FRAMEWORK_CI_RUNNER_DEDUP_CANDIDATE.md",
+        "sha256": "60670b70d676eb5975a5e319427ae7ef334b25d1a9b707d7e9cd866edc2458e3",
+        "bytes": 6839
+      },
+      {
+        "path": "tools/tests/test_ci_test_partition.py",
+        "sha256": "571f39ee7d375695b9f3da350befe0cea6ae723f2d00599435d023971143e8b5",
+        "bytes": 3822
+      }
+    ],
+    "tests": 41,
+    "interpreters": [
+      "3.11",
+      "3.12"
+    ],
+    "exit_codes": [
+      0,
+      0
+    ],
+    "command": "py -<version> -B -m unittest tools.tests.test_ci_test_partition tools.tests.test_ci_event_dedup_contract tools.tests.test_bootstrap_project tools.tests.test_capability_activation -v"
+  },
+  "published_blob_comparison": {
+    "at": "2026-10-19T19:04:24.669Z",
+    "confirmations": [
+      {
+        "pr": 83,
+        "repo": "EREI-Engineering-Framework",
+        "checked": 3,
+        "mismatches": []
+      },
+      {
+        "pr": 84,
+        "repo": "EREI-Engineering-Framework",
+        "checked": 3,
+        "mismatches": []
+      },
+      {
+        "pr": 85,
+        "repo": "EREI-Engineering-Framework",
+        "checked": 2,
+        "mismatches": []
+      },
+      {
+        "pr": 86,
+        "repo": "EREI-Engineering-Framework",
+        "checked": 14,
+        "mismatches": []
+      },
+      {
+        "pr": 87,
+        "repo": "EREI-Engineering-Framework",
+        "checked": 2,
+        "mismatches": []
+      },
+      {
+        "pr": 88,
+        "repo": "EREI-Engineering-Framework",
+        "checked": 3,
+        "mismatches": []
+      },
+      {
+        "pr": 89,
+        "repo": "EREI-Engineering-Framework",
+        "checked": 12,
+        "mismatches": []
+      },
+      {
+        "pr": 91,
+        "repo": "EREI-Engineering-Framework",
+        "checked": 8,
+        "mismatches": []
+      },
+      {
+        "pr": 92,
+        "repo": "EREI-Engineering-Framework",
+        "checked": 3,
+        "mismatches": []
+      },
+      {
+        "pr": 174,
+        "repo": "EREI-3.2",
+        "checked": 2,
+        "mismatches": []
+      }
+    ]
+  },
+  "official_actions_snapshot": {
+    "at": "2026-10-19T19:00:52.592Z",
+    "records": [
+      {
+        "pr": 83,
+        "head": "6054baf7f9b926203d47f94db1adf909810b88ef",
+        "runs": [
+          {
+            "id": 39185680855,
+            "head_sha": "6054baf7f9b926203d47f94db1adf909810b88ef",
+            "event": "pull_request",
+            "status": "completed",
+            "conclusion": "startup_failure",
+            "path": "BuildFailed",
+            "html_url": "https://github.com/lijust/EREI-Engineering-Framework/actions/runs/39185680855"
+          },
+          {
+            "id": 39185654385,
+            "head_sha": "6054baf7f9b926203d47f94db1adf909810b88ef",
+            "event": "push",
+            "status": "completed",
+            "conclusion": "startup_failure",
+            "path": "BuildFailed",
+            "html_url": "https://github.com/lijust/EREI-Engineering-Framework/actions/runs/39185654385"
+          }
+        ]
+      },
+      {
+        "pr": 84,
+        "head": "3545df37a90695a588ce5ced4a5a1327ea3d803d",
+        "runs": [
+          {
+            "id": 39264294831,
+            "head_sha": "3545df37a90695a588ce5ced4a5a1327ea3d803d",
+            "event": "pull_request",
+            "status": "completed",
+            "conclusion": "startup_failure",
+            "path": "BuildFailed",
+            "html_url": "https://github.com/lijust/EREI-Engineering-Framework/actions/runs/39264294831"
+          },
+          {
+            "id": 39264244325,
+            "head_sha": "3545df37a90695a588ce5ced4a5a1327ea3d803d",
+            "event": "pull_request",
+            "status": "completed",
+            "conclusion": "startup_failure",
+            "path": "BuildFailed",
+            "html_url": "https://github.com/lijust/EREI-Engineering-Framework/actions/runs/39264244325"
+          },
+          {
+            "id": 39264231637,
+            "head_sha": "3545df37a90695a588ce5ced4a5a1327ea3d803d",
+            "event": "push",
+            "status": "completed",
+            "conclusion": "startup_failure",
+            "path": "BuildFailed",
+            "html_url": "https://github.com/lijust/EREI-Engineering-Framework/actions/runs/39264231637"
+          }
+        ]
+      },
+      {
+        "pr": 85,
+        "head": "084c3ab0bf0dd9e5afcadf074c723533fe190561",
+        "runs": [
+          {
+            "id": 39253096476,
+            "head_sha": "084c3ab0bf0dd9e5afcadf074c723533fe190561",
+            "event": "pull_request",
+            "status": "completed",
+            "conclusion": "startup_failure",
+            "path": "BuildFailed",
+            "html_url": "https://github.com/lijust/EREI-Engineering-Framework/actions/runs/39253096476"
+          },
+          {
+            "id": 39253024750,
+            "head_sha": "084c3ab0bf0dd9e5afcadf074c723533fe190561",
+            "event": "push",
+            "status": "completed",
+            "conclusion": "startup_failure",
+            "path": "BuildFailed",
+            "html_url": "https://github.com/lijust/EREI-Engineering-Framework/actions/runs/39253024750"
+          }
+        ]
+      },
+      {
+        "pr": 86,
+        "head": "0555feb863412db1032b229c48073b2a9eb83479",
+        "runs": [
+          {
+            "id": 39253546965,
+            "head_sha": "0555feb863412db1032b229c48073b2a9eb83479",
+            "event": "pull_request",
+            "status": "completed",
+            "conclusion": "startup_failure",
+            "path": "BuildFailed",
+            "html_url": "https://github.com/lijust/EREI-Engineering-Framework/actions/runs/39253546965"
+          },
+          {
+            "id": 39253440282,
+            "head_sha": "0555feb863412db1032b229c48073b2a9eb83479",
+            "event": "push",
+            "status": "completed",
+            "conclusion": "startup_failure",
+            "path": "BuildFailed",
+            "html_url": "https://github.com/lijust/EREI-Engineering-Framework/actions/runs/39253440282"
+          }
+        ]
+      },
+      {
+        "pr": 87,
+        "head": "e779b5fdaa347665355e89439b72820313dfcf20",
+        "runs": [
+          {
+            "id": 39264053640,
+            "head_sha": "e779b5fdaa347665355e89439b72820313dfcf20",
+            "event": "pull_request",
+            "status": "completed",
+            "conclusion": "startup_failure",
+            "path": "BuildFailed",
+            "html_url": "https://github.com/lijust/EREI-Engineering-Framework/actions/runs/39264053640"
+          },
+          {
+            "id": 39264043138,
+            "head_sha": "e779b5fdaa347665355e89439b72820313dfcf20",
+            "event": "push",
+            "status": "completed",
+            "conclusion": "startup_failure",
+            "path": "BuildFailed",
+            "html_url": "https://github.com/lijust/EREI-Engineering-Framework/actions/runs/39264043138"
+          }
+        ]
+      },
+      {
+        "pr": 88,
+        "head": "9ca0fd14ca2e4a60def23f9e7df11c827a961135",
+        "runs": [
+          {
+            "id": 39264414315,
+            "head_sha": "9ca0fd14ca2e4a60def23f9e7df11c827a961135",
+            "event": "pull_request",
+            "status": "completed",
+            "conclusion": "startup_failure",
+            "path": "BuildFailed",
+            "html_url": "https://github.com/lijust/EREI-Engineering-Framework/actions/runs/39264414315"
+          },
+          {
+            "id": 39264403903,
+            "head_sha": "9ca0fd14ca2e4a60def23f9e7df11c827a961135",
+            "event": "push",
+            "status": "completed",
+            "conclusion": "startup_failure",
+            "path": "BuildFailed",
+            "html_url": "https://github.com/lijust/EREI-Engineering-Framework/actions/runs/39264403903"
+          }
+        ]
+      },
+      {
+        "pr": 89,
+        "head": "0b2f9a517215a5b0070617e9c9312c6377d0c218",
+        "runs": [
+          {
+            "id": 39264803539,
+            "head_sha": "0b2f9a517215a5b0070617e9c9312c6377d0c218",
+            "event": "pull_request",
+            "status": "completed",
+            "conclusion": "startup_failure",
+            "path": "BuildFailed",
+            "html_url": "https://github.com/lijust/EREI-Engineering-Framework/actions/runs/39264803539"
+          },
+          {
+            "id": 39264713171,
+            "head_sha": "0b2f9a517215a5b0070617e9c9312c6377d0c218",
+            "event": "push",
+            "status": "completed",
+            "conclusion": "startup_failure",
+            "path": "BuildFailed",
+            "html_url": "https://github.com/lijust/EREI-Engineering-Framework/actions/runs/39264713171"
+          }
+        ]
+      },
+      {
+        "pr": 90,
+        "head": "dd920a67ae4545e9b2711b580a87a11b89e24281",
+        "runs": [
+          {
+            "id": 39265635953,
+            "head_sha": "dd920a67ae4545e9b2711b580a87a11b89e24281",
+            "event": "pull_request",
+            "status": "completed",
+            "conclusion": "startup_failure",
+            "path": "BuildFailed",
+            "html_url": "https://github.com/lijust/EREI-Engineering-Framework/actions/runs/39265635953"
+          },
+          {
+            "id": 39265531630,
+            "head_sha": "dd920a67ae4545e9b2711b580a87a11b89e24281",
+            "event": "push",
+            "status": "completed",
+            "conclusion": "startup_failure",
+            "path": "BuildFailed",
+            "html_url": "https://github.com/lijust/EREI-Engineering-Framework/actions/runs/39265531630"
+          }
+        ]
+      },
+      {
+        "pr": 91,
+        "head": "106181a254e72b23f950e05d435b7e00b5a354fe",
+        "runs": [
+          {
+            "id": 39266399247,
+            "head_sha": "106181a254e72b23f950e05d435b7e00b5a354fe",
+            "event": "pull_request",
+            "status": "completed",
+            "conclusion": "startup_failure",
+            "path": "BuildFailed",
+            "html_url": "https://github.com/lijust/EREI-Engineering-Framework/actions/runs/39266399247"
+          },
+          {
+            "id": 39266337453,
+            "head_sha": "106181a254e72b23f950e05d435b7e00b5a354fe",
+            "event": "push",
+            "status": "completed",
+            "conclusion": "startup_failure",
+            "path": "BuildFailed",
+            "html_url": "https://github.com/lijust/EREI-Engineering-Framework/actions/runs/39266337453"
+          }
+        ]
+      }
+    ],
+    "jobs": [
+      {
+        "pr": 83,
+        "id": 39185680855,
+        "total_jobs": 0
+      },
+      {
+        "pr": 83,
+        "id": 39185654385,
+        "total_jobs": 0
+      },
+      {
+        "pr": 84,
+        "id": 39264294831,
+        "total_jobs": 0
+      },
+      {
+        "pr": 84,
+        "id": 39264244325,
+        "total_jobs": 0
+      },
+      {
+        "pr": 84,
+        "id": 39264231637,
+        "total_jobs": 0
+      },
+      {
+        "pr": 85,
+        "id": 39253096476,
+        "total_jobs": 0
+      },
+      {
+        "pr": 85,
+        "id": 39253024750,
+        "total_jobs": 0
+      },
+      {
+        "pr": 86,
+        "id": 39253546965,
+        "total_jobs": 0
+      },
+      {
+        "pr": 86,
+        "id": 39253440282,
+        "total_jobs": 0
+      },
+      {
+        "pr": 87,
+        "id": 39264053640,
+        "total_jobs": 0
+      },
+      {
+        "pr": 87,
+        "id": 39264043138,
+        "total_jobs": 0
+      },
+      {
+        "pr": 88,
+        "id": 39264414315,
+        "total_jobs": 0
+      },
+      {
+        "pr": 88,
+        "id": 39264403903,
+        "total_jobs": 0
+      },
+      {
+        "pr": 89,
+        "id": 39264803539,
+        "total_jobs": 0
+      },
+      {
+        "pr": 89,
+        "id": 39264713171,
+        "total_jobs": 0
+      },
+      {
+        "pr": 90,
+        "id": 39265635953,
+        "total_jobs": 0
+      },
+      {
+        "pr": 90,
+        "id": 39265531630,
+        "total_jobs": 0
+      },
+      {
+        "pr": 91,
+        "id": 39266399247,
+        "total_jobs": 0
+      },
+      {
+        "pr": 91,
+        "id": 39266337453,
+        "total_jobs": 0
+      }
+    ],
+    "limits": [
+      "Read-only GitHub API; no re-run or activation.",
+      "Underlying startup_failure cause unavailable."
+    ]
+  },
+  "limits": [
+    "Aggregate source has no frozen release commit; 44 changed files and one documented Markdown merge.",
+    "Selected local tests; not full tool discovery or independent authority verification.",
+    "Repeated test groups overlap; counts must not be summed as unique tests.",
+    "No genuine AI evaluation, measured operational CI savings, or causal quality improvement.",
+    "Independent review for PR91/PR92 remains pending."
+  ]
+}

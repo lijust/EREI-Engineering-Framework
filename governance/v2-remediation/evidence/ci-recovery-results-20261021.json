@@ -1,0 +1,1376 @@
+{
+  "recorded_at": "2026-10-21T12:40:42.380Z",
+  "repository": "lijust/EREI-Engineering-Framework",
+  "main": "72d49658524fbce6145783cd52297c53edbb2c95",
+  "classification": "GitHub API observations, not release attestation or branch protection proof",
+  "runs": [
+    {
+      "id": 39522737234,
+      "url": "https://github.com/lijust/EREI-Engineering-Framework/actions/runs/39522737234",
+      "workflow": "Project Bootstrap Tests",
+      "head": "85ead2121ecb03454495200a475ca9f3f129398e",
+      "tree": "25150db4f6886a4a604cec1130283aa352f5bb03",
+      "prs": [
+        93
+      ],
+      "created_at": "2026-10-21T00:40:30Z",
+      "status": "completed",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "id": 118970188325,
+          "name": "bootstrap-self-test (3.11)",
+          "status": "completed",
+          "conclusion": "success",
+          "runner": "EREI-Framework-Windows",
+          "labels": [
+            "self-hosted",
+            "Windows",
+            "X64"
+          ],
+          "started_at": "2026-10-21T00:54:59Z",
+          "completed_at": "2026-10-21T00:57:42Z",
+          "job_seconds": 163,
+          "queue_seconds": 869,
+          "steps": [
+            {
+              "name": "Run bootstrap unit tests",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-10-21T00:55:11Z",
+              "completed_at": "2026-10-21T00:57:36Z"
+            }
+          ],
+          "log_excerpts": [
+            "2026-10-21T00:55:05.6475172Z HEAD is now at c266e28 Merge a20cccf9447b46bc87e38b568bae5662c84acf02 into 9ca0fd14ca2e4a60def23f9e7df11c827a961135\r",
+            "2026-10-21T00:55:09.3035491Z HEAD is now at d64e9c0 Merge 85ead2121ecb03454495200a475ca9f3f129398e into e779b5fdaa347665355e89439b72820313dfcf20\r",
+            "2026-10-21T00:57:36.0795092Z Ran 411 tests in 143.827s\r"
+          ]
+        },
+        {
+          "id": 118970188657,
+          "name": "bootstrap-self-test (3.12)",
+          "status": "completed",
+          "conclusion": "success",
+          "runner": "EREI-Framework-Windows",
+          "labels": [
+            "self-hosted",
+            "Windows",
+            "X64"
+          ],
+          "started_at": "2026-10-21T01:01:03Z",
+          "completed_at": "2026-10-21T01:03:47Z",
+          "job_seconds": 164,
+          "queue_seconds": 1233,
+          "steps": [
+            {
+              "name": "Run bootstrap unit tests",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-10-21T01:01:14Z",
+              "completed_at": "2026-10-21T01:03:40Z"
+            }
+          ],
+          "log_excerpts": [
+            "2026-10-21T01:01:09.4957826Z HEAD is now at d64e9c0 Merge 85ead2121ecb03454495200a475ca9f3f129398e into e779b5fdaa347665355e89439b72820313dfcf20\r",
+            "2026-10-21T01:01:13.0130518Z HEAD is now at d64e9c0 Merge 85ead2121ecb03454495200a475ca9f3f129398e into e779b5fdaa347665355e89439b72820313dfcf20\r",
+            "2026-10-21T01:03:40.0557555Z Ran 411 tests in 144.031s\r"
+          ]
+        }
+      ]
+    },
+    {
+      "id": 39522737045,
+      "url": "https://github.com/lijust/EREI-Engineering-Framework/actions/runs/39522737045",
+      "workflow": "Framework Assurance Gate",
+      "head": "85ead2121ecb03454495200a475ca9f3f129398e",
+      "tree": "25150db4f6886a4a604cec1130283aa352f5bb03",
+      "prs": [
+        93
+      ],
+      "created_at": "2026-10-21T00:40:30Z",
+      "status": "completed",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "id": 118970187595,
+          "name": "assurance",
+          "status": "completed",
+          "conclusion": "success",
+          "runner": "EREI-Framework-Windows",
+          "labels": [
+            "self-hosted",
+            "Windows",
+            "X64"
+          ],
+          "started_at": "2026-10-21T00:57:45Z",
+          "completed_at": "2026-10-21T01:01:01Z",
+          "job_seconds": 196,
+          "queue_seconds": 1035,
+          "steps": [
+            {
+              "name": "Run all Framework tool tests",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-10-21T00:58:00Z",
+              "completed_at": "2026-10-21T01:00:23Z"
+            },
+            {
+              "name": "Validate repository-local assurance references",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-10-21T01:00:23Z",
+              "completed_at": "2026-10-21T01:00:23Z"
+            },
+            {
+              "name": "Run eval harness tests",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-10-21T01:00:23Z",
+              "completed_at": "2026-10-21T01:00:32Z"
+            },
+            {
+              "name": "Execute all published cases at reference-contract level",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-10-21T01:00:33Z",
+              "completed_at": "2026-10-21T01:00:45Z"
+            },
+            {
+              "name": "Validate truthful assurance enforcement state",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-10-21T01:00:47Z",
+              "completed_at": "2026-10-21T01:00:48Z"
+            },
+            {
+              "name": "Report derived VNext Stable readiness",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-10-21T01:00:49Z",
+              "completed_at": "2026-10-21T01:00:51Z"
+            }
+          ],
+          "log_excerpts": [
+            "2026-10-21T00:57:52.0174247Z HEAD is now at d64e9c0 Merge 85ead2121ecb03454495200a475ca9f3f129398e into e779b5fdaa347665355e89439b72820313dfcf20\r",
+            "2026-10-21T00:57:57.2470108Z HEAD is now at d64e9c0 Merge 85ead2121ecb03454495200a475ca9f3f129398e into e779b5fdaa347665355e89439b72820313dfcf20\r",
+            "2026-10-21T01:00:23.3259792Z Ran 411 tests in 142.358s\r",
+            "2026-10-21T01:00:32.8935473Z Ran 63 tests in 8.265s\r",
+            "2026-10-21T01:00:45.2254070Z Summary: 75 passed, 0 failed, 75 total\r"
+          ]
+        }
+      ]
+    },
+    {
+      "id": 39522736910,
+      "url": "https://github.com/lijust/EREI-Engineering-Framework/actions/runs/39522736910",
+      "workflow": "Task Learning Tests",
+      "head": "85ead2121ecb03454495200a475ca9f3f129398e",
+      "tree": "25150db4f6886a4a604cec1130283aa352f5bb03",
+      "prs": [
+        93
+      ],
+      "created_at": "2026-10-21T00:40:30Z",
+      "status": "completed",
+      "conclusion": "failure",
+      "jobs": [
+        {
+          "id": 118970186983,
+          "name": "validate-learning-development-outputs",
+          "status": "completed",
+          "conclusion": "failure",
+          "runner": "",
+          "labels": [
+            "ubuntu-latest"
+          ],
+          "started_at": "2026-10-21T00:40:30Z",
+          "completed_at": "2026-10-21T00:40:32Z",
+          "job_seconds": 2,
+          "queue_seconds": 0,
+          "steps": [],
+          "log_excerpts": []
+        },
+        {
+          "id": 118970187165,
+          "name": "task-learning (3.12)",
+          "status": "completed",
+          "conclusion": "cancelled",
+          "runner": "",
+          "labels": [
+            "ubuntu-latest"
+          ],
+          "started_at": "2026-10-21T00:40:30Z",
+          "completed_at": "2026-10-21T00:40:33Z",
+          "job_seconds": 3,
+          "queue_seconds": 0,
+          "steps": [],
+          "log_excerpts": []
+        },
+        {
+          "id": 118970187171,
+          "name": "task-learning (3.11)",
+          "status": "completed",
+          "conclusion": "failure",
+          "runner": "",
+          "labels": [
+            "ubuntu-latest"
+          ],
+          "started_at": "2026-10-21T00:40:30Z",
+          "completed_at": "2026-10-21T00:40:33Z",
+          "job_seconds": 3,
+          "queue_seconds": 0,
+          "steps": [],
+          "log_excerpts": []
+        }
+      ]
+    },
+    {
+      "id": 39522724900,
+      "url": "https://github.com/lijust/EREI-Engineering-Framework/actions/runs/39522724900",
+      "workflow": "Framework Assurance Gate",
+      "head": "a20cccf9447b46bc87e38b568bae5662c84acf02",
+      "tree": "49fb8a5e0ae6cc8dfe8071bae75283901ea2fcdf",
+      "prs": [
+        94
+      ],
+      "created_at": "2026-10-21T00:40:23Z",
+      "status": "completed",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "id": 118970148023,
+          "name": "assurance",
+          "status": "completed",
+          "conclusion": "success",
+          "runner": "EREI-Framework-Windows",
+          "labels": [
+            "self-hosted",
+            "Windows",
+            "X64"
+          ],
+          "started_at": "2026-10-21T00:48:52Z",
+          "completed_at": "2026-10-21T00:52:11Z",
+          "job_seconds": 199,
+          "queue_seconds": 509,
+          "steps": [
+            {
+              "name": "Run all Framework tool tests",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-10-21T00:49:06Z",
+              "completed_at": "2026-10-21T00:51:29Z"
+            },
+            {
+              "name": "Validate repository-local assurance references",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-10-21T00:51:29Z",
+              "completed_at": "2026-10-21T00:51:30Z"
+            },
+            {
+              "name": "Run eval harness tests",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-10-21T00:51:30Z",
+              "completed_at": "2026-10-21T00:51:39Z"
+            },
+            {
+              "name": "Execute all published cases at reference-contract level",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-10-21T00:51:39Z",
+              "completed_at": "2026-10-21T00:51:53Z"
+            },
+            {
+              "name": "Validate truthful assurance enforcement state",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-10-21T00:51:56Z",
+              "completed_at": "2026-10-21T00:51:56Z"
+            },
+            {
+              "name": "Report derived VNext Stable readiness",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-10-21T00:51:58Z",
+              "completed_at": "2026-10-21T00:52:00Z"
+            }
+          ],
+          "log_excerpts": [
+            "2026-10-21T00:48:59.1624462Z HEAD is now at 63421c4 Merge a42f9413a98d829ce51b48bed38d7294f931bae3 into 69a2d6cfb3d42c70e467d1fd6fff283e817972bf\r",
+            "2026-10-21T00:49:04.1725145Z HEAD is now at c266e28 Merge a20cccf9447b46bc87e38b568bae5662c84acf02 into 9ca0fd14ca2e4a60def23f9e7df11c827a961135\r",
+            "2026-10-21T00:51:29.5602634Z Ran 393 tests in 141.775s\r",
+            "2026-10-21T00:51:39.2731252Z Ran 63 tests in 8.420s\r",
+            "2026-10-21T00:51:53.7489057Z Summary: 75 passed, 0 failed, 75 total\r"
+          ]
+        }
+      ]
+    },
+    {
+      "id": 39522724899,
+      "url": "https://github.com/lijust/EREI-Engineering-Framework/actions/runs/39522724899",
+      "workflow": "Project Bootstrap Tests",
+      "head": "a20cccf9447b46bc87e38b568bae5662c84acf02",
+      "tree": "49fb8a5e0ae6cc8dfe8071bae75283901ea2fcdf",
+      "prs": [
+        94
+      ],
+      "created_at": "2026-10-21T00:40:23Z",
+      "status": "completed",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "id": 118970148041,
+          "name": "bootstrap-self-test (3.11)",
+          "status": "completed",
+          "conclusion": "success",
+          "runner": "EREI-Framework-Windows",
+          "labels": [
+            "self-hosted",
+            "Windows",
+            "X64"
+          ],
+          "started_at": "2026-10-21T00:45:49Z",
+          "completed_at": "2026-10-21T00:48:27Z",
+          "job_seconds": 158,
+          "queue_seconds": 326,
+          "steps": [
+            {
+              "name": "Run bootstrap unit tests",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-10-21T00:46:00Z",
+              "completed_at": "2026-10-21T00:48:21Z"
+            }
+          ],
+          "log_excerpts": [
+            "2026-10-21T00:45:55.5399723Z HEAD is now at 63421c4 Merge a42f9413a98d829ce51b48bed38d7294f931bae3 into 69a2d6cfb3d42c70e467d1fd6fff283e817972bf\r",
+            "2026-10-21T00:45:58.9987643Z HEAD is now at c266e28 Merge a20cccf9447b46bc87e38b568bae5662c84acf02 into 9ca0fd14ca2e4a60def23f9e7df11c827a961135\r",
+            "2026-10-21T00:48:21.8922861Z Ran 393 tests in 139.867s\r"
+          ]
+        },
+        {
+          "id": 118970148467,
+          "name": "bootstrap-self-test (3.12)",
+          "status": "completed",
+          "conclusion": "success",
+          "runner": "EREI-Framework-Windows",
+          "labels": [
+            "self-hosted",
+            "Windows",
+            "X64"
+          ],
+          "started_at": "2026-10-21T00:52:14Z",
+          "completed_at": "2026-10-21T00:54:56Z",
+          "job_seconds": 162,
+          "queue_seconds": 711,
+          "steps": [
+            {
+              "name": "Run bootstrap unit tests",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-10-21T00:52:26Z",
+              "completed_at": "2026-10-21T00:54:51Z"
+            }
+          ],
+          "log_excerpts": [
+            "2026-10-21T00:52:20.9918540Z HEAD is now at c266e28 Merge a20cccf9447b46bc87e38b568bae5662c84acf02 into 9ca0fd14ca2e4a60def23f9e7df11c827a961135\r",
+            "2026-10-21T00:52:24.6927793Z HEAD is now at c266e28 Merge a20cccf9447b46bc87e38b568bae5662c84acf02 into 9ca0fd14ca2e4a60def23f9e7df11c827a961135\r",
+            "2026-10-21T00:54:51.1771866Z Ran 393 tests in 143.492s\r"
+          ]
+        }
+      ]
+    },
+    {
+      "id": 39522667928,
+      "url": "https://github.com/lijust/EREI-Engineering-Framework/actions/runs/39522667928",
+      "workflow": "Project Bootstrap Tests",
+      "head": "a42f9413a98d829ce51b48bed38d7294f931bae3",
+      "tree": "5760226341079aff57dc191c653647eec578ec54",
+      "prs": [
+        92
+      ],
+      "created_at": "2026-10-21T00:39:50Z",
+      "status": "completed",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "id": 118969966768,
+          "name": "bootstrap-self-test (3.12)",
+          "status": "completed",
+          "conclusion": "success",
+          "runner": "EREI-Framework-Windows",
+          "labels": [
+            "self-hosted",
+            "Windows",
+            "X64"
+          ],
+          "started_at": "2026-10-21T00:48:30Z",
+          "completed_at": "2026-10-21T00:48:50Z",
+          "job_seconds": 20,
+          "queue_seconds": 520,
+          "steps": [
+            {
+              "name": "Run bootstrap unit tests",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-10-21T00:48:42Z",
+              "completed_at": "2026-10-21T00:48:44Z"
+            }
+          ],
+          "log_excerpts": [
+            "2026-10-21T00:48:36.6289601Z HEAD is now at c266e28 Merge a20cccf9447b46bc87e38b568bae5662c84acf02 into 9ca0fd14ca2e4a60def23f9e7df11c827a961135\r",
+            "2026-10-21T00:48:40.6120710Z HEAD is now at 63421c4 Merge a42f9413a98d829ce51b48bed38d7294f931bae3 into 69a2d6cfb3d42c70e467d1fd6fff283e817972bf\r",
+            "2026-10-21T00:48:44.4811706Z Ran 30 tests in 1.279s\r"
+          ]
+        },
+        {
+          "id": 118969966806,
+          "name": "bootstrap-self-test (3.11)",
+          "status": "completed",
+          "conclusion": "success",
+          "runner": "EREI-Framework-Windows",
+          "labels": [
+            "self-hosted",
+            "Windows",
+            "X64"
+          ],
+          "started_at": "2026-10-21T00:43:11Z",
+          "completed_at": "2026-10-21T00:45:46Z",
+          "job_seconds": 155,
+          "queue_seconds": 201,
+          "steps": [
+            {
+              "name": "Run bootstrap unit tests",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-10-21T00:43:22Z",
+              "completed_at": "2026-10-21T00:45:40Z"
+            }
+          ],
+          "log_excerpts": [
+            "2026-10-21T00:43:17.5175328Z HEAD is now at 63421c4 Merge a42f9413a98d829ce51b48bed38d7294f931bae3 into 69a2d6cfb3d42c70e467d1fd6fff283e817972bf\r",
+            "2026-10-21T00:43:20.9005265Z HEAD is now at 63421c4 Merge a42f9413a98d829ce51b48bed38d7294f931bae3 into 69a2d6cfb3d42c70e467d1fd6fff283e817972bf\r",
+            "2026-10-21T00:45:40.0290255Z Ran 380 tests in 136.389s\r"
+          ]
+        }
+      ]
+    },
+    {
+      "id": 39522667923,
+      "url": "https://github.com/lijust/EREI-Engineering-Framework/actions/runs/39522667923",
+      "workflow": "Framework Assurance Gate",
+      "head": "a42f9413a98d829ce51b48bed38d7294f931bae3",
+      "tree": "5760226341079aff57dc191c653647eec578ec54",
+      "prs": [
+        92
+      ],
+      "created_at": "2026-10-21T00:39:50Z",
+      "status": "completed",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "id": 118969966558,
+          "name": "assurance",
+          "status": "completed",
+          "conclusion": "success",
+          "runner": "EREI-Framework-Windows",
+          "labels": [
+            "self-hosted",
+            "Windows",
+            "X64"
+          ],
+          "started_at": "2026-10-21T00:39:53Z",
+          "completed_at": "2026-10-21T00:43:09Z",
+          "job_seconds": 196,
+          "queue_seconds": 3,
+          "steps": [
+            {
+              "name": "Run all Framework tool tests",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-10-21T00:40:05Z",
+              "completed_at": "2026-10-21T00:42:34Z"
+            },
+            {
+              "name": "Validate repository-local assurance references",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-10-21T00:42:34Z",
+              "completed_at": "2026-10-21T00:42:34Z"
+            },
+            {
+              "name": "Run eval harness tests",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-10-21T00:42:34Z",
+              "completed_at": "2026-10-21T00:42:43Z"
+            },
+            {
+              "name": "Execute all published cases at reference-contract level",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-10-21T00:42:44Z",
+              "completed_at": "2026-10-21T00:42:54Z"
+            },
+            {
+              "name": "Validate truthful assurance enforcement state",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-10-21T00:42:56Z",
+              "completed_at": "2026-10-21T00:42:56Z"
+            },
+            {
+              "name": "Report derived VNext Stable readiness",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-10-21T00:42:57Z",
+              "completed_at": "2026-10-21T00:42:59Z"
+            }
+          ],
+          "log_excerpts": [
+            "2026-10-21T00:39:59.2269928Z HEAD is now at 0bd8073 Merge e10d3c345062d166c4447ed7ca7131470bcc1448 into 72d49658524fbce6145783cd52297c53edbb2c95\r",
+            "2026-10-21T00:40:02.9766803Z HEAD is now at 63421c4 Merge a42f9413a98d829ce51b48bed38d7294f931bae3 into 69a2d6cfb3d42c70e467d1fd6fff283e817972bf\r",
+            "2026-10-21T00:42:33.9824644Z Ran 380 tests in 148.069s\r",
+            "2026-10-21T00:42:43.7590366Z Ran 63 tests in 8.516s\r",
+            "2026-10-21T00:42:54.4499364Z Summary: 75 passed, 0 failed, 75 total\r"
+          ]
+        }
+      ]
+    },
+    {
+      "id": 39521959149,
+      "url": "https://github.com/lijust/EREI-Engineering-Framework/actions/runs/39521959149",
+      "workflow": "Framework Evals",
+      "head": "e10d3c345062d166c4447ed7ca7131470bcc1448",
+      "tree": "6f899cbea05d8964eb60128a23571e4a7df72e0e",
+      "prs": [
+        95
+      ],
+      "created_at": "2026-10-21T00:32:43Z",
+      "status": "completed",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "id": 118967646574,
+          "name": "harness-self-test",
+          "status": "completed",
+          "conclusion": "success",
+          "runner": "EREI-Framework-Windows",
+          "labels": [
+            "self-hosted",
+            "Windows",
+            "X64"
+          ],
+          "started_at": "2026-10-21T00:38:18Z",
+          "completed_at": "2026-10-21T00:38:44Z",
+          "job_seconds": 26,
+          "queue_seconds": 335,
+          "steps": [
+            {
+              "name": "Run harness unit smoke tests",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-10-21T00:38:28Z",
+              "completed_at": "2026-10-21T00:38:37Z"
+            }
+          ],
+          "log_excerpts": [
+            "2026-10-21T00:38:24.2406630Z HEAD is now at 0bd8073 Merge e10d3c345062d166c4447ed7ca7131470bcc1448 into 72d49658524fbce6145783cd52297c53edbb2c95\r",
+            "2026-10-21T00:38:27.7858706Z HEAD is now at 0bd8073 Merge e10d3c345062d166c4447ed7ca7131470bcc1448 into 72d49658524fbce6145783cd52297c53edbb2c95\r",
+            "2026-10-21T00:38:37.8134122Z Ran 90 tests in 8.125s\r"
+          ]
+        }
+      ]
+    },
+    {
+      "id": 39521959138,
+      "url": "https://github.com/lijust/EREI-Engineering-Framework/actions/runs/39521959138",
+      "workflow": "Framework Assurance Gate",
+      "head": "e10d3c345062d166c4447ed7ca7131470bcc1448",
+      "tree": "6f899cbea05d8964eb60128a23571e4a7df72e0e",
+      "prs": [
+        95
+      ],
+      "created_at": "2026-10-21T00:32:43Z",
+      "status": "completed",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "id": 118967646519,
+          "name": "assurance",
+          "status": "completed",
+          "conclusion": "success",
+          "runner": "EREI-Framework-Windows",
+          "labels": [
+            "self-hosted",
+            "Windows",
+            "X64"
+          ],
+          "started_at": "2026-10-21T00:35:04Z",
+          "completed_at": "2026-10-21T00:38:15Z",
+          "job_seconds": 191,
+          "queue_seconds": 141,
+          "steps": [
+            {
+              "name": "Run all Framework tool tests",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-10-21T00:35:18Z",
+              "completed_at": "2026-10-21T00:37:39Z"
+            },
+            {
+              "name": "Validate repository-local assurance references",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-10-21T00:37:39Z",
+              "completed_at": "2026-10-21T00:37:40Z"
+            },
+            {
+              "name": "Run eval harness tests",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-10-21T00:37:40Z",
+              "completed_at": "2026-10-21T00:37:49Z"
+            },
+            {
+              "name": "Execute all published cases at reference-contract level",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-10-21T00:37:50Z",
+              "completed_at": "2026-10-21T00:38:00Z"
+            },
+            {
+              "name": "Validate truthful assurance enforcement state",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-10-21T00:38:02Z",
+              "completed_at": "2026-10-21T00:38:02Z"
+            },
+            {
+              "name": "Report derived VNext Stable readiness",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-10-21T00:38:03Z",
+              "completed_at": "2026-10-21T00:38:05Z"
+            }
+          ],
+          "log_excerpts": [
+            "2026-10-21T00:35:11.8550528Z HEAD is now at 30bae6f Merge 4a47642ba933c04a45660c5e9b89934c72a71d23 into 72d49658524fbce6145783cd52297c53edbb2c95\r",
+            "2026-10-21T00:35:15.8707149Z HEAD is now at 0bd8073 Merge e10d3c345062d166c4447ed7ca7131470bcc1448 into 72d49658524fbce6145783cd52297c53edbb2c95\r",
+            "2026-10-21T00:37:39.5689431Z Ran 369 tests in 140.485s\r",
+            "2026-10-21T00:37:49.4155142Z Ran 90 tests in 8.546s\r",
+            "2026-10-21T00:38:00.3700094Z Summary: 75 passed, 0 failed, 75 total\r"
+          ]
+        }
+      ]
+    },
+    {
+      "id": 39521843598,
+      "url": "https://github.com/lijust/EREI-Engineering-Framework/actions/runs/39521843598",
+      "workflow": "Framework Assurance Gate",
+      "head": "4a47642ba933c04a45660c5e9b89934c72a71d23",
+      "tree": "30372f74076948ecc38a9b97e41298b56ded5056",
+      "prs": [
+        90
+      ],
+      "created_at": "2026-10-21T00:31:33Z",
+      "status": "completed",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "id": 118967272746,
+          "name": "assurance",
+          "status": "completed",
+          "conclusion": "success",
+          "runner": "EREI-Framework-Windows",
+          "labels": [
+            "self-hosted",
+            "Windows",
+            "X64"
+          ],
+          "started_at": "2026-10-21T00:31:36Z",
+          "completed_at": "2026-10-21T00:35:01Z",
+          "job_seconds": 205,
+          "queue_seconds": 3,
+          "steps": [
+            {
+              "name": "Run all Framework tool tests",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-10-21T00:31:50Z",
+              "completed_at": "2026-10-21T00:34:24Z"
+            },
+            {
+              "name": "Validate repository-local assurance references",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-10-21T00:34:24Z",
+              "completed_at": "2026-10-21T00:34:25Z"
+            },
+            {
+              "name": "Run eval harness tests",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-10-21T00:34:25Z",
+              "completed_at": "2026-10-21T00:34:34Z"
+            },
+            {
+              "name": "Execute all published cases at reference-contract level",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-10-21T00:34:34Z",
+              "completed_at": "2026-10-21T00:34:46Z"
+            },
+            {
+              "name": "Validate truthful assurance enforcement state",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-10-21T00:34:48Z",
+              "completed_at": "2026-10-21T00:34:49Z"
+            },
+            {
+              "name": "Report derived VNext Stable readiness",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-10-21T00:34:50Z",
+              "completed_at": "2026-10-21T00:34:51Z"
+            }
+          ],
+          "log_excerpts": []
+        }
+      ]
+    },
+    {
+      "id": 39562643912,
+      "url": "https://github.com/lijust/EREI-Engineering-Framework/actions/runs/39562643912",
+      "workflow": "Framework Assurance Gate",
+      "head": "084c3ab0bf0dd9e5afcadf074c723533fe190561",
+      "tree": "c246f6220b532c94fac81820214eee6d3862cd0b",
+      "prs": [
+        85
+      ],
+      "created_at": "2026-10-21T07:32:00Z",
+      "status": "completed",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "id": 119097291777,
+          "name": "assurance",
+          "status": "completed",
+          "conclusion": "success",
+          "runner": "EREI-Framework-Windows",
+          "labels": [
+            "self-hosted",
+            "Windows",
+            "X64"
+          ],
+          "started_at": "2026-10-21T07:41:28Z",
+          "completed_at": "2026-10-21T07:44:39Z",
+          "job_seconds": 191,
+          "queue_seconds": 568,
+          "steps": [
+            {
+              "name": "Run all Framework tool tests",
+              "conclusion": "success",
+              "started_at": "2026-10-21T07:41:41Z",
+              "completed_at": "2026-10-21T07:44:02Z"
+            },
+            {
+              "name": "Validate repository-local assurance references",
+              "conclusion": "success",
+              "started_at": "2026-10-21T07:44:02Z",
+              "completed_at": "2026-10-21T07:44:03Z"
+            },
+            {
+              "name": "Run eval harness tests",
+              "conclusion": "success",
+              "started_at": "2026-10-21T07:44:03Z",
+              "completed_at": "2026-10-21T07:44:12Z"
+            },
+            {
+              "name": "Execute all published cases at reference-contract level",
+              "conclusion": "success",
+              "started_at": "2026-10-21T07:44:13Z",
+              "completed_at": "2026-10-21T07:44:23Z"
+            },
+            {
+              "name": "Validate truthful assurance enforcement state",
+              "conclusion": "success",
+              "started_at": "2026-10-21T07:44:25Z",
+              "completed_at": "2026-10-21T07:44:26Z"
+            },
+            {
+              "name": "Report derived VNext Stable readiness",
+              "conclusion": "success",
+              "started_at": "2026-10-21T07:44:27Z",
+              "completed_at": "2026-10-21T07:44:29Z"
+            }
+          ],
+          "log_excerpts": [
+            "2026-10-21T07:41:34.9484914Z HEAD is now at 51178cb Merge a132e104c6881d7dc4f1002862741bc33a0da748 into 72d49658524fbce6145783cd52297c53edbb2c95\r",
+            "2026-10-21T07:41:38.8431616Z HEAD is now at bf6196e Merge 084c3ab0bf0dd9e5afcadf074c723533fe190561 into 72d49658524fbce6145783cd52297c53edbb2c95\r",
+            "2026-10-21T07:44:02.6299025Z Ran 369 tests in 140.767s\r",
+            "2026-10-21T07:44:12.4726334Z Ran 65 tests in 8.464s\r",
+            "2026-10-21T07:44:23.8307005Z Summary: 75 passed, 0 failed, 75 total\r"
+          ]
+        }
+      ]
+    },
+    {
+      "id": 39562643882,
+      "url": "https://github.com/lijust/EREI-Engineering-Framework/actions/runs/39562643882",
+      "workflow": "Framework Evals",
+      "head": "084c3ab0bf0dd9e5afcadf074c723533fe190561",
+      "tree": "c246f6220b532c94fac81820214eee6d3862cd0b",
+      "prs": [
+        85
+      ],
+      "created_at": "2026-10-21T07:32:00Z",
+      "status": "completed",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "id": 119097291200,
+          "name": "harness-self-test",
+          "status": "completed",
+          "conclusion": "success",
+          "runner": "EREI-Framework-Windows",
+          "labels": [
+            "self-hosted",
+            "Windows",
+            "X64"
+          ],
+          "started_at": "2026-10-21T07:47:53Z",
+          "completed_at": "2026-10-21T07:48:20Z",
+          "job_seconds": 27,
+          "queue_seconds": 953,
+          "steps": [
+            {
+              "name": "Run harness unit smoke tests",
+              "conclusion": "success",
+              "started_at": "2026-10-21T07:48:04Z",
+              "completed_at": "2026-10-21T07:48:13Z"
+            }
+          ],
+          "log_excerpts": [
+            "2026-10-21T07:47:59.3738975Z HEAD is now at cb2c90c Merge 0b2f9a517215a5b0070617e9c9312c6377d0c218 into 72d49658524fbce6145783cd52297c53edbb2c95\r",
+            "2026-10-21T07:48:03.2145535Z HEAD is now at bf6196e Merge 084c3ab0bf0dd9e5afcadf074c723533fe190561 into 72d49658524fbce6145783cd52297c53edbb2c95\r",
+            "2026-10-21T07:48:13.5659024Z Ran 65 tests in 8.413s\r"
+          ]
+        }
+      ]
+    },
+    {
+      "id": 39562626009,
+      "url": "https://github.com/lijust/EREI-Engineering-Framework/actions/runs/39562626009",
+      "workflow": "Framework Evals",
+      "head": "0b2f9a517215a5b0070617e9c9312c6377d0c218",
+      "tree": "881ec26405cb088dbbc35eea9d23adf38259d9fb",
+      "prs": [
+        89
+      ],
+      "created_at": "2026-10-21T07:31:51Z",
+      "status": "completed",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "id": 119097235859,
+          "name": "harness-self-test",
+          "status": "completed",
+          "conclusion": "success",
+          "runner": "EREI-Framework-Windows",
+          "labels": [
+            "self-hosted",
+            "Windows",
+            "X64"
+          ],
+          "started_at": "2026-10-21T07:37:34Z",
+          "completed_at": "2026-10-21T07:38:01Z",
+          "job_seconds": 27,
+          "queue_seconds": 343,
+          "steps": [
+            {
+              "name": "Run harness unit smoke tests",
+              "conclusion": "success",
+              "started_at": "2026-10-21T07:37:45Z",
+              "completed_at": "2026-10-21T07:37:55Z"
+            }
+          ],
+          "log_excerpts": [
+            "2026-10-21T07:37:40.5728124Z HEAD is now at 51178cb Merge a132e104c6881d7dc4f1002862741bc33a0da748 into 72d49658524fbce6145783cd52297c53edbb2c95\r",
+            "2026-10-21T07:37:44.2791614Z HEAD is now at cb2c90c Merge 0b2f9a517215a5b0070617e9c9312c6377d0c218 into 72d49658524fbce6145783cd52297c53edbb2c95\r",
+            "2026-10-21T07:37:55.0190639Z Ran 76 tests in 8.702s\r"
+          ]
+        }
+      ]
+    },
+    {
+      "id": 39562625928,
+      "url": "https://github.com/lijust/EREI-Engineering-Framework/actions/runs/39562625928",
+      "workflow": "Framework Assurance Gate",
+      "head": "0b2f9a517215a5b0070617e9c9312c6377d0c218",
+      "tree": "881ec26405cb088dbbc35eea9d23adf38259d9fb",
+      "prs": [
+        89
+      ],
+      "created_at": "2026-10-21T07:31:51Z",
+      "status": "completed",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "id": 119097235762,
+          "name": "assurance",
+          "status": "completed",
+          "conclusion": "success",
+          "runner": "EREI-Framework-Windows",
+          "labels": [
+            "self-hosted",
+            "Windows",
+            "X64"
+          ],
+          "started_at": "2026-10-21T07:44:42Z",
+          "completed_at": "2026-10-21T07:47:50Z",
+          "job_seconds": 188,
+          "queue_seconds": 771,
+          "steps": [
+            {
+              "name": "Run all Framework tool tests",
+              "conclusion": "success",
+              "started_at": "2026-10-21T07:44:54Z",
+              "completed_at": "2026-10-21T07:47:14Z"
+            },
+            {
+              "name": "Validate repository-local assurance references",
+              "conclusion": "success",
+              "started_at": "2026-10-21T07:47:14Z",
+              "completed_at": "2026-10-21T07:47:15Z"
+            },
+            {
+              "name": "Run eval harness tests",
+              "conclusion": "success",
+              "started_at": "2026-10-21T07:47:15Z",
+              "completed_at": "2026-10-21T07:47:24Z"
+            },
+            {
+              "name": "Execute all published cases at reference-contract level",
+              "conclusion": "success",
+              "started_at": "2026-10-21T07:47:24Z",
+              "completed_at": "2026-10-21T07:47:35Z"
+            },
+            {
+              "name": "Validate truthful assurance enforcement state",
+              "conclusion": "success",
+              "started_at": "2026-10-21T07:47:37Z",
+              "completed_at": "2026-10-21T07:47:37Z"
+            },
+            {
+              "name": "Report derived VNext Stable readiness",
+              "conclusion": "success",
+              "started_at": "2026-10-21T07:47:38Z",
+              "completed_at": "2026-10-21T07:47:40Z"
+            }
+          ],
+          "log_excerpts": [
+            "2026-10-21T07:44:48.5043622Z HEAD is now at bf6196e Merge 084c3ab0bf0dd9e5afcadf074c723533fe190561 into 72d49658524fbce6145783cd52297c53edbb2c95\r",
+            "2026-10-21T07:44:52.3358668Z HEAD is now at cb2c90c Merge 0b2f9a517215a5b0070617e9c9312c6377d0c218 into 72d49658524fbce6145783cd52297c53edbb2c95\r",
+            "2026-10-21T07:47:14.3826611Z Ran 369 tests in 138.715s\r",
+            "2026-10-21T07:47:24.2199453Z Ran 76 tests in 8.463s\r",
+            "2026-10-21T07:47:35.4456885Z Summary: 75 passed, 0 failed, 75 total\r"
+          ]
+        }
+      ]
+    },
+    {
+      "id": 39562611272,
+      "url": "https://github.com/lijust/EREI-Engineering-Framework/actions/runs/39562611272",
+      "workflow": "Framework Assurance Gate",
+      "head": "a132e104c6881d7dc4f1002862741bc33a0da748",
+      "tree": "3e881954ae47fae1305381ba1e596110e602e719",
+      "prs": [
+        91
+      ],
+      "created_at": "2026-10-21T07:31:44Z",
+      "status": "completed",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "id": 119097192323,
+          "name": "assurance",
+          "status": "completed",
+          "conclusion": "success",
+          "runner": "EREI-Framework-Windows",
+          "labels": [
+            "self-hosted",
+            "Windows",
+            "X64"
+          ],
+          "started_at": "2026-10-21T07:38:04Z",
+          "completed_at": "2026-10-21T07:41:26Z",
+          "job_seconds": 202,
+          "queue_seconds": 380,
+          "steps": [
+            {
+              "name": "Run all Framework tool tests",
+              "conclusion": "success",
+              "started_at": "2026-10-21T07:38:18Z",
+              "completed_at": "2026-10-21T07:40:49Z"
+            },
+            {
+              "name": "Validate repository-local assurance references",
+              "conclusion": "success",
+              "started_at": "2026-10-21T07:40:49Z",
+              "completed_at": "2026-10-21T07:40:50Z"
+            },
+            {
+              "name": "Run eval harness tests",
+              "conclusion": "success",
+              "started_at": "2026-10-21T07:40:50Z",
+              "completed_at": "2026-10-21T07:40:59Z"
+            },
+            {
+              "name": "Execute all published cases at reference-contract level",
+              "conclusion": "success",
+              "started_at": "2026-10-21T07:40:59Z",
+              "completed_at": "2026-10-21T07:41:11Z"
+            },
+            {
+              "name": "Validate truthful assurance enforcement state",
+              "conclusion": "success",
+              "started_at": "2026-10-21T07:41:13Z",
+              "completed_at": "2026-10-21T07:41:13Z"
+            },
+            {
+              "name": "Report derived VNext Stable readiness",
+              "conclusion": "success",
+              "started_at": "2026-10-21T07:41:14Z",
+              "completed_at": "2026-10-21T07:41:16Z"
+            }
+          ],
+          "log_excerpts": [
+            "2026-10-21T07:38:10.9504183Z HEAD is now at cb2c90c Merge 0b2f9a517215a5b0070617e9c9312c6377d0c218 into 72d49658524fbce6145783cd52297c53edbb2c95\r",
+            "2026-10-21T07:38:16.2137994Z HEAD is now at 51178cb Merge a132e104c6881d7dc4f1002862741bc33a0da748 into 72d49658524fbce6145783cd52297c53edbb2c95\r",
+            "2026-10-21T07:40:49.4891838Z Ran 376 tests in 149.721s\r",
+            "2026-10-21T07:40:59.3089033Z Ran 63 tests in 8.440s\r",
+            "2026-10-21T07:41:11.1140245Z Summary: 75 passed, 0 failed, 75 total\r"
+          ]
+        }
+      ]
+    },
+    {
+      "id": 39562611245,
+      "url": "https://github.com/lijust/EREI-Engineering-Framework/actions/runs/39562611245",
+      "workflow": "Project Bootstrap Tests",
+      "head": "a132e104c6881d7dc4f1002862741bc33a0da748",
+      "tree": "3e881954ae47fae1305381ba1e596110e602e719",
+      "prs": [
+        91
+      ],
+      "created_at": "2026-10-21T07:31:44Z",
+      "status": "completed",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "id": 119097190721,
+          "name": "bootstrap-self-test (3.12)",
+          "status": "completed",
+          "conclusion": "success",
+          "runner": "EREI-Framework-Windows",
+          "labels": [
+            "self-hosted",
+            "Windows",
+            "X64"
+          ],
+          "started_at": "2026-10-21T07:31:46Z",
+          "completed_at": "2026-10-21T07:34:36Z",
+          "job_seconds": 170,
+          "queue_seconds": 2,
+          "steps": [
+            {
+              "name": "Run bootstrap unit tests",
+              "conclusion": "success",
+              "started_at": "2026-10-21T07:31:59Z",
+              "completed_at": "2026-10-21T07:34:29Z"
+            }
+          ],
+          "log_excerpts": [
+            "2026-10-21T07:31:53.8843381Z HEAD is now at d64e9c0 Merge 85ead2121ecb03454495200a475ca9f3f129398e into e779b5fdaa347665355e89439b72820313dfcf20\r",
+            "2026-10-21T07:31:57.7875284Z HEAD is now at 51178cb Merge a132e104c6881d7dc4f1002862741bc33a0da748 into 72d49658524fbce6145783cd52297c53edbb2c95\r",
+            "2026-10-21T07:34:29.2367320Z Ran 376 tests in 148.076s\r"
+          ]
+        },
+        {
+          "id": 119097191007,
+          "name": "bootstrap-self-test (3.11)",
+          "status": "completed",
+          "conclusion": "success",
+          "runner": "EREI-Framework-Windows",
+          "labels": [
+            "self-hosted",
+            "Windows",
+            "X64"
+          ],
+          "started_at": "2026-10-21T07:34:38Z",
+          "completed_at": "2026-10-21T07:37:32Z",
+          "job_seconds": 174,
+          "queue_seconds": 174,
+          "steps": [
+            {
+              "name": "Run bootstrap unit tests",
+              "conclusion": "success",
+              "started_at": "2026-10-21T07:34:51Z",
+              "completed_at": "2026-10-21T07:37:25Z"
+            }
+          ],
+          "log_excerpts": [
+            "2026-10-21T07:34:44.5591866Z HEAD is now at 51178cb Merge a132e104c6881d7dc4f1002862741bc33a0da748 into 72d49658524fbce6145783cd52297c53edbb2c95\r",
+            "2026-10-21T07:34:49.5406011Z HEAD is now at 51178cb Merge a132e104c6881d7dc4f1002862741bc33a0da748 into 72d49658524fbce6145783cd52297c53edbb2c95\r",
+            "2026-10-21T07:37:25.6563965Z Ran 376 tests in 153.021s\r"
+          ]
+        }
+      ]
+    },
+    {
+      "id": 39600674348,
+      "url": "https://github.com/lijust/EREI-Engineering-Framework/actions/runs/39600674348",
+      "workflow": "Framework Assurance Gate",
+      "head": "da9b5160d8fc9789fb878683b24d3f287e759483",
+      "tree": "6842fc1ce6834fd2f70d62c3a8fb400c8a671349",
+      "prs": [
+        95
+      ],
+      "created_at": "2026-10-21T12:34:23Z",
+      "status": "completed",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "id": 119224063158,
+          "name": "assurance",
+          "status": "completed",
+          "conclusion": "success",
+          "runner": "EREI-Framework-Windows",
+          "labels": [
+            "self-hosted",
+            "Windows",
+            "X64"
+          ],
+          "started_at": "2026-10-21T12:34:26Z",
+          "completed_at": "2026-10-21T12:37:49Z",
+          "job_seconds": 203,
+          "queue_seconds": 3,
+          "steps": [
+            {
+              "name": "Run all Framework tool tests",
+              "conclusion": "success",
+              "started_at": "2026-10-21T12:34:42Z",
+              "completed_at": "2026-10-21T12:37:13Z"
+            },
+            {
+              "name": "Validate repository-local assurance references",
+              "conclusion": "success",
+              "started_at": "2026-10-21T12:37:13Z",
+              "completed_at": "2026-10-21T12:37:13Z"
+            },
+            {
+              "name": "Run eval harness tests",
+              "conclusion": "success",
+              "started_at": "2026-10-21T12:37:13Z",
+              "completed_at": "2026-10-21T12:37:23Z"
+            },
+            {
+              "name": "Execute all published cases at reference-contract level",
+              "conclusion": "success",
+              "started_at": "2026-10-21T12:37:23Z",
+              "completed_at": "2026-10-21T12:37:34Z"
+            },
+            {
+              "name": "Validate truthful assurance enforcement state",
+              "conclusion": "success",
+              "started_at": "2026-10-21T12:37:36Z",
+              "completed_at": "2026-10-21T12:37:37Z"
+            },
+            {
+              "name": "Report derived VNext Stable readiness",
+              "conclusion": "success",
+              "started_at": "2026-10-21T12:37:38Z",
+              "completed_at": "2026-10-21T12:37:40Z"
+            }
+          ],
+          "log_excerpts": [
+            "2026-10-21T12:34:34.1736686Z HEAD is now at bf6196e Merge 084c3ab0bf0dd9e5afcadf074c723533fe190561 into 72d49658524fbce6145783cd52297c53edbb2c95\r",
+            "2026-10-21T12:34:38.6145262Z HEAD is now at 1d35c67 Merge da9b5160d8fc9789fb878683b24d3f287e759483 into 72d49658524fbce6145783cd52297c53edbb2c95\r",
+            "2026-10-21T12:37:13.1428296Z Ran 369 tests in 149.542s\r",
+            "2026-10-21T12:37:23.1207342Z Ran 91 tests in 8.633s\r",
+            "2026-10-21T12:37:34.4990042Z Summary: 75 passed, 0 failed, 75 total\r"
+          ]
+        }
+      ]
+    },
+    {
+      "id": 39600674371,
+      "url": "https://github.com/lijust/EREI-Engineering-Framework/actions/runs/39600674371",
+      "workflow": "Framework Evals",
+      "head": "da9b5160d8fc9789fb878683b24d3f287e759483",
+      "tree": "6842fc1ce6834fd2f70d62c3a8fb400c8a671349",
+      "prs": [
+        95
+      ],
+      "created_at": "2026-10-21T12:34:23Z",
+      "status": "completed",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "id": 119224063615,
+          "name": "harness-self-test",
+          "status": "completed",
+          "conclusion": "success",
+          "runner": "EREI-Framework-Windows",
+          "labels": [
+            "self-hosted",
+            "Windows",
+            "X64"
+          ],
+          "started_at": "2026-10-21T12:37:52Z",
+          "completed_at": "2026-10-21T12:38:19Z",
+          "job_seconds": 27,
+          "queue_seconds": 209,
+          "steps": [
+            {
+              "name": "Run harness unit smoke tests",
+              "conclusion": "success",
+              "started_at": "2026-10-21T12:38:03Z",
+              "completed_at": "2026-10-21T12:38:12Z"
+            }
+          ],
+          "log_excerpts": [
+            "2026-10-21T12:37:58.7071397Z HEAD is now at 1d35c67 Merge da9b5160d8fc9789fb878683b24d3f287e759483 into 72d49658524fbce6145783cd52297c53edbb2c95\r",
+            "2026-10-21T12:38:02.3891343Z HEAD is now at 1d35c67 Merge da9b5160d8fc9789fb878683b24d3f287e759483 into 72d49658524fbce6145783cd52297c53edbb2c95\r",
+            "2026-10-21T12:38:12.5694353Z Ran 91 tests in 8.234s\r"
+          ]
+        }
+      ]
+    }
+  ],
+  "merge_tree_bindings": [
+    {
+      "sha": "63421c425165e65f99db07c4dbfe72f79fa98730",
+      "tree": "5760226341079aff57dc191c653647eec578ec54",
+      "parents": [
+        "69a2d6cfb3d42c70e467d1fd6fff283e817972bf",
+        "a42f9413a98d829ce51b48bed38d7294f931bae3"
+      ]
+    },
+    {
+      "sha": "c266e28f19e801f67f813fc8bbc9385e6fe2f149",
+      "tree": "49fb8a5e0ae6cc8dfe8071bae75283901ea2fcdf",
+      "parents": [
+        "9ca0fd14ca2e4a60def23f9e7df11c827a961135",
+        "a20cccf9447b46bc87e38b568bae5662c84acf02"
+      ]
+    },
+    {
+      "sha": "d64e9c0b24ffded97d28859bc85dc61da23c2a49",
+      "tree": "25150db4f6886a4a604cec1130283aa352f5bb03",
+      "parents": [
+        "e779b5fdaa347665355e89439b72820313dfcf20",
+        "85ead2121ecb03454495200a475ca9f3f129398e"
+      ]
+    },
+    {
+      "sha": "51178cbb87a1e2484c5d0e8edd6f3722bf6c4004",
+      "tree": "3e881954ae47fae1305381ba1e596110e602e719",
+      "parents": [
+        "72d49658524fbce6145783cd52297c53edbb2c95",
+        "a132e104c6881d7dc4f1002862741bc33a0da748"
+      ]
+    },
+    {
+      "sha": "bf6196ef2db7aeba40aa27cc6490cc43a659601b",
+      "tree": "c246f6220b532c94fac81820214eee6d3862cd0b",
+      "parents": [
+        "72d49658524fbce6145783cd52297c53edbb2c95",
+        "084c3ab0bf0dd9e5afcadf074c723533fe190561"
+      ]
+    },
+    {
+      "sha": "cb2c90cb2b3aa290a8066207dd45986466d9cde3",
+      "tree": "881ec26405cb088dbbc35eea9d23adf38259d9fb",
+      "parents": [
+        "72d49658524fbce6145783cd52297c53edbb2c95",
+        "0b2f9a517215a5b0070617e9c9312c6377d0c218"
+      ]
+    },
+    {
+      "checkout": "1d35c679f32c3f75a6206a2e5db9886f9097033b",
+      "tree": "6842fc1ce6834fd2f70d62c3a8fb400c8a671349",
+      "parents": [
+        "72d49658524fbce6145783cd52297c53edbb2c95",
+        "da9b5160d8fc9789fb878683b24d3f287e759483"
+      ]
+    }
+  ],
+  "benchmark_binding": {
+    "checkout": "0bd8073fad59c6614dd9fd7e87cdf3a03d0f785c",
+    "tree": "6f899cbea05d8964eb60128a23571e4a7df72e0e",
+    "head": "e10d3c345062d166c4447ed7ca7131470bcc1448",
+    "tree_matches": true
+  },
+  "hosted_failure_annotations": [
+    {
+      "job_id": 118970186983,
+      "annotations": [
+        {
+          "path": ".github",
+          "start_line": 1,
+          "end_line": 1,
+          "annotation_level": "failure",
+          "message": "The job was not started because recent account payments have failed or your spending limit needs to be increased. Please check the 'Billing & plans' section in your settings",
+          "title": "",
+          "raw_details": ""
+        },
+        {
+          "path": ".github",
+          "start_line": 1,
+          "end_line": 1,
+          "annotation_level": "notice",
+          "message": "\"The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026. For more information, see https://github.com/actions/runner-images/issues/14748\"",
+          "title": "",
+          "raw_details": ""
+        }
+      ]
+    },
+    {
+      "job_id": 118970187171,
+      "annotations": [
+        {
+          "path": ".github",
+          "start_line": 1,
+          "end_line": 1,
+          "annotation_level": "failure",
+          "message": "The job was not started because recent account payments have failed or your spending limit needs to be increased. Please check the 'Billing & plans' section in your settings",
+          "title": "",
+          "raw_details": ""
+        },
+        {
+          "path": ".github",
+          "start_line": 1,
+          "end_line": 1,
+          "annotation_level": "notice",
+          "message": "\"The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026. For more information, see https://github.com/actions/runner-images/issues/14748\"",
+          "title": "",
+          "raw_details": ""
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "Source tests are not real model evaluation",
+    "0/13 genuine exact-target cases",
+    "Stable readiness remains blocked",
+    "Self-hosted Windows has recovered; GitHub-hosted Ubuntu is blocked by official account billing/spending annotation",
+    "No causal CI saving estimate; timings across different heads are not controlled comparison"
+  ],
+  "exact_target_model_cases_passed": 0,
+  "exact_target_model_cases_required": 13,
+  "stable_ready": false
+}
