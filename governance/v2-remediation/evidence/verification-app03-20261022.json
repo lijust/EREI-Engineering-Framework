@@ -1,0 +1,176 @@
+{
+  "recorded_at": "2026-10-22T00:43:55.826Z",
+  "head": "d62246a8ab77c89d0732efc0152411b5350d2581",
+  "tree": "3c427b1e3c42d147cc3f4a6388d65b4659120ce2",
+  "base_main": "64f9d97230f95d4e663369b6d4a54e941964effa",
+  "all_published_blobs_matched": 314,
+  "kind": "Public calibration preparation; not held-out AI evaluation",
+  "model_executions": 0,
+  "prepared_tasks": 7,
+  "total_task_proposals": 12,
+  "remaining": [
+    "APP-04",
+    "APP-05",
+    "PY-01",
+    "PY-03",
+    "PY-06"
+  ],
+  "plan_sha256": "909f427b56fd5d224ce4868b71e36ab000bb08bc74fbba7b9eedc9941db3e901",
+  "catalog_sha256": "ba3fc0eed7b53dcd4f230e25923c0554f0ec1264001293c09b34fbb3280073c4",
+  "unique_input_blobs": 19,
+  "inputs_unchanged": true,
+  "evals": [
+    {
+      "version": "-3.11",
+      "exit_code": 0,
+      "summaries": [
+        "Ran 93 tests in 9.019s"
+      ]
+    },
+    {
+      "version": "-3.12",
+      "exit_code": 0,
+      "summaries": [
+        "Ran 93 tests in 9.273s"
+      ]
+    }
+  ],
+  "calibration": [
+    {
+      "python": "3.11.9 (tags/v3.11.9:de54cf5, Apr  2 2024, 10:12:12) [MSC v.1938 64 bit (AMD64)]",
+      "exit_code": 0,
+      "recipes": [
+        {
+          "task_id": "APP-01",
+          "reference_exit": 0,
+          "starter_exit": 1,
+          "calibration_passed": true
+        },
+        {
+          "task_id": "APP-02",
+          "reference_exit": 0,
+          "starter_exit": 1,
+          "calibration_passed": true
+        },
+        {
+          "task_id": "APP-03",
+          "reference_exit": 0,
+          "starter_exit": 1,
+          "calibration_passed": true
+        },
+        {
+          "task_id": "APP-06",
+          "reference_exit": 0,
+          "starter_exit": 1,
+          "calibration_passed": true
+        },
+        {
+          "task_id": "PY-02",
+          "reference_exit": 0,
+          "starter_exit": 1,
+          "calibration_passed": true
+        },
+        {
+          "task_id": "PY-04",
+          "reference_exit": 0,
+          "starter_exit": 1,
+          "calibration_passed": true
+        },
+        {
+          "task_id": "PY-05",
+          "reference_exit": 0,
+          "starter_exit": 1,
+          "calibration_passed": true
+        }
+      ]
+    },
+    {
+      "python": "3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)]",
+      "exit_code": 0,
+      "recipes": [
+        {
+          "task_id": "APP-01",
+          "reference_exit": 0,
+          "starter_exit": 1,
+          "calibration_passed": true
+        },
+        {
+          "task_id": "APP-02",
+          "reference_exit": 0,
+          "starter_exit": 1,
+          "calibration_passed": true
+        },
+        {
+          "task_id": "APP-03",
+          "reference_exit": 0,
+          "starter_exit": 1,
+          "calibration_passed": true
+        },
+        {
+          "task_id": "APP-06",
+          "reference_exit": 0,
+          "starter_exit": 1,
+          "calibration_passed": true
+        },
+        {
+          "task_id": "PY-02",
+          "reference_exit": 0,
+          "starter_exit": 1,
+          "calibration_passed": true
+        },
+        {
+          "task_id": "PY-04",
+          "reference_exit": 0,
+          "starter_exit": 1,
+          "calibration_passed": true
+        },
+        {
+          "task_id": "PY-05",
+          "reference_exit": 0,
+          "starter_exit": 1,
+          "calibration_passed": true
+        }
+      ]
+    }
+  ],
+  "accounting": {
+    "scheduled_slots": 48,
+    "observed_runs": 0,
+    "execution_authorized": false,
+    "comparability": "NOT_VERIFIED",
+    "effectiveness": "NOT_ESTABLISHED"
+  },
+  "commands": [
+    "py -3.11/-3.12 -B -m unittest discover -s evals/tests -v",
+    "py -3.11/-3.12 -B evals/benchmarks/check_calibration.py --source-exports <pinned exports> --node <absolute Node executable>"
+  ],
+  "independent_review": {
+    "reviewer": "benchmark_source_review_20261021",
+    "scope": "APP-03 delta plus unchanged prior six recipes; full preparation review already completed at da9",
+    "status": "COMPLETE_NO_BLOCKING_FINDINGS",
+    "input_blobs_matched": 7,
+    "python": "3.11.9",
+    "node": "24.20.0",
+    "reference_exit": 0,
+    "starter_exit": 1,
+    "expected_assertion_line": 59,
+    "expected_assertion": "source_developer_id must stay blank for DVI-origin",
+    "reviewed_blobs": {
+      "evals/benchmarks/calibration-packages.json": "da91a2331ce97e2011ad1a7408a3bb58698eb626",
+      "evals/benchmarks/v1-v2-pilot.json": "9efebeb203b5a168f944ad78aedd652b0b3e6550",
+      "evals/benchmarks/README.md": "428c5ca35d8a456a75af3e0a718e7c0cb487f1bf"
+    },
+    "limits": [
+      "One synthetic valid-profile case; not all lineage/malformed input cases",
+      "No live write enforcement or model quality claim",
+      "Historical JSON counts are not new live measurements",
+      "Not every plannedRow field independently covered by current APP03 test"
+    ]
+  },
+  "ci_record": "verification-delivery-20261022.json",
+  "raw_local_evidence": [
+    "app03-first-check-20261021.json",
+    "app03-evals-20261021.json",
+    "app03-final-20261021.json"
+  ]
+}

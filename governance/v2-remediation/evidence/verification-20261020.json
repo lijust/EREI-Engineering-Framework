@@ -1,0 +1,391 @@
+{
+  "schema_version": 1,
+  "kind": "local-remediation-verification-not-release-attestation",
+  "recorded_at": "2026-10-20T00:09:13.634Z",
+  "date_cairo": "2026-10-20",
+  "base": "72d49658524fbce6145783cd52297c53edbb2c95",
+  "aggregate": {
+    "source_prs": [
+      83,
+      84,
+      85,
+      86,
+      87,
+      88,
+      89,
+      91,
+      93
+    ],
+    "updated_heads": {
+      "91": "a132e104c6881d7dc4f1002862741bc33a0da748",
+      "93": "85ead2121ecb03454495200a475ca9f3f129398e"
+    },
+    "manual_merge": [
+      "learning/README.md: activation contract plus legacy positional review recovery section"
+    ],
+    "files": [
+      {
+        "path": ".github/workflows/task-learning-tests.yml",
+        "sha256": "ab57a8ff327a06ef286f9139bb61dd9b27b886589496641c767608fa0445e1dd"
+      },
+      {
+        "path": "agents/chief-engineer/AGENT.md",
+        "sha256": "b08fb6f32c295413bc6c0214d0ed811196556f2cd9b5738b4d56656365a393fb"
+      },
+      {
+        "path": "evals/BEHAVIORAL_SIMULATION.md",
+        "sha256": "dd9a5c4a533625eba9fbe05717acf8807efffadb4fb8d487be24136562c41307"
+      },
+      {
+        "path": "evals/README.md",
+        "sha256": "b59348af38237f2017b13d4ef6e2a2129093d321a58f52534a73a14ef480c8f4"
+      },
+      {
+        "path": "evals/adapters/EXACT_TARGET_BLIND_PROTOCOL_V2.md",
+        "sha256": "2a8dae7bdc6f34a1fd1c37d332e8cd1205917c04632230d850ed6c4d115167a9"
+      },
+      {
+        "path": "evals/adapters/copilot_cli_exact_target.py",
+        "sha256": "e2f76c067abe411355ab66ade6212f56bc13b1343d8a8a21c293563cb4dd9769"
+      },
+      {
+        "path": "evals/cases/candidate-capability-activation.eval.json",
+        "sha256": "603702f1b15e7388859e6907d4a4b3d77d95111e5445da49f34e1b6b81915dae"
+      },
+      {
+        "path": "evals/cases/learning-to-development.eval.json",
+        "sha256": "71033ca2cc18f98d1dfef58ebf903a7da29a1f7fc59c902916bac802fe110d58"
+      },
+      {
+        "path": "evals/cases/task-learning-review.eval.json",
+        "sha256": "9fb820e1f6c9dab308f116870e262c4b26c214726996b5b27839ff1450bfd38a"
+      },
+      {
+        "path": "evals/exact_target_run.py",
+        "sha256": "641c8dc416392e5a26baeeb4ae4385c4bd1678e2057a60f248cb3ca01f41edba"
+      },
+      {
+        "path": "evals/fixtures/reference_oracle_adapter.py",
+        "sha256": "58c59547cae8c6489c6a3acde3319b0d7f8f7938e259893b6c410f9deaa23cdc"
+      },
+      {
+        "path": "evals/runner.py",
+        "sha256": "8a1882807c5036b2a80cd4dbd7a254e712ebeb38833b54931db155aa8d13212f"
+      },
+      {
+        "path": "evals/schema/eval-case.schema.json",
+        "sha256": "defb675e933cadac5409c6489836b6970c1a88bfecda82118866421007969da7"
+      },
+      {
+        "path": "evals/tests/test_behavioral_simulation.py",
+        "sha256": "b50049914cfe6a494147a7ddbe98086032932254af5e0346f1c221011beb3f82"
+      },
+      {
+        "path": "evals/tests/test_reference_oracle.py",
+        "sha256": "8f6ccd40dfa8638f77295100c9ee6a7d8352a1a96d141877a6d687939f5b9ad1"
+      },
+      {
+        "path": "evals/tests/test_runner.py",
+        "sha256": "5d5332f8d72ddc561cf44ec9a5d81dd2c0f310007938b188e7c4b6877bb9917a"
+      },
+      {
+        "path": "learning/LEARNING_INTERVENTION_CONTRACT.md",
+        "sha256": "1c74bc643cf3649c0a28ca6dfb45544e68d29ed626619839c1bb5029b6332912"
+      },
+      {
+        "path": "learning/README.md",
+        "sha256": "90e35839810833d22460f273c24f05e98dd066ec62cd3e349db72b93645c35aa"
+      },
+      {
+        "path": "runbooks/RELEASE_AUTHORITY_BOUNDARIES.md",
+        "sha256": "965d3e16c8454c4e141b2e27a47d66dae935f6b5fcf9f249247fdf8f24e6f787"
+      },
+      {
+        "path": "runbooks/TASK_LEARNING_MIGRATION_PREFLIGHT.md",
+        "sha256": "9e7d908c3f0db7f4e6c71487c4b75470633aed77dac359580e964081c1c76770"
+      },
+      {
+        "path": "tools/assurance_enforcement.py",
+        "sha256": "cc5e73502bbc78868b5815f0d5c349e424084abbda6fa395f6c37bc9453c3738"
+      },
+      {
+        "path": "tools/capability_activation.py",
+        "sha256": "6baa7a0d3d557665347c901d206479c1645dd6dd34673329f98153e5268b62ab"
+      },
+      {
+        "path": "tools/exact_target_evidence.py",
+        "sha256": "e8e0b9d80655e7b73278a245b4bee7e8b0c1a671f765c9e12a285757e0675f67"
+      },
+      {
+        "path": "tools/learning_development_output.py",
+        "sha256": "e96c27d9d8566828ccf744cafdd8b7bcd8184536c6b2f1896ecc561d0588a6e9"
+      },
+      {
+        "path": "tools/learning_effectiveness.py",
+        "sha256": "9e0718a48189a124dff4492da7d5e5616af00c67913788b2903495e22911118b"
+      },
+      {
+        "path": "tools/learning_pattern_analysis.py",
+        "sha256": "77332afcd66e95b5d75fe63b378f415ed0b4db2fdce1c3f467df05e35b224e5c"
+      },
+      {
+        "path": "tools/learning_review_debt_gate.py",
+        "sha256": "66e08852dc2aed40ab55b2715548686c999a74d4039550574134a70239b58cd7"
+      },
+      {
+        "path": "tools/plan_task_learning_migration.py",
+        "sha256": "471272aacbc6fee88e992232aeeba356c91e0eb9120d585ce70d72b7df1a2a1f"
+      },
+      {
+        "path": "tools/prospective_cycle_status.py",
+        "sha256": "9f60a5fe4219f182cd4dce9629d6f8b271ac4323f2c15f87233d125c096fa02d"
+      },
+      {
+        "path": "tools/release_approval.py",
+        "sha256": "9044e8fcc6339ab89576fd49e2dd87fc11895078116f293a81eca7c64ddf5197"
+      },
+      {
+        "path": "tools/release_assurance.py",
+        "sha256": "914df99a79352cc34eebd0d3c28c084efc57a76156917005a15f9676dceea3d2"
+      },
+      {
+        "path": "tools/stable_readiness.py",
+        "sha256": "503ce11464d53c8e07de5ae8a138762fe41c95b668753c7288b3222146254325"
+      },
+      {
+        "path": "tools/task_learning.py",
+        "sha256": "84882c6cd0de34aa57cdb643fb5c1e2979426bbb0e6167805ad665cf1156464e"
+      },
+      {
+        "path": "tools/tests/fixtures/task-learning-v1.json",
+        "sha256": "1d566a6cb8b64f6e1cabb010e48d32eda77797bbb4442711db88a90c246d215f"
+      },
+      {
+        "path": "tools/tests/test_assurance_enforcement.py",
+        "sha256": "f90345c7ab3f6fdf27ac82c050172d1397ec98c7e3ddc862d6764140c1766379"
+      },
+      {
+        "path": "tools/tests/test_learning_effectiveness_validation.py",
+        "sha256": "41fd83286f38913fad32c2ee65d1920eb767387f614c3b7fb7fa2f4ce237faae"
+      },
+      {
+        "path": "tools/tests/test_learning_intervention.py",
+        "sha256": "27a53766c22f28d4a73a32ecffc36ebeda60c0784311dfc4bb6928efbb67d851"
+      },
+      {
+        "path": "tools/tests/test_learning_operation_activation.py",
+        "sha256": "01af269b7c1f40f480d5fc0bf900077410fa5253f30808050981170412b0e7a5"
+      },
+      {
+        "path": "tools/tests/test_learning_pattern_analysis.py",
+        "sha256": "abaf48ecf1556b944c53538631208446ebb8f0e861b0ea6065d0c3fd1cca689b"
+      },
+      {
+        "path": "tools/tests/test_live_server_enforcement.py",
+        "sha256": "3b63b303e204d79d6ee4a9db13b562b4836b2c7c3190c1278c1c9a4ddfd8db5e"
+      },
+      {
+        "path": "tools/tests/test_plan_task_learning_migration.py",
+        "sha256": "5abab509b84f3adb8c46dcf174ea719bf6319f8a0bb145a520ec271db7bcc6f1"
+      },
+      {
+        "path": "tools/tests/test_prospective_cycle_status.py",
+        "sha256": "6892d8dd7202c40349ecdb8be9588d07deae9a8bdc019f9e96d3ec3a6dae135b"
+      },
+      {
+        "path": "tools/tests/test_release_assurance.py",
+        "sha256": "0684fae1aa0000a09da3ba5d2a40bec161a11d4ad2fac175c7dd80c29246577a"
+      },
+      {
+        "path": "tools/tests/test_release_authority_boundaries.py",
+        "sha256": "b7f80a13793f33cafdfd71da75359c8ed8dc952c733ed2966e114e980f982206"
+      },
+      {
+        "path": "tools/tests/test_stable_readiness.py",
+        "sha256": "b0ddfc9b20891f7b00b092e86cc94885e85c84fb923302d2b0cd66e0b84b7bd4"
+      },
+      {
+        "path": "tools/tests/test_task_learning_legacy.py",
+        "sha256": "ff2fe57d20699348447319d25bc8819c905aa790c015a1723574ae3f44933843"
+      },
+      {
+        "path": "tools/tests/test_task_learning_order.py",
+        "sha256": "30ffde213cd78de8894128b6406cfa17f4a05f6e8524f02706db287c1c63029c"
+      },
+      {
+        "path": "workflows/learning-review/WORKFLOW.md",
+        "sha256": "9950d2007e238893ff64cfa27bc7eb479ced29e95a3f7fe9e6ac155ad7132adf"
+      },
+      {
+        "path": "workflows/learning-to-development/WORKFLOW.md",
+        "sha256": "5f1359d0f0331486a00095b3ea2ce0935ca9acfbfaf2a719cdfa95409467caae"
+      },
+      {
+        "path": "workflows/router/WORKFLOW.md",
+        "sha256": "5d3a5b77d0fc1dad5aa64b1569ab4f6a7635feda10f790459bcc5d9e776db601"
+      }
+    ]
+  },
+  "checks": {
+    "tool_tests": {
+      "count": 193,
+      "chunk_id": "ff5c97",
+      "wall_time_seconds": 0.0000101,
+      "exit_code": 0,
+      "original_token_count": 26,
+      "output": "----------------------------------------------------------------------\r\nRan 193 tests in 16.024s\r\n\r\nOK\r\n",
+      "command": "python -B -m unittest tools.tests.test_task_learning tools.tests.test_task_learning_legacy tools.tests.test_task_learning_order tools.tests.test_plan_task_learning_migration tools.tests.test_capability_activation tools.tests.test_learning_operation_activation tools.tests.test_learning_effectiveness_validation tools.tests.test_release_authority_boundaries tools.tests.test_live_server_enforcement tools.tests.test_release_approval tools.tests.test_release_assurance tools.tests.test_assurance_enforcement tools.tests.test_stable_readiness tools.tests.test_learning_intervention tools.tests.test_prospective_cycle_status -q"
+    },
+    "eval_tests": {
+      "count": 78,
+      "chunk_id": "742d79",
+      "wall_time_seconds": 9.1009908,
+      "exit_code": 0,
+      "original_token_count": 26,
+      "output": "----------------------------------------------------------------------\r\nRan 78 tests in 8.440s\r\n\r\nOK\r\n",
+      "command": "python -B -m unittest discover -s evals/tests -q"
+    }
+  },
+  "learning_intervention": {
+    "recorded_at": "2026-10-20T00:03:38.147Z",
+    "kind": "source-only-intervention-accounting",
+    "parent": "e779b5fdaa347665355e89439b72820313dfcf20",
+    "parent_tree": "94089a539dc04644c950733332fe814e1bbc4abb",
+    "unchanged_blobs_matched": 306,
+    "changed": [
+      {
+        "path": "tools/learning_effectiveness.py",
+        "sha256": "9e0718a48189a124dff4492da7d5e5616af00c67913788b2903495e22911118b",
+        "bytes": 16565
+      },
+      {
+        "path": "tools/prospective_cycle_status.py",
+        "sha256": "9f60a5fe4219f182cd4dce9629d6f8b271ac4323f2c15f87233d125c096fa02d",
+        "bytes": 7526
+      },
+      {
+        "path": "tools/tests/test_prospective_cycle_status.py",
+        "sha256": "6892d8dd7202c40349ecdb8be9588d07deae9a8bdc019f9e96d3ec3a6dae135b",
+        "bytes": 4030
+      },
+      {
+        "path": "tools/tests/test_learning_intervention.py",
+        "sha256": "27a53766c22f28d4a73a32ecffc36ebeda60c0784311dfc4bb6928efbb67d851",
+        "bytes": 10119
+      },
+      {
+        "path": "learning/LEARNING_INTERVENTION_CONTRACT.md",
+        "sha256": "1c74bc643cf3649c0a28ca6dfb45544e68d29ed626619839c1bb5029b6332912",
+        "bytes": 8277
+      }
+    ],
+    "checks": [
+      {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "1cdebf",
+          "wall_time_seconds": 0.9370331,
+          "exit_code": 0,
+          "original_token_count": 26,
+          "output": "----------------------------------------------------------------------\r\nRan 50 tests in 0.346s\r\n\r\nOK\r\n"
+        }
+      },
+      {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "ab9d87",
+          "wall_time_seconds": 0.300871,
+          "exit_code": 0,
+          "original_token_count": 67,
+          "output": "{\"blockers\": [], \"causation\": \"NOT_ESTABLISHED\", \"cohort_exposure\": \"NOT_ASSESSED\", \"completed_steps\": 6, \"cycle_id\": \"PLC-20260907-C1F01A84\", \"effectiveness\": \"NOT_ESTABLISHED\", \"evidence_level\": \"DECLARED_STEP_REFERENCES\", \"pending_steps\": 0, \"status\": \"complete\"}\r\n"
+        }
+      },
+      {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "16200b",
+          "wall_time_seconds": 0.4239234,
+          "exit_code": 0,
+          "original_token_count": 21,
+          "output": "PASS: review-debt and effectiveness semantics are fail-closed and causation-safe.\r\n"
+        }
+      },
+      {
+        "command": "py -3.11 -B -m unittest tools.tests.test_learning_intervention tools.tests.test_learning_effectiveness_validation tools.tests.test_learning_operation_activation tools.tests.test_prospective_cycle_status -q",
+        "exit_code": 0,
+        "tests": 50,
+        "observed_tool_chunk": "902484"
+      }
+    ],
+    "limits": [
+      "No independent review or official CI success.",
+      "Cohort completeness, exposure, source authenticity and causation require external review.",
+      "No live evidence, Candidate adoption, pins, model execution or financial settings changed."
+    ],
+    "pr": 93,
+    "head": "85ead2121ecb03454495200a475ca9f3f129398e",
+    "tree": "25150db4f6886a4a604cec1130283aa352f5bb03",
+    "published_files_match": 5
+  },
+  "authority_readiness": {
+    "recorded_at": "2026-10-20T00:07:59.909Z",
+    "parent": "106181a254e72b23f950e05d435b7e00b5a354fe",
+    "head": "a132e104c6881d7dc4f1002862741bc33a0da748",
+    "tree": "3e881954ae47fae1305381ba1e596110e602e719",
+    "pr": 91,
+    "changed": [
+      {
+        "path": "tools/stable_readiness.py",
+        "sha256": "503ce11464d53c8e07de5ae8a138762fe41c95b668753c7288b3222146254325"
+      },
+      {
+        "path": "tools/tests/test_stable_readiness.py",
+        "sha256": "b0ddfc9b20891f7b00b092e86cc94885e85c84fb923302d2b0cd66e0b84b7bd4"
+      },
+      {
+        "path": "runbooks/RELEASE_AUTHORITY_BOUNDARIES.md",
+        "sha256": "965d3e16c8454c4e141b2e27a47d66dae935f6b5fcf9f249247fdf8f24e6f787"
+      }
+    ],
+    "red": {
+      "exit_code": 1,
+      "tests": 2,
+      "failures": [
+        "approval gate returned pass for authenticated review-only records",
+        "approval gate did not call verify_approval_authority"
+      ]
+    },
+    "green": {
+      "chunk_id": "762652",
+      "wall_time_seconds": 0.0000088,
+      "exit_code": 0,
+      "original_token_count": 26,
+      "output": "----------------------------------------------------------------------\r\nRan 73 tests in 13.057s\r\n\r\nOK\r\n"
+    },
+    "limits": [
+      "Source-only local verification; independent review and official CI pending."
+    ]
+  },
+  "billing_annotation": {
+    "recorded_date_cairo": "2026-10-20",
+    "run_id": 39185680855,
+    "source": "owner-provided GitHub UI annotation in this chat",
+    "classification": "EXTERNAL_ACCOUNT_BILLING_BLOCK",
+    "alternatives": [
+      "recent account payments failed",
+      "spending limit needs to be increased"
+    ],
+    "specific_alternative_verified": false,
+    "other_runs_same_cause_independently_verified": false,
+    "account_billing_accessed": false,
+    "settings_changed": false,
+    "workflows_rerun": false
+  },
+  "limits": [
+    "No frozen release commit; source integration only.",
+    "No official exact-head CI success or independent review claimed.",
+    "Billing cause supplied by owner for one run; specific failed-payment versus limit alternative unresolved.",
+    "No measured operational CI saving or causal learning improvement.",
+    "Historical evidence and earlier checkpoints retained."
+  ]
+}
