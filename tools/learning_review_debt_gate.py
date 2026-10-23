@@ -9,12 +9,15 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 if __package__:
-    from . import capability_activation
+    from . import capability_activation, task_learning as authoritative_task_learning
 else:
     import importlib.util
     _activation_spec = importlib.util.spec_from_file_location("_erei_capability_activation", Path(__file__).with_name("capability_activation.py"))
     capability_activation = importlib.util.module_from_spec(_activation_spec)
     _activation_spec.loader.exec_module(capability_activation)
+    _task_spec = importlib.util.spec_from_file_location("_erei_authoritative_task_learning", Path(__file__).with_name("task_learning.py"))
+    authoritative_task_learning = importlib.util.module_from_spec(_task_spec)
+    _task_spec.loader.exec_module(authoritative_task_learning)
 
 
 class ReviewDebtError(RuntimeError):
@@ -302,6 +305,15 @@ def evaluate_target(target: Path, state: dict, *, defer_path: Path | None = None
     if critical is not None:
         return critical
     capability_activation.require_active(target, "learning_review_debt_guard")
+    # Never authorize Candidate debt/defer using caller-controlled state.
+    # The projection's updated_at is a clock value, not semantic evidence.
+    try:
+        actual = authoritative_task_learning.authoritative_snapshot(target)["state"]
+    except authoritative_task_learning.LearningError as exc:
+        raise ReviewDebtError("cannot verify authoritative learning state: " + str(exc)) from exc
+    material_keys = set(actual) - {"updated_at"}
+    if any(state.get(key) != actual[key] for key in material_keys):
+        raise ReviewDebtError("supplied learning state does not match authoritative ledgers")
     # A dormant/blocked Candidate must not read or apply a defer record.
     defer = _read(defer_path) if defer_path is not None else None
     return evaluate(state, defer, now or datetime.now(timezone.utc))
