@@ -8,6 +8,17 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
+if __package__:
+    from . import capability_activation, task_learning as authoritative_task_learning
+else:
+    import importlib.util
+    _activation_spec = importlib.util.spec_from_file_location("_erei_capability_activation", Path(__file__).with_name("capability_activation.py"))
+    capability_activation = importlib.util.module_from_spec(_activation_spec)
+    _activation_spec.loader.exec_module(capability_activation)
+    _task_spec = importlib.util.spec_from_file_location("_erei_authoritative_task_learning", Path(__file__).with_name("task_learning.py"))
+    authoritative_task_learning = importlib.util.module_from_spec(_task_spec)
+    _task_spec.loader.exec_module(authoritative_task_learning)
+
 
 class ReviewDebtError(RuntimeError):
     pass
@@ -231,14 +242,12 @@ def validate_defer(defer: dict, state: dict, now: datetime) -> dict:
     return {"additional_material_tasks": additional}
 
 
-def evaluate(state: dict, defer: dict | None, now: datetime) -> dict:
+def core_safety_stop(state: dict) -> dict | None:
+    """Core security/data blocking is unconditional, never a Candidate trial."""
     _validate_state(state)
-    trigger = state["trigger"]
-    reported_level = trigger.get("level")
+    reported_level = state["trigger"].get("level")
     metrics = state["metrics_since_last_review"]
     critical_events = metrics["security_or_data_critical_events"]
-    verification_escapes = metrics["verification_escapes"]
-
     if critical_events > 0:
         return {
             "status": "BLOCK_CRITICAL_SECURITY_OR_DATA_REVIEW",
@@ -248,6 +257,16 @@ def evaluate(state: dict, defer: dict | None, now: datetime) -> dict:
             "critical_events": critical_events,
             "reason": "security/data critical evidence requires review closure and cannot be bypassed by a bounded defer",
         }
+    return None
+
+
+def evaluate(state: dict, defer: dict | None, now: datetime) -> dict:
+    """Pure policy calculation; project dispatch must use evaluate_target."""
+    critical = core_safety_stop(state)
+    if critical is not None:
+        return critical
+    reported_level = state["trigger"].get("level")
+    verification_escapes = state["metrics_since_last_review"]["verification_escapes"]
 
     evidence_requires_immediate = verification_escapes > 0
     effective_immediate = reported_level == "IMMEDIATE_REVIEW" or evidence_requires_immediate
@@ -280,18 +299,42 @@ def evaluate(state: dict, defer: dict | None, now: datetime) -> dict:
     }
 
 
+def evaluate_target(target: Path, state: dict, *, defer_path: Path | None = None,
+                    now: datetime | None = None) -> dict:
+    critical = core_safety_stop(state)
+    if critical is not None:
+        return critical
+    capability_activation.require_active(target, "learning_review_debt_guard")
+    # Never authorize Candidate debt/defer using caller-controlled state.
+    # The projection's updated_at is a clock value, not semantic evidence.
+    try:
+        actual = authoritative_task_learning.authoritative_snapshot(target)["state"]
+    except authoritative_task_learning.LearningError as exc:
+        raise ReviewDebtError("cannot verify authoritative learning state: " + str(exc)) from exc
+    material_keys = set(actual) - {"updated_at"}
+    if any(state.get(key) != actual[key] for key in material_keys):
+        raise ReviewDebtError("supplied learning state does not match authoritative ledgers")
+    # A dormant/blocked Candidate must not read or apply a defer record.
+    defer = _read(defer_path) if defer_path is not None else None
+    return evaluate(state, defer, now or datetime.now(timezone.utc))
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser()
+    parser.add_argument("--target", required=True)
     parser.add_argument("--state", required=True)
     parser.add_argument("--defer")
     parser.add_argument("--now")
     args = parser.parse_args(argv)
     try:
         state = _read(Path(args.state))
-        defer = _read(Path(args.defer)) if args.defer else None
         now = _parse_time(args.now) if args.now else datetime.now(timezone.utc)
-        result = evaluate(state, defer, now)
-    except ReviewDebtError as exc:
+        result = evaluate_target(Path(args.target), state,
+                                 defer_path=Path(args.defer) if args.defer else None, now=now)
+    except capability_activation.InactiveCapabilityError as exc:
+        print(json.dumps(exc.result, sort_keys=True))
+        return 3
+    except (capability_activation.ActivationError, OSError, ReviewDebtError) as exc:
         print(json.dumps({"status":"BLOCK_INVALID_REVIEW_DEFER","error":str(exc)}, sort_keys=True))
         return 2
     print(json.dumps(result, sort_keys=True))

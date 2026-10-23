@@ -6,6 +6,14 @@ import argparse
 import json
 from pathlib import Path
 
+if __package__:
+    from . import capability_activation
+else:
+    import importlib.util
+    _activation_spec = importlib.util.spec_from_file_location("_erei_capability_activation", Path(__file__).with_name("capability_activation.py"))
+    capability_activation = importlib.util.module_from_spec(_activation_spec)
+    _activation_spec.loader.exec_module(capability_activation)
+
 
 class EffectivenessError(RuntimeError):
     pass
@@ -142,14 +150,24 @@ def compare(before: dict, after: dict) -> dict:
     }
 
 
+def compare_target(target: Path, before_path: Path, after_path: Path) -> dict:
+    """Governed project dispatch; compare remains a pure artifact calculation."""
+    capability_activation.require_active(target, "framework_effectiveness_measurement")
+    return compare(_load(before_path), _load(after_path))
+
+
 def main(argv=None) -> int:
     parser=argparse.ArgumentParser()
+    parser.add_argument("--target", required=True)
     parser.add_argument("--before",required=True)
     parser.add_argument("--after",required=True)
     args=parser.parse_args(argv)
     try:
-        result=compare(_load(Path(args.before)),_load(Path(args.after)))
-    except EffectivenessError as exc:
+        result=compare_target(Path(args.target), Path(args.before), Path(args.after))
+    except capability_activation.InactiveCapabilityError as exc:
+        print(json.dumps(exc.result, sort_keys=True))
+        return 3
+    except (capability_activation.ActivationError, OSError, EffectivenessError) as exc:
         print(json.dumps({"status":"ERROR","error":str(exc)},sort_keys=True))
         return 2
     print(json.dumps(result,indent=2,sort_keys=True))
