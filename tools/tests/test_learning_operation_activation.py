@@ -24,6 +24,10 @@ from tools import learning_effectiveness as effectiveness
 from tools import learning_pattern_analysis as pattern
 from tools import learning_review_debt_gate as debt
 
+# Keep references to the real checkout guards before fixture-level mocking.
+REAL_CLEAN_CHECKOUT = activation.assert_clean_framework_checkout
+REAL_LOADED_REF = activation.detect_loaded_framework_ref
+
 
 ROOT = Path(__file__).resolve().parents[2]
 PIN = "a" * 40
@@ -342,6 +346,46 @@ class LearningOperationActivationTests(unittest.TestCase):
         write_json(self.state_path, pattern.authoritative_task_learning.authoritative_snapshot(self.target)["state"])
         code, stdout = self.cli(debt.main, ["--target", str(self.target), "--state", str(self.state_path)])
         self.assertEqual((code, json.loads(stdout)["status"]), (0, "PASS_NO_IMMEDIATE_REVIEW"))
+
+    def test_four_guarded_clis_use_real_clean_checkout_identity(self):
+        """Exercise all four guarded entrypoints using a real Git checkout."""
+        actual_ref = REAL_LOADED_REF(ROOT)
+        self.project["framework"]["ref"] = actual_ref
+        write_json(self.target / activation.MANIFEST_PATH, self.project)
+        self.adopt()
+        adoption_path = self.target / activation.ADOPTION_PATH
+        adoption = json.loads(adoption_path.read_text(encoding="utf-8"))
+        adoption["framework_ref"] = actual_ref
+        write_json(adoption_path, adoption)
+        self.capture_event()
+        with mock.patch.object(activation, "detect_loaded_framework_ref", REAL_LOADED_REF), \
+             mock.patch.object(activation, "assert_clean_framework_checkout", REAL_CLEAN_CHECKOUT):
+            REAL_CLEAN_CHECKOUT(ROOT)
+            report_path = self.target / "report.json"
+            code, output = self.cli(
+                pattern.main, ["--target", str(self.target), "--json-output", str(report_path)]
+            )
+            self.assertEqual(code, 0, output)
+            self.assertTrue(report_path.exists())
+            code, output = self.cli(effectiveness.main, [
+                "--target", str(self.target), "--before", str(report_path),
+                "--after", str(report_path),
+            ])
+            self.assertEqual(code, 0, output)
+            self.assertEqual(json.loads(output)["causation"], "NOT_ESTABLISHED")
+            ldo_path = self.target / "ldo.json"
+            write_json(ldo_path, self.output_fixture())
+            code, output = self.cli(ldo.main, [
+                "--target", str(self.target), "--input", str(ldo_path),
+            ])
+            self.assertEqual((code, json.loads(output)["status"]), (0, "VALID"))
+            authoritative = pattern.authoritative_task_learning.authoritative_snapshot(self.target)["state"]
+            write_json(self.state_path, authoritative)
+            code, output = self.cli(debt.main, [
+                "--target", str(self.target), "--state", str(self.state_path),
+            ])
+            self.assertEqual((code, json.loads(output)["status"]), (0, "PASS_NO_IMMEDIATE_REVIEW"))
+            REAL_CLEAN_CHECKOUT(ROOT)
 
     def test_pure_artifact_validation_and_calculations_do_not_activate_workflows(self):
         self.clean.side_effect = activation.ActivationError("no runtime checkout")
