@@ -3,7 +3,8 @@
 
 Authoritative V2 events/reviews are individual immutable JSON files so parallel Git
 branches normally merge without editing one shared ledger. JSONL, state and Markdown
-are rebuildable projections. Legacy V1 JSONL remains readable for compatibility.
+are rebuildable projections except that V1 positional review membership requires
+the original complete event projection. Legacy V1 JSONL remains readable.
 """
 from __future__ import annotations
 
@@ -96,11 +97,16 @@ def _fingerprint(event: dict) -> str:
         "feedback_ids": event.get("feedback_ids", []),
         "feedback_fingerprints": event.get("feedback_fingerprints", []),
         "tags": event.get("tags", []),
-        "task_group": event.get("task_group", ""),
-        "failure_stage": event.get("failure_stage", "unknown"),
-        "failure_subject": event.get("failure_subject", ""),
-        "signal_assessment": event.get("signal_assessment", {}),
     }
+    # V1 fingerprints are a frozen wire contract. Adding absent V2 fields would
+    # invalidate historical evidence produced by the Stable V1 implementation.
+    if event.get("schema_version") == 2:
+        semantic.update({
+            "task_group": event.get("task_group", ""),
+            "failure_stage": event.get("failure_stage", "unknown"),
+            "failure_subject": event.get("failure_subject", ""),
+            "signal_assessment": event.get("signal_assessment", {}),
+        })
     canonical = json.dumps(semantic, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
@@ -259,14 +265,14 @@ def validate_event(event: dict) -> None:
         raise LearningError(f"task event fingerprint mismatch: {event.get('task_id', 'UNKNOWN')}")
 
 
-def _deduplicate_records(records: list[dict], key_fn, label: str) -> list[dict]:
+def _deduplicate_records(records: list[dict], key_fn, label: str, *, preserve_order: bool = False) -> list[dict]:
     result: dict[str, dict] = {}
     for item in records:
         key = key_fn(item)
         if key in result and result[key] != item:
             raise LearningError(f"conflicting duplicate {label}: {key}")
         result[key] = item
-    return sorted(result.values(), key=key_fn)
+    return list(result.values()) if preserve_order else sorted(result.values(), key=key_fn)
 
 
 def _immutable_records(directory: Path, key_fn, label: str) -> list[dict]:
@@ -290,13 +296,20 @@ def _merge_legacy_projection_with_immutable(
     *,
     key_fn,
     label: str,
+    preserve_projection_order: bool = False,
 ) -> list[dict]:
     immutable_by_key = {key_fn(item): item for item in immutable}
     legacy: list[dict] = []
+    projected_keys: set[str] = set()
     for item in projection:
         version = item.get("schema_version")
         if type(version) is not int:
             raise LearningError(f"{label} schema_version must be an integer")
+        if preserve_projection_order:
+            key = key_fn(item)
+            if key in projected_keys:
+                raise LearningError(f"duplicate {label} projection identity: {key}")
+            projected_keys.add(key)
         if version == 1:
             legacy.append(item)
             continue
@@ -309,20 +322,37 @@ def _merge_legacy_projection_with_immutable(
                 )
             if authoritative != item:
                 raise LearningError(f"V2 {label} projection does not match immutable authority: {key}")
+            if preserve_projection_order:
+                legacy.append(authoritative)
             continue
         # Preserve unsupported projection records so strict schema validation reports the real contract error.
         legacy.append(item)
-    return _deduplicate_records(legacy + immutable, key_fn, f"{label} identity")
+    return _deduplicate_records(
+        legacy + immutable, key_fn, f"{label} identity", preserve_order=preserve_projection_order
+    )
 
 
-def _load_events(paths: dict[str, Path]) -> list[dict]:
+def _load_events(paths: dict[str, Path], *, admitted_new_occurrence: str | None = None) -> list[dict]:
     projection = _read_jsonl(paths["events"])
     immutable = _immutable_records(paths["event_dir"], _occurrence, "event")
+    immutable_only = {_occurrence(item) for item in immutable} - {_occurrence(item) for item in projection}
+    # A V1 cutoff binds positions, which cannot be recovered by sorting or
+    # appending missing rows. Only capture may admit its one just-written event,
+    # after validating the complete prior snapshot under the same lock.
+    ambiguous = immutable_only - ({admitted_new_occurrence} if admitted_new_occurrence else set())
+    if ambiguous and any(review["schema_version"] == 1 for review in _load_reviews(paths)):
+        raise LearningError(
+            "legacy review membership cannot be proven for immutable-only events; "
+            "original projection recovery required: " + ", ".join(sorted(ambiguous))
+        )
     events = _merge_legacy_projection_with_immutable(
         projection,
         immutable,
         key_fn=_occurrence,
         label="event",
+        # Legacy review cutoffs address append positions, not lexicographic IDs.
+        # Keep known positions; missing legacy positions are rejected above.
+        preserve_projection_order=True,
     )
     seen_task_ids: dict[str, str] = {}
     for event in events:
@@ -487,6 +517,34 @@ def _reviewed_occurrences(events: list[dict], reviews: list[dict]) -> tuple[set[
             if cutoff < legacy_cutoff or cutoff > len(events):
                 raise LearningError("invalid legacy learning review cutoff")
             selected = events[legacy_cutoff:cutoff]
+            # V1 positional cutoffs bind no occurrence IDs or digest.
+            # A pre-fix identity sort may have moved a V2 event inside
+            # this span. Without external original-order provenance,
+            # accepting it could silently re-close the wrong event.
+            unproven = sorted(
+                _occurrence(event) for event in selected
+                if event["schema_version"] == 2
+            )
+            if unproven:
+                raise LearningError(
+                    "legacy V1 review includes V2 occurrences without original-order provenance: "
+                    + ", ".join(unproven)
+                )
+            # A V1 positional cutoff must not re-close occurrences explicitly
+            # reviewed by an earlier V2 review in a mixed review history.
+            overlap = sorted({_occurrence(event) for event in selected} & reviewed)
+            if overlap:
+                raise LearningError("review re-closes occurrences: " + ", ".join(overlap))
+            # A past V1 cutoff cannot close an occurrence recorded after
+            # the review itself. This catches a common pre-sorted projection
+            # failure even when all row fingerprints and immutable files match.
+            closure = datetime.fromisoformat(review["closed_at"].replace("Z", "+00:00"))
+            future = sorted(
+                _occurrence(event) for event in selected
+                if datetime.fromisoformat(event["recorded_at"].replace("Z", "+00:00")) > closure
+            )
+            if future:
+                raise LearningError("legacy review covers event recorded after closure: " + ", ".join(future))
             legacy_cutoff = cutoff
         else:
             ids = review["reviewed_occurrence_ids"]
@@ -562,7 +620,7 @@ def _render_summary(state: dict) -> str:
     lines += [f"- `{reason}`" for reason in trigger["reasons"]] if trigger["reasons"] else ["- None."]
     lines += [
         "",
-        "JSONL/state/summary files are projections. V2 event/review JSON files are immutable authoritative occurrences.",
+        "V2 event/review JSON files are immutable authority. Legacy positional reviews also require the original complete event projection.",
         "Task Learning never authorizes Framework self-modification.",
         "",
     ]
@@ -672,7 +730,7 @@ def capture(target: Path, event: dict) -> tuple[dict, bool]:
         candidate_events = events + [event]
         state = derive_state(candidate_events, reviews)
         _write_immutable_json(paths["event_dir"] / f"{occurrence}.json", event)
-        persisted_events = _load_events(paths)
+        persisted_events = _load_events(paths, admitted_new_occurrence=occurrence)
         state = derive_state(persisted_events, reviews)
         _persist_projections(paths, persisted_events, reviews, state)
     return state, False

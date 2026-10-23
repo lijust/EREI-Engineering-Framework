@@ -1,0 +1,175 @@
+{
+  "schema_version": 1,
+  "recorded_at_utc": "2026-10-20 08:31:30 UTC",
+  "evidence_kind": "LOCAL_SYNTHETIC_ROLLBACK_DRILL",
+  "repository": "lijust/EREI-Engineering-Framework",
+  "main": "72d49658524fbce6145783cd52297c53edbb2c95",
+  "head": "a20cccf9447b46bc87e38b568bae5662c84acf02",
+  "tree": "49fb8a5e0ae6cc8dfe8071bae75283901ea2fcdf",
+  "parent": "9ca0fd14ca2e4a60def23f9e7df11c827a961135",
+  "pr": 94,
+  "v1": {
+    "commit": "69079018606750312344cb3c648952b9ab72d35b",
+    "tool_blob": "8429a5fdda91f962e067f30e0a828a1789850ec3",
+    "tool_sha256": "336037ea356c91d780f61684889b7c92c5d2bde21a8fff2591fec95e559be8f2"
+  },
+  "source_hashes": {
+    "tools/tests/drill_task_learning_rollback.py": "e71ba078079c606e6f83c94b9c5293b2772e46ee15fe2df8eb99c11691b342d7",
+    "learning/INTERNAL_ROLLBACK_DRILL.md": "f1b317498c48a7d153db6bb3e55af0fa4639bd39b9e76f7b91647067ce2495db"
+  },
+  "published_blob_matches": 315,
+  "tests": [
+    {
+      "command": "py \"-3.11\" -B tools/tests/drill_task_learning_rollback.py --v1-tool '<exact-export>/task_learning.py'",
+      "exit_code": 0,
+      "output": "test_fresh_restore_preserves_baseline_and_full_trial_archive (__main__.RollbackDrill.test_fresh_restore_preserves_baseline_and_full_trial_archive) ... ok\r\ntest_pin_only_rollback_rejects_v2_without_status_writes (__main__.RollbackDrill.test_pin_only_rollback_rejects_v2_without_status_writes) ... ok\r\ntest_verified_v1_loader_rejects_modified_source (__main__.RollbackDrill.test_verified_v1_loader_rejects_modified_source) ... ok\r\n{\r\n  \"evidence_kind\": \"LOCAL_SYNTHETIC_ROLLBACK_DRILL\",\r\n  \"v1_commit\": \"69079018606750312344cb3c648952b9ab72d35b\",\r\n  \"v1_tool_sha256\": \"336037ea356c91d780f61684889b7c92c5d2bde21a8fff2591fec95e559be8f2\",\r\n  \"v2_source_sha256\": {\r\n    \"tools/task_learning.py\": \"84882c6cd0de34aa57cdb643fb5c1e2979426bbb0e6167805ad665cf1156464e\",\r\n    \"tools/validation_contract.py\": \"2159b2c48174af662f217a771af676616c8e57290a64dcccbbceaad59dda07f7\",\r\n    \"tools/tests/drill_task_learning_rollback.py\": \"e71ba078079c606e6f83c94b9c5293b2772e46ee15fe2df8eb99c11691b342d7\"\r\n  },\r\n  \"tests_run\": 3,\r\n  \"failures\": 0,\r\n  \"errors\": 0,\r\n  \"passed\": true,\r\n  \"live_adoption\": false,\r\n  \"internal_release_qualified\": false\r\n}\r\n\r\n----------------------------------------------------------------------\r\nRan 3 tests in 0.513s\r\n\r\nOK\r\n"
+    },
+    {
+      "command": "py \"-3.12\" -B tools/tests/drill_task_learning_rollback.py --v1-tool '<exact-export>/task_learning.py'",
+      "exit_code": 0,
+      "output": "test_fresh_restore_preserves_baseline_and_full_trial_archive (__main__.RollbackDrill.test_fresh_restore_preserves_baseline_and_full_trial_archive) ... ok\r\ntest_pin_only_rollback_rejects_v2_without_status_writes (__main__.RollbackDrill.test_pin_only_rollback_rejects_v2_without_status_writes) ... ok\r\ntest_verified_v1_loader_rejects_modified_source (__main__.RollbackDrill.test_verified_v1_loader_rejects_modified_source) ... ok\r\n\r\n----------------------------------------------------------------------\r\nRan 3 tests in 0.454s\r\n\r\nOK\r\n{\r\n  \"evidence_kind\": \"LOCAL_SYNTHETIC_ROLLBACK_DRILL\",\r\n  \"v1_commit\": \"69079018606750312344cb3c648952b9ab72d35b\",\r\n  \"v1_tool_sha256\": \"336037ea356c91d780f61684889b7c92c5d2bde21a8fff2591fec95e559be8f2\",\r\n  \"v2_source_sha256\": {\r\n    \"tools/task_learning.py\": \"84882c6cd0de34aa57cdb643fb5c1e2979426bbb0e6167805ad665cf1156464e\",\r\n    \"tools/validation_contract.py\": \"2159b2c48174af662f217a771af676616c8e57290a64dcccbbceaad59dda07f7\",\r\n    \"tools/tests/drill_task_learning_rollback.py\": \"e71ba078079c606e6f83c94b9c5293b2772e46ee15fe2df8eb99c11691b342d7\"\r\n  },\r\n  \"tests_run\": 3,\r\n  \"failures\": 0,\r\n  \"errors\": 0,\r\n  \"passed\": true,\r\n  \"live_adoption\": false,\r\n  \"internal_release_qualified\": false\r\n}\r\n"
+    },
+    {
+      "command": "python -B -m unittest tools.tests.test_task_learning tools.tests.test_task_learning_legacy tools.tests.test_task_learning_order tools.tests.test_plan_task_learning_migration -q",
+      "exit_code": 0,
+      "output": "----------------------------------------------------------------------\r\nRan 48 tests in 2.779s\r\n\r\nOK\r\n"
+    }
+  ],
+  "development_errors": [
+    {
+      "stage": "initial report emission",
+      "tests_passed": 3,
+      "process_exit_code": 1,
+      "cause": "validation_contracts.py typo; actual module is validation_contract.py",
+      "resolved_before_final_runs": true
+    }
+  ],
+  "independent_review": "PENDING",
+  "official_ci": "NOT_ESTABLISHED",
+  "internal_release_qualified": false,
+  "live_data_or_pins_changed": false,
+  "limitations": [
+    "Synthetic fixtures and stopped writers only",
+    "No in-place V2 to V1 downgrade",
+    "No automatic reconciliation of divergent histories",
+    "No activation, real model, production or disaster-recovery proof"
+  ],
+  "pr_snapshot": [
+    {
+      "path": "lijust/EREI-Engineering-Framework/pulls/83",
+      "state": "open",
+      "head": "6054baf7f9b926203d47f94db1adf909810b88ef",
+      "merged": false,
+      "draft": false,
+      "base": "main"
+    },
+    {
+      "path": "lijust/EREI-Engineering-Framework/pulls/84",
+      "state": "open",
+      "head": "3545df37a90695a588ce5ced4a5a1327ea3d803d",
+      "merged": false,
+      "draft": false,
+      "base": "codex/v2-f01-legacy-fingerprints"
+    },
+    {
+      "path": "lijust/EREI-Engineering-Framework/pulls/85",
+      "state": "open",
+      "head": "084c3ab0bf0dd9e5afcadf074c723533fe190561",
+      "merged": false,
+      "draft": false,
+      "base": "main"
+    },
+    {
+      "path": "lijust/EREI-Engineering-Framework/pulls/86",
+      "state": "open",
+      "head": "0555feb863412db1032b229c48073b2a9eb83479",
+      "merged": false,
+      "draft": false,
+      "base": "main"
+    },
+    {
+      "path": "lijust/EREI-Engineering-Framework/pulls/87",
+      "state": "open",
+      "head": "e779b5fdaa347665355e89439b72820313dfcf20",
+      "merged": false,
+      "draft": false,
+      "base": "codex/v2-f04-candidate-boundaries"
+    },
+    {
+      "path": "lijust/EREI-Engineering-Framework/pulls/88",
+      "state": "open",
+      "head": "9ca0fd14ca2e4a60def23f9e7df11c827a961135",
+      "merged": false,
+      "draft": false,
+      "base": "codex/v2-f02-review-membership"
+    },
+    {
+      "path": "lijust/EREI-Engineering-Framework/pulls/89",
+      "state": "open",
+      "head": "0b2f9a517215a5b0070617e9c9312c6377d0c218",
+      "merged": false,
+      "draft": false,
+      "base": "main"
+    },
+    {
+      "path": "lijust/EREI-Engineering-Framework/pulls/90",
+      "state": "open",
+      "head": "186d0c03b5970432bb9adcff0e768ff1dae21c0b",
+      "merged": false,
+      "draft": false,
+      "base": "main"
+    },
+    {
+      "path": "lijust/EREI-Engineering-Framework/pulls/91",
+      "state": "open",
+      "head": "a132e104c6881d7dc4f1002862741bc33a0da748",
+      "merged": false,
+      "draft": true,
+      "base": "main"
+    },
+    {
+      "path": "lijust/EREI-Engineering-Framework/pulls/92",
+      "state": "open",
+      "head": "a42f9413a98d829ce51b48bed38d7294f931bae3",
+      "merged": false,
+      "draft": true,
+      "base": "ci/avoid-duplicate-assurance-runs-20261017"
+    },
+    {
+      "path": "lijust/EREI-Engineering-Framework/pulls/93",
+      "state": "open",
+      "head": "85ead2121ecb03454495200a475ca9f3f129398e",
+      "merged": false,
+      "draft": true,
+      "base": "codex/v2-f10-numeric-evidence"
+    },
+    {
+      "path": "lijust/EREI-Engineering-Framework/pulls/94",
+      "state": "open",
+      "head": "a20cccf9447b46bc87e38b568bae5662c84acf02",
+      "merged": false,
+      "draft": true,
+      "base": "codex/v2-f03-migration-preflight"
+    },
+    {
+      "path": "lijust/EREI-Engineering-Framework/pulls/67",
+      "state": "open",
+      "head": "69a2d6cfb3d42c70e467d1fd6fff283e817972bf",
+      "merged": false,
+      "draft": false,
+      "base": "main"
+    },
+    {
+      "path": "lijust/EREI-3.2/pulls/174",
+      "state": "open",
+      "head": "50cc659415af535e1b20a45a3a2453d0aa07afa3",
+      "merged": false,
+      "draft": false,
+      "base": "main"
+    },
+    {
+      "path": "lijust/EREI-Engineering-Framework/branches/main",
+      "head": "72d49658524fbce6145783cd52297c53edbb2c95"
+    }
+  ]
+}

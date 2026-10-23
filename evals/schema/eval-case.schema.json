@@ -3,25 +3,60 @@
   "$id": "https://erei.local/schemas/eval-case.schema.json",
   "title": "EREI Eval Suite V1",
   "type": "object",
-  "required": ["schema_version", "suite_id", "artifact", "assurance_scope", "cases"],
+  "required": [
+    "schema_version",
+    "suite_id",
+    "artifact",
+    "assurance_scope",
+    "cases"
+  ],
   "additionalProperties": false,
   "properties": {
-    "schema_version": {"const": "1.0"},
-    "suite_id": {"type": "string", "minLength": 1},
-    "artifact": {"type": "string", "minLength": 1},
-    "assurance_scope": {"enum": ["behavioral_runtime", "harness_only"]},
+    "schema_version": {
+      "const": "1.0"
+    },
+    "suite_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "artifact": {
+      "type": "string",
+      "minLength": 1
+    },
+    "assurance_scope": {
+      "enum": [
+        "behavioral_runtime",
+        "harness_only"
+      ]
+    },
     "cases": {
       "type": "array",
       "minItems": 1,
       "items": {
         "type": "object",
-        "required": ["id", "input", "expectations"],
+        "required": [
+          "id",
+          "input",
+          "expectations"
+        ],
         "additionalProperties": false,
         "properties": {
-          "id": {"type": "string", "minLength": 1},
-          "input": {"type": "object"},
-          "context": {"type": "object"},
-          "tags": {"type": "array", "items": {"type": "string"}},
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "input": {
+            "type": "object"
+          },
+          "context": {
+            "type": "object"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
           "expectations": {
             "type": "array",
             "minItems": 1,
@@ -30,47 +65,161 @@
                 {
                   "type": "object",
                   "additionalProperties": false,
-                  "required": ["type", "values"],
+                  "required": [
+                    "type",
+                    "values"
+                  ],
                   "properties": {
-                    "type": {"enum": ["output_contains_all", "output_contains_none"]},
-                    "values": {"type": "array", "minItems": 1, "items": {"type": "string"}}
+                    "type": {
+                      "enum": [
+                        "output_contains_all",
+                        "output_contains_none"
+                      ]
+                    },
+                    "values": {
+                      "type": "array",
+                      "minItems": 1,
+                      "items": {
+                        "type": "string"
+                      }
+                    }
                   }
                 },
                 {
                   "type": "object",
                   "additionalProperties": false,
-                  "required": ["type", "pattern"],
+                  "required": [
+                    "type",
+                    "pattern"
+                  ],
                   "properties": {
-                    "type": {"const": "output_regex"},
-                    "pattern": {"type": "string", "minLength": 1}
+                    "type": {
+                      "const": "output_regex"
+                    },
+                    "pattern": {
+                      "type": "string",
+                      "minLength": 1
+                    }
                   }
                 },
                 {
                   "type": "object",
                   "additionalProperties": false,
-                  "required": ["type", "key", "value"],
+                  "required": [
+                    "type",
+                    "key",
+                    "value"
+                  ],
                   "properties": {
-                    "type": {"const": "metadata_equals"},
-                    "key": {"type": "string", "minLength": 1},
+                    "type": {
+                      "const": "metadata_equals"
+                    },
+                    "key": {
+                      "type": "string",
+                      "minLength": 1
+                    },
                     "value": {}
                   }
                 },
                 {
                   "type": "object",
                   "additionalProperties": false,
-                  "required": ["type", "tool"],
+                  "required": [
+                    "type",
+                    "tool"
+                  ],
                   "properties": {
-                    "type": {"enum": ["trace_tool_called", "trace_tool_not_called"]},
-                    "tool": {"type": "string", "minLength": 1}
+                    "type": {
+                      "enum": [
+                        "trace_tool_called",
+                        "trace_tool_not_called"
+                      ]
+                    },
+                    "tool": {
+                      "type": "string",
+                      "minLength": 1
+                    }
                   }
                 },
                 {
                   "type": "object",
                   "additionalProperties": false,
-                  "required": ["type", "value"],
+                  "required": [
+                    "type",
+                    "value"
+                  ],
                   "properties": {
-                    "type": {"const": "max_trace_steps"},
-                    "value": {"type": "integer", "minimum": 0}
+                    "type": {
+                      "const": "max_trace_steps"
+                    },
+                    "value": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "type",
+                    "decision",
+                    "state",
+                    "reference_actions"
+                  ],
+                  "properties": {
+                    "type": {
+                      "const": "behavioral_simulation"
+                    },
+                    "decision": {
+                      "enum": [
+                        "capture_task",
+                        "omit_task",
+                        "request_review",
+                        "reject_sensitive_capture",
+                        "feedback_then_promotion",
+                        "allow_capability",
+                        "block_capability"
+                      ]
+                    },
+                    "state": {
+                      "type": "object",
+                      "minProperties": 1,
+                      "additionalProperties": false,
+                      "properties": {
+                        "task_events": {
+                          "type": "array"
+                        },
+                        "review_status": {
+                          "type": "string"
+                        },
+                        "feedback": {
+                          "type": "array"
+                        },
+                        "promotion_queue": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "core_modified": {
+                          "type": "boolean"
+                        },
+                        "capability_status": {
+                          "type": "string"
+                        },
+                        "executions": {
+                          "type": "array"
+                        }
+                      }
+                    },
+                    "reference_actions": {
+                      "type": "array",
+                      "maxItems": 16,
+                      "items": {
+                        "type": "object"
+                      }
+                    }
                   }
                 }
               ]

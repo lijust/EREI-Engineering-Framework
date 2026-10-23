@@ -23,6 +23,14 @@ L0 conversational explanation-only requests do not require the router unless the
 - Risk Contract.
 - Available roles, skills, workflows, overlays, and tools.
 
+## Activation rule — applies before every dispatch, including Stage 0
+
+Before direct or subordinate invocation of a project capability, resolve its own activation using `tools/capability_activation.py --target <project> --capability <name>`. Invoke only on `ACTIVE_STABLE` or `ACTIVE_CANDIDATE`. On `DORMANT_CANDIDATE`, skip the optional capability and retain Core behavior, or block the requested outcome if it requires that capability. On `BLOCK_*` or resolver failure, fail closed for that invocation and repair its evidence.
+
+The rule applies at every stage, including Stage 0 and after review closure; it is not deferred until Stage 7.5. Parent workflow adoption never activates a different subordinate capability. Pin movement and source-file presence never activate a Candidate.
+
+Use guarded project entrypoints (`analyze_target`, `compare_target`, `evaluate_target`) when dispatching Python tools. Pure schema validators and calculations may verify retained test/source artifacts without adoption; they do not authorize project analysis, output generation, persistence, or policy application.
+
 ## Stage 0 — Learning-debt preflight
 
 Before starting a **new material engineering execution** in an integrated project, reconstruct the current Learning State from the authoritative Task Learning ledgers.
@@ -32,7 +40,7 @@ Before starting a **new material engineering execution** in an integrated projec
    - It must derive the current state from those records.
    - It may refresh the rebuildable JSONL/state/summary projections.
    - If derivation or ledger validation fails, fail closed as `BLOCKED_LEARNING_REVIEW`; do not fall back to an existing projection.
-2. Only after successful derivation, invoke `tools/learning_review_debt_gate.py` (or equivalent contract-validating implementation) **unconditionally before trusting the stored trigger level**.
+2. Only after successful derivation, invoke `tools/learning_review_debt_gate.py --target <project> --state <derived-state>` (add `--defer <record>` only when available). Its unconditional Core validation/security-data stop runs before activation resolution. Its ordinary debt/defer policy runs only when `learning_review_debt_guard` is active.
 
 `LEARNING_STATE.json` is a rebuildable projection, not the learning source of truth. A missing/stale/healthy projection never authorizes execution when authoritative ledgers contain newer escape or critical evidence.
 
@@ -43,10 +51,12 @@ Route by gate result:
 3. `BLOCK_IMMEDIATE_REVIEW_DEBT` — route to `learning-review` before new material Framework-dependent execution and return `BLOCKED_LEARNING_REVIEW`.
 4. `BLOCK_CRITICAL_SECURITY_OR_DATA_REVIEW` — stop new material execution and route through Learning Review plus the normal security/data blocking governance; no bounded defer is valid.
 5. `BLOCK_INVALID_REVIEW_DEFER` or any state/defer contract-validation error — fail closed as `BLOCKED_LEARNING_REVIEW`; repair/rebuild the learning state before continuing.
+6. `DORMANT_CANDIDATE` — record the optional debt policy as dormant; continue Core review-trigger handling and underlying security/data/verification governance. Do not require, read, or apply a Candidate bounded defer.
+7. Activation `BLOCK_*` or resolution error — do not execute the Candidate debt policy; repair the adoption/ref/version evidence before using it. This never dismisses underlying Core blocking evidence.
 
 Do not pre-filter state reconstruction or the gate call by `trigger.level`, and do not skip reconstruction because `LEARNING_STATE.json` is absent. A stored `LEARNING_HEALTHY` value does not override authoritative ledger evidence or derived verification-escape/critical security-data metrics.
 
-This preflight does **not** retroactively change the terminal state of the task that created the trigger. It prevents unresolved immediate-review debt from growing without bound.
+This preflight does **not** retroactively change the terminal state of the task that created the trigger. When adopted, the optional debt policy prevents unresolved immediate-review debt from growing without bound.
 
 A bounded defer never overrides security, data, release or verification blocking evidence.
 
@@ -158,15 +168,7 @@ Avoid activating overlapping skills without a distinct purpose.
 
 ## Stage 7.5 — Candidate capability activation gate
 
-Before invoking any role/skill/workflow/tool whose capability registry status is not `stable`:
-
-1. treat asset presence in the Framework tree as **dormant by default**;
-2. run `tools/capability_activation.py --target <project> --capability <name>` or equivalent;
-3. invoke the Candidate only on `ACTIVE_CANDIDATE`;
-4. on `DORMANT_CANDIDATE`, use Stable behavior when available or block if the requested outcome explicitly depends on the Candidate;
-5. on any `BLOCK_*` result, fail closed and repair the adoption/ref/version evidence before Candidate use.
-
-Framework pin movement alone never activates a Candidate. Stable registry capabilities do not require Candidate adoption records.
+Apply the activation rule above to each selected role/skill/workflow/tool before execution. Stable registry capabilities do not require Candidate adoption records; their loaded Framework identity must still match the project pin.
 
 ## Stage 8 — Approval gate
 
@@ -196,6 +198,8 @@ For L2+ default to:
 4. regression verification.
 
 Prefer independent/fresh review context for material changes.
+
+If review invokes optional pattern analysis, learning translation, or effectiveness measurement, apply the activation rule to each invocation; review authority itself is not Candidate adoption.
 
 ## Stage 11 — Converge
 
@@ -239,13 +243,13 @@ Read the deterministic learning trigger returned from the project-local `.erei/l
 
 A learning trigger never authorizes Framework self-modification and does not replace the task terminal state.
 
-If the new state is `IMMEDIATE_REVIEW`, record that the **next material execution** requires Learning Review closure or a valid bounded defer under Stage 0.
+If the new state is `IMMEDIATE_REVIEW`, surface the Core review trigger and underlying blocking evidence. Only when `learning_review_debt_guard` is active, record that the **next material execution** requires Learning Review closure or a valid bounded defer under Stage 0. Dormant debt policy never waives security/data/verification stops.
 
 ## Stage 12.5 — Translate closed learning into development
 
 When the routed execution is a Learning Review, or when a Learning Review has just closed and produced reusable/measurement-relevant findings:
 
-- invoke `workflows/learning-to-development/WORKFLOW.md`;
+- resolve `learning_to_development` before invoking `workflows/learning-to-development/WORKFLOW.md` or generating/persisting an LDO; only active resolution permits the following optional steps;
 - require the Chief Engineer to interpret each material finding;
 - persist project-local Learning Development Outputs;
 - route project-only findings locally;
@@ -253,6 +257,8 @@ When the routed execution is a Learning Review, or when a Learning Review has ju
 - define expected effect and success metrics before any learning-derived Candidate implementation.
 
 Do not generate a Framework Candidate directly from a metric or pattern-detector output.
+
+On `DORMANT_CANDIDATE`, retain the Core review findings, follow-up actions, feedback routing, and closure without requiring LDOs. On activation failure, do not enter translation. Independently resolve every subordinate capability requested by the translation workflow.
 
 ## Stage 13 — Exit
 
@@ -286,7 +292,7 @@ Task learning event: <task-id>
 Learning epoch: <epoch-id>
 Learning trigger: <level + reasons>
 Learning state derivation: authoritative-ledgers-pass | blocked
-Learning review debt gate: not-applicable | pass | bounded-defer | blocked
+Learning review debt gate: not-applicable | dormant | pass | bounded-defer | blocked
 Learning development outputs: none | <output-id(s) + route>
 Candidate capability activation: none | <capability + ACTIVE_CANDIDATE / dormant / blocked>
 Exit state:
