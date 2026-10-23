@@ -154,3 +154,37 @@ jobs:
           print('STABLE_CAPABILITIES=' + ','.join(stable))
           '@ | py "-3.12" -
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+  # CI-only verification fixture for the immutable six-stream final source SHA.
+  # This branch is not a production/release PR and this job grants no approval.
+  targeted-final-source-python-311:
+    runs-on: [self-hosted, Windows, X64]
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact reviewed integration source
+        uses: actions/checkout@v4
+        with:
+          ref: e9562046b80d194316653b7e98e13f16bb0437d3
+          persist-credentials: false
+      - name: Verify exact checkout and Python 3.11
+        shell: powershell
+        run: |
+          $actual = (git rev-parse HEAD).Trim()
+          if ($LASTEXITCODE -ne 0 -or $actual -ne 'e9562046b80d194316653b7e98e13f16bb0437d3') { throw "wrong checkout $actual" }
+          py "-3.11" -c "import sys; print(sys.version); assert sys.version_info[:2] == (3, 11)"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Run all Framework tool tests on exact integration source (3.11)
+        shell: powershell
+        run: |
+          py "-3.11" -B -m unittest discover -s tools/tests -p 'test_*.py' -v
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Run all Framework eval harness tests on exact integration source (3.11)
+        shell: powershell
+        run: |
+          py "-3.11" -B -m unittest discover -s evals/tests -p 'test_*.py' -v
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Verify frozen release scope remains intact
+        shell: powershell
+        run: |
+          py "-3.11" -B tools/release_scope.py --repo-root .
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
