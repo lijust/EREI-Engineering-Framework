@@ -185,6 +185,12 @@ class RollbackDrill(unittest.TestCase):
         self.assertEqual(files(self.trial), trial_bytes)
         self.assertNotIn(resumed_event["task_id"], {item["task_id"] for item in retained["events"]})
 
+    def test_checkout_ref_preflight_denies_unbound_target(self):
+        self.assertEqual(require_exact_clean_checkout(TRIAL_REF), TRIAL_REF)
+        for invalid in ("main", "F" * 40, "0" * 39, "f" * 40):
+            with self.subTest(ref=invalid), self.assertRaises(ValueError):
+                require_exact_clean_checkout(invalid)
+
     def test_verified_v1_loader_rejects_modified_source(self):
         with self.assertRaisesRegex(ValueError, "frozen Stable source"):
             load_v1(b"raise RuntimeError('untrusted source must not execute')")
