@@ -64,6 +64,23 @@ Project-local ledgers:
 
 Retrospective events carry `evidence_quality = confirmed | reconstructed | inferred`, and each reconstructed signal carries its own quality and source references. Unknown historical signals stay absent rather than being guessed.
 
+## Legacy positional review recovery
+
+V1 reviews bind `through_event_count` to the original event projection order.
+When any V1 review exists, an immutable event missing from `TASK_EVENTS.jsonl`
+has no provable historical position. Snapshot, validation, status, capture, and
+review closure fail closed rather than append it and silently change which
+occurrences the old review covered. Restore the complete projection in its
+original order from trusted history before retrying; do not guess positions or
+delete immutable evidence to clear the error.
+
+A normal capture validates the complete prior snapshot under its lock and may
+then append only the one occurrence it has just written. If it crashes after
+the immutable write but before projection persistence, a later retry requires
+recovery: it cannot prove the missing row was its own prior append. Entirely V2
+history uses explicit review membership and can still rebuild a missing event
+projection deterministically.
+
 ## V1 review trigger states
 
 - `LEARNING_HEALTHY`
