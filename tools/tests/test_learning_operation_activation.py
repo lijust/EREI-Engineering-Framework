@@ -196,6 +196,59 @@ class LearningOperationActivationTests(unittest.TestCase):
             self.clean.assert_not_called()
             defer.assert_not_called()
 
+    def test_router_stage_zero_rederives_critical_ledger_before_dormant_candidate(self):
+        """Stage 0 contract: derive from immutable ledgers, never stale projection."""
+        # Candidate debt guard is NOT adopted.  Core critical evidence must
+        # still stop execution when the router follows its documented preflight.
+        self.capture_event(security_or_data_critical_event=True)
+        learning = self.target / ".erei/learning"
+        projected = learning / "LEARNING_STATE.json"
+        write_json(projected, self.state)  # simulate stale LEARNING_HEALTHY
+        before = (learning / "TASK_EVENTS.jsonl").read_bytes()
+        current_path = self.target / "router_derived_state.json"
+        code, stdout = self.cli(
+            pattern.authoritative_task_learning.main,
+            ["status", "--target", str(self.target)],
+        )
+        self.assertEqual(code, 0, stdout)
+        current = json.loads(stdout)
+        self.assertEqual(current["metrics_since_last_review"]["security_or_data_critical_events"], 1)
+        self.assertEqual(current["trigger"]["level"], "IMMEDIATE_REVIEW")
+        self.assertEqual(
+            json.loads(projected.read_text(encoding="utf-8"))["metrics_since_last_review"]["security_or_data_critical_events"], 1
+        )
+        write_json(current_path, current)
+        missing_defer = self.target / "no_defer.json"
+        # Actual Stage 0 sequence: ledger -> status -> CLI debt policy.
+        # A missing Candidate adoption must not suppress the Core critical stop.
+        code, output = self.cli(
+            debt.main,
+            ["--target", str(self.target), "--state", str(current_path), "--defer", str(missing_defer)],
+        )
+        self.assertEqual(code, 3, output)
+        self.assertEqual(json.loads(output)["status"], "BLOCK_CRITICAL_SECURITY_OR_DATA_REVIEW")
+        self.clean.assert_not_called()
+        self.assertFalse(missing_defer.exists())
+        self.assertEqual((learning / "TASK_EVENTS.jsonl").read_bytes(), before)
+
+    def test_router_stage_zero_dormant_escape_cannot_claim_candidate_policy_pass(self):
+        """Escapes remain Core review signals, not optional gate PASS."""
+        self.capture_event(verification_escape=True)
+        code, stdout = self.cli(
+            pattern.authoritative_task_learning.main,
+            ["status", "--target", str(self.target)],
+        )
+        self.assertEqual(code, 0, stdout)
+        current = json.loads(stdout)
+        self.assertEqual(current["metrics_since_last_review"]["verification_escapes"], 1)
+        self.assertEqual(current["trigger"]["level"], "IMMEDIATE_REVIEW")
+        write_json(self.state_path, current)
+        code, stdout = self.cli(debt.main, ["--target", str(self.target), "--state", str(self.state_path)])
+        self.assertEqual(code, 3, stdout)
+        self.assertEqual(json.loads(stdout)["status"], "DORMANT_CANDIDATE")
+        # Router's contract handles Core verification evidence separately;
+        # the dormant CLI does not enforce optional bounded debt policy.
+
     def test_invalid_core_state_fails_closed_before_optional_policy(self):
         with self.assertRaises(debt.ReviewDebtError):
             debt.evaluate_target(self.target, {})
@@ -243,7 +296,7 @@ class LearningOperationActivationTests(unittest.TestCase):
         write_json(path, record)
         self.assertEqual(debt.evaluate_target(self.target, state, defer_path=path, now=self.now)["status"], "PASS_BOUNDED_REVIEW_DEFER")
 
-    def capture_event(self, *, verification_escape=False):
+    def capture_event(self, *, verification_escape=False, security_or_data_critical_event=False):
         args = argparse.Namespace(
             task_id=None, occurrence_id=None, task_group="activation-regression",
             project_repository="example/repo", project_name="Fixture", framework_ref=PIN,
@@ -251,7 +304,7 @@ class LearningOperationActivationTests(unittest.TestCase):
             outcome_class="verified_success", material=True, rework_cycles=0,
             verification_failures=0, verification_escape=verification_escape, framework_feedback_created=False,
             manual_workaround=False, context_gap=False, unexpected_scope_growth=False,
-            security_or_data_critical_event=False, duration_class="medium", failure_stage="none",
+            security_or_data_critical_event=security_or_data_critical_event, duration_class="medium", failure_stage="none",
             failure_subject=None, feedback_id=[], feedback_fingerprint=[], tag=[],
         )
         event = pattern.authoritative_task_learning.build_event(args)
