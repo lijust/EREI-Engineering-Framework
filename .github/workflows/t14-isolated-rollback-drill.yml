@@ -1,0 +1,76 @@
+name: T14 Isolated Rollback Drill (PR 94 Only)
+
+on:
+  pull_request:
+    paths:
+      - 'tools/tests/drill_task_learning_rollback.py'
+      - 'learning/INTERNAL_ROLLBACK_DRILL.md'
+      - '.github/workflows/t14-isolated-rollback-drill.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  isolated-drill:
+    if: ${{ github.event.pull_request.number == 94 && github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: [self-hosted, Windows, X64]
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.11', '3.12']
+    steps:
+      - name: Checkout exact PR source with V1 Stable history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Run opt-in synthetic rollback drill with frozen V1 bytes
+        shell: powershell
+        env:
+          PYTHON_VERSION: ${{ matrix.python-version }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $target = (git rev-parse HEAD).Trim()
+          if ($LASTEXITCODE -ne 0 -or $target -notmatch '^[a-f0-9]{40}$') { throw 'invalid Git checkout HEAD' }
+          $env:EREI_T14_TARGET = $target
+          $env:EREI_T14_V1_PATH = Join-Path $env:RUNNER_TEMP ('erei-t14-stable-v1-' + $env:PYTHON_VERSION + '.py')
+          try {
+            @'
+          import hashlib
+          import os
+          from pathlib import Path
+          import subprocess
+
+          ref = "69079018606750312344cb3c648952b9ab72d35b"
+          result = subprocess.run(
+              ["git", "show", ref + ":tools/task_learning.py"],
+              stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+              timeout=30, check=True,
+          )
+          original = result.stdout
+          expected = "336037ea356c91d780f61684889b7c92c5d2bde21a8fff2591fec95e559be8f2"
+          if hashlib.sha256(original).hexdigest() != expected:
+              raise SystemExit("Frozen V1 source bytes failed digest verification")
+          Path(os.environ["EREI_T14_V1_PATH"]).write_bytes(original)
+          print("PASS frozen V1 immutable source SHA256", expected)
+          '@ | py "-$env:PYTHON_VERSION" -B -
+            if ($LASTEXITCODE -ne 0) { throw 'frozen V1 export failed' }
+
+            $report = & py "-$env:PYTHON_VERSION" -B tools/tests/drill_task_learning_rollback.py --v1-tool $env:EREI_T14_V1_PATH --target-ref $env:EREI_T14_TARGET
+            if ($LASTEXITCODE -ne 0) { throw 'rollback synthetic test suite failed' }
+            $result = $report | ConvertFrom-Json
+            if ($result.tests_run -ne 4 -or $result.failures -ne 0 -or $result.errors -ne 0 -or $result.passed -ne $true) {
+              throw 'synthetic rollback test result not four clean PASS'
+            }
+            if ($result.isolated_checkout_ref -ne $target -or $result.checkout_identity_verified -ne $true) {
+              throw 'rollback test source checkout identity mismatch'
+            }
+            if ($result.live_adoption -ne $false -or $result.internal_release_qualified -ne $false) {
+              throw 'rollback test must not claim live adoption or Internal qualification'
+            }
+            Write-Host "PASS T14 isolated four-case rollback drill with verified target $target"
+          } finally {
+            Remove-Item -LiteralPath $env:EREI_T14_V1_PATH -Force -ErrorAction SilentlyContinue
+          }
