@@ -1,3 +1,20 @@
+## قرارات تنفيذية مستجدة — 2026-10-23 (تسبق سجل 2026-10-19 التاريخي)
+
+| المعرف | القرار المثبت | القيود والمتابعة |
+|---|---|---|
+| D-20261023-01 | دمج مسارات المصدر الستة F01/F02/F03/F04/F10/F14 فعليًا إلى main `58034ae3e6eca6b2e45f79453aa71a783beee07c`، مع إثبات شجرة `928a622cfa5b027b7f77d1b0599b22c36acd28a9` | المصدر فقط؛ لا consumer adoption أو Internal/Stable authorization |
+| D-20261023-02 | الاعتماد على موافقة المالك الواسعة لتنفيذ الدمج قبل إغلاق مراجعات P1 الثلاث | **استثناء حوكمي موثق** وليس `APPROVED` مستقلًا؛ threads #84/#86/#88 مفتوحة حتى reviewer disposition مرتبط بالـSHA، بلا إغلاق شكلي |
+| D-20261023-03 | قبول source fail-closed الخاص بـF02 لمنع membership خاطئة في التاريخ المختلط | **فقدان توافق غير مشروط مع App القديم**؛ 35 V2 وأربع anomalies تبقى BLOCKED وتتطلب سلطة/استعادة منفصلة |
+| D-20261023-04 | اختبارات DORMANT وReal Git checkout وF14 proof اجتازت source tree 3.11/3.12؛ لا تحويلها إلى دليل runtime model | router Stage0 في Markdown سياسة، لا dispatch تنفيذي كامل؛ F14 `effectiveness=NOT_ESTABLISHED`، `causation=NOT_ESTABLISHED` |
+| D-20261023-05 | فصل نتيجة exact-source tests عن final-main commit CI وعن صالحية الإصدار | final-main Windows queued؛ Ubuntu failed بلا خطوات؛ لا تخمين billing أو offline؛ الحصول على evidence الفعلي قبل تحديث الحالة |
+| D-20261023-06 | بقاء `DONE=27/237` baseline وزني محفوظ حتى تسوية acceptance بعد merges | 6 source streams merged ≠ 6 DONE آليًا؛ **Internal NOT QUALIFIED، Stable BLOCKED**، لا تعديل pin/freeze/security/production |
+
+[Source tracker #68](https://github.com/lijust/EREI-Engineering-Framework/issues/68) هو الحالة التنفيذية الحية؛ [Stable authority #31](https://github.com/lijust/EREI-Engineering-Framework/issues/31) هو المرجع الحاكم. النصوص المؤرخة أدناه **تاريخية** ولا يصح اقتباس `CURRENT` منها دون ذكر تاريخها.
+
+---
+
+## سجل قرارات محفوظ بدءًا من 2026-10-19 (تاريخي)
+
 # سجل القرارات — برنامج إصلاح EREI V2
 
 تاريخ هذه اللقطة: 2026-10-19، Africa/Cairo. يسجل هذا الملف القرارات وحدودها، ولا يغير سلطة [Issue #31](https://github.com/lijust/EREI-Engineering-Framework/issues/31). الحالة التفصيلية في [EXECUTION_STATUS.md](EXECUTION_STATUS.md).

@@ -1,3 +1,22 @@
+## تحديث دليل التنفيذ — 2026-10-23 (الأقسام السابقة تاريخية)
+
+| محور الدليل | المصدر الثابت | نطاق الإثبات وحدوده |
+|---|---|---|
+| final main / source | [commit](https://github.com/lijust/EREI-Engineering-Framework/commit/58034ae3e6eca6b2e45f79453aa71a783beee07c)؛ tree `928a622cfa5b027b7f77d1b0599b22c36acd28a9` | ستة مسارات جديدة مدمجة؛ مطابق bytes للمصدر المختبر، لكن ليس release provenance تلقائيًا |
+| source matrix 3.11 | [Actions #39889369608](https://github.com/lijust/EREI-Engineering-Framework/actions/runs/39889369608) | exact checkout `e9562046b80d194316653b7e98e13f16bb0437d3`؛ 448 tool +80 eval PASS |
+| source matrix 3.12 | [Actions #39888381351](https://github.com/lijust/EREI-Engineering-Framework/actions/runs/39888381351) | 448 tool +80 eval PASS لنفس source tree |
+| post-merge CI | [Assurance #39913519288](https://github.com/lijust/EREI-Engineering-Framework/actions/runs/39913519288)، [Bootstrap #39913519322](https://github.com/lijust/EREI-Engineering-Framework/actions/runs/39913519322) | queued عند التحقق، **لا** PASS؛ [Ubuntu #39913519253](https://github.com/lijust/EREI-Engineering-Framework/actions/runs/39913519253) failed بلا test steps |
+| F02 / F03 / F04 P1 | [#84](https://github.com/lijust/EREI-Engineering-Framework/pull/84)، [#88](https://github.com/lijust/EREI-Engineering-Framework/pull/88)، [#86](https://github.com/lijust/EREI-Engineering-Framework/pull/86) | original threads unresolved، `COMMENTED` فقط؛ الإصلاحات مدمجة، القبول المستقل معلق |
+| App data | [#68](https://github.com/lijust/EREI-Engineering-Framework/issues/68) | 35 V2 مع missing immutable و4 anomalies؛ source guards لا تعني data recovery |
+| release authority | [#31](https://github.com/lijust/EREI-Engineering-Framework/issues/31) | `main.protected=false`، 0/13 exact-target model cases، enforcement/approvals incomplete، Stable BLOCKED |
+| learning outcomes | [PR #93](https://github.com/lijust/EREI-Engineering-Framework/pull/93) | declared exposure only، `effectiveness=NOT_ESTABLISHED`، ولا قياس وفورات وقت/تكلفة |
+
+**أعداد الاختبارات متداخلة وليست 1,056 حالة فريدة.** [#68](https://github.com/lijust/EREI-Engineering-Framework/issues/68) يعرض حالة التنفيذ، وهذا الفهرس يحتفظ بالـhistorical SHA refs الواردة أدناه كما هي، مع وسمها كلقطات مؤرخة.
+
+---
+
+## فهرس الأدلة السابق — لقطة تاريخية
+
 # فهرس الأدلة — EREI V2
 
 سجل متتابع؛ آخر دفعة 2026-10-21، Africa/Cairo. الفقرات المؤرخة السابقة تاريخية ويعلوها آخر تحديث. هذا الفهرس يميز بين source identity واختبارات محلية وCI رسمي وبين authority تشغيلية. مراجعة agent للمصدر لا تصبح جهة إصدار مستقلة.

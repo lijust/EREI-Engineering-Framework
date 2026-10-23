@@ -1,5 +1,24 @@
 # EREI V2 REMEDIATION STATUS
 
+## الحالة الحالية المعتمدة للقراءة — 2026-10-23 (تعلو لقطات 19–22 أكتوبر أدناه)
+
+> **مصدر الحقيقة:** [Master Tracker #68](https://github.com/lijust/EREI-Engineering-Framework/issues/68). الأقسام أدناه محفوظة **كلقطات تاريخية**، بما فيها الأوصاف `CURRENT` و`لم تُدمج` التي تعود لتواريخها ولا تمثل الوضع الحالي.
+
+- **Framework main:** `58034ae3e6eca6b2e45f79453aa71a783beee07c`؛ شجرة المصدر `928a622cfa5b027b7f77d1b0599b22c36acd28a9`، مطابقة حرفيًا للشجرة النهائية المختبرة. لم يتغير consumer App Google أو EREI-3.2 إلى تبنٍّ مثبت جديد ضمن هذه الدفعة.
+- **المصدر:** 6/6 مسارات #83/F01، #84/F02، #88/F03، #86/F04، #87/F10، #93/F14 **MERGED إلى main**. مع #85 و#89 أصبح عدد PRs المدمجة في برنامج المعالجة **8**؛ هذا عدد تسليمات مصدر، **وليس** عدد مهام DONE المثبتة أو نسبة إطلاق.
+- **الاختبار المؤكد للشجرة النهائية:** [Windows Python 3.11](https://github.com/lijust/EREI-Engineering-Framework/actions/runs/39889369608) و[Windows Python 3.12](https://github.com/lijust/EREI-Engineering-Framework/actions/runs/39888381351): **448 framework tool + 80 eval PASS لكل إصدار**. checkout 3.11 استخدم صراحة المصدر `e9562046b80d194316653b7e98e13f16bb0437d3` ذي نفس tree. **لا تنتقل هوية التشغيل/الإصدار بين commitين بمجرد تطابق tree**.
+- **final-main CI:** [Assurance #39913519288](https://github.com/lijust/EREI-Engineering-Framework/actions/runs/39913519288) و[Bootstrap #39913519322](https://github.com/lijust/EREI-Engineering-Framework/actions/runs/39913519322) في الانتظار عند التحقق؛ لا دليل تشغيل خطوات أو runner معين. [Ubuntu Task Learning #39913519253](https://github.com/lijust/EREI-Engineering-Framework/actions/runs/39913519253) FAILED مع jobs بلا steps؛ لا يثبت فشل Python ولا سبب الانتظار. لا تشغيل مكرر أو تغيير إعدادات دون تشخيص.
+- **دين المراجعة:** بقيت **3 P1 threads مفتوحة** على #84/#86/#88، ولا توجد مراجعة مستقلة `APPROVED`. الإصلاحات موجودة ومختبرة بالمصدر، ودمجها تم بتفويض مالك واسع **مع استثناء موثق من ترتيب المراجعة قبل الدمج**؛ التفويض ليس قرار قبول فنيًا مستقلًا. القبول لكل finding مرتبط بالـSHA النهائي ولم يُغلق.
+- **التوافق والتشغيل:** F02 يرفض fail-closed عضوية V1/V2 التي لا يثبت ترتيبها؛ **35 V2** وأربع anomalies تاريخية في App ما زالت تحتاج مسار استعادة/قرار منفصل. F04 DORMANT guard لا يجعل router المكتوب في Markdown تنفيذًا مستقلًا. F14 حساب exposure/outcome **معلن** فقط، بلا authenticity/cohort completeness/causation.
+- **Delivery:** احتفظنا بـ**27/237 = 11.4%** كخط أساس وزني سابق **بحاجة إلى تسوية** وفق معايير `DONE`، وليس تقديرًا للجاهزية بعد الدمج. لا نحول إغلاق Issues وحده إلى وزن إضافي.
+- **الترقية:** prospective cycle `complete`؛ لكن genuine exact-target model **0/13**، و`main.protected=false`، و`equivalent_enforcement_verified=false`، وموافقات Architecture/Security غير مكتملة. **Internal NOT QUALIFIED / Stable BLOCKED**؛ لا pin، لا production، لا freeze ولا تشغيل مدفوع. إثبات source-tree forward/inverse لا يعوّض operational rollback drill على هدف معزول.
+
+**نقطة القرار التالية:** قرار مراجعة مستقل محدود لكل P1؛ نتائج final-main CI أو تشخيص تشغيل Windows، وتسوية أوزان DONE، ثم target محدد وتأهيل regression/rollback **معزول** لـInternal. Benchmark والتكلفة والفعالية وStable authority مسارات منفصلة.
+
+---
+
+## نسخة حالة محفوظة بتاريخ 2026-10-22 (تاريخية وليست الحالة الحية)
+
 Date: 2026-10-22، Africa/Cairo.
 Repository: lijust/EREI-Engineering-Framework؛ تكامل منفصل مع lijust/EREI-App-Google وlijust/EREI-3.2.
 Current main SHA: `9b7fa4e24e26a136099d3304bd44db5a887a84f7`؛ baseline التدقيق `72d49658524fbce6145783cd52297c53edbb2c95`.
