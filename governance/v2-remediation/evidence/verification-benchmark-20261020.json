@@ -1,0 +1,515 @@
+{
+  "schema_version": 1,
+  "recorded_at_utc": "2026-10-20 16:56:27 UTC",
+  "repository": "lijust/EREI-Engineering-Framework",
+  "main": "72d49658524fbce6145783cd52297c53edbb2c95",
+  "head": "b6d421c03b5d0f4967c524a15fd734f9759fe758",
+  "tree": "11177ce326f3ec7160931f64a4563008bd23e5e9",
+  "pr": 95,
+  "published_blob_matches": 311,
+  "reference_blobs_checked": 12,
+  "source_hashes": {
+    "evals/benchmark_accounting.py": "63688766d3a42db672ee5cb48889b574143d6a39098b8bfa722c5a696c5b1355",
+    "evals/benchmarks/v1-v2-pilot.json": "1b33442ad7ef12f0a3b43dd2477c5a5761a850cb2111cd20273220b67dc1ca35",
+    "evals/benchmarks/README.md": "2bd95e1123f227ef8f9cf200b2753c9cd73d748451a09015d95ffe675073e85f",
+    "evals/tests/test_benchmark_accounting.py": "4e2b1596903178e19e060edc6f298e5d3582205378519dc2a2e70a978c29b652"
+  },
+  "tests": {
+    "commands": [
+      "py \"-3.11\" -B -m unittest discover -s evals/tests -p test_benchmark_accounting.py -q",
+      "py \"-3.12\" -B -m unittest discover -s evals/tests -p test_benchmark_accounting.py -q"
+    ],
+    "results": [
+      {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "5c4a89",
+          "wall_time_seconds": 0.0000258,
+          "exit_code": 0,
+          "original_token_count": 26,
+          "output": "----------------------------------------------------------------------\r\nRan 17 tests in 0.143s\r\n\r\nOK\r\n"
+        }
+      },
+      {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "88493f",
+          "wall_time_seconds": 0.1524258,
+          "exit_code": 0,
+          "original_token_count": 26,
+          "output": "----------------------------------------------------------------------\r\nRan 17 tests in 0.152s\r\n\r\nOK\r\n"
+        }
+      }
+    ]
+  },
+  "independent_review": "PENDING",
+  "official_ci": {
+    "runs": [
+      {
+        "id": 39397068049,
+        "head": "b6d421c03b5d0f4967c524a15fd734f9759fe758",
+        "status": "completed",
+        "conclusion": "startup_failure",
+        "jobs": 0
+      },
+      {
+        "id": 39397006581,
+        "head": "b6d421c03b5d0f4967c524a15fd734f9759fe758",
+        "status": "completed",
+        "conclusion": "startup_failure",
+        "jobs": 0
+      }
+    ],
+    "annotations_not_read": true,
+    "cause_not_independently_verified": true,
+    "checked_at_utc": "2026-10-20 16:57:57 UTC"
+  },
+  "model_executions": 0,
+  "consumer_tests_executed": 0,
+  "fixture_packages_prepared": 0,
+  "benchmark_execution_status": "BLOCKED",
+  "limits": [
+    "Public calibration proposals, not hidden tests",
+    "No authority, comparability or effectiveness verification",
+    "Missing model/runtime/budget/fixture configuration"
+  ],
+  "dry_run": {
+    "schema_version": 1,
+    "plan_sha256": "f192060a7376eba3c6353a0303a495b8dd91859f3fe5610fb44131af0f305ca9",
+    "evidence_kind": "no_observations",
+    "execution_authorized": false,
+    "comparability": "NOT_VERIFIED",
+    "evidence_authenticity": "NOT_VERIFIED",
+    "effectiveness": "NOT_ESTABLISHED",
+    "scheduled_runs": [
+      {
+        "run_id": "PY-04-R1-V2",
+        "task_id": "PY-04",
+        "repetition": 1,
+        "arm": "V2"
+      },
+      {
+        "run_id": "PY-04-R1-V1",
+        "task_id": "PY-04",
+        "repetition": 1,
+        "arm": "V1"
+      },
+      {
+        "run_id": "PY-01-R1-V1",
+        "task_id": "PY-01",
+        "repetition": 1,
+        "arm": "V1"
+      },
+      {
+        "run_id": "PY-01-R1-V2",
+        "task_id": "PY-01",
+        "repetition": 1,
+        "arm": "V2"
+      },
+      {
+        "run_id": "APP-01-R2-V2",
+        "task_id": "APP-01",
+        "repetition": 2,
+        "arm": "V2"
+      },
+      {
+        "run_id": "APP-01-R2-V1",
+        "task_id": "APP-01",
+        "repetition": 2,
+        "arm": "V1"
+      },
+      {
+        "run_id": "PY-04-R2-V1",
+        "task_id": "PY-04",
+        "repetition": 2,
+        "arm": "V1"
+      },
+      {
+        "run_id": "PY-04-R2-V2",
+        "task_id": "PY-04",
+        "repetition": 2,
+        "arm": "V2"
+      },
+      {
+        "run_id": "PY-06-R1-V1",
+        "task_id": "PY-06",
+        "repetition": 1,
+        "arm": "V1"
+      },
+      {
+        "run_id": "PY-06-R1-V2",
+        "task_id": "PY-06",
+        "repetition": 1,
+        "arm": "V2"
+      },
+      {
+        "run_id": "APP-05-R1-V2",
+        "task_id": "APP-05",
+        "repetition": 1,
+        "arm": "V2"
+      },
+      {
+        "run_id": "APP-05-R1-V1",
+        "task_id": "APP-05",
+        "repetition": 1,
+        "arm": "V1"
+      },
+      {
+        "run_id": "PY-02-R2-V2",
+        "task_id": "PY-02",
+        "repetition": 2,
+        "arm": "V2"
+      },
+      {
+        "run_id": "PY-02-R2-V1",
+        "task_id": "PY-02",
+        "repetition": 2,
+        "arm": "V1"
+      },
+      {
+        "run_id": "PY-01-R2-V2",
+        "task_id": "PY-01",
+        "repetition": 2,
+        "arm": "V2"
+      },
+      {
+        "run_id": "PY-01-R2-V1",
+        "task_id": "PY-01",
+        "repetition": 2,
+        "arm": "V1"
+      },
+      {
+        "run_id": "APP-04-R2-V2",
+        "task_id": "APP-04",
+        "repetition": 2,
+        "arm": "V2"
+      },
+      {
+        "run_id": "APP-04-R2-V1",
+        "task_id": "APP-04",
+        "repetition": 2,
+        "arm": "V1"
+      },
+      {
+        "run_id": "APP-05-R2-V1",
+        "task_id": "APP-05",
+        "repetition": 2,
+        "arm": "V1"
+      },
+      {
+        "run_id": "APP-05-R2-V2",
+        "task_id": "APP-05",
+        "repetition": 2,
+        "arm": "V2"
+      },
+      {
+        "run_id": "PY-06-R2-V2",
+        "task_id": "PY-06",
+        "repetition": 2,
+        "arm": "V2"
+      },
+      {
+        "run_id": "PY-06-R2-V1",
+        "task_id": "PY-06",
+        "repetition": 2,
+        "arm": "V1"
+      },
+      {
+        "run_id": "APP-02-R2-V1",
+        "task_id": "APP-02",
+        "repetition": 2,
+        "arm": "V1"
+      },
+      {
+        "run_id": "APP-02-R2-V2",
+        "task_id": "APP-02",
+        "repetition": 2,
+        "arm": "V2"
+      },
+      {
+        "run_id": "APP-01-R1-V1",
+        "task_id": "APP-01",
+        "repetition": 1,
+        "arm": "V1"
+      },
+      {
+        "run_id": "APP-01-R1-V2",
+        "task_id": "APP-01",
+        "repetition": 1,
+        "arm": "V2"
+      },
+      {
+        "run_id": "PY-03-R2-V1",
+        "task_id": "PY-03",
+        "repetition": 2,
+        "arm": "V1"
+      },
+      {
+        "run_id": "PY-03-R2-V2",
+        "task_id": "PY-03",
+        "repetition": 2,
+        "arm": "V2"
+      },
+      {
+        "run_id": "APP-06-R1-V2",
+        "task_id": "APP-06",
+        "repetition": 1,
+        "arm": "V2"
+      },
+      {
+        "run_id": "APP-06-R1-V1",
+        "task_id": "APP-06",
+        "repetition": 1,
+        "arm": "V1"
+      },
+      {
+        "run_id": "APP-02-R1-V2",
+        "task_id": "APP-02",
+        "repetition": 1,
+        "arm": "V2"
+      },
+      {
+        "run_id": "APP-02-R1-V1",
+        "task_id": "APP-02",
+        "repetition": 1,
+        "arm": "V1"
+      },
+      {
+        "run_id": "APP-04-R1-V1",
+        "task_id": "APP-04",
+        "repetition": 1,
+        "arm": "V1"
+      },
+      {
+        "run_id": "APP-04-R1-V2",
+        "task_id": "APP-04",
+        "repetition": 1,
+        "arm": "V2"
+      },
+      {
+        "run_id": "APP-03-R2-V2",
+        "task_id": "APP-03",
+        "repetition": 2,
+        "arm": "V2"
+      },
+      {
+        "run_id": "APP-03-R2-V1",
+        "task_id": "APP-03",
+        "repetition": 2,
+        "arm": "V1"
+      },
+      {
+        "run_id": "PY-03-R1-V2",
+        "task_id": "PY-03",
+        "repetition": 1,
+        "arm": "V2"
+      },
+      {
+        "run_id": "PY-03-R1-V1",
+        "task_id": "PY-03",
+        "repetition": 1,
+        "arm": "V1"
+      },
+      {
+        "run_id": "PY-02-R1-V1",
+        "task_id": "PY-02",
+        "repetition": 1,
+        "arm": "V1"
+      },
+      {
+        "run_id": "PY-02-R1-V2",
+        "task_id": "PY-02",
+        "repetition": 1,
+        "arm": "V2"
+      },
+      {
+        "run_id": "PY-05-R1-V1",
+        "task_id": "PY-05",
+        "repetition": 1,
+        "arm": "V1"
+      },
+      {
+        "run_id": "PY-05-R1-V2",
+        "task_id": "PY-05",
+        "repetition": 1,
+        "arm": "V2"
+      },
+      {
+        "run_id": "APP-03-R1-V1",
+        "task_id": "APP-03",
+        "repetition": 1,
+        "arm": "V1"
+      },
+      {
+        "run_id": "APP-03-R1-V2",
+        "task_id": "APP-03",
+        "repetition": 1,
+        "arm": "V2"
+      },
+      {
+        "run_id": "PY-05-R2-V2",
+        "task_id": "PY-05",
+        "repetition": 2,
+        "arm": "V2"
+      },
+      {
+        "run_id": "PY-05-R2-V1",
+        "task_id": "PY-05",
+        "repetition": 2,
+        "arm": "V1"
+      },
+      {
+        "run_id": "APP-06-R2-V1",
+        "task_id": "APP-06",
+        "repetition": 2,
+        "arm": "V1"
+      },
+      {
+        "run_id": "APP-06-R2-V2",
+        "task_id": "APP-06",
+        "repetition": 2,
+        "arm": "V2"
+      }
+    ],
+    "arms": {
+      "V1": {
+        "assigned_runs": 24,
+        "observed_runs": 0,
+        "missing_run_ids": [
+          "PY-04-R1-V1",
+          "PY-01-R1-V1",
+          "APP-01-R2-V1",
+          "PY-04-R2-V1",
+          "PY-06-R1-V1",
+          "APP-05-R1-V1",
+          "PY-02-R2-V1",
+          "PY-01-R2-V1",
+          "APP-04-R2-V1",
+          "APP-05-R2-V1",
+          "PY-06-R2-V1",
+          "APP-02-R2-V1",
+          "APP-01-R1-V1",
+          "PY-03-R2-V1",
+          "APP-06-R1-V1",
+          "APP-02-R1-V1",
+          "APP-04-R1-V1",
+          "APP-03-R2-V1",
+          "PY-03-R1-V1",
+          "PY-02-R1-V1",
+          "PY-05-R1-V1",
+          "APP-03-R1-V1",
+          "PY-05-R2-V1",
+          "APP-06-R2-V1"
+        ],
+        "status_counts": {
+          "blocked": 0,
+          "canceled": 0,
+          "completed": 0,
+          "failed": 0,
+          "started": 0,
+          "timeout": 0
+        },
+        "attempts": 0,
+        "first_candidate": {
+          "successes": 0,
+          "assessed": 0,
+          "assigned": 24,
+          "unknown": 24,
+          "assessment_coverage": 0,
+          "rate": null,
+          "missing_data_bounds": [
+            0,
+            1
+          ]
+        },
+        "declared_independent_completion": {
+          "successes": 0,
+          "assessed": 0,
+          "assigned": 24,
+          "unknown": 24,
+          "assessment_coverage": 0,
+          "rate": null,
+          "missing_data_bounds": [
+            0,
+            1
+          ]
+        },
+        "known_cost_subtotal_usd": 0,
+        "cost_complete_attempts": 0,
+        "total_cost_usd": null,
+        "cost_per_declared_verified_run_usd": null,
+        "known_attempt_wall_seconds_sum": 0,
+        "time_assessed_attempts": 0
+      },
+      "V2": {
+        "assigned_runs": 24,
+        "observed_runs": 0,
+        "missing_run_ids": [
+          "PY-04-R1-V2",
+          "PY-01-R1-V2",
+          "APP-01-R2-V2",
+          "PY-04-R2-V2",
+          "PY-06-R1-V2",
+          "APP-05-R1-V2",
+          "PY-02-R2-V2",
+          "PY-01-R2-V2",
+          "APP-04-R2-V2",
+          "APP-05-R2-V2",
+          "PY-06-R2-V2",
+          "APP-02-R2-V2",
+          "APP-01-R1-V2",
+          "PY-03-R2-V2",
+          "APP-06-R1-V2",
+          "APP-02-R1-V2",
+          "APP-04-R1-V2",
+          "APP-03-R2-V2",
+          "PY-03-R1-V2",
+          "PY-02-R1-V2",
+          "PY-05-R1-V2",
+          "APP-03-R1-V2",
+          "PY-05-R2-V2",
+          "APP-06-R2-V2"
+        ],
+        "status_counts": {
+          "blocked": 0,
+          "canceled": 0,
+          "completed": 0,
+          "failed": 0,
+          "started": 0,
+          "timeout": 0
+        },
+        "attempts": 0,
+        "first_candidate": {
+          "successes": 0,
+          "assessed": 0,
+          "assigned": 24,
+          "unknown": 24,
+          "assessment_coverage": 0,
+          "rate": null,
+          "missing_data_bounds": [
+            0,
+            1
+          ]
+        },
+        "declared_independent_completion": {
+          "successes": 0,
+          "assessed": 0,
+          "assigned": 24,
+          "unknown": 24,
+          "assessment_coverage": 0,
+          "rate": null,
+          "missing_data_bounds": [
+            0,
+            1
+          ]
+        },
+        "known_cost_subtotal_usd": 0,
+        "cost_complete_attempts": 0,
+        "total_cost_usd": null,
+        "cost_per_declared_verified_run_usd": null,
+        "known_attempt_wall_seconds_sum": 0,
+        "time_assessed_attempts": 0
+      }
+    }
+  }
+}

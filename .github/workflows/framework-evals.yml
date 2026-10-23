@@ -23,26 +23,32 @@ permissions:
 
 jobs:
   harness-self-test:
-    runs-on: [self-hosted, Windows, X64]
-    timeout-minutes: 5
+    runs-on: windows-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
-      - name: Verify local Python 3.12
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Verify GitHub-hosted Python 3.12
         shell: powershell
         run: |
-          py "-3.12" -c "import sys, encodings, ssl; print(sys.version); print(sys.executable)"
+          python -c "import sys, encodings, ssl; print(sys.version); print(sys.executable)"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Compile runner
         shell: powershell
-        run: py "-3.12" -m py_compile evals/runner.py evals/fixtures/mock_adapter.py evals/tests/test_runner.py
+        run: python -m py_compile evals/runner.py evals/fixtures/mock_adapter.py evals/tests/test_runner.py
 
       - name: Run harness unit smoke tests
         shell: powershell
-        run: py "-3.12" -m unittest discover -s evals/tests -v
+        run: python -m unittest discover -s evals/tests -v
 
       - name: Validate all machine-readable eval suites
         shell: powershell
-        run: py "-3.12" evals/runner.py validate evals/cases
+        run: python evals/runner.py validate evals/cases
