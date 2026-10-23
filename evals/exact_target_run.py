@@ -165,7 +165,7 @@ def run_suites(
                 response = _retained_response(
                     runner.call_adapter(command, request, timeout, case["expectations"])
                 )
-                scorer_results = [runner.score(expectation, response) for expectation in case["expectations"]]
+                scorer_results = [runner.score(expectation, response, case["input"]) for expectation in case["expectations"]]
                 status = "pass" if all(item[0] for item in scorer_results) else "fail"
                 response_digest = _canonical_digest(response)
             except Exception:

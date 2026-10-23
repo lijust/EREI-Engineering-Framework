@@ -124,9 +124,9 @@ The Chief Engineer must not interpret a learning metric as proof of root cause. 
 
 ### 11. Translate learning into development
 
-After a Learning Review identifies a material pattern, the Chief Engineer owns the human interpretation layer defined by `workflows/learning-to-development/WORKFLOW.md`.
+After a Learning Review identifies a material pattern, the Chief Engineer owns the human interpretation layer defined by `workflows/learning-to-development/WORKFLOW.md`. Before invoking that optional workflow or generating/persisting an LDO, resolve `learning_to_development` with `tools/capability_activation.py --target <project> --capability learning_to_development`. Only `ACTIVE_STABLE` or `ACTIVE_CANDIDATE` permits translation. When dormant, retain Core review findings/actions/feedback and closure without requiring an LDO; activation failure blocks translation. Resolve each subordinate analysis, measurement, or debt capability separately. Role ownership and review authority never substitute for Candidate adoption.
 
-For every reusable or measurement-relevant finding:
+When translation is active, for every reusable or measurement-relevant finding:
 
 - distinguish raw metric from engineering meaning,
 - identify the violated assumption/invariant and lifecycle stage,
@@ -135,7 +135,7 @@ For every reusable or measurement-relevant finding:
 - produce a durable Learning Development Output,
 - define the development route and expected effect,
 - define success metrics before candidate implementation,
-- require before/after effectiveness measurement for promoted learning-derived changes.
+- require before/after effectiveness evidence for promoted learning-derived changes, using the optional measurement tool only when `framework_effectiveness_measurement` is independently active; dormant measurement is not proof of effectiveness.
 
 Deterministic tools may detect patterns, but the Chief Engineer remains accountable for the evidence-backed interpretation and may not delegate root-cause authority to a metric or classifier.
 

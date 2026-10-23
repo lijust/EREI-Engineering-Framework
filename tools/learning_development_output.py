@@ -9,6 +9,14 @@ import re
 from datetime import datetime
 from pathlib import Path
 
+if __package__:
+    from . import capability_activation
+else:
+    import importlib.util
+    _activation_spec = importlib.util.spec_from_file_location("_erei_capability_activation", Path(__file__).with_name("capability_activation.py"))
+    capability_activation = importlib.util.module_from_spec(_activation_spec)
+    _activation_spec.loader.exec_module(capability_activation)
+
 OUTPUT_ID=re.compile(r"^LDO-[0-9]{8}T[0-9]{6}Z-[A-F0-9]{8}$")
 RFC3339=re.compile(r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\.[0-9]+)?(?:Z|[+-][0-9]{2}:[0-9]{2})$")
 CLASSES={
@@ -105,10 +113,19 @@ def validate(value:dict)->dict:
     return {"status":"VALID","output_id":value["output_id"]}
 
 def main(argv=None)->int:
-    p=argparse.ArgumentParser();p.add_argument("--input",required=True);args=p.parse_args(argv)
+    p=argparse.ArgumentParser()
+    p.add_argument("--target", help="Project invocation: require learning_to_development activation before validation")
+    p.add_argument("--input",required=True)
+    args=p.parse_args(argv)
     try:
+        # With no target this is only source/artifact schema validation: it does
+        # not create an LDO or authorize a project workflow or persistence.
+        if args.target:
+            capability_activation.require_active(Path(args.target), "learning_to_development")
         value=json.loads(Path(args.input).read_text(encoding="utf-8"));result=validate(value)
-    except (OSError,json.JSONDecodeError,OutputError) as exc:
+    except capability_activation.InactiveCapabilityError as exc:
+        print(json.dumps(exc.result, sort_keys=True));return 3
+    except (capability_activation.ActivationError,OSError,json.JSONDecodeError,OutputError) as exc:
         print(json.dumps({"status":"INVALID","error":str(exc)},sort_keys=True));return 2
     print(json.dumps(result,sort_keys=True));return 0
 

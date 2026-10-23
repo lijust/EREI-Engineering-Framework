@@ -49,7 +49,9 @@ class CIEvidencePreservationTests(unittest.TestCase):
             "Validate grandfathered last Stable carrier provenance",
         ):
             self.assertIn(phrase, self.assurance)
-        self.assertIn("runs-on: [self-hosted, Windows, X64]", self.assurance)
+        self.assertIn("runs-on: windows-latest", self.assurance)
+        self.assertNotIn("runs-on: [self-hosted", self.assurance)
+        self.assertIn("persist-credentials: false", self.assurance)
 
     def test_assurance_pr_only_cancellation_preserves_each_push_attempt(self):
         self.assertIn(
@@ -64,7 +66,9 @@ class CIEvidencePreservationTests(unittest.TestCase):
 
     def test_bootstrap_both_interpreter_checks_remain(self):
         self.assertIn("python-version: ['3.11', '3.12']", self.bootstrap)
-        self.assertIn("runs-on: [self-hosted, Windows, X64]", self.bootstrap)
+        self.assertIn("runs-on: windows-latest", self.bootstrap)
+        self.assertNotIn("runs-on: [self-hosted", self.bootstrap)
+        self.assertIn("persist-credentials: false", self.bootstrap)
         self.assertIn("Run bootstrap unit tests", self.bootstrap)
         self.assertIn("  push:\n    branches: [main]", self.bootstrap)
         self.assertIn("  pull_request:\n    paths:", self.bootstrap)

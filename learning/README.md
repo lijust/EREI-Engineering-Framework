@@ -64,6 +64,23 @@ Project-local ledgers:
 
 Retrospective events carry `evidence_quality = confirmed | reconstructed | inferred`, and each reconstructed signal carries its own quality and source references. Unknown historical signals stay absent rather than being guessed.
 
+## Legacy positional review recovery
+
+V1 reviews bind `through_event_count` to the original event projection order.
+When any V1 review exists, an immutable event missing from `TASK_EVENTS.jsonl`
+has no provable historical position. Snapshot, validation, status, capture, and
+review closure fail closed rather than append it and silently change which
+occurrences the old review covered. Restore the complete projection in its
+original order from trusted history before retrying; do not guess positions or
+delete immutable evidence to clear the error.
+
+A normal capture validates the complete prior snapshot under its lock and may
+then append only the one occurrence it has just written. If it crashes after
+the immutable write but before projection persistence, a later retry requires
+recovery: it cannot prove the missing row was its own prior append. Entirely V2
+history uses explicit review membership and can still rebuild a missing event
+projection deterministically.
+
 ## V1 review trigger states
 
 - `LEARNING_HEALTHY`
@@ -118,4 +135,4 @@ The Chief Engineer owns interpretation; deterministic tooling supplies evidence 
 
 ## Immediate-review debt
 
-Candidate governance now defines a bounded defer contract for unresolved `IMMEDIATE_REVIEW` debt. The default remains: review promptly. A defer is time-limited, task-count-limited and evidence-backed; it never authorizes security/data/release risk.
+Candidate governance defines a bounded defer contract for unresolved `IMMEDIATE_REVIEW` debt, applied only when `learning_review_debt_guard` resolves active for the exact project pin/version. A dormant Candidate does not require or apply a defer. Core authoritative-state validation, prompt review of signals, and security/data/verification stops remain in effect. An active defer is time-limited, task-count-limited and evidence-backed; it never authorizes security/data/release risk.

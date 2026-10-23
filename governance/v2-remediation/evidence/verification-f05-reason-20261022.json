@@ -1,0 +1,170 @@
+{
+  "recorded_at": "2026-10-22T07:26:35.420Z",
+  "finding_id": "F05-R1",
+  "severity": "P2",
+  "description": "Typed capability denial reason could be substituted while retaining DORMANT/BLOCKED state, causing false pass in scoring and retained replay",
+  "security_impact": "Wrong policy-cause acceptance; no capability execution bypass demonstrated",
+  "old_head": "0b2f9a517215a5b0070617e9c9312c6377d0c218",
+  "head": "41a33eadd497bd6bd9795755a33bea14dd2850cb",
+  "tree": "20726bcc27922d124fab398f5ebdbdfb5e580ecc",
+  "synced_main": "64f9d97230f95d4e663369b6d4a54e941964effa",
+  "all_published_blobs_matched": 309,
+  "fix": "Compare typed block_capability action to private reference_actions in shared scorer after strict op/field validation; no schema/state expansion or blind transport change",
+  "locations": {
+    "fix": "evals/runner.py:177-179",
+    "regressions": "evals/tests/test_behavioral_simulation.py"
+  },
+  "red": {
+    "exit_code": 1,
+    "tests": 2,
+    "failed_subtests": 8,
+    "coverage": "Four denial cases accepted an incorrect reason in direct scoring and replay"
+  },
+  "green": [
+    {
+      "python": "-3.11",
+      "exit_code": 0,
+      "summaries": [
+        "Ran 80 tests in 13.059s"
+      ]
+    },
+    {
+      "python": "-3.12",
+      "exit_code": 0,
+      "summaries": [
+        "Ran 80 tests in 13.621s"
+      ]
+    }
+  ],
+  "independent_review": {
+    "reviewer": "scoring_review_20261022",
+    "status": "LOCAL_DELTA_ACCEPTED_NO_OPEN_FINDINGS",
+    "reviewed_blobs": {
+      "evals/runner.py": "281fe8c8cee89c7cda3dd39837eeaa726e462791",
+      "evals/tests/test_behavioral_simulation.py": "393bc17f6e551c81893a7204f91b807e7749cadb"
+    },
+    "tests": [
+      {
+        "python": "-3.11",
+        "exit_code": 0,
+        "summaries": [
+          "Ran 15 tests in 1.772s"
+        ]
+      },
+      {
+        "python": "-3.12",
+        "exit_code": 0,
+        "summaries": [
+          "Ran 15 tests in 1.917s"
+        ]
+      }
+    ],
+    "wrong_reason_substitutions_rejected_per_runtime": 12,
+    "correct_denial_reasons_accepted": 4,
+    "allow_cases_remain_passing": true,
+    "blind_payload_unchanged": true,
+    "followup_artifact_sha256": "ace80002256b04eebce0b9cec4e11940861fc468881818820e498b08896110b5"
+  },
+  "ci": {
+    "status": "PASS",
+    "head": "41a33eadd497bd6bd9795755a33bea14dd2850cb",
+    "checkout": "77b48621dc41da248358c7b5834102ac311456fb",
+    "head_tree": "20726bcc27922d124fab398f5ebdbdfb5e580ecc",
+    "checkout_tree": "20726bcc27922d124fab398f5ebdbdfb5e580ecc",
+    "tree_matches": true,
+    "runs": [
+      {
+        "id": 39707084317,
+        "jobs": [
+          {
+            "id": 119589543864,
+            "name": "assurance",
+            "conclusion": "success",
+            "started_at": "2026-10-22T01:41:31Z",
+            "completed_at": "2026-10-22T01:45:11Z"
+          }
+        ]
+      },
+      {
+        "id": 39707084351,
+        "jobs": [
+          {
+            "id": 119589543474,
+            "name": "harness-self-test",
+            "conclusion": "success",
+            "started_at": "2026-10-22T01:40:57Z",
+            "completed_at": "2026-10-22T01:41:29Z"
+          }
+        ]
+      }
+    ],
+    "tool_tests": 369,
+    "eval_tests": 80
+  },
+  "limits": [
+    "Synthetic deterministic contract coverage only",
+    "No genuine independent model execution or release readiness",
+    "Earlier CI on old head is not evidence for this fix"
+  ],
+  "approved_merge": {
+    "owner_scope": "PR89 only at head41a33eadd497bd6bd9795755a33bea14dd2850cb",
+    "merge_sha": "9b7fa4e24e26a136099d3304bd44db5a887a84f7",
+    "merge_tree": "20726bcc27922d124fab398f5ebdbdfb5e580ecc",
+    "tree_matches_reviewed_head": true,
+    "post_merge_ci": {
+      "status": "PASS",
+      "runs": [
+        {
+          "id": 39707667427,
+          "jobs": [
+            {
+              "job_id": 119591400492,
+              "tests": [
+                {
+                  "count": 369,
+                  "seconds": 154.485
+                },
+                {
+                  "count": 80,
+                  "seconds": 10.316
+                }
+              ],
+              "checkout_verified": true,
+              "name": "assurance",
+              "conclusion": "success",
+              "started_at": "2026-10-22T01:47:08Z",
+              "completed_at": "2026-10-22T01:50:37Z"
+            }
+          ]
+        },
+        {
+          "id": 39707667449,
+          "jobs": [
+            {
+              "job_id": 119591400169,
+              "tests": [
+                {
+                  "count": 80,
+                  "seconds": 9.915
+                }
+              ],
+              "checkout_verified": true,
+              "name": "harness-self-test",
+              "conclusion": "success",
+              "started_at": "2026-10-22T01:50:39Z",
+              "completed_at": "2026-10-22T01:51:08Z"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "security_observation": {
+    "observed_at": "2026-10-22T01:50:18.276Z",
+    "main": "9b7fa4e24e26a136099d3304bd44db5a887a84f7",
+    "github_branch_protected": false,
+    "assurance_record_status": "candidate_control",
+    "equivalent_enforcement_verified": false,
+    "interpretation": "Source fixes and successful CI do not establish effective release enforcement"
+  }
+}
