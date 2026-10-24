@@ -234,6 +234,22 @@ class CalibrationTests(unittest.TestCase):
             self.assertEqual(consumer["mutant"]["failed_name"], failed_name)
             self.assertFalse(record["independent_reviewer"])
             self.assertFalse(record["hidden_acceptance"])
+        structural = report["source_structural_observations"]
+        self.assertEqual(len(structural), 1)
+        self.assertEqual(structural[0]["task_id"], "PY-04")
+        for role, path in (
+            ("source_git_blob", "core/project_update_presets.py"),
+            ("registry_git_blob", "core/project_field_registry.py"),
+            ("test_git_blob", "tests/unit/test_project_update_presets.py"),
+        ):
+            self.assertEqual(
+                structural[0][role],
+                next(item["git_blob"] for item in tasks["PY-04"]["files"]
+                     if item["path"] == path))
+        self.assertFalse(structural[0]["python_runtime_executed"])
+        self.assertFalse(structural[0]["original_consumer_test_executed"])
+        self.assertEqual(structural[0]["observation"]["registry_tokens"], 20)
+        self.assertEqual(structural[0]["observation"]["mutant_full_tokens"], 19)
         self.assertTrue(report["limits"])
 
     def test_private_source_exports_cannot_be_inside_public_framework_checkout(self):
