@@ -21,7 +21,17 @@ CATALOG = Path(__file__).with_name("calibration-packages.json")
 # These pinned Python files use plain assertions and only the tmp_path fixture.
 # Execute their unchanged functions using unittest, without a pytest dependency.
 PYTHON_CHECK = r"""
-import inspect, json, pathlib, runpy, sys, tempfile, unittest
+import importlib.metadata, inspect, json, pathlib, runpy, sys, tempfile, unittest
+requirements = json.loads(sys.argv[3]) if len(sys.argv) > 3 else {}
+if not isinstance(requirements, dict):
+    raise RuntimeError("Pinned dependency manifest must be an object")
+for package, expected in sorted(requirements.items()):
+    if not isinstance(package, str) or not isinstance(expected, str) or not expected:
+        raise RuntimeError("Invalid pinned dependency")
+    observed = importlib.metadata.version(package)
+    if observed != expected:
+        raise RuntimeError("Pinned dependency mismatch: " + package +
+                           " expected=" + expected + " observed=" + observed)
 sys.path.insert(0, str(pathlib.Path.cwd()))
 namespace = runpy.run_path(sys.argv[1])
 names = json.loads(sys.argv[2])
@@ -322,8 +332,17 @@ def run_copy(package: dict, inputs: dict[str, bytes], node: str | None) -> dict:
             elif "behavioral_oracle" in package:
                 raise ValueError("Unknown public Python behavioral oracle")
             else:
-                command = [sys.executable, "-I", "-S", "-B", "-c", PYTHON_CHECK,
-                           package["test_path"], json.dumps(package["python_tests"])]
+                dependencies = package.get("dependency_versions", {})
+                if not isinstance(dependencies, dict):
+                    raise ValueError("dependency_versions must be a pinned mapping")
+                for name, version in dependencies.items():
+                    if (not isinstance(name, str) or not isinstance(version, str)
+                            or not name or not version):
+                        raise ValueError("invalid pinned dependency")
+                isolation = ["-I", "-B"] if dependencies else ["-I", "-S", "-B"]
+                command = [sys.executable, *isolation, "-c", PYTHON_CHECK,
+                           package["test_path"], json.dumps(package["python_tests"]),
+                           json.dumps(dependencies, sort_keys=True)]
         else:
             raise ValueError("Unsupported calibration runtime")
         # Avoid NODE_OPTIONS, PYTHONPATH, provider credentials and test plugins.
