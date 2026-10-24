@@ -389,9 +389,9 @@ def assess(package: dict, reference: dict, starter: dict) -> bool:
             # A visible expected token anywhere in stderr is not enough:
             # tie the one expected assertion to an actual Node -e eval frame,
             # and reject unrelated structure/parity assertions and startup errors.
-            error = (r"(?m)^AssertionError \\[ERR_ASSERTION\\]: "
-                     + re.escape(expected_assertion) + r"\\r?$")
-            frame = r"(?m)^ +at (?:[^\\r\\n]*\\()?\\[eval\\]:\\d+:\\d+\\)?\\r?$"
+            error = (r"(?m)^AssertionError \[ERR_ASSERTION\]: "
+                     + re.escape(expected_assertion) + r"\r?$")
+            frame = r"(?m)^ +at (?:[^\r\n]*\()?\[eval\]:\d+:\d+\)?\r?$"
             stderr = starter.get("stderr", "")
             return (reference.get("stdout", "").strip() == success
                     and not reference.get("stderr", "")
