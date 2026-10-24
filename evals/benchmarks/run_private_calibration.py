@@ -99,6 +99,7 @@ def run_one(task: str) -> dict:
             "public_calibration_passed": qualified,
             "private_export_cleaned_on_exit": True,
             "original_consumer_test_blob_unchanged": True,
+            "original_consumer_test_executed": not bool(package.get("behavioral_oracle")),
             "model_executions": 0,
             "independent_review": "NOT_PERFORMED",
             "hidden_acceptance": "NOT_PERFORMED",
