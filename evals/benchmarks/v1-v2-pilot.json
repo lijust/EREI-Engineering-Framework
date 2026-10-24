@@ -95,17 +95,21 @@
       "family": "allocation-boundary",
       "risk": "L2",
       "proposed_task": "Keep proposed IDs unreserved until write-time recomputation under the same lock.",
-      "fixture_preparation": "Inject gap reuse or preview reservation in a fixture; no real allocation.",
-      "state": "PROPOSAL_FIXTURE_NOT_PREPARED",
+      "fixture_preparation": "Pinned original App policy test and source plus one unique preview mutation. Supplemental Framework-owned Node VM behavioral oracle proves gap is not reused; no original test modification or Sheets calls.",
+      "state": "PUBLIC_CALIBRATION_RECIPE_PREPARED",
       "source": {
         "repository": "lijust/EREI-App-Google",
         "commit": "6d32e7a14a4324dbdea228f695d6b75e0b8bd246",
         "path": "tests/developer-validation-project-id-policy.test.js",
         "git_blob": "3f0c48f0b98d180fd242d1affed87ff0d87d6418"
       },
-      "fixture_sha256": null,
-      "prompt_sha256": null,
-      "hidden_acceptance_sha256": null
+      "fixture_sha256": "01e8c5cc5b44d0519ca87c96da64a9b7ff6e824926e425f125833d0e69f12661",
+      "prompt_sha256": "203694205d2501ea9f957cbe9614242ced9d4f8186aa8b6353b3edb22a80230d",
+      "hidden_acceptance_sha256": null,
+      "calibration_package": {
+        "path": "evals/benchmarks/calibration-packages.json",
+        "task_id": "APP-04"
+      }
     },
     {
       "task_id": "APP-05",
