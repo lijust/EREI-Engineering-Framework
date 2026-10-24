@@ -77,7 +77,7 @@ class PrivateExportTests(unittest.TestCase):
         self.assertEqual(list(self.root.glob(".erei-private-source-*")), [])
         cmd = runner.call_args.args[0]
         self.assertEqual(cmd[1:4], ["api", "-H", "Accept: application/vnd.github+json"])
-        self.assertIn("refs", repr(cmd) + " refs")  # use immutable ref below
+        self.assertIn("?ref=", cmd[-1])
         self.assertIn(self.entry["source"]["commit"], cmd[-1])
         self.assertNotIn("shell=True", str(runner.call_args))
         self.assertIs(runner.call_args.kwargs["shell"], False)
