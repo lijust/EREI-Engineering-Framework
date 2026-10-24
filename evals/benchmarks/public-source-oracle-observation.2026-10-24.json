@@ -135,6 +135,40 @@
       }
     },
     {
+      "task_id": "PY-02",
+      "method": "PINNED_UNCHANGED_PRIVATE_PYTHON_CONSUMER_ALL_FUNCTIONS_EXECUTED_ISOLATED_STDLIB",
+      "source_git_blob": "60e9c102da12b2950e32b784b46646e4d341897b",
+      "test_git_blob": "ff2a5512ab62bc57620857cec3e27152d586a683",
+      "source_git_blobs_verified_by_local_git_hash_object": true,
+      "original_consumer_test_executed": true,
+      "original_consumer_run": {
+        "script": "tests/unit/test_erei_semantic_harvest_cache.py",
+        "runner": "python -I -S -B via stdlib runpy+unittest FunctionTestCase and isolated tmp_path",
+        "tests_defined": 4,
+        "reference": {
+          "tests": 4,
+          "passed": 4,
+          "failed": 0,
+          "errors": 0,
+          "exit": 0
+        },
+        "mutant": {
+          "tests": 4,
+          "passed": 3,
+          "failed": 1,
+          "errors": 0,
+          "exit": 1,
+          "failed_name": "test_attempt_ledger_does_not_poison_reusable_result_cache"
+        },
+        "single_exact_mutation": "Inject self.put(entry) before attempt-ledger SQL cursor",
+        "no_network_or_provider": true,
+        "only_local_sqlite_memory_and_temp": true,
+        "original_test_file_unchanged": true
+      },
+      "independent_reviewer": false,
+      "hidden_acceptance": false
+    },
+    {
       "task_id": "PY-03",
       "method": "PRIVATE_TEMP_PYTHON_3_13_ISOLATED_AST_AND_ORIGINAL_TEST_DIRECT_METHOD",
       "source_git_blob": "6f165f875aa3aec8db8b2d2ff26eedfa904bd473",
@@ -162,6 +196,40 @@
       },
       "expected_exact_not_substring_mutation_detected": true,
       "heldout": false
+    },
+    {
+      "task_id": "PY-05",
+      "method": "PINNED_UNCHANGED_PRIVATE_PYTHON_CONSUMER_ALL_FUNCTIONS_EXECUTED_ISOLATED_STDLIB",
+      "source_git_blob": "145a541a9c6e43b06dbea6cd7efd795e1db65f20",
+      "test_git_blob": "a137cfe8107a7f400da9546681198e4595efe130",
+      "source_git_blobs_verified_by_local_git_hash_object": true,
+      "original_consumer_test_executed": true,
+      "original_consumer_run": {
+        "script": "tests/unit/test_launcher_unit_type_normalizer.py",
+        "runner": "python -I -S -B via stdlib runpy+unittest FunctionTestCase",
+        "tests_defined": 6,
+        "reference": {
+          "tests": 6,
+          "passed": 6,
+          "failed": 0,
+          "errors": 0,
+          "exit": 0
+        },
+        "mutant": {
+          "tests": 6,
+          "passed": 5,
+          "failed": 1,
+          "errors": 0,
+          "exit": 1,
+          "failed_name": "test_load_unit_type_mapping_uses_short_lived_connection_and_normalizes_keys"
+        },
+        "single_exact_mutation": "Replace connection finally conn.close() with pass",
+        "no_network_or_provider": true,
+        "only_fake_connection": true,
+        "original_test_file_unchanged": true
+      },
+      "independent_reviewer": false,
+      "hidden_acceptance": false
     }
   ],
   "limits": [
@@ -171,6 +239,7 @@
     "No genuine original consumer full test baseline/mutant success is claimed for all 12 packages.",
     "Self-reported tool execution is not independent assessor signoff, budget authority or Stable readiness.",
     "Never copy private repository files into a public Framework git tree or artifacts.",
-    "APP-06 full unchanged original Node consumer regression executed in isolated temporary source/test copy against fake repository; not a live PostgreSQL-backed integration test."
+    "APP-06 full unchanged original Node consumer regression executed in isolated temporary source/test copy against fake repository; not a live PostgreSQL-backed integration test.",
+    "PY-02 and PY-05 full original consumer test functions were invoked via stdlib runpy/unittest with isolated temporary packages, not pytest plugins or complete production application stacks."
   ]
 }
