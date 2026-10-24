@@ -83,7 +83,10 @@ class CalibrationTests(unittest.TestCase):
             "tests": 2, "failures": ["test_a"], "errors": [], "skipped": 0}}
         self.assertTrue(calibration.assess(package, reference, starter))
         for field, value in (("tests", 1), ("errors", ["test_b"]),
-                             ("skipped", 1), ("failures", ["test_b"])):
+                             ("skipped", 1), ("failures", ["test_b"]),
+                             ("failures", ["test_a", "test_b"]),
+                             ("failures", ["test_b", "test_a"]),
+                             ("failures", ["test_a", "test_a"])):
             invalid = copy.deepcopy(starter)
             invalid["checks"][field] = value
             self.assertFalse(calibration.assess(package, reference, invalid))
