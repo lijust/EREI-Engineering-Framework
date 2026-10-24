@@ -34,6 +34,9 @@ on:
       - 'workflows/project-integration-bootstrap/**'
       - 'adr/ADR-0002-PROJECT-INTEGRATION-CONTRACT.md'
 
+# Deliberately no concurrency group. PR-controlled groups can collide with
+# authoritative main-run groups. Retain all jobs until safely partitioned.
+
 permissions:
   contents: read
 

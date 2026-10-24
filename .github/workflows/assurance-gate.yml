@@ -5,8 +5,11 @@ on:
   push:
     branches:
       - main
-      - 'hardening/**'
       - 'release/**'
+
+# Deliberately no concurrency group here. Public PR workflow source can
+# select the name of another run's group, canceling main/release evidence.
+# Keep every exact push run independent; obsolete PR cancellation is deferred.
 
 permissions:
   contents: read
