@@ -125,10 +125,10 @@ class CalibrationTests(unittest.TestCase):
     def test_app04_public_oracle_reports_only_the_expected_gap_reuse_violation(self):
         package = {"runtime": "node", "behavioral_oracle": "APP04_PROJECT_ID_MAX_PLUS_ONE",
                    "test_path": "tests/developer-validation-project-id-policy.test.js"}
-        success = {"returncode": 0, "stdout": "APP04_BEHAVIORAL_ORACLE_PASS\\n", "stderr": ""}
+        success = {"returncode": 0, "stdout": "APP04_BEHAVIORAL_ORACLE_PASS\n", "stderr": ""}
         failure = {"returncode": 1, "stdout": "",
-                   "stderr": "AssertionError [ERR_ASSERTION]: APP04_MAX_PLUS_ONE_NO_GAP_REUSE\\n"
-                             "    at [eval]:34:8\\n"}
+                   "stderr": "AssertionError [ERR_ASSERTION]: APP04_MAX_PLUS_ONE_NO_GAP_REUSE\n"
+                             "    at [eval]:34:8\n"}
         self.assertTrue(calibration.assess(package, success, failure))
         self.assertFalse(calibration.assess(package, success, {**failure,
                          "stderr": "Error: Cannot find module APP04_MAX_PLUS_ONE_NO_GAP_REUSE"}))
