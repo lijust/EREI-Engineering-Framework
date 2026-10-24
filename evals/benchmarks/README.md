@@ -451,3 +451,33 @@ checkout العام أو موقعًا تلتقطه GitHub Actions artifacts/logs
 **حدود الإثبات:** هذه أداة تحضير وتشغيل محلي opt-in وليست دليلًا أن
 جميع معايرات المستهلك نجحت في بيئة المستخدم، وليست ترخيصًا لتشغيل
 48 مقارنة V1/V2 أو الدمج/الإصدار دون مراجعة مستقلة.
+
+### فحص APP-01 / APP-02 / APP-03 بالسورس والاختبارات الأصلية — JS V8 محدود
+
+استُخدم GitHub connector المصرح له لقراءة بايتات المصدر والاختبار
+من `EREI-App-Google@6d32e7a...` الخاصة، ثم نُفّذ **نص الاختبار
+الأصلي كما هو** في V8 مع محاكاة محددة لـ `require('fs')`,
+`require('path')`, `require('assert')`، و`vm.runInNewContext`
+في APP-03. لم تُنسخ ملفات المستودع الخاص إلى Framework العام.
+
+- `APP-01`: دالة `dviEnsure_` الأصلية نجحت في اختبار idempotent
+  headers، ثم فشل assertion المقصود بعد تعديل
+  `needsHeaderWrite=created` إلى `true`.
+- `APP-02`: منطق `dviEvidenceFieldDecision_` و
+  `dviConsensusValueKey_` الأصلي نجح، ثم فشل اختبار
+  canonicalization الرقمي بعد تعديل `return String(n)` إلى
+  `return raw`.
+- `APP-03`: سياسة source developer provenance نجحت في الاختبار
+  الأصلي، ثم فشل بالرسالة المتوقعة `source_developer_id must stay blank
+  for DVI-origin` بعد حقن external ID من master.
+
+هذه الاختبارات **تنفذ نصوص المستهلك الأصلية والمصدر الفعلي**، لكنها
+ليست ملفات اختبار Native Node CLI كاملة، لأن واجهات Node وبعض
+سلوك VM جاءت من mocks محدودة. لذلك لا تدخل هذه الثلاثة في عداد
+ملفات اختبارات المستهلك الأصلية الثلاثة المنفذة بالكامل
+سابقًا (APP-06، PY-02، PY-05). سجل النتائج يحفظ البصمات
+والحالة فقط، والتصنيف ما زال `SELF_REPORTED_UNATTESTED_SOURCE_EXECUTION`.
+
+بذلك هناك رصد سلوكي محدود لتسع مهام من أصل 12، وتبقى
+`PY-01` و`PY-04` و`PY-06` بلا رصد تشغيل فعلي في هذا المحضر؛
+لا يُحسب ذلك تقييم V1/V2 أو قبولًا مستقلًا أو تفويض إصدار.
