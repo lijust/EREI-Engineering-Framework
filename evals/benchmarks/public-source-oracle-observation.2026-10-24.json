@@ -89,6 +89,37 @@
       "heldout": false
     },
     {
+      "task_id": "APP-06",
+      "method": "DIRECT_PINNED_PRIVATE_CONTEXT_RESOLVER_READONLY_JS_V8_REPOSITORY_MOCK",
+      "source_git_blob": "bd18ab81be52894becd09855a2ae5db31a9c692d",
+      "test_git_blob": "6c69478e0b03b435fbc4a26a0175023c5c288658",
+      "source_invoked": "createProductionEdgeContextResolver().resolve()",
+      "cases": [
+        "valid_authority_snapshot",
+        "wrong_subscriber",
+        "wrong_workspace",
+        "missing_person"
+      ],
+      "reference": {
+        "valid_resolved": true,
+        "wrong_subscriber_error": "AUTHORITY_SNAPSHOT_CONTEXT_MISMATCH",
+        "wrong_workspace_error": "AUTHORITY_SNAPSHOT_CONTEXT_MISMATCH",
+        "missing_person_error": "AUTH_INVALID",
+        "snapshot_repository_reads_each_scenario": 1
+      },
+      "one_line_mutant": {
+        "wrong_subscriber_rejected": false,
+        "wrong_workspace_rejected": false,
+        "missing_person_error": "AUTH_INVALID",
+        "snapshot_repository_reads_each_scenario": 1
+      },
+      "expected_fail_closed_mutation_detected": true,
+      "original_consumer_test_executed": false,
+      "original_full_postgres_runtime_executed": false,
+      "heldout": false,
+      "note": "One initial checking harness run was corrected: total 4 repository calls over 4 independent scenarios, one call in each; product source remained unchanged."
+    },
+    {
       "task_id": "PY-03",
       "method": "PRIVATE_TEMP_PYTHON_3_13_ISOLATED_AST_AND_ORIGINAL_TEST_DIRECT_METHOD",
       "source_git_blob": "6f165f875aa3aec8db8b2d2ff26eedfa904bd473",
@@ -124,6 +155,7 @@
     "PY-03 original consumer coverage is 1 of 3 functions with a narrowly scoped import shim; original HTML parser was not exercised.",
     "No genuine original consumer full test baseline/mutant success is claimed for all 12 packages.",
     "Self-reported tool execution is not independent assessor signoff, budget authority or Stable readiness.",
-    "Never copy private repository files into a public Framework git tree or artifacts."
+    "Never copy private repository files into a public Framework git tree or artifacts.",
+    "APP-06 original source behavior was executed only in mocked V8, not the unchanged original Node consumer test or real PostgreSQL context."
   ]
 }
