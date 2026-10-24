@@ -390,3 +390,25 @@ parser الأصلية في نفس التشغيل**. لا يتضمن الرصد �
 الأصلية؛ لا تُلحق stdout/stderr خامًا بمحضر عام. CLI مصمم الآن لإخراج
 بصمات ومجاميع منقحة، ويعطي رسالة `FAIL_CLOSED` دون المسارات أو
 tracebacks الخام عند استثناء غير متوقع.
+
+### معايرتان إضافيتان بالاختبارات الأصلية غير المعدلة — PY-02 / PY-05
+
+نفذنا اختبارات المستهلك الأصلية من ملفات `EREI-3.2` المثبتة (Git blob
+مطابق) خارج مستودع Framework العام، ببيئة Python `-I -S -B` دون
+network أو خدمات إنتاج أو pytest plugins. تُستدعى الدوال الأصلية نفسها
+عبر `runpy` و`unittest`، مع `tmp_path` مؤقت لاختبار PY-02:
+
+- `PY-02`: المرجع **4/4 PASS / exit 0**. طفرة إدخال provider-error
+  محاولة إلى reusable cache أعطت **3/4 PASS، 1 intended FAIL / exit 1**
+  في `test_attempt_ledger_does_not_poison_reusable_result_cache`.
+  استخدم SQLite داخل الذاكرة/المسار المؤقت فقط.
+- `PY-05`: المرجع **6/6 PASS / exit 0**. طفرة تعطيل
+  `conn.close()` أعطت **5/6 PASS، 1 intended FAIL / exit 1**
+  في `test_load_unit_type_mapping_uses_short_lived_connection_and_normalizes_keys`.
+  الاتصال كان `FakeConnection` وليس قاعدة تشغيل حقيقية.
+
+بهذا لدينا محاضر تشغيل **ثلاثة ملفات اختبارات مستهلك أصلية كاملة
+(APP-06، PY-02، PY-05)** بنجاح baseline وفشل mutant كما هو مقصود،
+بالإضافة إلى اختبار واحد أصلي من ملف PY-03، وAPP-04/05 باستخدام
+oracles عامة على methods المصدر الحقيقي. العدد ليس 12/12 من قبول
+المستهلك، ولا يشمل مقارنة نموذجية أو hidden acceptance أو توقيع مراجع مستقل.
