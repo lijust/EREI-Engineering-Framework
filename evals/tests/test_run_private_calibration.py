@@ -46,22 +46,6 @@ class PrivateCalibrationOrchestratorTests(unittest.TestCase):
         }
         self.raw_catalog = json.dumps(self.catalog).encode()
 
-    def patch_runner(self):
-        return (
-            patch.object(runner.check_calibration.CATALOG.__class__, "read_bytes",
-                         return_value=self.raw_catalog),
-            patch.object(runner.prepare_private_exports, "prepare",
-                         return_value={"file_count": 1}),
-            patch.object(runner.check_calibration, "read_inputs",
-                         return_value={"source": b"original private bytes"}),
-            patch.object(runner.check_calibration, "starter_inputs",
-                         return_value={"source": b"private mutated bytes"}),
-            patch.object(runner.check_calibration, "run_copy",
-                         side_effect=[self.baseline, self.mutant]),
-            patch.object(runner.check_calibration, "assess",
-                         return_value=True),
-        )
-
     def test_single_task_end_to_end_prepares_and_deletes_source_outside_checkout(self):
         with (
             patch.object(runner.check_calibration, "CATALOG") as catalog_path,
