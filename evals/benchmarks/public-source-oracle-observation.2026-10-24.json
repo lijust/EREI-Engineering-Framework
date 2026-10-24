@@ -35,6 +35,78 @@
   },
   "source_executions": [
     {
+      "task_id": "APP-01",
+      "method": "PRIVATE_PINNED_ORIGINAL_CONSUMER_JS_TEST_BODY_IN_ISOLATED_V8_VIRTUAL_FS",
+      "source_git_blob": "5f8ee6b20a2a3cb289704361c7a02e34681b1c16",
+      "test_git_blob": "8b51f8d033c1216261944375e6a5381f50aba18c",
+      "source_invoked": "dviEnsure_ via original unchanged consumer test",
+      "test_name": "tests/developer-validation-idempotent-sheet-ensure.test.js",
+      "reference": {
+        "status": "PASS",
+        "output_lines": 1
+      },
+      "single_mutant": {
+        "status": "FAIL",
+        "error_type": "AssertionError",
+        "assertion": "deepStrictEqual",
+        "original_test_approx_line": 41
+      },
+      "expected_mutation_detected": true,
+      "unchanged_original_consumer_test_text_executed": true,
+      "full_node_runtime_executed": false,
+      "environment": "No Node fs or native assert: V8 JS interpreter with fake require('fs','path','assert') and virtual pinned files.",
+      "heldout": false,
+      "independent_reviewer": false
+    },
+    {
+      "task_id": "APP-02",
+      "method": "PRIVATE_PINNED_ORIGINAL_CONSUMER_JS_TEST_BODY_IN_ISOLATED_V8_VIRTUAL_FS",
+      "source_git_blob": "5f8ee6b20a2a3cb289704361c7a02e34681b1c16",
+      "test_git_blob": "99ff5520076c176b3f1389d2081241f030c2e406",
+      "source_invoked": "dviEvidenceFieldDecision_ and dviConsensusValueKey_ via unchanged test",
+      "test_name": "tests/developer-validation-field-consensus.test.js",
+      "reference": {
+        "status": "PASS",
+        "output_lines": 1
+      },
+      "single_mutant": {
+        "status": "FAIL",
+        "error_type": "AssertionError",
+        "assertion": "strictEqual",
+        "original_test_approx_line": 32
+      },
+      "expected_mutation_detected": true,
+      "unchanged_original_consumer_test_text_executed": true,
+      "full_node_runtime_executed": false,
+      "environment": "No Node fs or native assert: V8 JS interpreter with fake require('fs','path','assert') and virtual pinned files.",
+      "heldout": false,
+      "independent_reviewer": false
+    },
+    {
+      "task_id": "APP-03",
+      "method": "PRIVATE_PINNED_ORIGINAL_CONSUMER_JS_TEST_BODY_IN_ISOLATED_V8_VIRTUAL_FS",
+      "source_git_blob": "6c2b8b02afa9044f21c547f1f19a93820ce7c9ff",
+      "test_git_blob": "90ae74e4bbd7939731cce4fc4e0d7c94ebee0883",
+      "source_invoked": "dviMissingProjectInsertAssess_ and dviMissingProjectInsertProvenancePlanRow_ via unchanged consumer",
+      "test_name": "tests/developer-validation-source-provenance-policy.test.js",
+      "reference": {
+        "status": "PASS",
+        "output_lines": 1
+      },
+      "single_mutant": {
+        "status": "FAIL",
+        "error_type": "AssertionError",
+        "assertion": "source_developer_id must stay blank for DVI-origin",
+        "original_test_approx_line": 59
+      },
+      "expected_mutation_detected": true,
+      "unchanged_original_consumer_test_text_executed": true,
+      "full_node_runtime_executed": false,
+      "environment": "No Node fs/vm/native assert; pinned original test body executed in V8 with virtual pinned files and VM/require emulators.",
+      "heldout": false,
+      "independent_reviewer": false
+    },
+    {
       "task_id": "APP-04",
       "method": "DIRECT_PINNED_PRIVATE_SOURCE_READONLY_JS_V8_MOCK",
       "source_git_blob": "6c2b8b02afa9044f21c547f1f19a93820ce7c9ff",
@@ -240,6 +312,7 @@
     "Self-reported tool execution is not independent assessor signoff, budget authority or Stable readiness.",
     "Never copy private repository files into a public Framework git tree or artifacts.",
     "APP-06 full unchanged original Node consumer regression executed in isolated temporary source/test copy against fake repository; not a live PostgreSQL-backed integration test.",
-    "PY-02 and PY-05 full original consumer test functions were invoked via stdlib runpy/unittest with isolated temporary packages, not pytest plugins or complete production application stacks."
+    "PY-02 and PY-05 full original consumer test functions were invoked via stdlib runpy/unittest with isolated temporary packages, not pytest plugins or complete production application stacks.",
+    "APP-01/APP-02/APP-03 original unchanged consumer JavaScript test text was executed with V8 shims (assert, fs, path, vm), not in an original native Node process; no independent or full original Node test certification is claimed."
   ]
 }
