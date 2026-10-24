@@ -23,22 +23,23 @@ class EvidenceSummaryTests(unittest.TestCase):
     def test_immutable_denominator_and_disjoint_provenance_levels(self):
         result = summarizer.summarize(self.catalog, self.receipt)
         self.assertEqual(result["recipe_preparation"], "12/12")
-        self.assertEqual(result["source_behavior_observations"], "10/12")
+        self.assertEqual(result["source_behavior_observations"], "12/12")
         self.assertEqual(result["source_structural_observations"], "0/12")
-        self.assertEqual(result["source_evidence_coverage"], "10/12")
+        self.assertEqual(result["source_evidence_coverage"], "12/12")
         self.assertEqual(result["stage_counts"], {
             summarizer.FULL: 4,
             summarizer.PARTIAL: 1,
             summarizer.V8: 3,
             summarizer.METHOD: 2,
+            summarizer.STUBBED_METHOD: 2,
             summarizer.STRUCTURAL: 0,
-            summarizer.NONE: 2,
+            summarizer.NONE: 0,
         })
         self.assertEqual(result["task_states"]["APP-04"], summarizer.METHOD)
         self.assertEqual(result["task_states"]["PY-03"], summarizer.PARTIAL)
-        self.assertEqual(result["task_states"]["PY-01"], summarizer.NONE)
+        self.assertEqual(result["task_states"]["PY-01"], summarizer.STUBBED_METHOD)
         self.assertEqual(result["task_states"]["PY-04"], summarizer.FULL)
-        self.assertEqual(result["task_states"]["PY-06"], summarizer.NONE)
+        self.assertEqual(result["task_states"]["PY-06"], summarizer.STUBBED_METHOD)
         self.assertEqual(result["independent_full_source_calibrations"], "0/12")
         self.assertEqual(result["model_comparisons"], "0/48")
         self.assertEqual(result["exact_target_runtime_evidence"], "0/13")
@@ -112,6 +113,34 @@ class EvidenceSummaryTests(unittest.TestCase):
         changed["source_executions"].append(copy.deepcopy(old[0]))
         with self.assertRaisesRegex(ValueError, "Duplicate"):
             summarizer.summarize(self.catalog, changed)
+
+    def test_stubbed_source_method_never_counts_as_original_consumer_suite(self):
+        for task, expected_method in (
+            ("PY-01", "SemanticPaymentPlanNormalizer.normalize"),
+            ("PY-06", "_validate_grounding"),
+        ):
+            record = next(row for row in self.receipt["source_executions"]
+                          if row["task_id"] == task)
+            self.assertEqual(record["source_method"], expected_method)
+            self.assertFalse(record["original_consumer_test_executed"])
+            self.assertTrue(record["stubbed_dependencies"])
+            for corrupt in (
+                ("original_consumer_test_executed", True),
+                ("independent_reviewer", True),
+            ):
+                with self.subTest(task=task, key=corrupt[0]):
+                    poisoned = copy.deepcopy(self.receipt)
+                    row = next(x for x in poisoned["source_executions"]
+                               if x["task_id"] == task)
+                    row[corrupt[0]] = corrupt[1]
+                    with self.assertRaisesRegex(ValueError, "method smoke"):
+                        summarizer.summarize(self.catalog, poisoned)
+            poisoned = copy.deepcopy(self.receipt)
+            row = next(x for x in poisoned["source_executions"]
+                       if x["task_id"] == task)
+            row["checks"]["expected_mutant_discrimination"] = 2
+            with self.assertRaisesRegex(ValueError, "method smoke"):
+                summarizer.summarize(self.catalog, poisoned)
 
     def test_duplicate_unknown_or_changed_denominator_fail_closed(self):
         receipt = copy.deepcopy(self.receipt)
