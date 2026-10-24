@@ -73,7 +73,7 @@ def main() -> int:
                         help="One task at a time, e.g. PY-04; never batch by default")
     args = parser.parse_args()
     try:
-        result = run_one(args.task)
+        result = run_one(args.task.strip().upper())
     except Exception as exc:
         # Do not emit original private exception message, file path, test
         # stderr, provider credential, gh stderr, or traceback.
