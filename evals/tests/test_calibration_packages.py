@@ -155,7 +155,7 @@ class CalibrationTests(unittest.TestCase):
         observed = {item["task_id"]: item for item in report["source_executions"]}
         self.assertEqual(set(observed), {
             "APP-01", "APP-02", "APP-03", "APP-04", "APP-05",
-            "APP-06", "PY-02", "PY-03", "PY-05"})
+            "APP-06", "PY-02", "PY-03", "PY-04", "PY-05"})
         # Public receipt is self-observed original JS consumer body execution
         # via V8 dependency shims, NOT original Node CLI execution or independent
         # reviewer approval. Bind both source and unchanged test git objects.
@@ -234,7 +234,8 @@ class CalibrationTests(unittest.TestCase):
             self.assertEqual(consumer["mutant"]["failed_name"], failed_name)
             self.assertFalse(record["independent_reviewer"])
             self.assertFalse(record["hidden_acceptance"])
-        structural = report["source_structural_observations"]
+        structural = report["historical_source_structural_observations"]
+        self.assertEqual(len(report["source_structural_observations"]), 0)
         self.assertEqual(len(structural), 1)
         self.assertEqual(structural[0]["task_id"], "PY-04")
         for role, path in (
@@ -250,6 +251,19 @@ class CalibrationTests(unittest.TestCase):
         self.assertFalse(structural[0]["original_consumer_test_executed"])
         self.assertEqual(structural[0]["observation"]["registry_tokens"], 20)
         self.assertEqual(structural[0]["observation"]["mutant_full_tokens"], 19)
+        py04 = observed["PY-04"]
+        self.assertTrue(py04["original_consumer_test_executed"])
+        self.assertEqual(py04["original_consumer_run"]["python_version"], "3.13.5")
+        self.assertEqual(py04["original_consumer_run"]["reference"]["passed"], 6)
+        self.assertEqual(py04["original_consumer_run"]["reference"]["failed"], 0)
+        self.assertEqual(py04["original_consumer_run"]["initial_mutant_rejected"]["failed"], 2)
+        self.assertEqual(py04["original_consumer_run"]["mutant"]["passed"], 5)
+        self.assertEqual(py04["original_consumer_run"]["mutant"]["failed"], 1)
+        self.assertEqual(py04["original_consumer_run"]["mutant"]["starter_sha256"],
+                         tasks["PY-04"]["starter_file_sha256"]["core/project_update_presets.py"])
+        self.assertEqual(py04["original_consumer_run"]["mutant"]["failed_name"],
+                         tasks["PY-04"]["expected_assertion"])
+        self.assertFalse(py04["independent_reviewer"])
         self.assertTrue(report["limits"])
 
     def test_private_source_exports_cannot_be_inside_public_framework_checkout(self):
