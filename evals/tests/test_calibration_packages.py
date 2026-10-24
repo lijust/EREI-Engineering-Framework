@@ -157,6 +157,71 @@ class CalibrationTests(unittest.TestCase):
         self.assertNotIn("GOOGLE", good["stdout"])
         self.assertNotIn("GOOGLE", bad["stderr"])
 
+    def test_app05_public_oracle_detects_broken_repository_cache_with_provider_parity(self):
+        node = __import__("shutil").which("node")
+        if node is None:
+            self.skipTest("Node executable unavailable")
+        package = {"runtime": "node", "behavioral_oracle": "APP05_REPOSITORY_CACHE_PARITY",
+                   "test_path": "tests/error-catalog-repository-candidate.test.js"}
+        # This micro-fixture is only a smoke test for the Framework-owned oracle:
+        # the real pinned builder, legacy service and test remain sourced by
+        # immutable git blobs and checked separately by read_inputs.
+        legacy = """const ErrorService = (function() {
+          var cache_ = null;
+          function catalog_() {
+            if (cache_) return cache_;
+            var t = getTable_(openSheetById_(getAdminId_(), EREI.ADMIN_SHEETS.ERRORS), 1), map = {};
+            t.rows.forEach(function(r) {
+              var o = rowToObject_(t.headers, r); if (o.error_code) map[o.error_code] = o;
+            });
+            cache_ = map; return map;
+          }
+          function fromCode(code, details) {
+            var row = catalog_()[code] || catalog_().INTERNAL_ERROR || {};
+            var quota429 = ['SEARCH_LIMIT','EXPORT_LIMIT','RESULT_EXPOSURE_LIMIT'].indexOf(code) >= 0;
+            var http = code.indexOf('AUTH_') === 0 ? 401 : (code === 'PERMISSION_DENIED' ? 403 : (code === 'NOT_FOUND' ? 404 : (code.indexOf('RATE_LIMIT') >= 0 || code === 'RATE_LIMIT' || quota429 ? 429 : 400)));
+            if (code === 'INTERNAL_ERROR') http = 500;
+            return new EreiError_(code, normalizeString_(row.user_message) || code, details || null, http);
+          }
+          return {fromCode:fromCode};
+        })();"""
+        candidate = legacy.replace("const ErrorService = (function() {",
+            "const ErrorCatalogRepository = (function() {"
+            "var cache_ = null;"
+            "function catalog() {"
+            "if (cache_) return cache_;"
+            "var t = getTable_(openSheetById_(getAdminId_(), EREI.ADMIN_SHEETS.ERRORS), 1), map = {};"
+            "t.rows.forEach(function(r) { var o = rowToObject_(t.headers,r); if (o.error_code) map[o.error_code] = o; });"
+            "cache_ = map; return map;"
+            "}"
+            "return {catalog:catalog};"
+            "})();"
+            "const ErrorService = (function() {").replace(
+            """var cache_ = null;
+          function catalog_() {
+            if (cache_) return cache_;
+            var t = getTable_(openSheetById_(getAdminId_(), EREI.ADMIN_SHEETS.ERRORS), 1), map = {};
+            t.rows.forEach(function(r) {
+              var o = rowToObject_(t.headers, r); if (o.error_code) map[o.error_code] = o;
+            });
+            cache_ = map; return map;
+          }""", "").replace("catalog_()", "ErrorCatalogRepository.catalog()")
+        builder = ("function candidateErrorServiceSource() { return "
+                   + json.dumps(candidate) + "; }"
+                   "module.exports = {candidateErrorServiceSource};")
+        path = "tools/build-error-catalog-repository-candidate.js"
+        original_path = "src/11_ErrorService.gs"
+        good = calibration.run_copy(package, {path: builder.encode(),
+                                            original_path: legacy.encode()}, node)
+        mutant = builder.replace("if (cache_) return cache_;",
+                                 "if (false) return cache_;")
+        bad = calibration.run_copy(package, {path: mutant.encode(),
+                                           original_path: legacy.encode()}, node)
+        self.assertTrue(calibration.assess(package, good, bad), (good, bad))
+        self.assertFalse(calibration.assess(package, good, {**bad,
+                         "stderr": "Error: Cannot find module APP05_REPOSITORY_PARITY_AND_CACHE"}))
+        self.assertFalse(calibration.assess(package, good, {**bad, "returncode": 0}))
+
     def test_timeout_is_not_converted_to_a_successful_calibration(self):
         self.package.update(runtime="python", python_tests=[])
         with patch.object(calibration.subprocess, "run",
