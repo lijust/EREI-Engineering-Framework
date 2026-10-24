@@ -545,7 +545,7 @@ python -B evals/benchmarks/summarize_calibration_evidence.py
 ويطلب تحديد مهمة واحدة لتقليل المخاطر وتقليل زمن التشخيص:
 
 ```text
-python -b evals/benchmarks/run_private_calibration.py --task PY-04
+python -b evals/benchmarks/run_private_calibration.py --task py-04
 ```
 
 تجمع الأداة في عملية واحدة: تنزيل ملفات المصدر والاختبارات الأصلية
