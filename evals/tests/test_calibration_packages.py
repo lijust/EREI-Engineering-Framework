@@ -37,6 +37,15 @@ class CalibrationTests(unittest.TestCase):
         }
         (target.parent / "test.py").write_bytes(self.source)
 
+    def test_private_source_exports_cannot_be_inside_public_framework_checkout(self):
+        public_checkout = Path(calibration.__file__).resolve().parents[2]
+        for location in (public_checkout, public_checkout / "private-exports",
+                         public_checkout / "evals/benchmarks/exports"):
+            with self.subTest(path=str(location)), self.assertRaisesRegex(
+                    ValueError, "outside the public Framework checkout"):
+                calibration.forbid_checkout_local_exports(location)
+        calibration.forbid_checkout_local_exports(self.root)
+
     def test_verified_bytes_are_reused_without_mutating_source_export(self):
         reference = calibration.read_inputs(self.package, self.root)
         # An external change after the read cannot replace bytes used by the checker.
