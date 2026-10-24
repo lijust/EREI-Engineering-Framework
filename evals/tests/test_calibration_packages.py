@@ -179,6 +179,18 @@ class CalibrationTests(unittest.TestCase):
         self.assertEqual(observed["APP-04"]["source_git_blob"],
                          next(f["git_blob"] for f in tasks["APP-04"]["files"]
                               if f["path"] == tasks["APP-04"]["mutation"]["path"]))
+        # The unchanged legacy policy-string test is blind to the actual
+        # ID gap reuse mutant. Do NOT upgrade this to consumer calibration;
+        # only the public method-level behavioral oracle discriminates.
+        blind = observed["APP-04"]["original_unchanged_consumer_test_probe"]
+        self.assertEqual(blind["test_git_blob"],
+                         next(f["git_blob"] for f in tasks["APP-04"]["files"]
+                              if f["path"] == tasks["APP-04"]["test_path"]))
+        self.assertEqual(blind["reference_result"], "PASS")
+        self.assertEqual(blind["mutant_result"], "PASS")
+        self.assertIs(blind["mutant_detected"], False)
+        self.assertIs(blind["behavioral_oracle_catches_mutation"], True)
+        self.assertIs(blind["not_native_node_execution"], True)
         self.assertEqual(observed["APP-05"]["builder_git_blob"],
                          next(f["git_blob"] for f in tasks["APP-05"]["files"]
                               if f["path"] == tasks["APP-05"]["mutation"]["path"]))
