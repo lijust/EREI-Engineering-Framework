@@ -73,4 +73,15 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Run bootstrap unit tests
         shell: powershell
-        run: python -m unittest discover -s tools/tests -p 'test_*.py' -v
+        # Required, unfiltered Assurance already executes full Python 3.12
+        # discovery on every PR/main push. Retain 3.11 full + 3.12 focused.
+        run: |
+          $version = '${{ matrix.python-version }}'
+          if ($version -eq '3.11') {
+            python -m unittest discover -s tools/tests -p 'test_*.py' -v
+          } elseif ($version -eq '3.12') {
+            python -m unittest tools.tests.test_bootstrap_project tools.tests.test_capability_activation -v
+          } else {
+            throw 'Unsupported Python version for Bootstrap CI'
+          }
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

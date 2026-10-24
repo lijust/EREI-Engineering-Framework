@@ -37,3 +37,11 @@ Before merging this source-only candidate:
 Public `main` is protected by active Ruleset #25712179 (required up-to-date `assurance` check). Independently trusted immutable workflow identity, audited consumer deny-by-default admission, signer custody, and authenticated separate Architecture/Security approvals remain unimplemented. Workflow efficiency is **not** effective security enforcement. No V2 release freeze, Copilot activation, or Stable promotion follows from this change.
 
 Track Stable V2 authority separately in issue #31. This PR only reduces avoidable Windows runner work while retaining explicit release-evidence behavior.
+
+## T09 focused Python 3.12 follow-up (separate PR #92, source-only)
+
+The protected public main Ruleset **requires the unfiltered `assurance` check** by GitHub Actions; its `windows-latest` Python 3.12 job always runs **all Framework tool tests** on every PR and main push. For eligible Bootstrap events, this follow-up keeps the complete Python 3.11 tools suite and narrows Python 3.12 Bootstrap to explicit bootstrap/capability-activation smoke tests. The independent Assurance step continues to own full Python 3.12 discovery and must be green at the same SHA before merging.
+
+No self-hosted runner, interpreter path, matrix job ID, PR/push trigger, permission, release pin or consumer behavior is changed. Its parent #67 intentionally removes PR/push concurrency groups for safety. This is a reduction in duplicate full-suite execution, **not permission to skip Assurance**. The `tools/tests/test_ci_test_partition.py` regression executes the actual PowerShell selector with a fake `python` function on Windows, verifying argv and negative exit propagation for both versions and an invalid matrix value.
+
+**Do not infer effectiveness from forecast:** compare hosted job durations and coverage under the final source; no PR cancellation is implemented in these mixed PR/push workflows, so no cancellation savings are claimed. If an external verified release workflow source digest exists, an authorized separate reviewer must re-bind/accept it before release enforcement. The independent review and exact-head hosted CI acceptance are pending; no Stable or Internal promotion.
