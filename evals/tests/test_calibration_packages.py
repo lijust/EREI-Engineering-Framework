@@ -517,17 +517,17 @@ class NawyExtractor(_PaymentNawyExtractor):
             "expected_assertion": "test_regression",
         }
         files = {
-            "core/__init__.py": b"raise RuntimeError('forbidden broad core startup')\\n",
-            "core/ai/__init__.py": b"raise RuntimeError('forbidden provider startup')\\n",
-            "core/ai/domain.py": b"VALUE = 1\\n",
+            "core/__init__.py": b"raise RuntimeError('forbidden broad core startup')\n",
+            "core/ai/__init__.py": b"raise RuntimeError('forbidden provider startup')\n",
+            "core/ai/domain.py": b"VALUE = 1\n",
             "tests/test_domain.py": (
-                b"from core.ai.domain import VALUE\\n"
-                b"def test_regression():\\n    assert VALUE == 1\\n"
-                b"def test_unrelated():\\n    assert VALUE > 0\\n"
+                b"from core.ai.domain import VALUE\n"
+                b"def test_regression():\n    assert VALUE == 1\n"
+                b"def test_unrelated():\n    assert VALUE > 0\n"
             ),
         }
         baseline = calibration.run_copy(package, files, None)
-        broken = {**files, "core/ai/domain.py": b"VALUE = 2\\n"}
+        broken = {**files, "core/ai/domain.py": b"VALUE = 2\n"}
         starter = calibration.run_copy(package, broken, None)
         self.assertTrue(calibration.assess(package, baseline, starter),
                         (baseline, starter))
