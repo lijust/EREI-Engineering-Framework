@@ -406,6 +406,25 @@ def assess(package: dict, reference: dict, starter: dict) -> bool:
             and starter["checks"]["failures"] == [package["expected_assertion"]])
 
 
+
+def sanitized_result(record: dict) -> dict:
+    """Only export digests/counts, never private consumer output or trace text."""
+    output = {"returncode": record["returncode"]}
+    for channel in ("stdout", "stderr"):
+        raw = record.get(channel, "")
+        output[channel + "_sha256"] = hashlib.sha256(raw.encode("utf-8")).hexdigest()
+        output[channel + "_nonempty"] = bool(raw)
+    checks = record.get("checks")
+    if checks is not None:
+        output["checks"] = {
+            "tests": checks["tests"],
+            "failed_count": len(checks["failures"]),
+            "error_count": len(checks["errors"]),
+            "skipped_count": checks["skipped"],
+        }
+    return output
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--source-exports", type=Path, required=True,
@@ -432,8 +451,12 @@ def main() -> int:
     for package, reference, starter in prepared:
         baseline = run_copy(package, reference, args.node)
         mutant = run_copy(package, starter, args.node)
-        records.append({"task_id": package["task_id"], "reference": baseline,
-                        "starter": mutant, "calibration_passed": assess(package, baseline, mutant)})
+        records.append({
+            "task_id": package["task_id"],
+            "reference": sanitized_result(baseline),
+            "starter": sanitized_result(mutant),
+            "calibration_passed": assess(package, baseline, mutant),
+        })
     report = {"kind": "PUBLIC_CALIBRATION_ONLY", "model_executions": 0,
               "independent_review": "NOT_PERFORMED",
               "effectiveness": "NOT_ESTABLISHED", "python": sys.version,
