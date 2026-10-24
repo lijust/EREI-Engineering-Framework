@@ -508,6 +508,34 @@ class NawyExtractor(_PaymentNawyExtractor):
                 calibration.run_copy({**package, "dependency_versions": bad},
                                      {"tests/unit/test_recovery.py": b""}, None)
 
+    def test_pinned_python_domain_import_skips_broad_legacy_initializers(self):
+        # Original consumer domain tests must not instantiate the unrelated
+        # legacy app bootstrap (desktop/API/optional network providers).
+        package = {
+            "runtime": "python", "test_path": "tests/test_domain.py",
+            "python_tests": ["test_regression", "test_unrelated"],
+            "expected_assertion": "test_regression",
+        }
+        files = {
+            "core/__init__.py": b"raise RuntimeError('forbidden broad core startup')\\n",
+            "core/ai/__init__.py": b"raise RuntimeError('forbidden provider startup')\\n",
+            "core/ai/domain.py": b"VALUE = 1\\n",
+            "tests/test_domain.py": (
+                b"from core.ai.domain import VALUE\\n"
+                b"def test_regression():\\n    assert VALUE == 1\\n"
+                b"def test_unrelated():\\n    assert VALUE > 0\\n"
+            ),
+        }
+        baseline = calibration.run_copy(package, files, None)
+        broken = {**files, "core/ai/domain.py": b"VALUE = 2\\n"}
+        starter = calibration.run_copy(package, broken, None)
+        self.assertTrue(calibration.assess(package, baseline, starter),
+                        (baseline, starter))
+        self.assertEqual(baseline["checks"]["tests"], 2)
+        self.assertEqual(starter["checks"]["failures"], ["test_regression"])
+        self.assertNotIn("forbidden broad core startup", baseline["stderr"])
+        self.assertNotIn("forbidden provider startup", starter["stderr"])
+
     def test_timeout_is_not_converted_to_a_successful_calibration(self):
         self.package.update(runtime="python", python_tests=[])
         with patch.object(calibration.subprocess, "run",
