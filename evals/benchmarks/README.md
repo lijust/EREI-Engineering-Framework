@@ -359,3 +359,24 @@ observations، `DRAFT_NOT_EXECUTABLE` و`effectiveness=NOT_ESTABLISHED`.
 لا يعني اكتمال معايرة المصدر فعليًا أو إجراء 48 مقارنة أو وجود hidden acceptance.**
 تظل الحالة `DRAFT_NOT_EXECUTABLE`, `execution_authorized=false`,
 `effectiveness=NOT_ESTABLISHED`, ولا تفويض بالصرف أو الدمج أو الإصدار.
+
+## محضر تشغيل فعلي محدود على المصادر الأصلية — 2026-10-24
+
+`public-source-oracle-observation.2026-10-24.json` يسجل **رصدًا ذاتيًا غير معتمد
+من مراجع مستقل**: فحص 35/35 من Git blobs الحقيقية في مستودعين خاصين؛
+12/12 تغييرًا واحدًا في موضعه مع بصمات الـstarter؛ وتشغيل methods الأصلية
+`APP-04` و`APP-05` على JS V8 مع مدخلات provider/mock دون كتابة،
+وتشغيل Python class من source الأصلي `PY-03`. إضافة إلى الـ3 tests
+العامة المحدودة في PY-03، جرى تشغيل **اختبار واحد أصلي غير معدّل من 3**
+لـPY-03 (`test_boundary_matching_is_exact_not_substring_based`)،
+حيث نجح baseline وفشل mutant كما هو متوقع، بعد فحص Git blobs لملفي
+المصدر والاختبار داخل منطقة مؤقتة خارج Git Framework العام. احتاج هذا
+التشغيل إلى import shim لواجهة extractor؛ لذلك **لم تُختبر دوال HTML
+parser الأصلية في نفس التشغيل**. لا يتضمن الرصد نتائج المعايرة الكاملة
+لمكونات Python المعتمدة على البيئة كاملة.
+
+هذا محضر سلوكي محدود **ليس** تحققًا مستقلًا ولا hidden acceptance،
+ولا يعني تشغيل 48 تجربة V1/V2 أو إغلاق T15. حافظ على خصوصية الملفات
+الأصلية؛ لا تُلحق stdout/stderr خامًا بمحضر عام. CLI مصمم الآن لإخراج
+بصمات ومجاميع منقحة، ويعطي رسالة `FAIL_CLOSED` دون المسارات أو
+tracebacks الخام عند استثناء غير متوقع.
