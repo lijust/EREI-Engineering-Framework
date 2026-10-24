@@ -8,6 +8,7 @@ PUBLIC_PR_WORKFLOWS = (
     "framework-evals.yml",
     "project-bootstrap-tests.yml",
     "runtime-adapter-tests.yml",
+    "t14-isolated-rollback-drill.yml",
 )
 
 
