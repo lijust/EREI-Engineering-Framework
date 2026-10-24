@@ -79,11 +79,26 @@ def summarize(catalog: dict[str, Any], receipt: dict[str, Any]) -> dict[str, Any
             status = FULL
         elif r.get("original_consumer_run", {}).get("reference", {}).get("passed") in (4, 6):
             original = r["original_consumer_run"]
-            if (task not in {"PY-02", "PY-05"}
+            if (task not in {"PY-02", "PY-04", "PY-05"}
                     or original["mutant"].get("failed") != 1
                     or original["mutant"].get("passed") != original["tests_defined"] - 1
-                    or original["reference"]["passed"] != original["tests_defined"]):
+                    or original["reference"]["passed"] != original["tests_defined"]
+                    or original["reference"].get("failed") != 0
+                    or original["reference"].get("errors") != 0
+                    or original["mutant"].get("errors") != 0):
                 raise ValueError("Invalid Python original consumer evidence")
+            if task == "PY-04":
+                rejected = original.get("initial_mutant_rejected", {})
+                expected = "test_full_project_details_preset_tracks_registry_without_duplicate_allowlist"
+                if (original.get("tests_defined") != 6
+                        or original.get("python_version") != "3.13.5"
+                        or rejected.get("failed") != 2
+                        or original["mutant"].get("failed_name") != expected
+                        or original["mutant"].get("starter_sha256") !=
+                        "1a78015a1acc1ce4225b406c232c81de5aac9f05d46452aa7cc0e7e57b879ff0"
+                        or r.get("original_consumer_test_executed") is not True
+                        or r.get("independent_reviewer") is not False):
+                    raise ValueError("PY-04 original consumer calibration must document rejected off-target mutant")
             status = FULL
         elif task == "PY-03":
             limited = r.get("unchanged_original_consumer_test", {})
