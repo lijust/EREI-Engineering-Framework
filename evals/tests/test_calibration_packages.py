@@ -222,6 +222,61 @@ class CalibrationTests(unittest.TestCase):
                          "stderr": "Error: Cannot find module APP05_REPOSITORY_PARITY_AND_CACHE"}))
         self.assertFalse(calibration.assess(package, good, {**bad, "returncode": 0}))
 
+    def test_py03_boundaries_detect_only_substring_regression_without_extractor_stack(self):
+        package = {
+            "runtime": "python", "behavioral_oracle": "PY03_NAWY_EXACT_BOUNDARY",
+            "test_path": "tests/unit/test_nawy_payment_section_boundary.py",
+            "python_tests": [
+                "test_exact_english_marker", "test_exact_arabic_marker",
+                "test_exact_not_substring_boundary",
+            ],
+            "expected_assertion": "test_exact_not_substring_boundary",
+        }
+        source = '''
+from typing import Iterable
+class NawyExtractor(_PaymentNawyExtractor):
+    _PAYMENT_STOP_EN = {"location on map", "call us"}
+    _PAYMENT_STOP_AR = {"الموقع على الخريطة", "اتصل بنا"}
+    @classmethod
+    def _normalized_boundary_text(cls, value: str) -> str:
+        return " ".join(cls._clean_text(value).casefold().split())
+    @classmethod
+    def _trim_payment_page_chrome(cls, lines: Iterable[str], *, locale: str) -> list[str]:
+        stops = cls._PAYMENT_STOP_AR if locale == "ar" else cls._PAYMENT_STOP_EN
+        result = []
+        for line in lines:
+            if cls._normalized_boundary_text(line) in stops:
+                break
+            result.append(line)
+        return result
+    @classmethod
+    def _payment_section_lines(cls, raw_html: str, locale: str) -> list[str]:
+        lines = super()._payment_section_lines(raw_html, locale)
+        return cls._trim_payment_page_chrome(lines, locale=locale)
+'''
+        path = "extractors/nawy/payment_section_boundary_extractor.py"
+        starter = source.replace(
+            "if cls._normalized_boundary_text(line) in stops:",
+            "if any(stop in cls._normalized_boundary_text(line) for stop in stops):"
+        )
+        reference = calibration.run_copy(package, {path: source.encode()}, None)
+        mutant = calibration.run_copy(package, {path: starter.encode()}, None)
+        self.assertTrue(calibration.assess(package, reference, mutant),
+                        (reference, mutant))
+        self.assertEqual(reference["checks"]["tests"], 3)
+        self.assertEqual(mutant["checks"]["failures"],
+                         ["test_exact_not_substring_boundary"])
+        # Reject a mere parsing/import error, and off-target failures.
+        for changes in (
+            {"returncode": 2},
+            {"checks": {**mutant["checks"], "errors": ["test_exact_english_marker"]}},
+            {"checks": {**mutant["checks"],
+                        "failures": ["test_exact_english_marker"]}},
+        ):
+            self.assertFalse(calibration.assess(
+                package, reference, {**mutant, **changes}
+            ))
+
     def test_timeout_is_not_converted_to_a_successful_calibration(self):
         self.package.update(runtime="python", python_tests=[])
         with patch.object(calibration.subprocess, "run",
@@ -246,7 +301,7 @@ class CalibrationTests(unittest.TestCase):
             encoding="utf-8"))
         self.assertEqual(len(plan["tasks"]), 12)
         by_id = {package["task_id"]: package for package in catalog["packages"]}
-        self.assertEqual(len(by_id), 9)
+        self.assertEqual(len(by_id), 10)
         linked = set()
         for task in plan["tasks"]:
             self.assertIsNone(task["hidden_acceptance_sha256"])
