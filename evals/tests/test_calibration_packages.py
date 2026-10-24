@@ -153,13 +153,20 @@ class CalibrationTests(unittest.TestCase):
         self.assertEqual(report["pin_integrity"]["distinct_git_blobs_readonly_verified"], 35)
         self.assertEqual(report["pin_integrity"]["original_source_mutations_starter_sha256_verified"], 12)
         observed = {item["task_id"]: item for item in report["source_executions"]}
-        self.assertEqual(set(observed), {"APP-04", "APP-05", "PY-03"})
+        self.assertEqual(set(observed), {"APP-04", "APP-05", "APP-06", "PY-03"})
         self.assertEqual(observed["APP-04"]["source_git_blob"],
                          next(f["git_blob"] for f in tasks["APP-04"]["files"]
                               if f["path"] == tasks["APP-04"]["mutation"]["path"]))
         self.assertEqual(observed["APP-05"]["builder_git_blob"],
                          next(f["git_blob"] for f in tasks["APP-05"]["files"]
                               if f["path"] == tasks["APP-05"]["mutation"]["path"]))
+        self.assertEqual(observed["APP-06"]["source_git_blob"],
+                         next(f["git_blob"] for f in tasks["APP-06"]["files"]
+                              if f["path"] == tasks["APP-06"]["mutation"]["path"]))
+        self.assertEqual(
+            observed["APP-06"]["reference"]["wrong_subscriber_error"],
+            "AUTHORITY_SNAPSHOT_CONTEXT_MISMATCH")
+        self.assertIs(observed["APP-06"]["one_line_mutant"]["wrong_subscriber_rejected"], False)
         self.assertEqual(observed["PY-03"]["source_git_blob"],
                          next(f["git_blob"] for f in tasks["PY-03"]["files"]
                               if f["path"] == tasks["PY-03"]["mutation"]["path"]))
