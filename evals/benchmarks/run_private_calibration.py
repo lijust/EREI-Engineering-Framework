@@ -22,7 +22,7 @@ import check_calibration
 import prepare_private_exports
 
 TASK_ID = re.compile(r"(?:APP|PY)-0[1-6]\Z")
-GIT_SHA = re.compile(r"[a-f0-9]{40}\\Z")
+GIT_SHA = re.compile(r"[a-f0-9]{40}\Z")
 FRAMEWORK_ROOT = Path(__file__).resolve().parents[2]
 
 
