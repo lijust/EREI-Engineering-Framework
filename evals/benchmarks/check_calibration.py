@@ -51,6 +51,50 @@ sys.exit(0 if result.wasSuccessful() else 1)
 """
 
 
+# Supplemental Framework-owned *public* behavioral oracle for APP-04.
+# Unlike the pinned consumer's policy-string test, this calls the actual
+# source function with an in-memory Master containing a numeric ID gap.
+# The consumer test blob remains pinned and unmodified. No Sheets API calls.
+APP04_NODE_ORACLE = r"""
+'use strict';
+const fs = require('fs');
+const vm = require('vm');
+const assert = require('assert');
+const source = fs.readFileSync(
+  'apps/developer-validation-intake/MissingProjectInsertReadiness.gs', 'utf8'
+);
+const headers = [
+  'developer_key', 'master_developer_id', 'developer_name_en',
+  'developer_name_ar', 'mapping_status', 'source_developer_id',
+  'source_developer_name', 'project_id', 'project_name_en',
+  'project_name_ar', 'project_type', 'project_latitude', 'project_longitude'
+];
+const mockSheet = {
+  getLastColumn: () => headers.length,
+  getRange: () => ({getDisplayValues: () => [headers]})
+};
+const sandbox = {
+  dviBuildState_: () => ({master: {getSheetByName: (name) =>
+    name === 'developer_projects' ? mockSheet : null}}),
+  dviRows_: () => [{project_id: '2'}, {project_id: '5'}],
+  dviTrim_: (value) => String(value === null || value === undefined ? '' : value).trim()
+};
+vm.createContext(sandbox);
+vm.runInContext(source, sandbox, {filename: 'MissingProjectInsertReadiness.gs', timeout: 1500});
+const observed = vm.runInContext(
+  'dviMissingProjectInsertMasterInventory_({})', sandbox, {timeout: 1500}
+);
+assert.strictEqual(observed.projectIdMin, 2);
+assert.strictEqual(observed.projectIdMax, 5);
+assert.strictEqual(observed.projectIdGapCount, 2);
+assert.strictEqual(observed.projectIdNonblankAll, true);
+assert.strictEqual(observed.projectIdUnique, true);
+assert.strictEqual(observed.projectIdPositiveInteger, true);
+assert.strictEqual(observed.projectIdNextCandidate, 6, 'APP04_MAX_PLUS_ONE_NO_GAP_REUSE');
+console.log('APP04_BEHAVIORAL_ORACLE_PASS');
+"""
+
+
 def relative_path(value: str) -> Path:
     posix = PurePosixPath(value)
     if (not value or "\\" in value or ":" in value or posix.is_absolute()
@@ -105,7 +149,12 @@ def run_copy(package: dict, inputs: dict[str, bytes], node: str | None) -> dict:
         if package["runtime"] == "node":
             if not node:
                 raise ValueError("Node executable is required for App calibration")
-            command = [node, package["test_path"]]
+            if package.get("behavioral_oracle") == "APP04_PROJECT_ID_MAX_PLUS_ONE":
+                command = [node, "-e", APP04_NODE_ORACLE]
+            elif "behavioral_oracle" in package:
+                raise ValueError("Unknown public behavioral oracle")
+            else:
+                command = [node, package["test_path"]]
         elif package["runtime"] == "python":
             command = [sys.executable, "-I", "-S", "-B", "-c", PYTHON_CHECK,
                        package["test_path"], json.dumps(package["python_tests"])]
@@ -129,6 +178,12 @@ def assess(package: dict, reference: dict, starter: dict) -> bool:
     if reference["returncode"] != 0 or starter["returncode"] != 1:
         return False
     if package["runtime"] == "node":
+        if package.get("behavioral_oracle") == "APP04_PROJECT_ID_MAX_PLUS_ONE":
+            return (reference["stdout"].strip() == "APP04_BEHAVIORAL_ORACLE_PASS"
+                    and "AssertionError [ERR_ASSERTION]" in starter["stderr"]
+                    and "APP04_MAX_PLUS_ONE_NO_GAP_REUSE" in starter["stderr"])
+        if "behavioral_oracle" in package:
+            return False
         line = package.get("expected_assertion_line")
         if type(line) is not int or line <= 0:
             return False
