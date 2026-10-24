@@ -479,5 +479,22 @@ def main() -> int:
     return 0 if records and all(r["calibration_passed"] for r in records) else 1
 
 
+def entrypoint() -> int:
+    """Never spill original consumer paths/data/tracebacks via CLI exceptions."""
+    try:
+        return main()
+    except Exception as exc:
+        # Keep diagnostics in a separately authorized private session. Output
+        # includes no exception message, traceback, export path or source data.
+        print(json.dumps({
+            "kind": "PUBLIC_CALIBRATION_ERROR",
+            "status": "FAIL_CLOSED",
+            "error_type": type(exc).__name__,
+            "model_executions": 0,
+            "independent_review": "NOT_PERFORMED",
+        }), file=sys.stderr)
+        return 2
+
+
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(entrypoint())
