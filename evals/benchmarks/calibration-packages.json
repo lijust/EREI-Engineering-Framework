@@ -479,6 +479,92 @@
         "desktop/app/launcher_unit_type_normalizer.py": "74f3fdbb5bc4ad16619794aa00b873d1e3e202b0b9097d92fb2ddbe3ae5178f8",
         "tests/unit/test_launcher_unit_type_normalizer.py": "215a19716456c8add4897cdf551b88f0be21b26d421927e2316dde6099f5a05e"
       }
+    },
+    {
+      "task_id": "PY-06",
+      "state": "PUBLIC_CALIBRATION_ONLY",
+      "source": {
+        "repository": "lijust/EREI-3.2",
+        "commit": "87d730ddc3547f863de2a6895e91f9b83e9c6e72",
+        "export_directory": "py"
+      },
+      "runtime": "python",
+      "files": [
+        {
+          "path": "core/ai/payment_plan_normalizer.py",
+          "git_blob": "262b2fb0d3ce62f35c3acb47adeac6b42f7ea036"
+        },
+        {
+          "path": "core/ai/provider.py",
+          "git_blob": "0b3d7be681246439c3b9bad00dcb8b4a89d6c110"
+        },
+        {
+          "path": "core/ai/semantic_domains.py",
+          "git_blob": "e367fe7ad222859d707751c103e73dd92169a40c"
+        },
+        {
+          "path": "core/ai/semantic_address.py",
+          "git_blob": "e38a02c1f01f64fbe2532e86a57f2b825308ebb5"
+        },
+        {
+          "path": "core/ai/semantic_facilities.py",
+          "git_blob": "e5475327f38cb600a04efd76032751b666f242ef"
+        },
+        {
+          "path": "core/ai/semantic_harvest.py",
+          "git_blob": "a6823bdf6ceda210207c1034ba5c5425c0744b38"
+        },
+        {
+          "path": "core/ai/semantic_project_intelligence.py",
+          "git_blob": "edfed610197e41cbd3f11c9f43f4e01aee3abb99"
+        },
+        {
+          "path": "core/ai/semantic_unit_types.py",
+          "git_blob": "892d55e980f8a1f4b60fff4c480a2a8324d8f953"
+        },
+        {
+          "path": "core/ai/semantic_cache.py",
+          "git_blob": "60e9c102da12b2950e32b784b46646e4d341897b"
+        },
+        {
+          "path": "tests/unit/test_payment_plan_explicit_number_word_grounding.py",
+          "git_blob": "c47d6aed4edc16a24149be9472c153f0cff1a8c6"
+        }
+      ],
+      "test_path": "tests/unit/test_payment_plan_explicit_number_word_grounding.py",
+      "dependency_versions": {
+        "jsonschema": "4.26.0",
+        "attrs": "26.1.0",
+        "referencing": "0.37.0",
+        "rpds-py": "2026.5.1",
+        "jsonschema-specifications": "2025.9.1"
+      },
+      "python_tests": [
+        "test_payment_harvest_prompt_version_bumps_for_grounding_semantics",
+        "test_explicit_two_months_may_ground_after_months_2",
+        "test_explicit_compound_number_words_are_grounded_without_arithmetic",
+        "test_word_number_grounding_does_not_allow_derived_year_to_month_conversion"
+      ],
+      "mutation": {
+        "path": "core/ai/payment_plan_normalizer.py",
+        "before": "            if token is not None and token not in evidence_tokens:",
+        "after": "            if token is not None and token not in evidence_tokens and field != \"installment_months\":"
+      },
+      "expected_assertion": "test_word_number_grounding_does_not_allow_derived_year_to_month_conversion",
+      "prompt": "Restore evidence grounding for installment months. Explicit English number words (including compound numbers) and exact 'after two months' are valid source tokens; an inferred eight-years-to-96-months conversion is not source-grounded and must be rejected. Preserve all four pinned public consumer tests, raw source evidence and fake provider isolation. Do not use any real provider, network or production data.",
+      "prompt_sha256": "6b6ac01661559a0ad9a5300bf9c8fd4aa7c6b6936ccd6920c4880f7ee92496ed",
+      "starter_file_sha256": {
+        "core/ai/payment_plan_normalizer.py": "8f5a239e06661b5380a5bdcecf08ce1dec88e4e339af057a0e7f407a05738fde",
+        "core/ai/provider.py": "d5180eeb08a61a2f5ea1faaa806c01a3801323ce6772fc5da530d8f58f2027ed",
+        "core/ai/semantic_domains.py": "94813fc360e3afb100c626552b99f2f32c3d55acbc209d368c705bbe228e588d",
+        "core/ai/semantic_address.py": "801f7e8585c67e7de42478e651ed753a42e2cd62508c3614e786c31d4faea3a4",
+        "core/ai/semantic_facilities.py": "0d0f2c1052e3a96c98e4d23cce43f73016c874f1d6df61aa29615d72ae11078f",
+        "core/ai/semantic_harvest.py": "f4fce97063d2750257f6ca527ee1694f1224e2a1e7717b301e1d63bc3b2fa446",
+        "core/ai/semantic_project_intelligence.py": "a293e2272048946f0dab19b18edfed92141e3fa19e737302101f13f3f79e4c43",
+        "core/ai/semantic_unit_types.py": "b97fe7e8746bd395009d5a1c350067235bd72a84153385a510277e19a44064ff",
+        "core/ai/semantic_cache.py": "033fd4b00c4ea8107a375aedb24aa7d127a4de04f6ec87d5b6cf170cb12dfdd0",
+        "tests/unit/test_payment_plan_explicit_number_word_grounding.py": "a548e569c75ba25e862ac926fdcf21a2c027dad17ebcd0aadf5fb0f4997f3a3d"
+      }
     }
   ]
 }
