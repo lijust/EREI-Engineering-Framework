@@ -116,17 +116,21 @@
       "family": "compatible-refactor",
       "risk": "L1",
       "proposed_task": "Separate provider reads from the error service while preserving error fields, fallback and one-load caching.",
-      "fixture_preparation": "Prepare a bounded refactor task from the source contract.",
-      "state": "PROPOSAL_FIXTURE_NOT_PREPARED",
+      "fixture_preparation": "Pinned public source+original builder test with one exact caching guard mutation in candidate generator; Framework-owned Node VM oracle checks repository delegation, original ErrorService parity, and one-load cache. Original builder test and production source are unchanged.",
+      "state": "PUBLIC_CALIBRATION_RECIPE_PREPARED",
       "source": {
         "repository": "lijust/EREI-App-Google",
         "commit": "6d32e7a14a4324dbdea228f695d6b75e0b8bd246",
         "path": "tests/error-catalog-repository-candidate.test.js",
         "git_blob": "68c41b198d0a3d634fd84cfc7f417e8b5d6807b8"
       },
-      "fixture_sha256": null,
-      "prompt_sha256": null,
-      "hidden_acceptance_sha256": null
+      "fixture_sha256": "2da698f7229a39a10283e1a7a3c8b7678a284760c8420420385dec5715af8708",
+      "prompt_sha256": "a390806eafd28c647849de711ccc1741a36f9e920718a9690ccb278f0cd19969",
+      "hidden_acceptance_sha256": null,
+      "calibration_package": {
+        "path": "evals/benchmarks/calibration-packages.json",
+        "task_id": "APP-05"
+      }
     },
     {
       "task_id": "APP-06",
