@@ -263,17 +263,21 @@
       "family": "evidence-grounding",
       "risk": "L2",
       "proposed_task": "Accept explicit number words while rejecting unsupported derived arithmetic.",
-      "fixture_preparation": "Inject an implicit years-to-months evidence conversion in a fake provider fixture.",
-      "state": "PROPOSAL_FIXTURE_NOT_PREPARED",
+      "fixture_preparation": "Pinned original four-function number-word/derived-arithmetic consumer test plus all nine direct/transitive core.ai source modules, using exact local Python jsonschema dependency versions, no network. One exact grounding mutation permits unsupported installment_months while retaining other numeric checks. Source recipe only until opt-in original test baseline/mutant reproduced and independent acceptance.",
+      "state": "PUBLIC_CALIBRATION_RECIPE_PREPARED",
       "source": {
         "repository": "lijust/EREI-3.2",
         "commit": "87d730ddc3547f863de2a6895e91f9b83e9c6e72",
         "path": "tests/unit/test_payment_plan_explicit_number_word_grounding.py",
         "git_blob": "c47d6aed4edc16a24149be9472c153f0cff1a8c6"
       },
-      "fixture_sha256": null,
-      "prompt_sha256": null,
-      "hidden_acceptance_sha256": null
+      "fixture_sha256": "3ebd2cf0ec00bd283077f699d1b1216c1a2b8b8dd67fe52bbf7440ee7795d45f",
+      "prompt_sha256": "6b6ac01661559a0ad9a5300bf9c8fd4aa7c6b6936ccd6920c4880f7ee92496ed",
+      "hidden_acceptance_sha256": null,
+      "calibration_package": {
+        "path": "evals/benchmarks/calibration-packages.json",
+        "task_id": "PY-06"
+      }
     }
   ]
 }
