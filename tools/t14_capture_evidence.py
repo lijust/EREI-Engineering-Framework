@@ -39,9 +39,12 @@ def validate_report(data: bytes, target_ref: str) -> None:
                         "tools/tests/drill_task_learning_rollback.py")
     if not isinstance(source_hashes, dict) or set(source_hashes) != set(expected_sources):
         raise ValueError("source hash manifest incomplete")
-    if any(not isinstance(source_hashes[key], str) or
-           not re.fullmatch(r"[a-f0-9]{64}", source_hashes[key]) for key in expected_sources):
-        raise ValueError("invalid source hash digest")
+    for key in expected_sources:
+        digest = source_hashes[key]
+        if not isinstance(digest, str) or not re.fullmatch(r"[a-f0-9]{64}", digest):
+            raise ValueError("invalid source hash digest: " + key)
+        if hashlib.sha256((ROOT / key).read_bytes()).hexdigest() != digest:
+            raise ValueError("drill source bytes differ from reported SHA256: " + key)
     for name, value in (("tests_run", 4), ("failures", 0), ("errors", 0)):
         if type(report.get(name)) is not int or report[name] != value:
             raise ValueError("unexpected drill test result: " + name)
