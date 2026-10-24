@@ -46,7 +46,7 @@ class AssuranceEnforcementTests(unittest.TestCase):
         with self.assertRaisesRegex(assurance_enforcement.EnforcementError, "status=enforced"):
             assurance_enforcement.validate_enforcement(self.base(status="enforced"))
 
-    def test_verified_equivalent_fallback_can_satisfy_stable_enforcement(self):
+    def test_declared_equivalence_is_shape_valid_but_not_effective_proof(self):
         value = self.base(status="enforced")
         value["fallback"] = {
             **value["fallback"],

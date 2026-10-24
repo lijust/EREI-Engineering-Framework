@@ -122,6 +122,18 @@ def validate_record(
     return value
 
 
+def verify_approval_authority(records: list[dict]) -> None:
+    """Deny promotion until an independent approval-authority verifier exists.
+
+    Call after shape and review-provenance validation. Role labels and authenticated
+    reviews are not grants of release authority; this function has no positive path.
+    """
+    principals = [record["review_provenance"]["reviewer_login"] for record in records]
+    if len(principals) != 2 or len(set(principals)) != 2:
+        raise ReleaseApprovalError("release approvals require two independent principals; role labels do not establish independence")
+    raise ReleaseApprovalError("independent release approval authority verifier is unavailable; authenticated reviews are not authority")
+
+
 def load_and_validate(
     path: Path,
     *,
