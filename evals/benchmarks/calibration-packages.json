@@ -428,13 +428,13 @@
       "mutation": {
         "path": "core/project_update_presets.py",
         "before": "tuple(spec.token for spec in PROJECT_FIELD_REGISTRY.specs),",
-        "after": "tuple(spec.token for spec in PROJECT_FIELD_REGISTRY.specs[:-1]),"
+        "after": "tuple(spec.token for spec in PROJECT_FIELD_REGISTRY.specs if spec.token != \"videos\"),"
       },
       "expected_assertion": "test_full_project_details_preset_tracks_registry_without_duplicate_allowlist",
       "prompt": "Repair Full Project Details so it includes every registered project-field token in registry order, without a second hard-coded allowlist. Preserve all other presets and per-source unavailable/partial capability semantics. Use the supplied offline registry tests.",
       "prompt_sha256": "deb8c562b6732b0cddc342b89ca628fd637d4a047c91339e5de31e101003212c",
       "starter_file_sha256": {
-        "core/project_update_presets.py": "6d687515838fb27924d20c9f5e3fcd13527635b692ca7f57e477e3bf915ca8fd",
+        "core/project_update_presets.py": "1a78015a1acc1ce4225b406c232c81de5aac9f05d46452aa7cc0e7e57b879ff0",
         "core/project_field_registry.py": "281fbf1ca37cbc35f85906d37d330c2af101686eedd7c1d72f8a1e2f5371bb35",
         "tests/unit/test_project_update_presets.py": "0b29430051d1ba079df2dd715a3833138ef492720ec1623dc4d11cb123057b50"
       }
