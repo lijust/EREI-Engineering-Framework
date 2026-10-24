@@ -186,6 +186,74 @@ console.log('APP05_BEHAVIORAL_ORACLE_PASS');
 """
 
 
+# PY-03: a bounded Framework-owned public oracle for the exact pinned
+# Nawy boundary class. Avoid importing the entire extractor stack or network
+# clients. This exercises the unmodified class method AST with a minimal
+# inherited _clean_text fixture; it is NOT the full original consumer test.
+PY03_BOUNDARY_CHECK = r"""
+import ast
+import json
+from pathlib import Path
+from typing import Iterable
+import unittest
+
+path = Path('extractors/nawy/payment_section_boundary_extractor.py')
+tree = ast.parse(path.read_text(encoding='utf-8'), filename=str(path))
+classes = [item for item in tree.body
+           if isinstance(item, ast.ClassDef) and item.name == 'NawyExtractor']
+if len(classes) != 1:
+    raise ValueError('Pinned payment boundary class not found exactly once')
+method_names = {item.name for item in classes[0].body
+                if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef))}
+if method_names != {'_normalized_boundary_text', '_trim_payment_page_chrome',
+                    '_payment_section_lines'}:
+    raise ValueError('Unexpected payment boundary method inventory')
+class _PaymentNawyExtractor:
+    @staticmethod
+    def _clean_text(value):
+        # The public fixture contains plain text only: no HTML parsing or
+        # higher-layer extractor dependencies are claimed here.
+        return str(value).strip()
+scope = {'Iterable': Iterable, '_PaymentNawyExtractor': _PaymentNawyExtractor}
+module = ast.fix_missing_locations(ast.Module(body=classes, type_ignores=[]))
+exec(compile(module, str(path), 'exec'), scope)
+NawyExtractor = scope['NawyExtractor']
+
+class BoundaryCases(unittest.TestCase):
+    def test_exact_english_marker(self):
+        lines = ['Original Plan', '5% Down Payment', '8 Years',
+                 'Location on Map', 'Call Us', 'Top Searches']
+        self.assertEqual(NawyExtractor._trim_payment_page_chrome(lines, locale='en'),
+                         lines[:3])
+
+    def test_exact_arabic_marker(self):
+        lines = ['خطة الدفع الاصليه', '5% مقدم', '8 سنوات',
+                 'الموقع على الخريطة', 'اتصل بنا', 'مناطق']
+        self.assertEqual(NawyExtractor._trim_payment_page_chrome(lines, locale='ar'),
+                         lines[:3])
+
+    def test_exact_not_substring_boundary(self):
+        lines = ['Original Plan', '5% Down Payment', '8 Years',
+                 'Location on Map benefit included in project access',
+                 'Call Us', 'Top Searches']
+        self.assertEqual(
+            NawyExtractor._trim_payment_page_chrome(lines, locale='en'),
+            lines[:4], 'PY03_EXACT_NOT_SUBSTRING_BOUNDARY'
+        )
+
+suite = unittest.defaultTestLoader.loadTestsFromTestCase(BoundaryCases)
+result = unittest.TestResult()
+suite.run(result)
+print(json.dumps({
+    'tests': result.testsRun,
+    'failures': [case.id().split('.')[-1] for case, _ in result.failures],
+    'errors': [case.id().split('.')[-1] for case, _ in result.errors],
+    'skipped': len(result.skipped),
+}))
+raise SystemExit(0 if result.wasSuccessful() else 1)
+"""
+
+
 def relative_path(value: str) -> Path:
     posix = PurePosixPath(value)
     if (not value or "\\" in value or ":" in value or posix.is_absolute()
@@ -249,8 +317,13 @@ def run_copy(package: dict, inputs: dict[str, bytes], node: str | None) -> dict:
             else:
                 command = [node, package["test_path"]]
         elif package["runtime"] == "python":
-            command = [sys.executable, "-I", "-S", "-B", "-c", PYTHON_CHECK,
-                       package["test_path"], json.dumps(package["python_tests"])]
+            if package.get("behavioral_oracle") == "PY03_NAWY_EXACT_BOUNDARY":
+                command = [sys.executable, "-I", "-S", "-B", "-c", PY03_BOUNDARY_CHECK]
+            elif "behavioral_oracle" in package:
+                raise ValueError("Unknown public Python behavioral oracle")
+            else:
+                command = [sys.executable, "-I", "-S", "-B", "-c", PYTHON_CHECK,
+                           package["test_path"], json.dumps(package["python_tests"])]
         else:
             raise ValueError("Unsupported calibration runtime")
         # Avoid NODE_OPTIONS, PYTHONPATH, provider credentials and test plugins.
