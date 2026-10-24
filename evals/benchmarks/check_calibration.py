@@ -21,7 +21,7 @@ CATALOG = Path(__file__).with_name("calibration-packages.json")
 # These pinned Python files use plain assertions and only the tmp_path fixture.
 # Execute their unchanged functions using unittest, without a pytest dependency.
 PYTHON_CHECK = r"""
-import importlib.metadata, inspect, json, pathlib, runpy, sys, tempfile, unittest
+import importlib.metadata, inspect, json, pathlib, runpy, sys, tempfile, types, unittest
 requirements = json.loads(sys.argv[3]) if len(sys.argv) > 3 else {}
 if not isinstance(requirements, dict):
     raise RuntimeError("Pinned dependency manifest must be an object")
@@ -32,7 +32,20 @@ for package, expected in sorted(requirements.items()):
     if observed != expected:
         raise RuntimeError("Pinned dependency mismatch: " + package +
                            " expected=" + expected + " observed=" + observed)
-sys.path.insert(0, str(pathlib.Path.cwd()))
+# Execute only pinned domain modules. The legacy core/desktop/extractors
+# package initializers import unrelated desktop and optional online providers.
+# Use namespace packages at these exact local paths without executing their
+# __init__.py files. This is public calibration, not full-app integration.
+root = pathlib.Path.cwd()
+sys.path.insert(0, str(root))
+for name in ("core", "core.ai", "desktop", "desktop.app", "extractors", "extractors.nawy"):
+    location = root.joinpath(*name.split("."))
+    if not location.is_dir():
+        continue
+    package = types.ModuleType(name)
+    package.__path__ = [str(location)]
+    package.__package__ = name
+    sys.modules[name] = package
 namespace = runpy.run_path(sys.argv[1])
 names = json.loads(sys.argv[2])
 assert sorted(names) == sorted(k for k in namespace if k.startswith("test_"))
