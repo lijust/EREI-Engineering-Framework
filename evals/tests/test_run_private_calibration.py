@@ -74,6 +74,7 @@ class PrivateCalibrationOrchestratorTests(unittest.TestCase):
         self.assertTrue(result["public_calibration_passed"])
         self.assertTrue(result["private_export_cleaned_on_exit"])
         self.assertTrue(result["original_consumer_test_blob_unchanged"])
+        self.assertTrue(result["original_consumer_test_executed"])
         self.assertEqual(result["pinned_files_verified"], 1)
         self.assertEqual(result["framework_commit_sha"], "a" * 40)
         self.assertEqual(result["consumer_source_repository"], "lijust/EREI-3.2")
@@ -188,6 +189,8 @@ class ExactFrameworkIdentityTests(unittest.TestCase):
         package = {"runtime": "node", "behavioral_oracle": "APP04_PROJECT_ID_MAX_PLUS_ONE"}
         self.assertEqual(runner.execution_scope(package),
                          "FRAMEWORK_OWNED_BOUNDED_SOURCE_BEHAVIOR_ORACLE")
+        self.assertTrue(package.get("behavioral_oracle"))
+        self.assertFalse(not bool(package.get("behavioral_oracle")))
         self.assertEqual(runner.execution_scope({"runtime": "node"}),
                          "UNCHANGED_ORIGINAL_NODE_CONSUMER_TEST")
         self.assertEqual(runner.execution_scope({"runtime": "python"}),
