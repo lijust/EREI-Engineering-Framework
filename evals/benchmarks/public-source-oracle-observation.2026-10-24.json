@@ -1,0 +1,129 @@
+{
+  "schema": "EREI_PUBLIC_SOURCE_ORACLE_OBSERVATION_V1",
+  "date": "2026-10-24",
+  "classification": "SELF_REPORTED_UNATTESTED_SOURCE_EXECUTION",
+  "authority": {
+    "execution_authorized": false,
+    "model_executions": 0,
+    "independent_review": "NOT_PERFORMED",
+    "independent_hidden_acceptance": "NONE",
+    "effectiveness": "NOT_ESTABLISHED",
+    "stable_release": "BLOCKED",
+    "exact_target_runtime_evidence": "0/13",
+    "sampled_study_runs": "0/48"
+  },
+  "provenance": {
+    "source_repos": [
+      "lijust/EREI-App-Google",
+      "lijust/EREI-3.2"
+    ],
+    "sources_visibility": "PRIVATE",
+    "framework_visibility": "PUBLIC",
+    "source_pins_only": true,
+    "no_private_source_contents_published": true,
+    "operator": "ChatGPT tool-assisted execution, no independent witness",
+    "release_review_qualified": false
+  },
+  "pin_integrity": {
+    "distinct_git_blobs_readonly_verified": 35,
+    "distinct_app_files": 16,
+    "distinct_python_files": 19,
+    "git_blob_mismatches": 0,
+    "original_source_mutations_starter_sha256_verified": 12,
+    "mutation_match_failures": 0,
+    "disclaimer": "Read-only authenticated GitHub source pin identity and single-step starter hashes. Not full consumer test execution."
+  },
+  "source_executions": [
+    {
+      "task_id": "APP-04",
+      "method": "DIRECT_PINNED_PRIVATE_SOURCE_READONLY_JS_V8_MOCK",
+      "source_git_blob": "6c2b8b02afa9044f21c547f1f19a93820ce7c9ff",
+      "source_invoked": "dviMissingProjectInsertMasterInventory_",
+      "source_inputs": {
+        "project_ids": [
+          2,
+          5
+        ]
+      },
+      "reference": {
+        "minimum": 2,
+        "maximum": 5,
+        "gap_count": 2,
+        "next_project_id": 6
+      },
+      "single_mutant": {
+        "next_project_id": 3
+      },
+      "expected_mutation_detected": true,
+      "original_consumer_test_executed": false,
+      "heldout": false
+    },
+    {
+      "task_id": "APP-05",
+      "method": "DIRECT_PINNED_PRIVATE_BUILDER_AND_ERROR_SERVICE_READONLY_JS_V8_MOCK",
+      "builder_git_blob": "6b799f6b2c5b5ae21d4ee911683ea47203de7e6a",
+      "service_git_blob": "7aa6f1a899aaa72f2f359b048402ed7d6927c28c",
+      "source_invoked": "candidateErrorServiceSource() and ErrorService.fromCode",
+      "behavior_vectors": 5,
+      "fields_compared": [
+        "code",
+        "message",
+        "details",
+        "http"
+      ],
+      "reference_reads": {
+        "open": 1,
+        "table": 1
+      },
+      "candidate_reads": {
+        "open": 1,
+        "table": 1
+      },
+      "mutant_reads": {
+        "open": 7,
+        "table": 7
+      },
+      "candidate_output_parity": true,
+      "expected_cache_mutation_detected": true,
+      "original_consumer_test_executed": false,
+      "heldout": false
+    },
+    {
+      "task_id": "PY-03",
+      "method": "PRIVATE_TEMP_PYTHON_3_13_ISOLATED_AST_AND_ORIGINAL_TEST_DIRECT_METHOD",
+      "source_git_blob": "6f165f875aa3aec8db8b2d2ff26eedfa904bd473",
+      "test_git_blob": "2a1353992f626bdf9d8b58db9a0d18f3c15be4c6",
+      "source_git_blobs_verified_by_local_git_hash_object": true,
+      "python_flags": [
+        "-I",
+        "-S",
+        "-B"
+      ],
+      "public_bounded_oracle": {
+        "tests": 3,
+        "reference_passed": 3,
+        "mutant_expected_failed": 1,
+        "mutant_offtarget_failed": 0
+      },
+      "unchanged_original_consumer_test": {
+        "name": "test_boundary_matching_is_exact_not_substring_based",
+        "baseline": "PASS",
+        "mutant": "FAIL_EXPECTED",
+        "executed": 1,
+        "total_defined": 3,
+        "full_import_chain_executed": false,
+        "import_shim": true
+      },
+      "expected_exact_not_substring_mutation_detected": true,
+      "heldout": false
+    }
+  ],
+  "limits": [
+    "No actual V1/V2 model submissions or 48 paired model observations.",
+    "JS V8 source mocks are not Node original consumer tests or Google Apps Script runtime.",
+    "PY-03 original consumer coverage is 1 of 3 functions with a narrowly scoped import shim; original HTML parser was not exercised.",
+    "No genuine original consumer full test baseline/mutant success is claimed for all 12 packages.",
+    "Self-reported tool execution is not independent assessor signoff, budget authority or Stable readiness.",
+    "Never copy private repository files into a public Framework git tree or artifacts."
+  ]
+}
