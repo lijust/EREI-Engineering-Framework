@@ -87,11 +87,12 @@ class PrivateCalibrationOrchestratorTests(unittest.TestCase):
             "release_authorized": False,
         }
         output = io.StringIO()
-        with (patch.object(runner, "run_one", return_value=result),
+        with (patch.object(runner, "run_one", return_value=result) as invoke,
               patch.object(sys, "argv",
-                           ["run_private_calibration.py", "--task", "PY-04"]),
+                           ["run_private_calibration.py", "--task", "py-04"]),
               contextlib.redirect_stdout(output)):
             self.assertEqual(runner.main(), 1)
+        invoke.assert_called_once_with("PY-04")
         self.assertFalse(json.loads(output.getvalue())["public_calibration_passed"])
 
     def test_private_error_is_redacted_and_invalid_task_never_prepares(self):
