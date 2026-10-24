@@ -7,11 +7,9 @@ on:
       - main
       - 'release/**'
 
-# Cancel only superseded PR runs. Each main/release push gets its own
-# unique run_id group, preserving authoritative push-side evidence.
-concurrency:
-  group: assurance-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || format('push-run-{0}', github.run_id) }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+# Deliberately no concurrency group here. Public PR workflow source can
+# select the name of another run's group, canceling main/release evidence.
+# Keep every exact push run independent; obsolete PR cancellation is deferred.
 
 permissions:
   contents: read

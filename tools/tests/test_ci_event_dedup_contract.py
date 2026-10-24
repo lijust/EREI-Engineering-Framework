@@ -53,16 +53,13 @@ class CIEvidencePreservationTests(unittest.TestCase):
         self.assertNotIn("runs-on: [self-hosted", self.assurance)
         self.assertIn("persist-credentials: false", self.assurance)
 
-    def test_assurance_pr_only_cancellation_preserves_each_push_attempt(self):
-        self.assertIn(
-            "group: assurance-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || format('push-run-{0}', github.run_id) }}",
-            self.assurance,
-        )
-        self.assertIn(
-            "cancel-in-progress: ${{ github.event_name == 'pull_request' }}",
-            self.assurance,
-        )
-        self.assertEqual(self.assurance.count("\nconcurrency:\n"), 1)
+    def test_untrusted_pr_cannot_cancel_authoritative_assurance_push_group(self):
+        # Without a push-side concurrency group, PR-origin YAML cannot pick
+        # the same group name to cancel an authoritative main/release run.
+        self.assertNotIn("concurrency:", self.assurance)
+        self.assertNotIn("cancel-in-progress:", self.assurance)
+        self.assertIn("no concurrency group", self.assurance)
+        self.assertIn("no GitHub Actions concurrency group", self.governance)
 
     def test_bootstrap_both_interpreter_checks_remain(self):
         self.assertIn("python-version: ['3.11', '3.12']", self.bootstrap)
@@ -73,16 +70,10 @@ class CIEvidencePreservationTests(unittest.TestCase):
         self.assertIn("  push:\n    branches: [main]", self.bootstrap)
         self.assertIn("  pull_request:\n    paths:", self.bootstrap)
 
-    def test_bootstrap_pr_only_cancellation_preserves_each_push_attempt(self):
-        self.assertIn(
-            "group: bootstrap-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || format('push-run-{0}', github.run_id) }}",
-            self.bootstrap,
-        )
-        self.assertIn(
-            "cancel-in-progress: ${{ github.event_name == 'pull_request' }}",
-            self.bootstrap,
-        )
-        self.assertEqual(self.bootstrap.count("\nconcurrency:\n"), 1)
+    def test_bootstrap_main_push_group_is_not_pr_cancelable(self):
+        self.assertNotIn("concurrency:", self.bootstrap)
+        self.assertNotIn("cancel-in-progress:", self.bootstrap)
+        self.assertIn("no concurrency group", self.bootstrap)
 
 
 if __name__ == "__main__":
