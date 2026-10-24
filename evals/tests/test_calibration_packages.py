@@ -122,6 +122,41 @@ class CalibrationTests(unittest.TestCase):
                 self.assertTrue(calibration.assess(package, reference, {
                     "returncode": 1, "stderr": "AssertionError [ERR_ASSERTION]\n" + frame + "\n"}))
 
+    def test_app04_public_oracle_reports_only_the_expected_gap_reuse_violation(self):
+        package = {"runtime": "node", "behavioral_oracle": "APP04_PROJECT_ID_MAX_PLUS_ONE",
+                   "test_path": "tests/developer-validation-project-id-policy.test.js"}
+        success = {"returncode": 0, "stdout": "APP04_BEHAVIORAL_ORACLE_PASS\\n", "stderr": ""}
+        failure = {"returncode": 1, "stdout": "",
+                   "stderr": "AssertionError [ERR_ASSERTION]: APP04_MAX_PLUS_ONE_NO_GAP_REUSE\\n"
+                             "    at [eval]:34:8\\n"}
+        self.assertTrue(calibration.assess(package, success, failure))
+        self.assertFalse(calibration.assess(package, success, {**failure,
+                         "stderr": "Error: Cannot find module APP04_MAX_PLUS_ONE_NO_GAP_REUSE"}))
+        self.assertFalse(calibration.assess(package, success, {**failure,
+                         "stderr": "AssertionError [ERR_ASSERTION]: unrelated assertion"}))
+        self.assertFalse(calibration.assess(package, {**success, "stdout": ""}, failure))
+        self.assertFalse(calibration.assess(package, success,
+                         {**failure, "returncode": 0}))
+
+    def test_app04_public_oracle_invokes_node_without_google_or_network(self):
+        node = __import__("shutil").which("node")
+        if node is None:
+            self.skipTest("Node executable unavailable")
+        package = {"runtime": "node", "behavioral_oracle": "APP04_PROJECT_ID_MAX_PLUS_ONE",
+                   "test_path": "tests/developer-validation-project-id-policy.test.js"}
+        path = "apps/developer-validation-intake/MissingProjectInsertReadiness.gs"
+        base = ("function dviMissingProjectInsertMasterInventory_() {"
+                "return {projectIdMin:2,projectIdMax:5,projectIdGapCount:2,"
+                "projectIdNonblankAll:true,projectIdUnique:true,"
+                "projectIdPositiveInteger:true,projectIdNextCandidate:6};}")
+        mutant = base.replace("projectIdNextCandidate:6", "projectIdNextCandidate:3")
+        good = calibration.run_copy(package, {path: base.encode()}, node)
+        bad = calibration.run_copy(package, {path: mutant.encode()}, node)
+        self.assertTrue(calibration.assess(package, good, bad),
+                        (good, bad))
+        self.assertNotIn("GOOGLE", good["stdout"])
+        self.assertNotIn("GOOGLE", bad["stderr"])
+
     def test_timeout_is_not_converted_to_a_successful_calibration(self):
         self.package.update(runtime="python", python_tests=[])
         with patch.object(calibration.subprocess, "run",
