@@ -128,7 +128,19 @@
       },
       "expected_mutation_detected": true,
       "original_consumer_test_executed": false,
-      "heldout": false
+      "heldout": false,
+      "original_unchanged_consumer_test_probe": {
+        "test_git_blob": "3f0c48f0b98d180fd242d1affed87ff0d87d6418",
+        "source_git_blob": "6c2b8b02afa9044f21c547f1f19a93820ce7c9ff",
+        "method": "unchanged original private JS policy text test executed under V8 mocked require('fs','path','assert')",
+        "reference_result": "PASS",
+        "mutant_result": "PASS",
+        "mutant_detected": false,
+        "reason": "Original static policy-string assertion still finds projectIdMax+1 elsewhere in source; the test does not distinguish the changed next-candidate computation.",
+        "behavioral_oracle_catches_mutation": true,
+        "not_native_node_execution": true,
+        "independent_review": false
+      }
     },
     {
       "task_id": "APP-05",
@@ -313,6 +325,7 @@
     "Never copy private repository files into a public Framework git tree or artifacts.",
     "APP-06 full unchanged original Node consumer regression executed in isolated temporary source/test copy against fake repository; not a live PostgreSQL-backed integration test.",
     "PY-02 and PY-05 full original consumer test functions were invoked via stdlib runpy/unittest with isolated temporary packages, not pytest plugins or complete production application stacks.",
-    "APP-01/APP-02/APP-03 original unchanged consumer JavaScript test text was executed with V8 shims (assert, fs, path, vm), not in an original native Node process; no independent or full original Node test certification is claimed."
+    "APP-01/APP-02/APP-03 original unchanged consumer JavaScript test text was executed with V8 shims (assert, fs, path, vm), not in an original native Node process; no independent or full original Node test certification is claimed.",
+    "APP-04 original unchanged static policy-text consumer test passed BOTH reference and the actual gap-reuse mutant under V8 shims. Thus it is NOT an adequate mutation-catching consumer test; the separate pinned-source behavior oracle catches the regression. This is a verified test coverage gap, not calibration success."
   ]
 }
