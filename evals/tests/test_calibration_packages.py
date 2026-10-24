@@ -136,6 +136,38 @@ class CalibrationTests(unittest.TestCase):
         self.assertEqual(result["model_executions"], 0)
         self.assertEqual(result["independent_review"], "NOT_PERFORMED")
 
+    def test_bounded_original_source_receipt_cannot_upgrade_benchmark_authority(self):
+        receipt_path = (calibration.CATALOG.parent /
+                        "public-source-oracle-observation.2026-10-24.json")
+        report = json.loads(receipt_path.read_text(encoding="utf-8"))
+        catalog = json.loads(calibration.CATALOG.read_text(encoding="utf-8"))
+        tasks = {item["task_id"]: item for item in catalog["packages"]}
+        self.assertEqual(report["classification"],
+                         "SELF_REPORTED_UNATTESTED_SOURCE_EXECUTION")
+        self.assertIs(report["authority"]["execution_authorized"], False)
+        self.assertEqual(report["authority"]["model_executions"], 0)
+        self.assertEqual(report["authority"]["sampled_study_runs"], "0/48")
+        self.assertEqual(report["authority"]["exact_target_runtime_evidence"], "0/13")
+        self.assertEqual(report["authority"]["stable_release"], "BLOCKED")
+        self.assertEqual(report["authority"]["independent_review"], "NOT_PERFORMED")
+        self.assertEqual(report["pin_integrity"]["distinct_git_blobs_readonly_verified"], 35)
+        self.assertEqual(report["pin_integrity"]["original_source_mutations_starter_sha256_verified"], 12)
+        observed = {item["task_id"]: item for item in report["source_executions"]}
+        self.assertEqual(set(observed), {"APP-04", "APP-05", "PY-03"})
+        self.assertEqual(observed["APP-04"]["source_git_blob"],
+                         next(f["git_blob"] for f in tasks["APP-04"]["files"]
+                              if f["path"] == tasks["APP-04"]["mutation"]["path"]))
+        self.assertEqual(observed["APP-05"]["builder_git_blob"],
+                         next(f["git_blob"] for f in tasks["APP-05"]["files"]
+                              if f["path"] == tasks["APP-05"]["mutation"]["path"]))
+        self.assertEqual(observed["PY-03"]["source_git_blob"],
+                         next(f["git_blob"] for f in tasks["PY-03"]["files"]
+                              if f["path"] == tasks["PY-03"]["mutation"]["path"]))
+        self.assertEqual(observed["PY-03"]["unchanged_original_consumer_test"]["executed"], 1)
+        self.assertEqual(observed["PY-03"]["unchanged_original_consumer_test"]["total_defined"], 3)
+        self.assertFalse(observed["PY-03"]["unchanged_original_consumer_test"]["full_import_chain_executed"])
+        self.assertTrue(report["limits"])
+
     def test_private_source_exports_cannot_be_inside_public_framework_checkout(self):
         public_checkout = Path(calibration.__file__).resolve().parents[2]
         for location in (public_checkout, public_checkout / "private-exports",
