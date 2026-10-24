@@ -277,6 +277,38 @@ class NawyExtractor(_PaymentNawyExtractor):
                 package, reference, {**mutant, **changes}
             ))
 
+    def test_python_dependency_pin_opt_in_is_fail_closed_and_preserves_isolation(self):
+        package = {"runtime": "python", "test_path": "tests/unit/test_recovery.py",
+                   "python_tests": ["test_error"], "dependency_versions": {
+                       "jsonschema": "4.26.0", "attrs": "26.1.0",
+                   }}
+        checks = {"tests": 1, "failures": [], "errors": [], "skipped": 0}
+        response = calibration.subprocess.CompletedProcess(
+            ["python"], 0, stdout=json.dumps(checks), stderr="")
+        with patch.object(calibration.subprocess, "run", return_value=response) as run:
+            result = calibration.run_copy(
+                package, {"tests/unit/test_recovery.py": b"def test_error(): pass\n"},
+                None)
+        command = run.call_args.args[0]
+        self.assertIn("-I", command)
+        self.assertIn("-B", command)
+        self.assertNotIn("-S", command, "pinned site mode must be explicit")
+        self.assertEqual(json.loads(command[-1]), package["dependency_versions"])
+        self.assertEqual(result["checks"]["tests"], 1)
+        self.assertEqual(run.call_args.kwargs["shell"], False)
+        self.assertEqual(run.call_args.kwargs["timeout"], 30)
+        self.assertNotIn("PYTHONPATH", run.call_args.kwargs["env"])
+        unpinned = {**package, "dependency_versions": {}}
+        with patch.object(calibration.subprocess, "run", return_value=response) as unpinned_run:
+            calibration.run_copy(
+                unpinned, {"tests/unit/test_recovery.py": b""}, None)
+        self.assertIn("-S", unpinned_run.call_args.args[0],
+                      "default Python mode must still disable site packages")
+        for bad in ([], {"jsonschema": ""}, {"jsonschema": 12}):
+            with self.subTest(bad=bad), self.assertRaises(ValueError):
+                calibration.run_copy({**package, "dependency_versions": bad},
+                                     {"tests/unit/test_recovery.py": b""}, None)
+
     def test_timeout_is_not_converted_to_a_successful_calibration(self):
         self.package.update(runtime="python", python_tests=[])
         with patch.object(calibration.subprocess, "run",
@@ -301,7 +333,7 @@ class NawyExtractor(_PaymentNawyExtractor):
             encoding="utf-8"))
         self.assertEqual(len(plan["tasks"]), 12)
         by_id = {package["task_id"]: package for package in catalog["packages"]}
-        self.assertEqual(len(by_id), 10)
+        self.assertEqual(len(by_id), 11)
         linked = set()
         for task in plan["tasks"]:
             self.assertIsNone(task["hidden_acceptance_sha256"])
