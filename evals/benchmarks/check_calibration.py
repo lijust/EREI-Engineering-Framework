@@ -114,6 +114,32 @@ assert.strictEqual(observed.projectIdNonblankAll, true);
 assert.strictEqual(observed.projectIdUnique, true);
 assert.strictEqual(observed.projectIdPositiveInteger, true);
 assert.strictEqual(observed.projectIdNextCandidate, 6, 'APP04_MAX_PLUS_ONE_NO_GAP_REUSE');
+// Extended public read-only oracle: test legitimate dense and gapped ID ranges,
+// empty/blank, duplicates, invalid numeric IDs and safe-integer boundaries.
+// This checks preview candidate arithmetic only, NOT concurrent locked writes.
+const scenarios = [
+  {name: 'dense', ids: ['1','2','3'], next: 4, gaps: 0},
+  {name: 'singleton', ids: ['7'], next: 8, gaps: 0},
+  {name: 'empty', ids: [], next: null, gaps: null},
+  {name: 'duplicate', ids: ['1','1'], next: null, gaps: null},
+  {name: 'blank', ids: ['1',''], next: null, gaps: 0},
+  {name: 'leading_zero', ids: ['01','2'], next: null, gaps: null},
+  {name: 'fractional', ids: ['1.5','2'], next: null, gaps: null},
+  {name: 'zero', ids: ['0','2'], next: null, gaps: null},
+  {name: 'safe_integer_limit', ids: ['9007199254740991'], next: null, gaps: 0},
+  {name: 'unsafe_integer', ids: ['9007199254740992'], next: null, gaps: null},
+  {name: 'multiple_holes', ids: ['4','9','12'], next: 13, gaps: 6},
+];
+for (const scenario of scenarios) {
+  sandbox.dviRows_ = () => scenario.ids.map(project_id => ({project_id}));
+  const value = vm.runInContext(
+    'dviMissingProjectInsertMasterInventory_({})', sandbox, {timeout: 1500}
+  );
+  assert.strictEqual(value.projectIdNextCandidate, scenario.next,
+                     'APP04_PREVIEW_CASE_' + scenario.name);
+  assert.strictEqual(value.projectIdGapCount, scenario.gaps,
+                     'APP04_GAP_CASE_' + scenario.name);
+}
 console.log('APP04_BEHAVIORAL_ORACLE_PASS');
 """
 
