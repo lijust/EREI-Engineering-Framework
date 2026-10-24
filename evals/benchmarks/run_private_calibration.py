@@ -11,8 +11,10 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import platform
 from pathlib import Path
 import re
+import subprocess
 import sys
 import tempfile
 
@@ -20,6 +22,37 @@ import check_calibration
 import prepare_private_exports
 
 TASK_ID = re.compile(r"(?:APP|PY)-0[1-6]\Z")
+GIT_SHA = re.compile(r"[a-f0-9]{40}\\Z")
+FRAMEWORK_ROOT = Path(__file__).resolve().parents[2]
+
+
+def verified_framework_checkout() -> str:
+    """Bind evidence to an exact clean checkout without leaking git paths."""
+    for args in (("rev-parse", "--verify", "HEAD"),
+                 ("status", "--porcelain", "--untracked-files=all")):
+        result = subprocess.run(
+            ["git", "-C", str(FRAMEWORK_ROOT), *args],
+            shell=False, stdin=subprocess.DEVNULL, capture_output=True,
+            timeout=15, check=False,
+        )
+        if result.returncode:
+            raise ValueError("Cannot bind calibration to a Git checkout")
+        if args[0] == "rev-parse":
+            head = result.stdout.decode("ascii", errors="replace").strip()
+            if not GIT_SHA.fullmatch(head):
+                raise ValueError("Invalid Framework HEAD SHA")
+        elif result.stdout.strip():
+            raise ValueError("Framework checkout must be clean before calibration")
+    return head
+
+
+def execution_scope(package: dict) -> str:
+    if package.get("behavioral_oracle"):
+        return "FRAMEWORK_OWNED_BOUNDED_SOURCE_BEHAVIOR_ORACLE"
+    if package["runtime"] == "python":
+        return "UNCHANGED_ORIGINAL_CONSUMER_FUNCTIONS_OFFLINE_UNITTEST_ADAPTER"
+    return "UNCHANGED_ORIGINAL_NODE_CONSUMER_TEST"
+
 
 
 def run_one(task: str) -> dict:
@@ -31,6 +64,7 @@ def run_one(task: str) -> dict:
     if len(matched) != 1:
         raise ValueError("Missing or duplicate pinned task")
     package = matched[0]
+    framework_commit = verified_framework_checkout()
     # Never let any consumer bytes, error traces or private auth metadata
     # become an artifact inside a public Git checkout.
     with tempfile.TemporaryDirectory(prefix="erei-operator-private-") as directory:
@@ -51,6 +85,12 @@ def run_one(task: str) -> dict:
         # contains only public-safe aggregates, return codes, stdout digests.
         return {
             "kind": "SELF_REPORTED_PRIVATE_SOURCE_CALIBRATION",
+            "framework_commit_sha": framework_commit,
+            "consumer_source_repository": package["source"]["repository"],
+            "consumer_source_commit_sha": package["source"]["commit"],
+            "python_runtime_version": platform.python_version(),
+            "host_os_family": platform.system(),
+            "execution_scope": execution_scope(package),
             "task_id": task,
             "catalog_sha256": hashlib.sha256(catalog_bytes).hexdigest(),
             "pinned_files_verified": exporter_report["file_count"],
