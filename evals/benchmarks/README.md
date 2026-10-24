@@ -369,7 +369,14 @@ observations، `DRAFT_NOT_EXECUTABLE` و`effectiveness=NOT_ESTABLISHED`.
 وتشغيل Python class من source الأصلي `PY-03`. في APP-06 اختُبرت حالات
 snapshot السليمة، واختلاف subscriber أو workspace، وغياب person؛
 كل حالة تستخدم قراءة repository واحدة، ونسخة الخطأ تتجاوز رفض
-اختلاف السياق. هذا ليس تشغيل PostgreSQL أو consumer test الأصلي. إضافة إلى الـ3 tests
+اختلاف السياق. هذا ليس تشغيل PostgreSQL حقيقي. **بالإضافة** إلى هذا oracle، شُغّل
+`APP-06` لاحقًا من نسختي المصدر والاختبار الأصلي غير المعدّل بعد مطابقة
+Git blob لكل منهما، في Node 22.16.0 بمجلد مؤقت خارج Git العام:
+المرجع **PASS (exit 0)** والطفرة الوحيدة **FAIL (exit 1)** من
+`tests/prd03-production-edge-context-resolver.test.js:57` بسبب
+`Missing expected rejection`. هذا تشغيل كامل لملف الاختبار الأصلي
+المحدد لـAPP-06 مع mock repository الخاص به، وليس اختبار اتصال PostgreSQL
+أو محضر اعتماد مستقل. إضافة إلى الـ3 tests
 العامة المحدودة في PY-03، جرى تشغيل **اختبار واحد أصلي غير معدّل من 3**
 لـPY-03 (`test_boundary_matching_is_exact_not_substring_based`)،
 حيث نجح baseline وفشل mutant كما هو متوقع، بعد فحص Git blobs لملفي
