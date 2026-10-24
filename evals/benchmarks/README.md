@@ -2,14 +2,15 @@
 
 الحالة: **DRAFT_NOT_EXECUTABLE**. لا تشغيل نموذج أو ميزانية معتمدة أو نتيجة
 مقارنة. `v1-v2-pilot.json` يحتوي 12 مقترحًا من اختبارات فعلية في المشروعين،
-مع commit وGit blob لكل مرجع. أُعدت **عشر وصفات معايرة عامة**، منها
-سبع لها نتائج معايرة سابقة وAPP-04/APP-05 لهما oracle سلوكية عامة جديدة
-تحتاج إعادة تنفيذ مع exports الأصلية المثبتة على Node. PY-03 لها oracle
-Python AST محدودة تختبر method الأصلية المثبتة فقط، لا extractor كاملًا. لم تُعدّل مصادر المشروعين أو بياناتهما.
+مع commit وGit blob لكل مرجع. أُعدت **12/12 وصفة معايرة عامة من حيث المصدر والمراجع والـhashes**،
+لكن **ليس 12/12 اختبار معايرة مكتملًا**: سبع وصفات لها أدلة معايرة سابقة؛
+APP-04/APP-05 لهما Node VM oracle جديدة، وPY-03 لها AST oracle محدودة،
+وPY-01/PY-06 تتطلبان اختبار ملفات المستهلك الأصلية ببيئة dependencies مضبوطة.
+لا يتضمن هذا نجاح benchmark أو إثبات قبول مستقل؛ لم تُعدّل مصادر المشروعين أو بياناتهما.
 
 هذه المراجع عقود عامة سبق نشرها، وليست hidden acceptance. mutations عيوب
-محَقونة في نسخ المعايرة، ولا تعني وجودها في المصدر الحالي. مهمتان ما زالتا
-مقترحتين؛ جميع `hidden_acceptance_sha256` تبقى `null`. لا يجوز عرض إعداد
+محَقونة في نسخ المعايرة، ولا تعني وجودها في المصدر الحالي. كل المهام الـ12
+مرتبطة الآن بوصفات **عامة فقط**؛ جميع `hidden_acceptance_sha256` تبقى `null`. لا يجوز عرض إعداد
 المعايرة بوصفه dataset مقارنة مكتملة أو دليل تفوق V2.
 
 ## أصغر جزء تنفيذي
@@ -90,7 +91,7 @@ runner-seconds. لا يستنتج مجموعها زمن نهاية إلى نها
 - المخرجات تبقى `comparability=NOT_VERIFIED` و
   `evidence_authenticity=NOT_VERIFIED` و`effectiveness=NOT_ESTABLISHED`.
 
-## عشر وصفات معايرة عامة من المصدر الفعلي
+## اثنتا عشرة وصفة معايرة عامة مثبتة بالمصدر
 
 `calibration-packages.json` يربط كل prompt بالمصدر والاختبار وmutation واحدة
 وGit blobs لجميع الملفات المطلوبة. لا ينسخ كود المشروعين داخل Framework.
@@ -107,10 +108,12 @@ runner-seconds. لا يستنتج مجموعها زمن نهاية إلى نها
 | APP-04 | تغيير next candidate من أعلى ID + 1 إلى أدنى ID + 1 | فحص Node VM سلوكي إضافي من Framework، يقرأ دالة المصدر الأصلية ويدخل IDs 2/5، ولا يشغل السكربت الأصلي النصي كاختبار قبول |
 | APP-05 | كسر cache داخل مصدر generator الخاص بـErrorCatalogRepository | فحص Node VM سلوكي إضافي من Framework يقارن كود ورسائل وأكواد HTTP وسلوك تحميل المزوّد مرة واحدة مع المصدر القديم، وليس تشغيل test الـbuilder النصي الأصلي |
 | APP-06 | إعادة snapshot عند اختلاف السياق | سكربت fake repository الأصلي |
+| PY-01 | تحويل فشل FakeProvider إلى NORMALIZED زائف | 20 دالة من اختبار المستهلك الأصلي؛ تتطلب بيئة jsonschema مطابقة للإصدارات المثبتة، ولم تُنفذ end-to-end بعد |
 | PY-02 | إدخال failed attempt في reusable cache | 4 دوال اختبار أصلية |
 | PY-03 | استبدال حدود marker المطابقة بدقة بمطابقة substring | oracle عامة محدودة تشغّل AST من method Nawy الأصلية على نصوص EN/AR، دون شبكة أو HTML parser كامل |
 | PY-04 | إسقاط آخر token من full preset | 6 دوال اختبار أصلية |
 | PY-05 | ترك connection دون close | 6 دوال اختبار أصلية |
+| PY-06 | تمرير installment_months رقمية غير مستندة لنص المصدر | 4 دوال أصلية بأدلة words/derived arithmetic وسلسلة 9 ملفات core.ai مثبتة؛ تحتاج exact local dependency versions |
 
 في المعايرات السبع السابقة ينجح الكود الأصلي ويفشل الـstarter عند assertion
 متوقعة؛ وصفتا APP-04 وAPP-05 أُعدتا اعتمادًا على oracle سلوكية جديدة للـVM
@@ -134,9 +137,12 @@ python -B -m unittest discover -s evals/tests -p test_calibration_packages.py -v
 
 الأداة opt-in وخارج تشغيل CI المعتاد. تتحقق أولًا من جميع Git blobs المختارة،
 ثم تستخدم البايتات نفسها لإنشاء reference وstarter منفصلين في temp directories.
-لا تعدّل الاختبارات ولا export الإدخال. تعمل Python بـ`-I -S -B` دون
-site packages؛ تُستدعى دوال الاختبار المثبتة عبر `unittest` مع دعم `tmp_path`
-فقط. لا تدّعي هذه الطريقة تشغيل pytest أو conftest أو كامل اختبارات المستهلك.
+لا تعدّل الاختبارات ولا export الإدخال. وصفات Python الافتراضية تعمل بـ
+`-I -S -B` دون site packages؛ **PY-01/PY-06 فقط** تعمل opt-in بـ`-I -B`
+مع إتاحة local site packages واشتراط تطابق إصدارات dependencies المثبتة
+في `dependency_versions` حرفيًا؛ أي نقص أو اختلاف في الإصدارات يوقف الاختبار
+دون اعتماد نتيجة. لا ترفع الأداة dependencies أو تحملها من الشبكة. تُستدعى
+دوال الاختبار المثبتة عبر `unittest` مع دعم `tmp_path` فقط. لا تدّعي هذه الطريقة تشغيل pytest أو conftest أو كامل اختبارات المستهلك.
 تعمل سكربتات Node الأصلية مباشرة في الوصفات السبع السابقة؛ APP-04 يستعمل
 oracle إضافية عامة مُضمّنة في checker لاستدعاء inventory function من مصدر
 Apps Script الحقيقي بـmock read-only (ID 2 و5، فجوات 3 و4، النتيجة 6)،
@@ -154,13 +160,12 @@ Apps Script الحقيقي بـmock read-only (ID 2 و5، فجوات 3 و4، ا�
 لا تشغّل الأداة نموذجًا أو provider أو خدمة إنتاج؛ SQLite هنا in-memory/temp.
 يجب مراجعة أي وصفة جديدة أو dependency قبل توسيع هذا المسار.
 
-المقترحات المتبقية تحتاج عملًا حقيقيًا قبل تجميد dataset:
-
-- PY-01/PY-06: تجميد dependency environment لـ`jsonschema` والمكونات
-  المستوردة، مع FakeProvider فقط؛ التبعية غير متاحة في Python المحلي الحالي.
-
-عدم اكتمال المقترحين لا يغير مقام الخطة من 12 مهمة ولا يسمح بحذف slots بعد
-النتائج. أي تغيير لاحق في dataset يتطلب خطة جديدة مثبتة قبل جمع المقارنة.
+الوصفات الـ12 الآن محددة بالمصدر، لكن **قبولها النهائي يحتاج عملًا حقيقيًا**:
+إعادة تشغيل baseline/mutant من exported source بالـGit blobs المثبتة، ومنها
+`PY-01/PY-06` داخل بيئة Python محلية موثوقة ذات إصدارات dependencies المحددة
+والموجودة سابقًا، ثم مراجعة مستقلة على الهوية والـfailures. هذا ليس تصريحًا
+بتثبيت تبعيات من الشبكة أو بدء LLM benchmark. اكتمال تجهيز الـ12 لا يسمح بحذف
+أي slot بعد النتائج. أي تغيير لاحق في dataset يتطلب خطة جديدة مثبتة قبل جمع المقارنة.
 قبل إرسال starter لوكيل، يفصل المنسق recipe/reference/mutation metadata
 عن workspace المهمة؛ الملف الحالي علني ولا يوفر blinding تلقائيًا.
 
@@ -319,3 +324,27 @@ observations، `DRAFT_NOT_EXECUTABLE` و`effectiveness=NOT_ESTABLISHED`.
 الـ48 مقارنة المخططة، ولا يُسمح بتنفيذ نموذجي مدفوع أو إصدار Stable
 على أساس هذه التحضيرات. معايرة PY-03 الكاملة بالـchecker وexports
 المثبتة وتقييم مستقل لا تزال مطلوبة.
+
+## إكمال Source Recipes PY-01 + PY-06 — 2026-10-24
+
+- **PY-01**: ثبت المصدران `payment_plan_normalizer.py` و`provider.py` واختبار
+  `test_payment_plan_semantic_normalizer.py` الأصلي (20 وظيفة اختبار)
+  عند `lijust/EREI-3.2@87d730dd...`. Mutation وحيدة في `except AIProviderError`
+  تستبدل `PROVIDER_ERROR` بـ`NORMALIZED` بصورة زائفة، ويجب أن تفشل
+  `test_provider_failure_does_not_destroy_raw_evidence` فقط عند تشغيل المصدر.
+- **PY-06**: ثبت جميع ملفات `core.ai` التسعة المطلوبة بسلسلة
+  `semantic_domains → semantic_{address,facilities,harvest,project_intelligence,unit_types}`
+  بالإضافة إلى cache/normalizer/provider، واختبار number-word الأصلي
+  (4 وظائف). Mutation تسمح بـ`installment_months` غير المستندة لدليل؛
+  يجب أن يفشل اختبار derived eight-years-to-96-months فقط.
+- **Environment pin**: `jsonschema=4.26.0`, `attrs=26.1.0`,
+  `referencing=0.37.0`, `rpds-py=2026.5.1`,
+  `jsonschema-specifications=2025.9.1`. نسخة Python الأصلية تُشغّل
+  `-I -B` في venv محلية مجهزة مسبقًا بهذه الإصدارات؛ لا تستخدم `-S`
+  للوصفات المعتمدة على jsonschema. أي mismatch يفشل قبل استدعاء الاختبار،
+  وتظل بقية الوصفات في الوضع الصارم `-I -S -B`.
+
+**معنى 12/12 هنا: ملفات recipe/prompt/fixture pin والتحقق من الصيغة مُجهزة،
+لا يعني اكتمال معايرة المصدر فعليًا أو إجراء 48 مقارنة أو وجود hidden acceptance.**
+تظل الحالة `DRAFT_NOT_EXECUTABLE`, `execution_authorized=false`,
+`effectiveness=NOT_ESTABLISHED`, ولا تفويض بالصرف أو الدمج أو الإصدار.
