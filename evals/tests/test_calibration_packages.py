@@ -75,6 +75,25 @@ class CalibrationTests(unittest.TestCase):
             hashlib.sha256(records[1]["stderr"].encode("utf-8")).hexdigest(),
         )
 
+    def test_cli_uncaught_private_file_error_is_redacted_and_fails_closed(self):
+        import contextlib
+        import io
+        raw_path = "/private/data/client_production/secret-app-project.gs"
+        stderr = io.StringIO()
+        with (patch.object(calibration, "main",
+                           side_effect=FileNotFoundError(raw_path)),
+              contextlib.redirect_stderr(stderr)):
+            self.assertEqual(calibration.entrypoint(), 2)
+        output = stderr.getvalue()
+        self.assertNotIn(raw_path, output)
+        self.assertNotIn("Traceback", output)
+        self.assertNotIn("FileNotFoundError:", output)
+        record = json.loads(output)
+        self.assertEqual(record["kind"], "PUBLIC_CALIBRATION_ERROR")
+        self.assertEqual(record["status"], "FAIL_CLOSED")
+        self.assertEqual(record["error_type"], "FileNotFoundError")
+        self.assertEqual(record["model_executions"], 0)
+
     def test_cli_report_never_serializes_private_consumer_stdout_stderr_or_failed_names(self):
         import contextlib
         import io
