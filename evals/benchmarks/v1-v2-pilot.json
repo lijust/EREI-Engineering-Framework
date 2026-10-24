@@ -196,17 +196,21 @@
       "family": "parsing-boundary",
       "risk": "L1",
       "proposed_task": "Trim exact page-chrome boundaries in both locales while preserving similar phrases inside evidence.",
-      "fixture_preparation": "Inject substring-based boundary matching in offline HTML fixtures.",
-      "state": "PROPOSAL_FIXTURE_NOT_PREPARED",
+      "fixture_preparation": "Pinned original Nawy boundary class plus unchanged consumer test. Supplemental public stdlib-only AST behavioral oracle runs original exact boundary method with inherited plain-text cleanup fixture, en/ar exact markers and similar substring phrase; original full HTML consumer/parser dependency stack is NOT executed.",
+      "state": "PUBLIC_CALIBRATION_RECIPE_PREPARED",
       "source": {
         "repository": "lijust/EREI-3.2",
         "commit": "87d730ddc3547f863de2a6895e91f9b83e9c6e72",
         "path": "tests/unit/test_nawy_payment_section_boundary.py",
         "git_blob": "2a1353992f626bdf9d8b58db9a0d18f3c15be4c6"
       },
-      "fixture_sha256": null,
-      "prompt_sha256": null,
-      "hidden_acceptance_sha256": null
+      "fixture_sha256": "01a60a032390e6c4a650101f1159654804fb2fd609282fba083433061291ff06",
+      "prompt_sha256": "6ece9f33d9937f91152e250764863090356652e97626d57ac03f10e01413d658",
+      "hidden_acceptance_sha256": null,
+      "calibration_package": {
+        "path": "evals/benchmarks/calibration-packages.json",
+        "task_id": "PY-03"
+      }
     },
     {
       "task_id": "PY-04",
