@@ -365,8 +365,11 @@ observations، `DRAFT_NOT_EXECUTABLE` و`effectiveness=NOT_ESTABLISHED`.
 `public-source-oracle-observation.2026-10-24.json` يسجل **رصدًا ذاتيًا غير معتمد
 من مراجع مستقل**: فحص 35/35 من Git blobs الحقيقية في مستودعين خاصين؛
 12/12 تغييرًا واحدًا في موضعه مع بصمات الـstarter؛ وتشغيل methods الأصلية
-`APP-04` و`APP-05` على JS V8 مع مدخلات provider/mock دون كتابة،
-وتشغيل Python class من source الأصلي `PY-03`. إضافة إلى الـ3 tests
+`APP-04` و`APP-05` و`APP-06` على JS V8 ببيانات mock دون كتابة،
+وتشغيل Python class من source الأصلي `PY-03`. في APP-06 اختُبرت حالات
+snapshot السليمة، واختلاف subscriber أو workspace، وغياب person؛
+كل حالة تستخدم قراءة repository واحدة، ونسخة الخطأ تتجاوز رفض
+اختلاف السياق. هذا ليس تشغيل PostgreSQL أو consumer test الأصلي. إضافة إلى الـ3 tests
 العامة المحدودة في PY-03، جرى تشغيل **اختبار واحد أصلي غير معدّل من 3**
 لـPY-03 (`test_boundary_matching_is_exact_not_substring_based`)،
 حيث نجح baseline وفشل mutant كما هو متوقع، بعد فحص Git blobs لملفي
