@@ -37,6 +37,44 @@ class CalibrationTests(unittest.TestCase):
         }
         (target.parent / "test.py").write_bytes(self.source)
 
+    def test_public_calibration_result_redacts_private_consumer_output_and_frames(self):
+        secret = "PRIVATE_SHEET_PASSWORD=redacted-source-should-never-appear"
+        source = "/home/private-source/internal/normalizer.py:432"
+        records = [
+            {
+                "returncode": 0, "stdout": "PASS " + secret + "\\n",
+                "stderr": "",
+                "checks": {"tests": 3, "failures": [], "errors": [], "skipped": 0},
+            },
+            {
+                "returncode": 1, "stdout": "FAIL " + secret + "\\n",
+                "stderr": "AssertionError: " + secret + "\\n" + source,
+                "checks": {
+                    "tests": 3,
+                    "failures": ["test_error " + secret],
+                    "errors": [],
+                    "skipped": 0,
+                },
+            },
+        ]
+        published = [calibration.sanitized_result(r) for r in records]
+        serialized = json.dumps(published, sort_keys=True)
+        self.assertNotIn(secret, serialized)
+        self.assertNotIn(source, serialized)
+        self.assertNotIn("test_error", serialized)
+        self.assertNotIn("AssertionError", serialized)
+        self.assertNotIn("stdout\"", serialized)
+        self.assertNotIn("stderr\"", serialized)
+        self.assertEqual(published[0]["returncode"], 0)
+        self.assertEqual(published[1]["returncode"], 1)
+        self.assertEqual(published[1]["checks"], {
+            "tests": 3, "failed_count": 1, "error_count": 0, "skipped_count": 0,
+        })
+        self.assertEqual(
+            published[1]["stderr_sha256"],
+            hashlib.sha256(records[1]["stderr"].encode("utf-8")).hexdigest(),
+        )
+
     def test_private_source_exports_cannot_be_inside_public_framework_checkout(self):
         public_checkout = Path(calibration.__file__).resolve().parents[2]
         for location in (public_checkout, public_checkout / "private-exports",
