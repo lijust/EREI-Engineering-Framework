@@ -264,6 +264,18 @@ raise SystemExit(0 if result.wasSuccessful() else 1)
 """
 
 
+
+def forbid_checkout_local_exports(exports: Path) -> None:
+    """Prevent private consumer source copies from living under public Framework git."""
+    framework_checkout = Path(__file__).resolve().parents[2]
+    resolved = exports.resolve()
+    if resolved.is_relative_to(framework_checkout):
+        raise ValueError(
+            "Private consumer source exports must remain outside the public "
+            "Framework checkout; never commit or upload them as CI artifacts"
+        )
+
+
 def relative_path(value: str) -> Path:
     posix = PurePosixPath(value)
     if (not value or "\\" in value or ":" in value or posix.is_absolute()
@@ -401,6 +413,10 @@ def main() -> int:
     parser.add_argument("--task", help="One package ID; default checks all prepared packages")
     parser.add_argument("--node", default=shutil.which("node"))
     args = parser.parse_args()
+    try:
+        forbid_checkout_local_exports(args.source_exports)
+    except ValueError as exc:
+        parser.exit(2, f"calibration source boundary: {exc}\n")
     catalog_bytes = CATALOG.read_bytes()
     packages = json.loads(catalog_bytes)["packages"]
     if args.task:
