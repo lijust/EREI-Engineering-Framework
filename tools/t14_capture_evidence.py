@@ -76,7 +76,7 @@ def capture(command: list[str], evidence_dir: Path, target_ref: str, timeout: in
     # JSON interpretation or any exception/denial.
     (folder / "drill-report.stdout.json").write_bytes(stdout)
     (folder / "drill-stderr.txt").write_bytes(stderr)
-    (folder / "drill-exit-code.txt").write_text(str(code) + "\n", encoding="utf-8")
+    (folder / "drill-exit-code.txt").write_bytes((str(code) + "\n").encode("ascii"))
     accepted, reason = False, "nonzero drill exit status: " + str(code)
     if code == 0:
         try:
