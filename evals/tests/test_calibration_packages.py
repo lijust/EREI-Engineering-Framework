@@ -327,13 +327,45 @@ class NawyExtractor(_PaymentNawyExtractor):
             self.assertEqual(package["prompt_sha256"],
                              hashlib.sha256(package["prompt"].encode()).hexdigest())
 
+    def test_python_provider_recipes_are_source_pinned_and_version_locked(self):
+        catalog = json.loads(calibration.CATALOG.read_text(encoding="utf-8"))
+        entries = {package["task_id"]: package for package in catalog["packages"]}
+        expected_versions = {
+            "jsonschema": "4.26.0", "attrs": "26.1.0",
+            "referencing": "0.37.0", "rpds-py": "2026.5.1",
+            "jsonschema-specifications": "2025.9.1",
+        }
+        self.assertEqual(len(entries), 12)
+        self.assertEqual({p["task_id"] for p in catalog["packages"]
+                          if p.get("dependency_versions")}, {"PY-01", "PY-06"})
+        for task_id, num_source_files, num_tests, target in (
+            ("PY-01", 3, 20, "test_provider_failure_does_not_destroy_raw_evidence"),
+            ("PY-06", 10, 4,
+             "test_word_number_grounding_does_not_allow_derived_year_to_month_conversion"),
+        ):
+            package = entries[task_id]
+            self.assertEqual(package["runtime"], "python")
+            self.assertEqual(package["dependency_versions"], expected_versions)
+            self.assertEqual(len(package["files"]), num_source_files)
+            self.assertEqual(len(package["python_tests"]), num_tests)
+            self.assertEqual(len(set(package["python_tests"])), num_tests)
+            self.assertEqual(package["expected_assertion"], target)
+            self.assertIn(target, package["python_tests"])
+            self.assertEqual(set(package["starter_file_sha256"]),
+                             {f["path"] for f in package["files"]})
+            self.assertNotEqual(package["mutation"]["before"],
+                                package["mutation"]["after"])
+        self.assertEqual(entries["PY-06"]["source"]["repository"], "lijust/EREI-3.2")
+        self.assertEqual(entries["PY-06"]["source"]["commit"],
+                         "87d730ddc3547f863de2a6895e91f9b83e9c6e72")
+
     def test_plan_digests_bind_prepared_starters_without_removing_pending_slots(self):
         catalog = json.loads(calibration.CATALOG.read_text(encoding="utf-8"))
         plan = json.loads(calibration.CATALOG.with_name("v1-v2-pilot.json").read_text(
             encoding="utf-8"))
         self.assertEqual(len(plan["tasks"]), 12)
         by_id = {package["task_id"]: package for package in catalog["packages"]}
-        self.assertEqual(len(by_id), 11)
+        self.assertEqual(len(by_id), 12)
         linked = set()
         for task in plan["tasks"]:
             self.assertIsNone(task["hidden_acceptance_sha256"])
