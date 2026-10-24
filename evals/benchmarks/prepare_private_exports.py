@@ -97,7 +97,7 @@ def fetch_original_bytes(spec: dict, gh: str) -> bytes:
         data = base64.b64decode("".join(encoded.split()), validate=True)
     except (ValueError, binascii.Error) as exc:
         raise ValueError("Invalid pinned source response encoding") from exc
-    blob = hashlib.sha1(b"blob " + str(len(data)).encode() + b"\\0" + data).hexdigest()
+    blob = hashlib.sha1(b"blob " + str(len(data)).encode() + b"\0" + data).hexdigest()
     if blob != spec["sha"]:
         raise ValueError("Downloaded original bytes fail Git blob identity check")
     return data
@@ -132,7 +132,7 @@ def prepare(destination: Path, task: str | None, gh: str = "gh") -> dict:
         for (directory, filename), spec in selected.items():
             payload = (stage / directory / safe_path(filename)).read_bytes()
             blob = hashlib.sha1(
-                b"blob " + str(len(payload)).encode() + b"\\0" + payload
+                b"blob " + str(len(payload)).encode() + b"\0" + payload
             ).hexdigest()
             if blob != spec["sha"]:
                 raise ValueError("Staged export verification failed")
