@@ -154,7 +154,28 @@ class CalibrationTests(unittest.TestCase):
         self.assertEqual(report["pin_integrity"]["original_source_mutations_starter_sha256_verified"], 12)
         observed = {item["task_id"]: item for item in report["source_executions"]}
         self.assertEqual(set(observed), {
-            "APP-04", "APP-05", "APP-06", "PY-02", "PY-03", "PY-05"})
+            "APP-01", "APP-02", "APP-03", "APP-04", "APP-05",
+            "APP-06", "PY-02", "PY-03", "PY-05"})
+        # Public receipt is self-observed original JS consumer body execution
+        # via V8 dependency shims, NOT original Node CLI execution or independent
+        # reviewer approval. Bind both source and unchanged test git objects.
+        for task_id in ("APP-01", "APP-02", "APP-03"):
+            record = observed[task_id]
+            package = tasks[task_id]
+            self.assertEqual(record["source_git_blob"],
+                             next(item["git_blob"] for item in package["files"]
+                                  if item["path"] == package["mutation"]["path"]))
+            self.assertEqual(record["test_git_blob"],
+                             next(item["git_blob"] for item in package["files"]
+                                  if item["path"] == package["test_path"]))
+            self.assertEqual(record["reference"]["status"], "PASS")
+            self.assertEqual(record["single_mutant"]["status"], "FAIL")
+            self.assertEqual(record["single_mutant"]["error_type"], "AssertionError")
+            self.assertTrue(record["expected_mutation_detected"])
+            self.assertTrue(record["unchanged_original_consumer_test_text_executed"])
+            self.assertIs(record["full_node_runtime_executed"], False)
+            self.assertIs(record["independent_reviewer"], False)
+            self.assertIs(record["heldout"], False)
         self.assertEqual(observed["APP-04"]["source_git_blob"],
                          next(f["git_blob"] for f in tasks["APP-04"]["files"]
                               if f["path"] == tasks["APP-04"]["mutation"]["path"]))
