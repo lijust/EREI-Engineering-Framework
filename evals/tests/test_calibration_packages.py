@@ -402,9 +402,9 @@ function dviMissingProjectInsertMasterInventory_() {
   const rows = dviRows_();
   const ids = rows.map(row => String(row.project_id || '').trim()).filter(Boolean);
   const unique = new Set(ids);
-  const positive = ids.every(id => /^[1-9]\\d*$/.test(id) &&
+  const positive = ids.every(id => /^[1-9]\d*$/.test(id) &&
                                     Number.isSafeInteger(Number(id)));
-  const numbers = ids.filter(id => /^[1-9]\\d*$/.test(id) &&
+  const numbers = ids.filter(id => /^[1-9]\d*$/.test(id) &&
                                    Number.isSafeInteger(Number(id))).map(Number);
   const min = numbers.length ? Math.min(...numbers) : null;
   const max = numbers.length ? Math.max(...numbers) : null;
