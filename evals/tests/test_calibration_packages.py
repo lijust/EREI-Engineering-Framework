@@ -143,17 +143,28 @@ class CalibrationTests(unittest.TestCase):
             encoding="utf-8"))
         self.assertEqual(len(plan["tasks"]), 12)
         by_id = {package["task_id"]: package for package in catalog["packages"]}
+        self.assertEqual(len(by_id), 7)
+        linked = set()
         for task in plan["tasks"]:
             self.assertIsNone(task["hidden_acceptance_sha256"])
             if task["task_id"] in by_id:
                 package = by_id[task["task_id"]]
+                self.assertEqual(task["state"], "PUBLIC_CALIBRATION_RECIPE_PREPARED")
+                self.assertEqual(task.get("calibration_package"), {
+                    "path": "evals/benchmarks/calibration-packages.json",
+                    "task_id": task["task_id"],
+                }, "prepared recipe must resolve to its own package")
+                linked.add(task["task_id"])
                 encoded = json.dumps(package["starter_file_sha256"],
                                      sort_keys=True, separators=(",", ":")).encode()
                 self.assertEqual(task["fixture_sha256"], hashlib.sha256(encoded).hexdigest())
                 self.assertEqual(task["prompt_sha256"], package["prompt_sha256"])
             else:
+                self.assertEqual(task["state"], "PROPOSAL_FIXTURE_NOT_PREPARED")
+                self.assertNotIn("calibration_package", task)
                 self.assertIsNone(task["fixture_sha256"])
                 self.assertIsNone(task["prompt_sha256"])
+        self.assertEqual(linked, set(by_id))
 
 
 if __name__ == "__main__":
