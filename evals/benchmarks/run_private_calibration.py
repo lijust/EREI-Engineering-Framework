@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import platform
 from pathlib import Path
 import re
@@ -27,17 +28,30 @@ FRAMEWORK_ROOT = Path(__file__).resolve().parents[2]
 
 
 def verified_framework_checkout() -> str:
-    """Bind evidence to an exact clean checkout without leaking git paths."""
-    for args in (("rev-parse", "--verify", "HEAD"),
+    """Bind evidence to an exact clean checkout without inherited Git redirection."""
+    # GIT_DIR/GIT_WORK_TREE override -C repository selection. All inherited
+    # GIT_* variables are unnecessary for local read-only source attestation,
+    # including GIT_INDEX_FILE and injected Git config/alternate object stores.
+    isolated_env = {
+        key: value for key, value in os.environ.items()
+        if not key.upper().startswith("GIT_")
+    }
+    expected_root = FRAMEWORK_ROOT.resolve()
+    for args in (("rev-parse", "--show-toplevel"),
+                 ("rev-parse", "--verify", "HEAD"),
                  ("status", "--porcelain", "--untracked-files=all")):
         result = subprocess.run(
             ["git", "-C", str(FRAMEWORK_ROOT), *args],
             shell=False, stdin=subprocess.DEVNULL, capture_output=True,
-            timeout=15, check=False,
+            timeout=15, check=False, env=isolated_env,
         )
         if result.returncode:
             raise ValueError("Cannot bind calibration to a Git checkout")
-        if args[0] == "rev-parse":
+        if args[1] == "--show-toplevel":
+            toplevel = result.stdout.decode("utf-8", errors="replace").strip()
+            if not toplevel or Path(toplevel).resolve() != expected_root:
+                raise ValueError("Git checkout root is not Framework")
+        elif args[0] == "rev-parse":
             head = result.stdout.decode("ascii", errors="replace").strip()
             if not GIT_SHA.fullmatch(head):
                 raise ValueError("Invalid Framework HEAD SHA")
