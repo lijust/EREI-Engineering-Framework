@@ -249,6 +249,73 @@
       "expected_assertion_line": 57
     },
     {
+      "task_id": "PY-01",
+      "state": "PUBLIC_CALIBRATION_ONLY",
+      "source": {
+        "repository": "lijust/EREI-3.2",
+        "commit": "87d730ddc3547f863de2a6895e91f9b83e9c6e72",
+        "export_directory": "py"
+      },
+      "runtime": "python",
+      "files": [
+        {
+          "path": "core/ai/payment_plan_normalizer.py",
+          "git_blob": "262b2fb0d3ce62f35c3acb47adeac6b42f7ea036"
+        },
+        {
+          "path": "core/ai/provider.py",
+          "git_blob": "0b3d7be681246439c3b9bad00dcb8b4a89d6c110"
+        },
+        {
+          "path": "tests/unit/test_payment_plan_semantic_normalizer.py",
+          "git_blob": "8a737ebd879d1ee3757f12adf00c473c434d29e6"
+        }
+      ],
+      "test_path": "tests/unit/test_payment_plan_semantic_normalizer.py",
+      "dependency_versions": {
+        "jsonschema": "4.26.0",
+        "attrs": "26.1.0",
+        "referencing": "0.37.0",
+        "rpds-py": "2026.5.1",
+        "jsonschema-specifications": "2025.9.1"
+      },
+      "python_tests": [
+        "test_single_english_plan_is_structured_without_losing_evidence",
+        "test_multiple_plans_remain_independent_objects_not_ranges",
+        "test_arabic_digits_percentages_and_years_are_grounded",
+        "test_mixed_language_discount_maintenance_and_handover_are_supported",
+        "test_booking_contract_delivery_balloon_and_schedule_are_supported",
+        "test_unknown_values_are_null_not_zero",
+        "test_explicit_zero_is_allowed_only_when_present_in_evidence",
+        "test_source_conflict_is_fail_closed_and_provider_is_not_called",
+        "test_hallucinated_numeric_value_is_rejected",
+        "test_derived_month_conversion_is_rejected_when_not_explicit",
+        "test_schema_mismatch_is_rejected_again_after_provider",
+        "test_provider_failure_does_not_destroy_raw_evidence",
+        "test_missing_evidence_fails_closed_without_provider_call",
+        "test_explicit_no_payment_plan_skips_provider",
+        "test_duplicate_semantic_plans_are_deduplicated_exactly",
+        "test_economic_alternatives_are_not_deduplicated",
+        "test_existing_nawy_raw_structured_contract_is_preserved",
+        "test_existing_aqarmap_conflict_never_calls_provider",
+        "test_existing_realestate_raw_text_and_contract_timing_are_preserved",
+        "test_currency_is_rejected_when_not_explicit_in_evidence"
+      ],
+      "mutation": {
+        "path": "core/ai/payment_plan_normalizer.py",
+        "before": "        except AIProviderError:\n            return PaymentNormalizationResult(PROVIDER_ERROR, (), rows, failure_reason=\"PROVIDER_ERROR\")",
+        "after": "        except AIProviderError:\n            return PaymentNormalizationResult(NORMALIZED, (), rows, failure_reason=\"PROVIDER_ERROR\")"
+      },
+      "expected_assertion": "test_provider_failure_does_not_destroy_raw_evidence",
+      "prompt": "Fix SemanticPaymentPlanNormalizer provider-error handling so a failed FakeProvider request returns PROVIDER_ERROR without fabricated NORMALIZED success or erasing raw source evidence. Preserve all 20 original payment plan consumer contracts, including hallucination rejection, conflict, plan alternatives and schema mismatch. Use only the pinned offline local Python dependency environment and the fake provider; do not invoke any real model API.",
+      "prompt_sha256": "20e1c5914528b1f095ac010ee286fbd41dfff9b9f23dd96ebe575cbbd7502715",
+      "starter_file_sha256": {
+        "core/ai/payment_plan_normalizer.py": "560a3bc41aef076c73c615fce6666d5614a591a148b7d34ff447d79b4c1d090b",
+        "core/ai/provider.py": "d5180eeb08a61a2f5ea1faaa806c01a3801323ce6772fc5da530d8f58f2027ed",
+        "tests/unit/test_payment_plan_semantic_normalizer.py": "fd30382285877cc28544f10fecfa814afd443b21e2d48c90c9cda5583817c7cb"
+      }
+    },
+    {
       "task_id": "PY-02",
       "state": "PUBLIC_CALIBRATION_ONLY",
       "source": {
