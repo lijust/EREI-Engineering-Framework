@@ -1,0 +1,148 @@
+"""Synthetic local-only tests for the private one-task calibration orchestrator."""
+from __future__ import annotations
+
+import contextlib
+import importlib.util
+import io
+import json
+from pathlib import Path
+import sys
+import unittest
+from unittest.mock import patch
+
+
+ROOT = Path(__file__).resolve().parents[1] / "benchmarks"
+sys.path.insert(0, str(ROOT))
+spec = importlib.util.spec_from_file_location(
+    "private_calibration_orchestrator", ROOT / "run_private_calibration.py"
+)
+runner = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(runner)
+
+
+class PrivateCalibrationOrchestratorTests(unittest.TestCase):
+    def setUp(self):
+        self.package = {
+            "task_id": "PY-04",
+            "runtime": "python",
+            "test_path": "tests/unit/test_project_update_presets.py",
+            "files": [{"path": "core/project_update_presets.py", "git_blob": "a" * 40}],
+        }
+        self.catalog = {"execution_authorized": False, "packages": [self.package]}
+        self.baseline = {
+            "returncode": 0, "stdout": '{"tests":6,"failures":[],"errors":[],"skipped":0}',
+            "stderr": "",
+            "checks": {"tests": 6, "failures": [], "errors": [], "skipped": 0},
+        }
+        self.mutant = {
+            "returncode": 1,
+            "stdout": '{"tests":6,"failures":["test_full_project_details_preset_tracks_registry_without_duplicate_allowlist"],"errors":[],"skipped":0}',
+            "stderr": "DO-NOT-PUBLISH-PRIVATE-TEST-PATH",
+            "checks": {
+                "tests": 6, "failures": [
+                    "test_full_project_details_preset_tracks_registry_without_duplicate_allowlist"
+                ], "errors": [], "skipped": 0,
+            },
+        }
+        self.raw_catalog = json.dumps(self.catalog).encode()
+
+    def patch_runner(self):
+        return (
+            patch.object(runner.check_calibration.CATALOG.__class__, "read_bytes",
+                         return_value=self.raw_catalog),
+            patch.object(runner.prepare_private_exports, "prepare",
+                         return_value={"file_count": 1}),
+            patch.object(runner.check_calibration, "read_inputs",
+                         return_value={"source": b"original private bytes"}),
+            patch.object(runner.check_calibration, "starter_inputs",
+                         return_value={"source": b"private mutated bytes"}),
+            patch.object(runner.check_calibration, "run_copy",
+                         side_effect=[self.baseline, self.mutant]),
+            patch.object(runner.check_calibration, "assess",
+                         return_value=True),
+        )
+
+    def test_single_task_end_to_end_prepares_and_deletes_source_outside_checkout(self):
+        with (
+            patch.object(runner.check_calibration, "CATALOG") as catalog_path,
+            patch.object(runner.prepare_private_exports, "prepare",
+                         return_value={"file_count": 1}) as exporter,
+            patch.object(runner.check_calibration, "read_inputs",
+                         return_value={"source": b"private source"}),
+            patch.object(runner.check_calibration, "starter_inputs",
+                         return_value={"source": b"private mutant"}),
+            patch.object(runner.check_calibration, "run_copy",
+                         side_effect=[self.baseline, self.mutant]) as executor,
+            patch.object(runner.check_calibration, "assess", return_value=True),
+        ):
+            catalog_path.read_bytes.return_value = self.raw_catalog
+            result = runner.run_one("PY-04")
+        self.assertTrue(result["public_calibration_passed"])
+        self.assertTrue(result["private_export_cleaned_on_exit"])
+        self.assertTrue(result["original_consumer_test_blob_unchanged"])
+        self.assertEqual(result["pinned_files_verified"], 1)
+        self.assertEqual(result["reference"]["returncode"], 0)
+        self.assertEqual(result["starter"]["returncode"], 1)
+        self.assertEqual(result["starter"]["checks"]["failed_count"], 1)
+        self.assertNotIn("stdout", result["starter"])
+        self.assertNotIn("stderr", result["starter"])
+        self.assertNotIn("DO-NOT-PUBLISH-PRIVATE-TEST-PATH", json.dumps(result))
+        self.assertEqual(result["model_executions"], 0)
+        self.assertFalse(result["release_authorized"])
+        self.assertEqual(result["independent_review"], "NOT_PERFORMED")
+        destination = exporter.call_args.args[0]
+        self.assertEqual(exporter.call_args.args[1], "PY-04")
+        self.assertFalse(destination.is_relative_to(ROOT.parents[1]))
+        self.assertFalse(destination.exists(), "private source temp must be deleted")
+        self.assertEqual(executor.call_count, 2)
+
+    def test_cli_returns_nonzero_when_consumer_mutant_not_caught(self):
+        result = {
+            "task_id": "PY-04", "public_calibration_passed": False,
+            "model_executions": 0, "independent_review": "NOT_PERFORMED",
+            "release_authorized": False,
+        }
+        output = io.StringIO()
+        with (patch.object(runner, "run_one", return_value=result),
+              patch.object(sys, "argv",
+                           ["run_private_calibration.py", "--task", "PY-04"]),
+              contextlib.redirect_stdout(output)):
+            self.assertEqual(runner.main(), 1)
+        self.assertFalse(json.loads(output.getvalue())["public_calibration_passed"])
+
+    def test_private_error_is_redacted_and_invalid_task_never_prepares(self):
+        with (patch.object(runner.prepare_private_exports, "prepare") as exporter,
+              self.assertRaisesRegex(ValueError, "explicit pinned")):
+            runner.run_one("--all")
+        exporter.assert_not_called()
+        private_path = "C:/Users/Private-Client-Secret/records.xlsx"
+        output, errors = io.StringIO(), io.StringIO()
+        with (patch.object(runner, "run_one",
+                           side_effect=OSError(private_path)),
+              patch.object(sys, "argv",
+                           ["run_private_calibration.py", "--task", "PY-04"]),
+              contextlib.redirect_stdout(output),
+              contextlib.redirect_stderr(errors)):
+            self.assertEqual(runner.main(), 2)
+        self.assertEqual(output.getvalue(), "")
+        self.assertNotIn(private_path, errors.getvalue())
+        self.assertNotIn("Traceback", errors.getvalue())
+        self.assertEqual(json.loads(errors.getvalue())["error_type"], "OSError")
+
+    def test_missing_task_or_wrong_export_inventory_fails_closed(self):
+        with patch.object(runner.check_calibration, "CATALOG") as catalog_path:
+            catalog_path.read_bytes.return_value = self.raw_catalog
+            with self.assertRaisesRegex(ValueError, "Missing or duplicate"):
+                runner.run_one("PY-01")
+        with (patch.object(runner.check_calibration, "CATALOG") as catalog_path,
+              patch.object(runner.prepare_private_exports, "prepare",
+                           return_value={"file_count": 0}),
+              patch.object(runner.check_calibration, "run_copy") as executor):
+            catalog_path.read_bytes.return_value = self.raw_catalog
+            with self.assertRaisesRegex(ValueError, "inventory"):
+                runner.run_one("PY-04")
+        executor.assert_not_called()
+
+
+if __name__ == "__main__":
+    unittest.main()
