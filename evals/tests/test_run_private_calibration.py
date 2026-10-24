@@ -22,10 +22,20 @@ spec.loader.exec_module(runner)
 
 class PrivateCalibrationOrchestratorTests(unittest.TestCase):
     def setUp(self):
+        clean = patch.object(
+            runner, "verified_framework_checkout",
+            return_value="a" * 40,
+        )
+        clean.start()
+        self.addCleanup(clean.stop)
         self.package = {
             "task_id": "PY-04",
             "runtime": "python",
             "test_path": "tests/unit/test_project_update_presets.py",
+            "source": {
+                "repository": "lijust/EREI-3.2",
+                "commit": "87d730ddc3547f863de2a6895e91f9b83e9c6e72",
+            },
             "files": [{"path": "core/project_update_presets.py", "git_blob": "a" * 40}],
         }
         self.catalog = {"execution_authorized": False, "packages": [self.package]}
@@ -65,6 +75,14 @@ class PrivateCalibrationOrchestratorTests(unittest.TestCase):
         self.assertTrue(result["private_export_cleaned_on_exit"])
         self.assertTrue(result["original_consumer_test_blob_unchanged"])
         self.assertEqual(result["pinned_files_verified"], 1)
+        self.assertEqual(result["framework_commit_sha"], "a" * 40)
+        self.assertEqual(result["consumer_source_repository"], "lijust/EREI-3.2")
+        self.assertEqual(result["consumer_source_commit_sha"],
+                         "87d730ddc3547f863de2a6895e91f9b83e9c6e72")
+        self.assertEqual(result["execution_scope"],
+                         "UNCHANGED_ORIGINAL_CONSUMER_FUNCTIONS_OFFLINE_UNITTEST_ADAPTER")
+        self.assertTrue(result["python_runtime_version"])
+        self.assertTrue(result["host_os_family"])
         self.assertEqual(result["reference"]["returncode"], 0)
         self.assertEqual(result["starter"]["returncode"], 1)
         self.assertEqual(result["starter"]["checks"]["failed_count"], 1)
