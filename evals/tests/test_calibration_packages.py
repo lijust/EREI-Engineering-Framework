@@ -187,12 +187,12 @@ class CalibrationTests(unittest.TestCase):
                          {**failure, "returncode": 0}))
         self.assertFalse(calibration.assess(package, success, {**failure,
                          "stderr": ("AssertionError [ERR_ASSERTION]: "
-                                    "APP04_MAX_PLUS_ONE_NO_GAP_REUSE\\n"
-                                    "    at /tmp/unrelated.test.js:34:8\\n")}))
+                                    "APP04_MAX_PLUS_ONE_NO_GAP_REUSE\n"
+                                    "    at /tmp/unrelated.test.js:34:8\n")}))
         self.assertFalse(calibration.assess(package, success, {**failure,
-                         "stderr": ("AssertionError [ERR_ASSERTION]: other test\\n"
-                                    "APP04_MAX_PLUS_ONE_NO_GAP_REUSE\\n"
-                                    "    at [eval]:34:8\\n")}))
+                         "stderr": ("AssertionError [ERR_ASSERTION]: other test\n"
+                                    "APP04_MAX_PLUS_ONE_NO_GAP_REUSE\n"
+                                    "    at [eval]:34:8\n")}))
         self.assertFalse(calibration.assess(package, success, {**failure,
                          "stderr": failure["stderr"] + failure["stderr"]}))
         self.assertFalse(calibration.assess(
@@ -284,14 +284,14 @@ class CalibrationTests(unittest.TestCase):
                          "stderr": "Error: Cannot find module APP05_CACHE_LOAD_ONCE"}))
         self.assertFalse(calibration.assess(package, good, {**bad, "returncode": 0}))
         self.assertFalse(calibration.assess(package, good, {**bad,
-                         "stderr": ("AssertionError [ERR_ASSERTION]: APP05_OUTPUT_PARITY\\n"
-                                    "    at [eval]:89:8\\n")}))
+                         "stderr": ("AssertionError [ERR_ASSERTION]: APP05_OUTPUT_PARITY\n"
+                                    "    at [eval]:89:8\n")}))
         self.assertFalse(calibration.assess(package, good, {**bad,
-                         "stderr": ("AssertionError [ERR_ASSERTION]: APP05_CACHE_LOAD_ONCE\\n"
-                                    "    at /src/unrelated.test.js:89:8\\n")}))
+                         "stderr": ("AssertionError [ERR_ASSERTION]: APP05_CACHE_LOAD_ONCE\n"
+                                    "    at /src/unrelated.test.js:89:8\n")}))
         self.assertFalse(calibration.assess(package, good, {**bad,
-                         "stderr": ("SyntaxError: APP05_CACHE_LOAD_ONCE\\n"
-                                    "    at [eval]:89:8\\n")}))
+                         "stderr": ("SyntaxError: APP05_CACHE_LOAD_ONCE\n"
+                                    "    at [eval]:89:8\n")}))
 
     def test_py03_boundaries_detect_only_substring_regression_without_extractor_stack(self):
         package = {
