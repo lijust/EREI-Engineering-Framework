@@ -127,7 +127,12 @@ PY-03 تستخدم oracle عامة تقطع dependencies بالـAST؛ لا تخ
 لإعادة الإنتاج، جهّز exports محلية موثوقة من المصدرين المثبتين في الخطة:
 `app/` لـApp Google و`py/` لـEREI-3.2، مع الحفاظ على مسارات الملفات والبايتات.
 يكفي توفير الملفات المدرجة في `files` لكل وصفة. لا تستخدم working tree
-متغيرًا أو تنزيلًا غير مثبت. الأداة لا تنزل ملفات ولا تثبت تبعيات.
+متغيرًا أو تنزيلًا غير مثبت. **مستودعا EREI-3.2 وEREI-App-Google خاصان،
+ومستودع Framework عام**: يجب إبقاء نسخ المصادر الخاصة **خارج مجلد Git
+العام**. يرفض checker أي `--source-exports` داخل Framework checkout بعد
+حل المسار الحقيقي (حتى لو مجلدًا فرعيًا موجودًا بالفعل). لا تضف تلك النسخ
+إلى Git أو artifacts أو سجلات GitHub Actions العامة؛ نفّذ المطابقة في بيئة
+خاصة مخوّلة وموثوقة فقط. الأداة لا تنزل ملفات ولا تثبت تبعيات.
 
 ```text
 python -B evals/benchmarks/check_calibration.py --source-exports <exports-directory> --node <absolute-node-executable>
