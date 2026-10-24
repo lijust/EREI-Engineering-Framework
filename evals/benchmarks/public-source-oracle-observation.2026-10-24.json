@@ -114,10 +114,25 @@
         "snapshot_repository_reads_each_scenario": 1
       },
       "expected_fail_closed_mutation_detected": true,
-      "original_consumer_test_executed": false,
+      "original_consumer_test_executed": true,
       "original_full_postgres_runtime_executed": false,
       "heldout": false,
-      "note": "One initial checking harness run was corrected: total 4 repository calls over 4 independent scenarios, one call in each; product source remained unchanged."
+      "note": "One initial checking harness run was corrected: total 4 repository calls over 4 independent scenarios, one call in each; product source remained unchanged.",
+      "original_consumer_run": {
+        "scope": "Original unchanged pinned private Node consumer JS test with exact pinned production resolver source in temporary private filesystem outside public checkout",
+        "node_version": "v22.16.0",
+        "test": "tests/prd03-production-edge-context-resolver.test.js",
+        "source_blob_verified": "bd18ab81be52894becd09855a2ae5db31a9c692d",
+        "test_blob_verified": "6c69478e0b03b435fbc4a26a0175023c5c288658",
+        "reference_exit_code": 0,
+        "reference_result": "PASS",
+        "mutant_exit_code": 1,
+        "mutant_expected_error": "AssertionError [ERR_ASSERTION]: Missing expected rejection.",
+        "mutant_original_test_line": 57,
+        "mutant_assertion_recovered": true,
+        "no_external_db_network": true,
+        "not_real_postgres": true
+      }
     },
     {
       "task_id": "PY-03",
@@ -156,6 +171,6 @@
     "No genuine original consumer full test baseline/mutant success is claimed for all 12 packages.",
     "Self-reported tool execution is not independent assessor signoff, budget authority or Stable readiness.",
     "Never copy private repository files into a public Framework git tree or artifacts.",
-    "APP-06 original source behavior was executed only in mocked V8, not the unchanged original Node consumer test or real PostgreSQL context."
+    "APP-06 full unchanged original Node consumer regression executed in isolated temporary source/test copy against fake repository; not a live PostgreSQL-backed integration test."
   ]
 }
