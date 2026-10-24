@@ -35,7 +35,7 @@ def run_one(task: str) -> dict:
     # become an artifact inside a public Git checkout.
     with tempfile.TemporaryDirectory(prefix="erei-operator-private-") as directory:
         outer = Path(directory).resolve()
-        if outer.is_relative_to(check_calibration.Path(__file__).resolve().parents[2]):
+        if outer.is_relative_to(Path(__file__).resolve().parents[2]):
             raise ValueError("System temp cannot be inside public checkout")
         private_dir = outer / "pinned-original-sources"
         exporter_report = prepare_private_exports.prepare(private_dir, task)
