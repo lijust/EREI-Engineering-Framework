@@ -95,6 +95,97 @@ console.log('APP04_BEHAVIORAL_ORACLE_PASS');
 """
 
 
+# Supplemental public APP-05 behavioral calibration oracle. This deliberately
+# evaluates the generated *candidate* from pinned builder bytes, NOT the live
+# consumer source or the original static builder test. Never calls buildCandidate:
+# no Git HEAD check, source copy, Apps Script, deployment or filesystem mutation.
+APP05_NODE_ORACLE = r"""
+'use strict';
+const fs = require('fs');
+const path = require('path');
+const vm = require('vm');
+const assert = require('assert');
+
+const original = fs.readFileSync('src/11_ErrorService.gs', 'utf8');
+const builder = fs.readFileSync('tools/build-error-catalog-repository-candidate.js', 'utf8');
+const candidateModule = {exports: {}};
+vm.runInNewContext(builder, {
+  module: candidateModule, require, console,
+  __dirname: path.resolve('tools')
+}, {filename: 'pinned-error-repository-builder.js', timeout: 1500});
+const candidate = candidateModule.exports.candidateErrorServiceSource();
+const repoPrefix = 'const ErrorCatalogRepository = (function() {';
+const servicePrefix = 'const ErrorService = (function() {';
+assert(candidate.startsWith(repoPrefix), 'APP05_REPOSITORY_PARITY_AND_CACHE');
+assert(candidate.includes(servicePrefix), 'APP05_REPOSITORY_PARITY_AND_CACHE');
+const serviceScope = candidate.slice(candidate.indexOf(servicePrefix));
+assert(!/openSheetById_|getTable_|SpreadsheetApp|CacheService/.test(serviceScope),
+       'APP05_REPOSITORY_PARITY_AND_CACHE');
+const repoScope = candidate.slice(0, candidate.indexOf(servicePrefix));
+assert(repoScope.includes('openSheetById_') && repoScope.includes('getTable_'),
+       'APP05_REPOSITORY_PARITY_AND_CACHE');
+assert(serviceScope.includes('ErrorCatalogRepository.catalog()'),
+       'APP05_REPOSITORY_PARITY_AND_CACHE');
+
+const vectors = [
+  ['SEARCH_LIMIT', {request_id: 'R1'}],
+  ['NOT_FOUND', null],
+  ['AUTH_LOGIN_REQUIRED', {reason: 'expired'}],
+  ['SOMETHING_UNKNOWN', null],
+  ['INTERNAL_ERROR', {trace: false}]
+];
+function run(source) {
+  const counts = {open: 0, table: 0};
+  const rows = [
+    ['SEARCH_LIMIT', 'Search limit reached'],
+    ['NOT_FOUND', 'Not found'],
+    ['INTERNAL_ERROR', 'Internal fallback']
+  ];
+  const ctx = {
+    EREI: {ADMIN_SHEETS: {ERRORS: '01_Errors'}},
+    getAdminId_: () => 'ADMIN-ID',
+    openSheetById_: (id, name) => {
+      counts.open += 1;
+      return {id, name};
+    },
+    getTable_: () => {
+      counts.table += 1;
+      return {headers: ['error_code', 'user_message'], rows: rows.map(r => r.slice())};
+    },
+    rowToObject_: (headers, row) =>
+      Object.fromEntries(headers.map((h, i) => [h, row[i]])),
+    normalizeString_: v => v === null || v === undefined ? '' : String(v).trim(),
+    EreiError_: function(code, message, details, http) {
+      this.code = code;
+      this.message = message;
+      this.details = details;
+      this.http = http;
+    }
+  };
+  vm.createContext(ctx);
+  new vm.Script(source, {filename: '11_ErrorService.gs'}).runInContext(ctx, {timeout: 1500});
+  const output = [];
+  vectors.forEach(([code, details]) => {
+    ctx.__code = code; ctx.__details = details;
+    const item = vm.runInContext(
+      '(function(){var e=ErrorService.fromCode(__code,__details);' +
+      'return {code:e.code,message:e.message,details:e.details,http:e.http};})()',
+      ctx, {timeout: 1500}
+    );
+    output.push(JSON.parse(JSON.stringify(item)));
+  });
+  return {output, counts};
+}
+const before = run(original);
+const after = run(candidate);
+assert.deepStrictEqual(after.output, before.output, 'APP05_REPOSITORY_PARITY_AND_CACHE');
+assert.deepStrictEqual(after.counts, before.counts, 'APP05_REPOSITORY_PARITY_AND_CACHE');
+assert.deepStrictEqual(after.counts, {open: 1, table: 1},
+                       'APP05_REPOSITORY_PARITY_AND_CACHE');
+console.log('APP05_BEHAVIORAL_ORACLE_PASS');
+"""
+
+
 def relative_path(value: str) -> Path:
     posix = PurePosixPath(value)
     if (not value or "\\" in value or ":" in value or posix.is_absolute()
@@ -151,6 +242,8 @@ def run_copy(package: dict, inputs: dict[str, bytes], node: str | None) -> dict:
                 raise ValueError("Node executable is required for App calibration")
             if package.get("behavioral_oracle") == "APP04_PROJECT_ID_MAX_PLUS_ONE":
                 command = [node, "-e", APP04_NODE_ORACLE]
+            elif package.get("behavioral_oracle") == "APP05_REPOSITORY_CACHE_PARITY":
+                command = [node, "-e", APP05_NODE_ORACLE]
             elif "behavioral_oracle" in package:
                 raise ValueError("Unknown public behavioral oracle")
             else:
@@ -182,6 +275,10 @@ def assess(package: dict, reference: dict, starter: dict) -> bool:
             return (reference["stdout"].strip() == "APP04_BEHAVIORAL_ORACLE_PASS"
                     and "AssertionError [ERR_ASSERTION]" in starter["stderr"]
                     and "APP04_MAX_PLUS_ONE_NO_GAP_REUSE" in starter["stderr"])
+        if package.get("behavioral_oracle") == "APP05_REPOSITORY_CACHE_PARITY":
+            return (reference["stdout"].strip() == "APP05_BEHAVIORAL_ORACLE_PASS"
+                    and "AssertionError [ERR_ASSERTION]" in starter["stderr"]
+                    and "APP05_REPOSITORY_PARITY_AND_CACHE" in starter["stderr"])
         if "behavioral_oracle" in package:
             return False
         line = package.get("expected_assertion_line")
