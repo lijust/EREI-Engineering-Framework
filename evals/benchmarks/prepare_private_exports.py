@@ -60,7 +60,8 @@ def verified_file_specifications(catalog: dict, task: str | None) -> dict[tuple[
         if directory not in ("app", "py"):
             raise ValueError("Unexpected export directory")
         for file in package["files"]:
-            filename = str(safe_path(file["path"]))
+            filename = file["path"]
+            safe_path(filename)  # preserve slash-delimited Git paths on Windows
             blob = file["git_blob"]
             if not isinstance(blob, str) or not GIT_BLOB_RE.fullmatch(blob):
                 raise ValueError("Malformed pinned source blob")
