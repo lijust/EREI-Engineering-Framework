@@ -152,7 +152,7 @@ class ExactFrameworkIdentityTests(unittest.TestCase):
     def test_checkout_clean_head_is_a_pinned_hex_sha(self):
         import subprocess
         cmd = [
-            subprocess.CompletedProcess([], 0, stdout=b"c" * 40 + b"\\n", stderr=b""),
+            subprocess.CompletedProcess([], 0, stdout=b"c" * 40 + b"\n", stderr=b""),
             subprocess.CompletedProcess([], 0, stdout=b"", stderr=b""),
         ]
         with patch.object(runner.subprocess, "run", side_effect=cmd) as git:
@@ -170,16 +170,16 @@ class ExactFrameworkIdentityTests(unittest.TestCase):
         scenarios = [
             (subprocess.CompletedProcess([], 1, stdout=b"",
                                          stderr=b"PRIVATE_TOKEN_DO_NOT_LEAK"), "Cannot bind"),
-            (subprocess.CompletedProcess([], 0, stdout=b"HEAD\\n", stderr=b""), "Invalid Framework"),
-            (subprocess.CompletedProcess([], 0, stdout=b"z" * 40 + b"\\n", stderr=b""), "Invalid Framework"),
+            (subprocess.CompletedProcess([], 0, stdout=b"HEAD\n", stderr=b""), "Invalid Framework"),
+            (subprocess.CompletedProcess([], 0, stdout=b"z" * 40 + b"\n", stderr=b""), "Invalid Framework"),
         ]
         for response, fragment in scenarios:
             with self.subTest(error=fragment), patch.object(
                     runner.subprocess, "run", return_value=response):
                 with self.assertRaisesRegex(ValueError, fragment):
                     runner.verified_framework_checkout()
-        pristine = subprocess.CompletedProcess([], 0, stdout=b"c" * 40 + b"\\n", stderr=b"")
-        untracked = subprocess.CompletedProcess([], 0, stdout=b"?? PRIVATE-CLIENT-FILE\\n", stderr=b"")
+        pristine = subprocess.CompletedProcess([], 0, stdout=b"c" * 40 + b"\n", stderr=b"")
+        untracked = subprocess.CompletedProcess([], 0, stdout=b"?? PRIVATE-CLIENT-FILE\n", stderr=b"")
         with patch.object(runner.subprocess, "run", side_effect=[pristine, untracked]):
             with self.assertRaisesRegex(ValueError, "must be clean"):
                 runner.verified_framework_checkout()
