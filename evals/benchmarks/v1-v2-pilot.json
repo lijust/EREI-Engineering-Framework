@@ -84,7 +84,11 @@
       },
       "fixture_sha256": "9582b70289b552c12e4306cdeb1972baae525a1fc5334bb01d6458ab4901f39b",
       "prompt_sha256": "097571abfe8ed8d1b42e564fd08b8e99bd5b8a0008f582cdd019d6b81c658d5c",
-      "hidden_acceptance_sha256": null
+      "hidden_acceptance_sha256": null,
+      "calibration_package": {
+        "path": "evals/benchmarks/calibration-packages.json",
+        "task_id": "APP-03"
+      }
     },
     {
       "task_id": "APP-04",
