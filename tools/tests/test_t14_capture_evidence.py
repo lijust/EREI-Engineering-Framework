@@ -1,5 +1,6 @@
 """Positive/negative retention contracts for hosted T14 synthetic rollback CI."""
 import json
+import hashlib
 import subprocess
 import sys
 import tempfile
@@ -20,7 +21,8 @@ def valid_report():
         "isolated_checkout_ref": TARGET,
         "checkout_identity_verified": True,
         "v2_source_sha256": {
-            key: "f" * 64 for key in (
+            key: hashlib.sha256((ROOT / key).read_bytes()).hexdigest()
+            for key in (
                 "tools/task_learning.py", "tools/validation_contract.py",
                 "tools/tests/drill_task_learning_rollback.py",
             )
