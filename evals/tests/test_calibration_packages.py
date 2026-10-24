@@ -171,6 +171,7 @@ class CalibrationTests(unittest.TestCase):
 
     def test_app04_public_oracle_reports_only_the_expected_gap_reuse_violation(self):
         package = {"runtime": "node", "behavioral_oracle": "APP04_PROJECT_ID_MAX_PLUS_ONE",
+                   "expected_assertion": "APP04_MAX_PLUS_ONE_NO_GAP_REUSE",
                    "test_path": "tests/developer-validation-project-id-policy.test.js"}
         success = {"returncode": 0, "stdout": "APP04_BEHAVIORAL_ORACLE_PASS\n", "stderr": ""}
         failure = {"returncode": 1, "stdout": "",
@@ -184,12 +185,25 @@ class CalibrationTests(unittest.TestCase):
         self.assertFalse(calibration.assess(package, {**success, "stdout": ""}, failure))
         self.assertFalse(calibration.assess(package, success,
                          {**failure, "returncode": 0}))
+        self.assertFalse(calibration.assess(package, success, {**failure,
+                         "stderr": ("AssertionError [ERR_ASSERTION]: "
+                                    "APP04_MAX_PLUS_ONE_NO_GAP_REUSE\\n"
+                                    "    at /tmp/unrelated.test.js:34:8\\n")}))
+        self.assertFalse(calibration.assess(package, success, {**failure,
+                         "stderr": ("AssertionError [ERR_ASSERTION]: other test\\n"
+                                    "APP04_MAX_PLUS_ONE_NO_GAP_REUSE\\n"
+                                    "    at [eval]:34:8\\n")}))
+        self.assertFalse(calibration.assess(package, success, {**failure,
+                         "stderr": failure["stderr"] + failure["stderr"]}))
+        self.assertFalse(calibration.assess(
+            {**package, "expected_assertion": "WRONG"}, success, failure))
 
     def test_app04_public_oracle_invokes_node_without_google_or_network(self):
         node = __import__("shutil").which("node")
         if node is None:
             self.skipTest("Node executable unavailable")
         package = {"runtime": "node", "behavioral_oracle": "APP04_PROJECT_ID_MAX_PLUS_ONE",
+                   "expected_assertion": "APP04_MAX_PLUS_ONE_NO_GAP_REUSE",
                    "test_path": "tests/developer-validation-project-id-policy.test.js"}
         path = "apps/developer-validation-intake/MissingProjectInsertReadiness.gs"
         base = ("function dviMissingProjectInsertMasterInventory_() {"
@@ -209,6 +223,7 @@ class CalibrationTests(unittest.TestCase):
         if node is None:
             self.skipTest("Node executable unavailable")
         package = {"runtime": "node", "behavioral_oracle": "APP05_REPOSITORY_CACHE_PARITY",
+                   "expected_assertion": "APP05_CACHE_LOAD_ONCE",
                    "test_path": "tests/error-catalog-repository-candidate.test.js"}
         # This micro-fixture is only a smoke test for the Framework-owned oracle:
         # the real pinned builder, legacy service and test remain sourced by
@@ -266,8 +281,17 @@ class CalibrationTests(unittest.TestCase):
                                            original_path: legacy.encode()}, node)
         self.assertTrue(calibration.assess(package, good, bad), (good, bad))
         self.assertFalse(calibration.assess(package, good, {**bad,
-                         "stderr": "Error: Cannot find module APP05_REPOSITORY_PARITY_AND_CACHE"}))
+                         "stderr": "Error: Cannot find module APP05_CACHE_LOAD_ONCE"}))
         self.assertFalse(calibration.assess(package, good, {**bad, "returncode": 0}))
+        self.assertFalse(calibration.assess(package, good, {**bad,
+                         "stderr": ("AssertionError [ERR_ASSERTION]: APP05_OUTPUT_PARITY\\n"
+                                    "    at [eval]:89:8\\n")}))
+        self.assertFalse(calibration.assess(package, good, {**bad,
+                         "stderr": ("AssertionError [ERR_ASSERTION]: APP05_CACHE_LOAD_ONCE\\n"
+                                    "    at /src/unrelated.test.js:89:8\\n")}))
+        self.assertFalse(calibration.assess(package, good, {**bad,
+                         "stderr": ("SyntaxError: APP05_CACHE_LOAD_ONCE\\n"
+                                    "    at [eval]:89:8\\n")}))
 
     def test_py03_boundaries_detect_only_substring_regression_without_extractor_stack(self):
         package = {
