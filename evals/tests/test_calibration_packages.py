@@ -155,7 +155,7 @@ class CalibrationTests(unittest.TestCase):
         observed = {item["task_id"]: item for item in report["source_executions"]}
         self.assertEqual(set(observed), {
             "APP-01", "APP-02", "APP-03", "APP-04", "APP-05",
-            "APP-06", "PY-02", "PY-03", "PY-04", "PY-05"})
+            "APP-06", "PY-01", "PY-02", "PY-03", "PY-04", "PY-05", "PY-06"})
         # Public receipt is self-observed original JS consumer body execution
         # via V8 dependency shims, NOT original Node CLI execution or independent
         # reviewer approval. Bind both source and unchanged test git objects.
@@ -264,6 +264,25 @@ class CalibrationTests(unittest.TestCase):
         self.assertEqual(py04["original_consumer_run"]["mutant"]["failed_name"],
                          tasks["PY-04"]["expected_assertion"])
         self.assertFalse(py04["independent_reviewer"])
+        for task_id, method_id, excerpt in (
+            ("PY-01", "SemanticPaymentPlanNormalizer.normalize", "ba77f4a0"),
+            ("PY-06", "_validate_grounding", "9177ac80"),
+        ):
+            scoped = observed[task_id]
+            self.assertEqual(
+                scoped["source_git_blob"],
+                next(obj["git_blob"] for obj in tasks[task_id]["files"]
+                     if obj["path"] == tasks[task_id]["mutation"]["path"]))
+            self.assertEqual(
+                scoped["test_git_blob"],
+                next(obj["git_blob"] for obj in tasks[task_id]["files"]
+                     if obj["path"] == tasks[task_id]["test_path"]))
+            self.assertEqual(scoped["source_method"], method_id)
+            self.assertEqual(scoped["source_excerpt"]["weak_fnv1a32"], excerpt)
+            self.assertEqual(scoped["checks"]["total"], 5)
+            self.assertEqual(scoped["checks"]["expected_mutant_discrimination"], 1)
+            self.assertFalse(scoped["original_consumer_test_executed"])
+            self.assertFalse(scoped["independent_reviewer"])
         self.assertTrue(report["limits"])
 
     def test_private_source_exports_cannot_be_inside_public_framework_checkout(self):
