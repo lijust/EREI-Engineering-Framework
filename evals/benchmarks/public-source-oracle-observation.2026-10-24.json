@@ -282,31 +282,6 @@
       "heldout": false
     },
     {
-      "task_id": "PY-04",
-      "method": "PINNED_PRIVATE_PYTHON_SOURCE_STRUCTURAL_INTERPRETATION_ONLY",
-      "source_git_blob": "2d0960ec3d909bfd24bbb7cfa3084b280f774c57",
-      "registry_git_blob": "17c82850ef60fd436b52aa18810cabfa6643dea6",
-      "test_git_blob": "5317a2b368150bd81031815dcc389db81d61334d",
-      "source_invoked": "NOT_EXECUTED_PYTHON_SOURCE",
-      "observation": {
-        "registry_tokens": 20,
-        "registry_tokens_unique": true,
-        "last_token": "seo",
-        "baseline_full_tokens": 20,
-        "mutant_full_tokens": 19,
-        "reference_equals_registry": true,
-        "mutant_equals_registry": false,
-        "mutation_exact_one_occurrence": true,
-        "original_consumer_assertion_present": true
-      },
-      "source_behavior_mutation_detected_via_structural_interpretation": true,
-      "original_consumer_test_executed": false,
-      "python_runtime_executed": false,
-      "heldout": false,
-      "independent_reviewer": false,
-      "notes": "Read-only regex extraction of exact pinned source ProjectFieldSpec identifiers and original full-preset expression; not an actual Python module/class invocation or original 6-function consumer suite. Do not treat as calibrated."
-    },
-    {
       "task_id": "PY-05",
       "method": "PINNED_UNCHANGED_PRIVATE_PYTHON_CONSUMER_ALL_FUNCTIONS_EXECUTED_ISOLATED_STDLIB",
       "source_git_blob": "145a541a9c6e43b06dbea6cd7efd795e1db65f20",
@@ -353,5 +328,32 @@
     "APP-01/APP-02/APP-03 original unchanged consumer JavaScript test text was executed with V8 shims (assert, fs, path, vm), not in an original native Node process; no independent or full original Node test certification is claimed.",
     "APP-04 original unchanged static policy-text consumer test passed BOTH reference and the actual gap-reuse mutant under V8 shims. Thus it is NOT an adequate mutation-catching consumer test; the separate pinned-source behavior oracle catches the regression. This is a verified test coverage gap, not calibration success.",
     "PY-04 is source-structural only, not original Python runtime execution: 20 original registry entries versus mutant 19, matching the pinned original consumer's expected invariant; no independent calibration."
+  ],
+  "source_structural_observations": [
+    {
+      "task_id": "PY-04",
+      "method": "PINNED_PRIVATE_PYTHON_SOURCE_STRUCTURAL_INTERPRETATION_ONLY",
+      "source_git_blob": "2d0960ec3d909bfd24bbb7cfa3084b280f774c57",
+      "registry_git_blob": "17c82850ef60fd436b52aa18810cabfa6643dea6",
+      "test_git_blob": "5317a2b368150bd81031815dcc389db81d61334d",
+      "source_invoked": "NOT_EXECUTED_PYTHON_SOURCE",
+      "observation": {
+        "registry_tokens": 20,
+        "registry_tokens_unique": true,
+        "last_token": "seo",
+        "baseline_full_tokens": 20,
+        "mutant_full_tokens": 19,
+        "reference_equals_registry": true,
+        "mutant_equals_registry": false,
+        "mutation_exact_one_occurrence": true,
+        "original_consumer_assertion_present": true
+      },
+      "source_behavior_mutation_detected_via_structural_interpretation": true,
+      "original_consumer_test_executed": false,
+      "python_runtime_executed": false,
+      "heldout": false,
+      "independent_reviewer": false,
+      "notes": "Read-only regex extraction of exact pinned source ProjectFieldSpec identifiers and original full-preset expression; not an actual Python module/class invocation or original 6-function consumer suite. Do not treat as calibrated."
+    }
   ]
 }
