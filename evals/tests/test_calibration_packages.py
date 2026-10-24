@@ -153,7 +153,8 @@ class CalibrationTests(unittest.TestCase):
         self.assertEqual(report["pin_integrity"]["distinct_git_blobs_readonly_verified"], 35)
         self.assertEqual(report["pin_integrity"]["original_source_mutations_starter_sha256_verified"], 12)
         observed = {item["task_id"]: item for item in report["source_executions"]}
-        self.assertEqual(set(observed), {"APP-04", "APP-05", "APP-06", "PY-03"})
+        self.assertEqual(set(observed), {
+            "APP-04", "APP-05", "APP-06", "PY-02", "PY-03", "PY-05"})
         self.assertEqual(observed["APP-04"]["source_git_blob"],
                          next(f["git_blob"] for f in tasks["APP-04"]["files"]
                               if f["path"] == tasks["APP-04"]["mutation"]["path"]))
@@ -181,6 +182,25 @@ class CalibrationTests(unittest.TestCase):
         self.assertEqual(observed["PY-03"]["unchanged_original_consumer_test"]["executed"], 1)
         self.assertEqual(observed["PY-03"]["unchanged_original_consumer_test"]["total_defined"], 3)
         self.assertFalse(observed["PY-03"]["unchanged_original_consumer_test"]["full_import_chain_executed"])
+        for task_id, test_count, failed_name in (
+            ("PY-02", 4, "test_attempt_ledger_does_not_poison_reusable_result_cache"),
+            ("PY-05", 6, "test_load_unit_type_mapping_uses_short_lived_connection_and_normalizes_keys"),
+        ):
+            record = observed[task_id]
+            self.assertEqual(record["source_git_blob"],
+                             next(f["git_blob"] for f in tasks[task_id]["files"]
+                                  if f["path"] == tasks[task_id]["mutation"]["path"]))
+            self.assertTrue(record["source_git_blobs_verified_by_local_git_hash_object"])
+            self.assertTrue(record["original_consumer_test_executed"])
+            consumer = record["original_consumer_run"]
+            self.assertEqual(consumer["tests_defined"], test_count)
+            self.assertEqual(consumer["reference"]["passed"], test_count)
+            self.assertEqual(consumer["reference"]["failed"], 0)
+            self.assertEqual(consumer["mutant"]["passed"], test_count - 1)
+            self.assertEqual(consumer["mutant"]["failed"], 1)
+            self.assertEqual(consumer["mutant"]["failed_name"], failed_name)
+            self.assertFalse(record["independent_reviewer"])
+            self.assertFalse(record["hidden_acceptance"])
         self.assertTrue(report["limits"])
 
     def test_private_source_exports_cannot_be_inside_public_framework_checkout(self):
