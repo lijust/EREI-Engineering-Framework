@@ -18,6 +18,7 @@ FULL = "ORIGINAL_CONSUMER_FILE_SELF_REPORTED_OFFLINE"
 PARTIAL = "ORIGINAL_CONSUMER_FUNCTION_PARTIAL_SELF_REPORTED"
 V8 = "ORIGINAL_JS_TEST_TEXT_V8_SHIMS_ONLY"
 METHOD = "DIRECT_PINNED_SOURCE_METHOD_ONLY"
+STRUCTURAL = "PINNED_SOURCE_STRUCTURAL_INTERPRETATION_ONLY"
 NONE = "NO_SOURCE_EXECUTION_RECORDED"
 
 
@@ -43,10 +44,33 @@ def summarize(catalog: dict[str, Any], receipt: dict[str, Any]) -> dict[str, Any
     observed = {r["task_id"]: r for r in records}
     if len(observed) != len(records) or not set(observed).issubset(ids):
         raise ValueError("Duplicate or unknown source observation")
+    structural_records = receipt.get("source_structural_observations", [])
+    structural = {r["task_id"]: r for r in structural_records}
+    if (len(structural) != len(structural_records)
+            or not set(structural).issubset(ids)
+            or set(structural).intersection(observed)):
+        raise ValueError("Duplicate, overlapping or unknown structural source observation")
     statuses: dict[str, str] = {}
     for task in ids:
         r = observed.get(task)
-        if r is None:
+        if r is None and task in structural:
+            entry = structural[task]
+            snapshot = entry.get("observation", {})
+            if not (task == "PY-04"
+                    and entry.get("source_invoked") == "NOT_EXECUTED_PYTHON_SOURCE"
+                    and entry.get("original_consumer_test_executed") is False
+                    and entry.get("python_runtime_executed") is False
+                    and snapshot.get("registry_tokens") == 20
+                    and snapshot.get("baseline_full_tokens") == 20
+                    and snapshot.get("mutant_full_tokens") == 19
+                    and snapshot.get("registry_tokens_unique") is True
+                    and snapshot.get("reference_equals_registry") is True
+                    and snapshot.get("mutant_equals_registry") is False
+                    and snapshot.get("mutation_exact_one_occurrence") is True
+                    and snapshot.get("original_consumer_assertion_present") is True):
+                raise ValueError("Structural PY-04 evidence may not count as runtime execution")
+            status = STRUCTURAL
+        elif r is None:
             status = NONE
         elif r.get("original_consumer_run", {}).get("reference_exit_code") == 0:
             if (task != "APP-06"
@@ -85,13 +109,15 @@ def summarize(catalog: dict[str, Any], receipt: dict[str, Any]) -> dict[str, Any
             raise ValueError("Unrecognized evidence must not promote task")
         statuses[task] = status
     counts = {state: sum(item == state for item in statuses.values())
-              for state in (FULL, PARTIAL, V8, METHOD, NONE)}
+              for state in (FULL, PARTIAL, V8, METHOD, STRUCTURAL, NONE)}
     if sum(counts.values()) != 12:
         raise ValueError("Evidence denominator changed")
     return {
         "kind": "PUBLIC_T15_EVIDENCE_CLASSIFICATION",
         "recipe_preparation": "12/12",
         "source_behavior_observations": f"{len(observed)}/12",
+        "source_structural_observations": f"{len(structural)}/12",
+        "source_evidence_coverage": f"{len(observed) + len(structural)}/12",
         "task_states": statuses,
         "stage_counts": counts,
         "independent_full_source_calibrations": "0/12",
