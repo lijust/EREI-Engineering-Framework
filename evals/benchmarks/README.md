@@ -2,12 +2,12 @@
 
 الحالة: **DRAFT_NOT_EXECUTABLE**. لا تشغيل نموذج أو ميزانية معتمدة أو نتيجة
 مقارنة. `v1-v2-pilot.json` يحتوي 12 مقترحًا من اختبارات فعلية في المشروعين،
-مع commit وGit blob لكل مرجع. أُعدت **ثماني وصفات معايرة عامة**، منها
-سبع لها نتائج معايرة سابقة وAPP-04 لها oracle سلوكية عامة جديدة تحتاج
-إعادة تنفيذ مع exports الأصلية المثبتة على Node. لم تُعدّل مصادر المشروعين أو بياناتهما.
+مع commit وGit blob لكل مرجع. أُعدت **تسع وصفات معايرة عامة**، منها
+سبع لها نتائج معايرة سابقة وAPP-04/APP-05 لهما oracle سلوكية عامة جديدة
+تحتاج إعادة تنفيذ مع exports الأصلية المثبتة على Node. لم تُعدّل مصادر المشروعين أو بياناتهما.
 
 هذه المراجع عقود عامة سبق نشرها، وليست hidden acceptance. mutations عيوب
-محَقونة في نسخ المعايرة، ولا تعني وجودها في المصدر الحالي. أربع مهام ما زالت
+محَقونة في نسخ المعايرة، ولا تعني وجودها في المصدر الحالي. ثلاث مهام ما زالت
 مقترحات؛ جميع `hidden_acceptance_sha256` تبقى `null`. لا يجوز عرض إعداد
 المعايرة بوصفه dataset مقارنة مكتملة أو دليل تفوق V2.
 
@@ -89,7 +89,7 @@ runner-seconds. لا يستنتج مجموعها زمن نهاية إلى نها
 - المخرجات تبقى `comparability=NOT_VERIFIED` و
   `evidence_authenticity=NOT_VERIFIED` و`effectiveness=NOT_ESTABLISHED`.
 
-## ثماني وصفات معايرة عامة من المصدر الفعلي
+## تسع وصفات معايرة عامة من المصدر الفعلي
 
 `calibration-packages.json` يربط كل prompt بالمصدر والاختبار وmutation واحدة
 وGit blobs لجميع الملفات المطلوبة. لا ينسخ كود المشروعين داخل Framework.
@@ -104,14 +104,15 @@ runner-seconds. لا يستنتج مجموعها زمن نهاية إلى نها
 | APP-02 | مقارنة spelling بدل القيمة الرقمية | سكربت consensus الأصلي |
 | APP-03 | نسخ master developer ID إلى external source identity | سكربت provenance الأصلي، مع بقاء write blockers |
 | APP-04 | تغيير next candidate من أعلى ID + 1 إلى أدنى ID + 1 | فحص Node VM سلوكي إضافي من Framework، يقرأ دالة المصدر الأصلية ويدخل IDs 2/5، ولا يشغل السكربت الأصلي النصي كاختبار قبول |
+| APP-05 | كسر cache داخل مصدر generator الخاص بـErrorCatalogRepository | فحص Node VM سلوكي إضافي من Framework يقارن كود ورسائل وأكواد HTTP وسلوك تحميل المزوّد مرة واحدة مع المصدر القديم، وليس تشغيل test الـbuilder النصي الأصلي |
 | APP-06 | إعادة snapshot عند اختلاف السياق | سكربت fake repository الأصلي |
 | PY-02 | إدخال failed attempt في reusable cache | 4 دوال اختبار أصلية |
 | PY-04 | إسقاط آخر token من full preset | 6 دوال اختبار أصلية |
 | PY-05 | ترك connection دون close | 6 دوال اختبار أصلية |
 
 في المعايرات السبع السابقة ينجح الكود الأصلي ويفشل الـstarter عند assertion
-متوقعة؛ وصفة APP-04 أُعدت اعتمادًا على oracle سلوكية جديدة للـVM وتحتاج
-إعادة تحقق مستقلة من تنفيذ Node على نسخ المصدر المثبتة بالكامل. هذا إعداد
+متوقعة؛ وصفتا APP-04 وAPP-05 أُعدتا اعتمادًا على oracle سلوكية جديدة للـVM
+وتحتاجان إعادة تحقق مستقلة من تنفيذ Node على نسخ المصدر المثبتة بالكامل. هذا إعداد
 معايرة عامة، وليس محاولة حل أجراها نموذج. المهام صغيرة ومتعمدة العيب،
 وقد يسهل عكس mutation؛ لا تمثل وحدها تطوير ميزات أو productivity فعلية.
 الاختبارات العامة لا تغطي كل قبول لاحق: مثل cleanup عند فشل قراءة DB
@@ -133,10 +134,12 @@ python -B -m unittest discover -s evals/tests -p test_calibration_packages.py -v
 لا تعدّل الاختبارات ولا export الإدخال. تعمل Python بـ`-I -S -B` دون
 site packages؛ تُستدعى دوال الاختبار المثبتة عبر `unittest` مع دعم `tmp_path`
 فقط. لا تدّعي هذه الطريقة تشغيل pytest أو conftest أو كامل اختبارات المستهلك.
-تعمل سكربتات Node الأصلية مباشرة في الوصفات السابقة؛ APP-04 يستعمل
+تعمل سكربتات Node الأصلية مباشرة في الوصفات السبع السابقة؛ APP-04 يستعمل
 oracle إضافية عامة مُضمّنة في checker لاستدعاء inventory function من مصدر
 Apps Script الحقيقي بـmock read-only (ID 2 و5، فجوات 3 و4، النتيجة 6)،
-دون Sheets API أو تعديل test blob المثبت. oracle عامة **ليست** الاختبار الأصلي
+وAPP-05 يستدعي `candidateErrorServiceSource()` من builder المثبت دون تشغيل
+`buildCandidate()` أو تجاوز git blob، ويقارن provider-read/cache/parity
+في VM ببيانات مزوّد زائفة. لا توجد Google API أو تعديلات للاختبارات الأصلية. oracle عامة **ليست** الاختبار الأصلي
 ولا تعد acceptance خفية. المصدر المقروء راجعه مؤلف الإعداد قبل
 التنفيذ؛ الأداة ليست sandbox لتشغيل كود وكيل غير موثوق.
 
@@ -150,14 +153,12 @@ Apps Script الحقيقي بـmock read-only (ID 2 و5، فجوات 3 و4، ا�
 
 المقترحات المتبقية تحتاج عملًا حقيقيًا قبل تجميد dataset:
 
-- APP-05: فصل قبول refactor السلوكي عن شرط builder المثبت لـsource blob؛
-  لا تجعل تجاوز فحص الهوية حلًا مقبولًا للمهمة.
 - PY-01/PY-06: تجميد dependency environment لـ`jsonschema` والمكونات
   المستوردة، مع FakeProvider فقط؛ التبعية غير متاحة في Python المحلي الحالي.
 - PY-03: حصر سلسلة extractor imports وHTML dependencies قبل تنفيذها؛
   لا تحوّل اختبار parser إلى تشغيل extraction أو شبكة.
 
-عدم اكتمال المقترحات الأربع لا يغير مقام الخطة من 12 مهمة ولا يسمح بحذف slots بعد
+عدم اكتمال المقترحات الثلاث لا يغير مقام الخطة من 12 مهمة ولا يسمح بحذف slots بعد
 النتائج. أي تغيير لاحق في dataset يتطلب خطة جديدة مثبتة قبل جمع المقارنة.
 قبل إرسال starter لوكيل، يفصل المنسق recipe/reference/mutation metadata
 عن workspace المهمة؛ الملف الحالي علني ولا يوفر blinding تلقائيًا.
@@ -266,7 +267,30 @@ GitHub المثبت، ولم تحدث أي عملية حجز/تخصيص ID أو 
 
 الوصفة **PUBLIC_CALIBRATION_ONLY** ويجب تشغيلها على exports المصدر الحقيقية
 بالـchecker وتوثيق baseline/mutant قبل اعتبارها `CALIBRATION_PASS`.
-لا تُعتبر test النصية الأصلية اختبارًا سلوكيًا. أصبحت **8/12 وصفات مجهزة
-من حيث المصدر والـhashes**؛ بقيت APP-05 وPY-01 وPY-03 وPY-06
-غير مجهزة، مع بقاء 48 slot، وصفر تنفيذ مقارنة V1/V2 ممولة، وغياب
+لا تُعتبر test النصية الأصلية اختبارًا سلوكيًا. كانت **8/12 وصفات مجهزة
+عند إضافتها**؛ بعد إضافة APP-05 أصبح الإجمالي **9/12 مجهزة**، وبقيت
+PY-01 وPY-03 وPY-06 غير مجهزة، مع بقاء 48 slot، وصفر تنفيذ مقارنة V1/V2 ممولة، وغياب
 hidden acceptance والتفويض والتقييم المستقل.
+
+## إضافة APP-05 — 2026-10-24 (وصفة عامة جاهزة، تحتاج تحقق consumer exports)
+
+الوصفة التاسعة تثبت **ثلاثة blobs** من App Google عند commit
+`6d32e7a14a4324dbdea228f695d6b75e0b8bd246`: مصدر
+`src/11_ErrorService.gs`، و`tools/build-error-catalog-repository-candidate.js`،
+واختبار `tests/error-catalog-repository-candidate.test.js` غير المُعدّل.
+لا يجري checker استدعاء `buildCandidate()` الذي يفترض Git HEAD ومجلد
+`src` كاملًا؛ بل يستدعي الدالة الأصلية الموثقة
+`candidateErrorServiceSource()` في Node VM من البايتات المثبتة، ثم
+يفحص فصل وصول المزوّد عن ErrorService، ومطابقة خمسة vectors للأكواد
+والرسائل والتفاصيل وHTTP، ومطابقة عدد القراءات السابق (واحدة).
+الطفرة الوحيدة تُعطّل حارس `if (cache_) return cache_;` داخل نص
+الـbuilder المثبت، لتعيد قراءات المزوّد رغم توافق المخرجات. تمت تجربة
+الباني المثبت في JS isolate: المرجع provider reads = 1/1 مقابل mutant = 7/7.
+الفحص السلوكي الإضافي **عام وFramework-owned**، وليس اختبار المستهلك
+الأصلي أو hidden acceptance. لم تُعتمد نسخة تطبيق أو كتابة مصدر أو نشر.
+
+**الحالة المحاسبية:** **9/12** وصفات مُجهزة بالـpins والـhashes؛ تبقى
+`PY-01` و`PY-03` و`PY-06` غير مجهزة، ولا تُرفع APP-05 إلى
+`CALIBRATION_PASS` قبل تشغيل checker على export المصدر المثبت
+وتوثيق baseline/mutant/المراجعة. تظل 48 مقارنة مخططة، 0 model
+observations، `DRAFT_NOT_EXECUTABLE` و`effectiveness=NOT_ESTABLISHED`.
