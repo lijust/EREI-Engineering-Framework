@@ -144,8 +144,10 @@ def assess(package: dict, reference: dict, starter: dict) -> bool:
         checks = record["checks"]
         if checks["tests"] != expected_count or checks["errors"] or checks["skipped"]:
             return False
+    # Reject off-target assertion failures: a mutant failing the intended
+    # regression *and* another test is not isolated calibration evidence.
     return (not reference["checks"]["failures"]
-            and package["expected_assertion"] in starter["checks"]["failures"])
+            and starter["checks"]["failures"] == [package["expected_assertion"]])
 
 
 def main() -> int:
