@@ -2,7 +2,7 @@
 
 ## تحديث إعداد الهدف — 2026-10-23
 
-تمت محاذاة مسودة T14 على Framework main النهائي `58034ae3e6eca6b2e45f79453aa71a783beee07c`؛ PR #94 ما زال **DRAFT / غير مدمج**. يجب تشغيل التمرين من checkout معزول ونظيف عند SHA محدد؛ الأداة ترفض `--target-ref` المخالف لـ Git HEAD قبل تشغيل أي حالة. اسم V2 ref داخل بيانات الاختبار يمثل SHA الفعلي للـcheckout فقط، **ولا يثبت consumer pin أو activation**.
+تمت محاذاة مسودة T14 على Framework main النهائي `58034ae3e6eca6b2e45f79453aa71a783beee07c`؛ PR #94 حاليًا **READY FOR REVIEW / غير مدمج**. يجب تشغيل التمرين من checkout معزول ونظيف عند SHA محدد؛ الأداة ترفض `--target-ref` المخالف لـ Git HEAD قبل تشغيل أي حالة. اسم V2 ref داخل بيانات الاختبار يمثل SHA الفعلي للـcheckout فقط، **ولا يثبت consumer pin أو activation**.
 
 
 النطاق: إعداد T14 في Issue #81. هذا تمرين تكامل ببيانات مصطنعة، وليس اعتماد
@@ -74,7 +74,20 @@ print(destination)
 
 هذا اختبار opt-in، واسمه لا يطابق `test_*.py`. لا يُضاف إلى كل تشغيل CI
 لأنه يحتاج مصدر V1 الأصلي؛ يجب تشغيله صراحة عند تأهيل target النهائي.
-النتيجة JSON على stdout والتفاصيل على stderr، وexit code غير صفر عند الفشل.
+النتيجة الأصلية JSON على stdout والتفاصيل على stderr، وexit code غير صفر عند الفشل.
+في GitHub-hosted CI لا يكفي عرض PASS في logs: يستخدم workflow واجهة
+`tools/t14_capture_evidence.py` لتشغيل الاختبار والاحتفاظ **قبل التقييم**
+بـ`drill-report.stdout.json` (stdout بدون تعديل)، `drill-stderr.txt`،
+`drill-exit-code.txt`، و`capture-verdict.json` مع SHA-256 لمخرجات التشغيل.
+فشل subprocess، أو JSON غير مكتمل/غير موثوق، يظل **BLOCKED** مع حفظ
+المخرجات المتاحة. يُرفَع artifact مستقل لكل Python 3.11 و3.12 من
+`RUNNER_TEMP` باستخدام `actions/upload-artifact@v4` و`always()`،
+`retention-days: 14` و`if-no-files-found: error`؛ يفشل الـworkflow
+إذا فشل حفظ ملف الدليل، ولا يُعامل ملف preflight على أنه تقرير اختبارات.
+يحتفظ كل artifact بهوية run_id/run_attempt في الاسم.
+هذه أدلة مؤقتة قابلة للفحص وليست مخزنًا مستقلًا غير قابل للتعديل أو توقيعًا
+أمنيًا. الحفظ بعد 14 يومًا يتطلب إجراءً منفصلًا يوافق عليه المسؤول قبل
+الحذف الآلي؛ لا يُستنتج اعتماد Internal أو Stable من وجود artifact.
 
 ## السيناريوهات ومعايير النجاح
 
