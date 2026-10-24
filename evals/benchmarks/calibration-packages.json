@@ -288,6 +288,45 @@
       }
     },
     {
+      "task_id": "PY-03",
+      "state": "PUBLIC_CALIBRATION_ONLY",
+      "source": {
+        "repository": "lijust/EREI-3.2",
+        "commit": "87d730ddc3547f863de2a6895e91f9b83e9c6e72",
+        "export_directory": "py"
+      },
+      "runtime": "python",
+      "files": [
+        {
+          "path": "extractors/nawy/payment_section_boundary_extractor.py",
+          "git_blob": "6f165f875aa3aec8db8b2d2ff26eedfa904bd473"
+        },
+        {
+          "path": "tests/unit/test_nawy_payment_section_boundary.py",
+          "git_blob": "2a1353992f626bdf9d8b58db9a0d18f3c15be4c6"
+        }
+      ],
+      "test_path": "tests/unit/test_nawy_payment_section_boundary.py",
+      "behavioral_oracle": "PY03_NAWY_EXACT_BOUNDARY",
+      "python_tests": [
+        "test_exact_english_marker",
+        "test_exact_arabic_marker",
+        "test_exact_not_substring_boundary"
+      ],
+      "mutation": {
+        "path": "extractors/nawy/payment_section_boundary_extractor.py",
+        "before": "            if cls._normalized_boundary_text(line) in stops:\n                break",
+        "after": "            if any(stop in cls._normalized_boundary_text(line) for stop in stops):\n                break"
+      },
+      "expected_assertion": "test_exact_not_substring_boundary",
+      "prompt": "Restore the Nawy payment-page boundary to an exact normalized marker check, not substring matching. In English and Arabic, strip explicit page chrome after payment lines, but preserve evidence lines such as 'Location on Map benefit included in project access' that contain only a substring of a marker. Do not change payment economics or network/provider behavior. Use the provided offline public boundary oracle.",
+      "prompt_sha256": "6ece9f33d9937f91152e250764863090356652e97626d57ac03f10e01413d658",
+      "starter_file_sha256": {
+        "extractors/nawy/payment_section_boundary_extractor.py": "31091e73a2eac817b0acd5db84946394c2213789fff91c07aa79d8d221d7ed19",
+        "tests/unit/test_nawy_payment_section_boundary.py": "57b57228221479d665f63e8dd98f6ac45b0c276f14004a791228671bccdf3098"
+      }
+    },
+    {
       "task_id": "PY-04",
       "state": "PUBLIC_CALIBRATION_ONLY",
       "source": {
