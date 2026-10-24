@@ -18,6 +18,7 @@ FULL = "ORIGINAL_CONSUMER_FILE_SELF_REPORTED_OFFLINE"
 PARTIAL = "ORIGINAL_CONSUMER_FUNCTION_PARTIAL_SELF_REPORTED"
 V8 = "ORIGINAL_JS_TEST_TEXT_V8_SHIMS_ONLY"
 METHOD = "DIRECT_PINNED_SOURCE_METHOD_ONLY"
+STUBBED_METHOD = "PINNED_PYTHON_SOURCE_METHOD_WITH_DEPENDENCY_STUBS"
 STRUCTURAL = "PINNED_SOURCE_STRUCTURAL_INTERPRETATION_ONLY"
 NONE = "NO_SOURCE_EXECUTION_RECORDED"
 
@@ -112,6 +113,29 @@ def summarize(catalog: dict[str, Any], receipt: dict[str, Any]) -> dict[str, Any
                     and r.get("single_mutant", {}).get("status") == "FAIL"):
                 raise ValueError("Cannot promote virtualized JS consumer run")
             status = V8
+        elif task in {"PY-01", "PY-06"}:
+            original_method = {
+                "PY-01": ("SemanticPaymentPlanNormalizer.normalize", 2900, "ba77f4a0",
+                          "provider_specific_failure"),
+                "PY-06": ("_validate_grounding", 1825, "9177ac80",
+                          "derived_8years_to_96months"),
+            }[task]
+            excerpt = r.get("source_excerpt", {})
+            checks = r.get("checks", {})
+            if (r.get("source_method") != original_method[0]
+                    or excerpt.get("length_bytes_ascii") != original_method[1]
+                    or excerpt.get("weak_fnv1a32") != original_method[2]
+                    or excerpt.get("method_executed_with_original_function_body") is not True
+                    or excerpt.get("isolated_private_temp_deleted") is not True
+                    or r.get("original_consumer_test_executed") is not False
+                    or checks.get("total") != 5 or checks.get("reference_pass") != 5
+                    or checks.get("expected_mutant_discrimination") != 1
+                    or checks.get("mutant_different_in_only_case") != original_method[3]
+                    or checks.get("unchanged_negative_controls") != 4
+                    or not r.get("stubbed_dependencies")
+                    or r.get("independent_reviewer") is not False):
+                raise ValueError("Pinned Python method smoke cannot become full consumer acceptance")
+            status = STUBBED_METHOD
         elif task in {"APP-04", "APP-05"}:
             if task == "APP-04":
                 test = r.get("original_unchanged_consumer_test_probe", {})
@@ -124,7 +148,7 @@ def summarize(catalog: dict[str, Any], receipt: dict[str, Any]) -> dict[str, Any
             raise ValueError("Unrecognized evidence must not promote task")
         statuses[task] = status
     counts = {state: sum(item == state for item in statuses.values())
-              for state in (FULL, PARTIAL, V8, METHOD, STRUCTURAL, NONE)}
+              for state in (FULL, PARTIAL, V8, METHOD, STUBBED_METHOD, STRUCTURAL, NONE)}
     if sum(counts.values()) != 12:
         raise ValueError("Evidence denominator changed")
     return {
