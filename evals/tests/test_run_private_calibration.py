@@ -181,38 +181,90 @@ class PrivateCalibrationOrchestratorTests(unittest.TestCase):
 class ExactFrameworkIdentityTests(unittest.TestCase):
     def test_checkout_clean_head_is_a_pinned_hex_sha(self):
         import subprocess
+        root = str(runner.FRAMEWORK_ROOT.resolve()).encode("utf-8")
         cmd = [
+            subprocess.CompletedProcess([], 0, stdout=root + b"\n", stderr=b""),
             subprocess.CompletedProcess([], 0, stdout=b"c" * 40 + b"\n", stderr=b""),
             subprocess.CompletedProcess([], 0, stdout=b"", stderr=b""),
         ]
         with patch.object(runner.subprocess, "run", side_effect=cmd) as git:
             self.assertEqual(runner.verified_framework_checkout(), "c" * 40)
-        self.assertEqual(git.call_count, 2)
+        self.assertEqual(git.call_count, 3)
+        self.assertEqual(git.call_args_list[0].args[0][-2:],
+                         ["rev-parse", "--show-toplevel"])
         for call in git.call_args_list:
             self.assertEqual(call.kwargs["shell"], False)
             self.assertEqual(call.kwargs["timeout"], 15)
             self.assertEqual(call.kwargs["capture_output"], True)
             self.assertEqual(call.args[0][:3],
                              ["git", "-C", str(runner.FRAMEWORK_ROOT)])
+            self.assertTrue(all(
+                not key.upper().startswith("GIT_") for key in call.kwargs["env"]
+            ))
 
     def test_changed_checkout_bad_revision_or_git_errors_refuse_attestation(self):
         import subprocess
+        good_root = subprocess.CompletedProcess(
+            [], 0, stdout=str(runner.FRAMEWORK_ROOT.resolve()).encode("utf-8") + b"\n",
+            stderr=b"",
+        )
+        pristine = subprocess.CompletedProcess(
+            [], 0, stdout=b"c" * 40 + b"\n", stderr=b"",
+        )
+        bad_exit = subprocess.CompletedProcess(
+            [], 1, stdout=b"", stderr=b"PRIVATE_TOKEN_DO_NOT_LEAK",
+        )
         scenarios = [
-            (subprocess.CompletedProcess([], 1, stdout=b"",
-                                         stderr=b"PRIVATE_TOKEN_DO_NOT_LEAK"), "Cannot bind"),
-            (subprocess.CompletedProcess([], 0, stdout=b"HEAD\n", stderr=b""), "Invalid Framework"),
-            (subprocess.CompletedProcess([], 0, stdout=b"z" * 40 + b"\n", stderr=b""), "Invalid Framework"),
+            ([bad_exit], "Cannot bind"),
+            ([subprocess.CompletedProcess([], 0,
+                                          stdout=b"other-repository\n", stderr=b"")],
+             "checkout root"),
+            ([good_root, subprocess.CompletedProcess(
+                [], 0, stdout=b"HEAD\n", stderr=b"")], "Invalid Framework"),
+            ([good_root, subprocess.CompletedProcess(
+                [], 0, stdout=b"z" * 40 + b"\n", stderr=b"")],
+             "Invalid Framework"),
+            ([good_root, bad_exit], "Cannot bind"),
         ]
-        for response, fragment in scenarios:
+        for results, fragment in scenarios:
             with self.subTest(error=fragment), patch.object(
-                    runner.subprocess, "run", return_value=response):
+                    runner.subprocess, "run", side_effect=results):
                 with self.assertRaisesRegex(ValueError, fragment):
                     runner.verified_framework_checkout()
-        pristine = subprocess.CompletedProcess([], 0, stdout=b"c" * 40 + b"\n", stderr=b"")
-        untracked = subprocess.CompletedProcess([], 0, stdout=b"?? PRIVATE-CLIENT-FILE\n", stderr=b"")
-        with patch.object(runner.subprocess, "run", side_effect=[pristine, untracked]):
+        untracked = subprocess.CompletedProcess(
+            [], 0, stdout=b"?? PRIVATE-CLIENT-FILE\n", stderr=b"",
+        )
+        with patch.object(runner.subprocess, "run",
+                          side_effect=[good_root, pristine, untracked]):
             with self.assertRaisesRegex(ValueError, "must be clean"):
                 runner.verified_framework_checkout()
+
+    def test_git_environment_cannot_redirect_source_attestation(self):
+        import subprocess
+        root = str(runner.FRAMEWORK_ROOT.resolve()).encode("utf-8")
+        commands = [
+            subprocess.CompletedProcess([], 0, stdout=root + b"\n", stderr=b""),
+            subprocess.CompletedProcess([], 0, stdout=b"c" * 40 + b"\n", stderr=b""),
+            subprocess.CompletedProcess([], 0, stdout=b"", stderr=b""),
+        ]
+        poisoned = {
+            "GIT_DIR": "C:/other-repository/.git",
+            "GIT_WORK_TREE": "C:/other-repository",
+            "GIT_INDEX_FILE": "C:/other-repository/.git/index",
+            "GIT_COMMON_DIR": "C:/other-repository/.git",
+            "GIT_CONFIG_COUNT": "1",
+            "GIT_CONFIG_KEY_0": "core.bare",
+            "GIT_CONFIG_VALUE_0": "true",
+        }
+        with (patch.dict(runner.os.environ, poisoned),
+              patch.object(runner.subprocess, "run",
+                           side_effect=commands) as git):
+            self.assertEqual(runner.verified_framework_checkout(), "c" * 40)
+        self.assertEqual(git.call_count, 3)
+        for call in git.call_args_list:
+            self.assertTrue(all(
+                not key.upper().startswith("GIT_") for key in call.kwargs["env"]
+            ), "Inherited Git routing must never reach attestation subprocesses")
 
     def test_source_behavior_oracle_must_not_claim_original_consumer_suite(self):
         package = {"runtime": "node", "behavioral_oracle": "APP04_PROJECT_ID_MAX_PLUS_ONE"}
