@@ -126,16 +126,16 @@ vm.runInNewContext(builder, {
 const candidate = candidateModule.exports.candidateErrorServiceSource();
 const repoPrefix = 'const ErrorCatalogRepository = (function() {';
 const servicePrefix = 'const ErrorService = (function() {';
-assert(candidate.startsWith(repoPrefix), 'APP05_REPOSITORY_PARITY_AND_CACHE');
-assert(candidate.includes(servicePrefix), 'APP05_REPOSITORY_PARITY_AND_CACHE');
+assert(candidate.startsWith(repoPrefix), 'APP05_REPOSITORY_STRUCTURE');
+assert(candidate.includes(servicePrefix), 'APP05_REPOSITORY_STRUCTURE');
 const serviceScope = candidate.slice(candidate.indexOf(servicePrefix));
 assert(!/openSheetById_|getTable_|SpreadsheetApp|CacheService/.test(serviceScope),
-       'APP05_REPOSITORY_PARITY_AND_CACHE');
+       'APP05_REPOSITORY_STRUCTURE');
 const repoScope = candidate.slice(0, candidate.indexOf(servicePrefix));
 assert(repoScope.includes('openSheetById_') && repoScope.includes('getTable_'),
-       'APP05_REPOSITORY_PARITY_AND_CACHE');
+       'APP05_REPOSITORY_STRUCTURE');
 assert(serviceScope.includes('ErrorCatalogRepository.catalog()'),
-       'APP05_REPOSITORY_PARITY_AND_CACHE');
+       'APP05_REPOSITORY_STRUCTURE');
 
 const vectors = [
   ['SEARCH_LIMIT', {request_id: 'R1'}],
@@ -188,10 +188,10 @@ function run(source) {
 }
 const before = run(original);
 const after = run(candidate);
-assert.deepStrictEqual(after.output, before.output, 'APP05_REPOSITORY_PARITY_AND_CACHE');
-assert.deepStrictEqual(after.counts, before.counts, 'APP05_REPOSITORY_PARITY_AND_CACHE');
+assert.deepStrictEqual(after.output, before.output, 'APP05_OUTPUT_PARITY');
 assert.deepStrictEqual(after.counts, {open: 1, table: 1},
-                       'APP05_REPOSITORY_PARITY_AND_CACHE');
+                       'APP05_CACHE_LOAD_ONCE');
+assert.deepStrictEqual(after.counts, before.counts, 'APP05_PROVIDER_PARITY');
 console.log('APP05_BEHAVIORAL_ORACLE_PASS');
 """
 
@@ -375,14 +375,28 @@ def assess(package: dict, reference: dict, starter: dict) -> bool:
     if reference["returncode"] != 0 or starter["returncode"] != 1:
         return False
     if package["runtime"] == "node":
-        if package.get("behavioral_oracle") == "APP04_PROJECT_ID_MAX_PLUS_ONE":
-            return (reference["stdout"].strip() == "APP04_BEHAVIORAL_ORACLE_PASS"
-                    and "AssertionError [ERR_ASSERTION]" in starter["stderr"]
-                    and "APP04_MAX_PLUS_ONE_NO_GAP_REUSE" in starter["stderr"])
-        if package.get("behavioral_oracle") == "APP05_REPOSITORY_CACHE_PARITY":
-            return (reference["stdout"].strip() == "APP05_BEHAVIORAL_ORACLE_PASS"
-                    and "AssertionError [ERR_ASSERTION]" in starter["stderr"]
-                    and "APP05_REPOSITORY_PARITY_AND_CACHE" in starter["stderr"])
+        if package.get("behavioral_oracle") in (
+                "APP04_PROJECT_ID_MAX_PLUS_ONE", "APP05_REPOSITORY_CACHE_PARITY"):
+            required = {
+                "APP04_PROJECT_ID_MAX_PLUS_ONE": (
+                    "APP04_BEHAVIORAL_ORACLE_PASS", "APP04_MAX_PLUS_ONE_NO_GAP_REUSE"),
+                "APP05_REPOSITORY_CACHE_PARITY": (
+                    "APP05_BEHAVIORAL_ORACLE_PASS", "APP05_CACHE_LOAD_ONCE"),
+            }[package["behavioral_oracle"]]
+            success, expected_assertion = required
+            if package.get("expected_assertion") != expected_assertion:
+                return False
+            # A visible expected token anywhere in stderr is not enough:
+            # tie the one expected assertion to an actual Node -e eval frame,
+            # and reject unrelated structure/parity assertions and startup errors.
+            error = (r"(?m)^AssertionError \\[ERR_ASSERTION\\]: "
+                     + re.escape(expected_assertion) + r"\\r?$")
+            frame = r"(?m)^ +at (?:[^\\r\\n]*\\()?\\[eval\\]:\\d+:\\d+\\)?\\r?$"
+            stderr = starter.get("stderr", "")
+            return (reference.get("stdout", "").strip() == success
+                    and not reference.get("stderr", "")
+                    and len(re.findall(error, stderr)) == 1
+                    and re.search(frame, stderr) is not None)
         if "behavioral_oracle" in package:
             return False
         line = package.get("expected_assertion_line")
