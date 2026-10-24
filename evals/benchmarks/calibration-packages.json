@@ -139,6 +139,41 @@
       }
     },
     {
+      "task_id": "APP-04",
+      "state": "PUBLIC_CALIBRATION_ONLY",
+      "source": {
+        "repository": "lijust/EREI-App-Google",
+        "commit": "6d32e7a14a4324dbdea228f695d6b75e0b8bd246",
+        "export_directory": "app"
+      },
+      "runtime": "node",
+      "files": [
+        {
+          "path": "apps/developer-validation-intake/MissingProjectInsertReadiness.gs",
+          "git_blob": "6c2b8b02afa9044f21c547f1f19a93820ce7c9ff"
+        },
+        {
+          "path": "tests/developer-validation-project-id-policy.test.js",
+          "git_blob": "3f0c48f0b98d180fd242d1affed87ff0d87d6418"
+        }
+      ],
+      "test_path": "tests/developer-validation-project-id-policy.test.js",
+      "python_tests": [],
+      "behavioral_oracle": "APP04_PROJECT_ID_MAX_PLUS_ONE",
+      "mutation": {
+        "path": "apps/developer-validation-intake/MissingProjectInsertReadiness.gs",
+        "before": "? projectIdMax+1\n    : null;",
+        "after": "? projectIdMin+1\n    : null;"
+      },
+      "expected_assertion": "APP04_MAX_PLUS_ONE_NO_GAP_REUSE",
+      "prompt": "Repair the source-owned DVI project-ID preview so a current Master inventory with IDs 2 and 5 yields provisional next ID 6, never a reused gap (3). Preserve exact 13-column contract and write-time-only locked allocation: preview must not reserve IDs or grant Master writes. Run the public offline behavioral oracle; do not connect to Google Sheets.",
+      "prompt_sha256": "203694205d2501ea9f957cbe9614242ced9d4f8186aa8b6353b3edb22a80230d",
+      "starter_file_sha256": {
+        "apps/developer-validation-intake/MissingProjectInsertReadiness.gs": "9bd59cdbc85824cc012be6d0b6fc7b9f29aa94ef0d32aebdb215ba0b8b385526",
+        "tests/developer-validation-project-id-policy.test.js": "bb7b96d9ff761e9c5f0d97132aaec4177c07e2aab7f2f4abe894af29b151c15e"
+      }
+    },
+    {
       "task_id": "APP-06",
       "state": "PUBLIC_CALIBRATION_ONLY",
       "source": {
