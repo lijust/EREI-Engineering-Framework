@@ -114,6 +114,35 @@ class PrivateCalibrationOrchestratorTests(unittest.TestCase):
         invoke.assert_called_once_with("PY-04")
         self.assertFalse(json.loads(output.getvalue())["public_calibration_passed"])
 
+    def test_public_oracle_receipt_never_claims_original_consumer_execution(self):
+        package = {
+            **self.package,
+            "task_id": "APP-04",
+            "runtime": "node",
+            "behavioral_oracle": "APP04_PROJECT_ID_MAX_PLUS_ONE",
+        }
+        with (
+            patch.object(runner.check_calibration, "CATALOG") as catalog_path,
+            patch.object(runner.prepare_private_exports, "prepare",
+                         return_value={"file_count": 1}),
+            patch.object(runner.check_calibration, "read_inputs",
+                         return_value={"source": b"private source"}),
+            patch.object(runner.check_calibration, "starter_inputs",
+                         return_value={"source": b"private mutant"}),
+            patch.object(runner.check_calibration, "run_copy",
+                         side_effect=[self.baseline, self.mutant]),
+            patch.object(runner.check_calibration, "assess", return_value=True),
+        ):
+            catalog_path.read_bytes.return_value = json.dumps(
+                {"execution_authorized": False, "packages": [package]}
+            ).encode()
+            result = runner.run_one("APP-04")
+        self.assertEqual(result["execution_scope"],
+                         "FRAMEWORK_OWNED_BOUNDED_SOURCE_BEHAVIOR_ORACLE")
+        self.assertTrue(result["original_consumer_test_blob_unchanged"])
+        self.assertFalse(result["original_consumer_test_executed"])
+        self.assertFalse(result["release_authorized"])
+
     def test_private_error_is_redacted_and_invalid_task_never_prepares(self):
         with (patch.object(runner.prepare_private_exports, "prepare") as exporter,
               self.assertRaisesRegex(ValueError, "explicit pinned")):
@@ -189,8 +218,6 @@ class ExactFrameworkIdentityTests(unittest.TestCase):
         package = {"runtime": "node", "behavioral_oracle": "APP04_PROJECT_ID_MAX_PLUS_ONE"}
         self.assertEqual(runner.execution_scope(package),
                          "FRAMEWORK_OWNED_BOUNDED_SOURCE_BEHAVIOR_ORACLE")
-        self.assertTrue(package.get("behavioral_oracle"))
-        self.assertFalse(not bool(package.get("behavioral_oracle")))
         self.assertEqual(runner.execution_scope({"runtime": "node"}),
                          "UNCHANGED_ORIGINAL_NODE_CONSUMER_TEST")
         self.assertEqual(runner.execution_scope({"runtime": "python"}),
