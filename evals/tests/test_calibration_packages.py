@@ -75,6 +75,48 @@ class CalibrationTests(unittest.TestCase):
             hashlib.sha256(records[1]["stderr"].encode("utf-8")).hexdigest(),
         )
 
+    def test_cli_report_never_serializes_private_consumer_stdout_stderr_or_failed_names(self):
+        import contextlib
+        import io
+        import sys
+        secret = "PRIVATE_CONSUMER_PAYLOAD_DO_NOT_PUBLISH"
+        catalog = self.root / "calibration-catalog.json"
+        catalog.write_text(json.dumps({"packages": [
+            {"task_id": "PY-06", "runtime": "python", "python_tests": ["test_grounding"],
+             "expected_assertion": "test_grounding", "test_path": "tests/test_grounding.py"}
+        ]}), encoding="utf-8")
+        reference = {
+            "returncode": 0, "stdout": "PASS " + secret,
+            "stderr": "source /private/repo/sheet.csv",
+            "checks": {"tests": 1, "failures": [], "errors": [], "skipped": 0},
+        }
+        mutant = {
+            "returncode": 1, "stdout": secret,
+            "stderr": "AssertionError: " + secret,
+            "checks": {"tests": 1, "failures": ["test_grounding " + secret],
+                       "errors": [], "skipped": 0},
+        }
+        output = io.StringIO()
+        with (patch.object(calibration, "CATALOG", catalog),
+              patch.object(calibration, "read_inputs", return_value={"source": b"source"}),
+              patch.object(calibration, "starter_inputs", return_value={"source": b"mutant"}),
+              patch.object(calibration, "run_copy", side_effect=[reference, mutant]),
+              patch.object(calibration, "assess", return_value=True),
+              patch.object(sys, "argv",
+                           ["check_calibration.py", "--source-exports", str(self.root)]),
+              contextlib.redirect_stdout(output)):
+            self.assertEqual(calibration.main(), 0)
+        printed = output.getvalue()
+        result = json.loads(printed)
+        self.assertNotIn(secret, printed)
+        self.assertNotIn("/private/repo/sheet.csv", printed)
+        self.assertNotIn("test_grounding " + secret, printed)
+        self.assertTrue(result["results"][0]["calibration_passed"])
+        self.assertEqual(result["results"][0]["starter"]["checks"]["failed_count"], 1)
+        self.assertIsNone(result.get("execution_authorized"))
+        self.assertEqual(result["model_executions"], 0)
+        self.assertEqual(result["independent_review"], "NOT_PERFORMED")
+
     def test_private_source_exports_cannot_be_inside_public_framework_checkout(self):
         public_checkout = Path(calibration.__file__).resolve().parents[2]
         for location in (public_checkout, public_checkout / "private-exports",
