@@ -397,11 +397,33 @@ class CalibrationTests(unittest.TestCase):
                    "expected_assertion": "APP04_MAX_PLUS_ONE_NO_GAP_REUSE",
                    "test_path": "tests/developer-validation-project-id-policy.test.js"}
         path = "apps/developer-validation-intake/MissingProjectInsertReadiness.gs"
-        base = ("function dviMissingProjectInsertMasterInventory_() {"
-                "return {projectIdMin:2,projectIdMax:5,projectIdGapCount:2,"
-                "projectIdNonblankAll:true,projectIdUnique:true,"
-                "projectIdPositiveInteger:true,projectIdNextCandidate:6};}")
-        mutant = base.replace("projectIdNextCandidate:6", "projectIdNextCandidate:3")
+        base = r"""
+function dviMissingProjectInsertMasterInventory_() {
+  const rows = dviRows_();
+  const ids = rows.map(row => String(row.project_id || '').trim()).filter(Boolean);
+  const unique = new Set(ids);
+  const positive = ids.every(id => /^[1-9]\\d*$/.test(id) &&
+                                    Number.isSafeInteger(Number(id)));
+  const numbers = ids.filter(id => /^[1-9]\\d*$/.test(id) &&
+                                   Number.isSafeInteger(Number(id))).map(Number);
+  const min = numbers.length ? Math.min(...numbers) : null;
+  const max = numbers.length ? Math.max(...numbers) : null;
+  const gap = positive && unique.size === ids.length && min !== null
+    ? Math.max(0, (max - min + 1) - unique.size) : null;
+  const next = positive && unique.size === ids.length && ids.length === rows.length &&
+               max !== null && Number.isSafeInteger(max + 1) ? max + 1 : null;
+  return {
+    projectIdMin: min, projectIdMax: max, projectIdGapCount: gap,
+    projectIdNonblankAll: ids.length === rows.length,
+    projectIdUnique: unique.size === ids.length,
+    projectIdPositiveInteger: positive,
+    projectIdNextCandidate: next,
+  };
+}
+"""
+        mutant = base.replace("projectIdNextCandidate: next,",
+                              "projectIdNextCandidate: min === null ? null : min + 1,")
+        self.assertNotEqual(base, mutant)
         good = calibration.run_copy(package, {path: base.encode()}, node)
         bad = calibration.run_copy(package, {path: mutant.encode()}, node)
         self.assertTrue(calibration.assess(package, good, bad),
