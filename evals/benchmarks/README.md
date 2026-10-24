@@ -2,13 +2,14 @@
 
 الحالة: **DRAFT_NOT_EXECUTABLE**. لا تشغيل نموذج أو ميزانية معتمدة أو نتيجة
 مقارنة. `v1-v2-pilot.json` يحتوي 12 مقترحًا من اختبارات فعلية في المشروعين،
-مع commit وGit blob لكل مرجع. أُعدت **تسع وصفات معايرة عامة**، منها
+مع commit وGit blob لكل مرجع. أُعدت **عشر وصفات معايرة عامة**، منها
 سبع لها نتائج معايرة سابقة وAPP-04/APP-05 لهما oracle سلوكية عامة جديدة
-تحتاج إعادة تنفيذ مع exports الأصلية المثبتة على Node. لم تُعدّل مصادر المشروعين أو بياناتهما.
+تحتاج إعادة تنفيذ مع exports الأصلية المثبتة على Node. PY-03 لها oracle
+Python AST محدودة تختبر method الأصلية المثبتة فقط، لا extractor كاملًا. لم تُعدّل مصادر المشروعين أو بياناتهما.
 
 هذه المراجع عقود عامة سبق نشرها، وليست hidden acceptance. mutations عيوب
-محَقونة في نسخ المعايرة، ولا تعني وجودها في المصدر الحالي. ثلاث مهام ما زالت
-مقترحات؛ جميع `hidden_acceptance_sha256` تبقى `null`. لا يجوز عرض إعداد
+محَقونة في نسخ المعايرة، ولا تعني وجودها في المصدر الحالي. مهمتان ما زالتا
+مقترحتين؛ جميع `hidden_acceptance_sha256` تبقى `null`. لا يجوز عرض إعداد
 المعايرة بوصفه dataset مقارنة مكتملة أو دليل تفوق V2.
 
 ## أصغر جزء تنفيذي
@@ -89,7 +90,7 @@ runner-seconds. لا يستنتج مجموعها زمن نهاية إلى نها
 - المخرجات تبقى `comparability=NOT_VERIFIED` و
   `evidence_authenticity=NOT_VERIFIED` و`effectiveness=NOT_ESTABLISHED`.
 
-## تسع وصفات معايرة عامة من المصدر الفعلي
+## عشر وصفات معايرة عامة من المصدر الفعلي
 
 `calibration-packages.json` يربط كل prompt بالمصدر والاختبار وmutation واحدة
 وGit blobs لجميع الملفات المطلوبة. لا ينسخ كود المشروعين داخل Framework.
@@ -107,12 +108,14 @@ runner-seconds. لا يستنتج مجموعها زمن نهاية إلى نها
 | APP-05 | كسر cache داخل مصدر generator الخاص بـErrorCatalogRepository | فحص Node VM سلوكي إضافي من Framework يقارن كود ورسائل وأكواد HTTP وسلوك تحميل المزوّد مرة واحدة مع المصدر القديم، وليس تشغيل test الـbuilder النصي الأصلي |
 | APP-06 | إعادة snapshot عند اختلاف السياق | سكربت fake repository الأصلي |
 | PY-02 | إدخال failed attempt في reusable cache | 4 دوال اختبار أصلية |
+| PY-03 | استبدال حدود marker المطابقة بدقة بمطابقة substring | oracle عامة محدودة تشغّل AST من method Nawy الأصلية على نصوص EN/AR، دون شبكة أو HTML parser كامل |
 | PY-04 | إسقاط آخر token من full preset | 6 دوال اختبار أصلية |
 | PY-05 | ترك connection دون close | 6 دوال اختبار أصلية |
 
 في المعايرات السبع السابقة ينجح الكود الأصلي ويفشل الـstarter عند assertion
 متوقعة؛ وصفتا APP-04 وAPP-05 أُعدتا اعتمادًا على oracle سلوكية جديدة للـVM
-وتحتاجان إعادة تحقق مستقلة من تنفيذ Node على نسخ المصدر المثبتة بالكامل. هذا إعداد
+وتحتاجان إعادة تحقق مستقلة من تنفيذ Node على نسخ المصدر المثبتة بالكامل.
+PY-03 تستخدم oracle عامة تقطع dependencies بالـAST؛ لا تختبر parser الكامل. هذا إعداد
 معايرة عامة، وليس محاولة حل أجراها نموذج. المهام صغيرة ومتعمدة العيب،
 وقد يسهل عكس mutation؛ لا تمثل وحدها تطوير ميزات أو productivity فعلية.
 الاختبارات العامة لا تغطي كل قبول لاحق: مثل cleanup عند فشل قراءة DB
@@ -155,10 +158,8 @@ Apps Script الحقيقي بـmock read-only (ID 2 و5، فجوات 3 و4، ا�
 
 - PY-01/PY-06: تجميد dependency environment لـ`jsonschema` والمكونات
   المستوردة، مع FakeProvider فقط؛ التبعية غير متاحة في Python المحلي الحالي.
-- PY-03: حصر سلسلة extractor imports وHTML dependencies قبل تنفيذها؛
-  لا تحوّل اختبار parser إلى تشغيل extraction أو شبكة.
 
-عدم اكتمال المقترحات الثلاث لا يغير مقام الخطة من 12 مهمة ولا يسمح بحذف slots بعد
+عدم اكتمال المقترحين لا يغير مقام الخطة من 12 مهمة ولا يسمح بحذف slots بعد
 النتائج. أي تغيير لاحق في dataset يتطلب خطة جديدة مثبتة قبل جمع المقارنة.
 قبل إرسال starter لوكيل، يفصل المنسق recipe/reference/mutation metadata
 عن workspace المهمة؛ الملف الحالي علني ولا يوفر blinding تلقائيًا.
@@ -294,3 +295,27 @@ hidden acceptance والتفويض والتقييم المستقل.
 `CALIBRATION_PASS` قبل تشغيل checker على export المصدر المثبت
 وتوثيق baseline/mutant/المراجعة. تظل 48 مقارنة مخططة، 0 model
 observations، `DRAFT_NOT_EXECUTABLE` و`effectiveness=NOT_ESTABLISHED`.
+
+## إضافة PY-03 — 2026-10-24 (الوصفة العاشرة العامة، parser stack ليس ضمنها)
+
+ثُبت source blob `6f165f875aa3aec8db8b2d2ff26eedfa904bd473` الخاص بـ
+`extractors/nawy/payment_section_boundary_extractor.py` وblob الاختبار
+الأصلي `2a1353992f626bdf9d8b58db9a0d18f3c15be4c6` من
+`lijust/EREI-3.2@87d730ddc3547f863de2a6895e91f9b83e9c6e72`.
+تُحقن طفرة substring وحيدة بدل exact matching عند شرط
+`if cls._normalized_boundary_text(line) in stops:`. اختبار Framework
+الجديد يستخدم `ast.parse` ثم يحمّل class `NawyExtractor` المثبتة
+من source الأصلي كما هي داخل Python `-I -S -B`، مع fake
+`_PaymentNawyExtractor._clean_text` لتطبيع أسطر **نصية صريحة فقط**.
+ثلاث assertions عامة: فاصل EN الصحيح، فاصل AR الصحيح، والاحتفاظ بجملة
+تشبه `Location on Map` لكن ليست marker كاملة؛ الأخيرة وحدها تفشل
+مع mutation. **لا يتم** تشغيل HTML parser أو `extractors.nawy` الكامل،
+ولا pytest أو network. اختبار المستهلك الأصلي مرفق بباطن blob ثابت لكنه
+**غير منفذ في الوصفة**؛ لا تعرض نتيجة oracle كتكافؤ كامل مع extractor.
+
+بعد إضافة PY-03، **10/12 وصفات مجهزة بالمصدر والـhashes**، ويبقى
+`PY-01` و`PY-06` يحتاجان dependency-resolved `jsonschema`
+وإغلاق سلسلة imports قبل تجميد وصفات فعلية؛ لا تُزال هذه المهام من
+الـ48 مقارنة المخططة، ولا يُسمح بتنفيذ نموذجي مدفوع أو إصدار Stable
+على أساس هذه التحضيرات. معايرة PY-03 الكاملة بالـchecker وexports
+المثبتة وتقييم مستقل لا تزال مطلوبة.
