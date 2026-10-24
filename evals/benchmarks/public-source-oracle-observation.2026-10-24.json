@@ -219,6 +219,42 @@
       }
     },
     {
+      "task_id": "PY-01",
+      "method": "BOUND_PYTHON_SOURCE_METHOD_EXCERPT_WITH_PROVIDER_REQUEST_STUBS_NO_FULL_CONSUMER",
+      "source_git_blob": "262b2fb0d3ce62f35c3acb47adeac6b42f7ea036",
+      "test_git_blob": "8a737ebd879d1ee3757f12adf00c473c434d29e6",
+      "source_method": "SemanticPaymentPlanNormalizer.normalize",
+      "source_excerpt": {
+        "length_bytes_ascii": 2900,
+        "weak_fnv1a32": "ba77f4a0",
+        "python_version": "3.13.5",
+        "method_executed_with_original_function_body": true,
+        "isolated_private_temp_deleted": true
+      },
+      "checks": {
+        "total": 5,
+        "reference_pass": 5,
+        "expected_mutant_discrimination": 1,
+        "mutant_different_in_only_case": "provider_specific_failure",
+        "unchanged_negative_controls": 4,
+        "provider_specific_ref": "PROVIDER_ERROR",
+        "provider_specific_mutant": "NORMALIZED",
+        "raw_evidence_retained": true
+      },
+      "original_consumer_test_executed": false,
+      "full_jsonschema_path_executed": false,
+      "pinned_original_test_function_count": 20,
+      "stubbed_dependencies": [
+        "StructuredAIRequest",
+        "_prompt",
+        "PaymentNormalizationResult shape",
+        "AIProviderError class",
+        "PAYMENT_NORMALIZATION_RESPONSE_SCHEMA"
+      ],
+      "independent_reviewer": false,
+      "heldout": false
+    },
+    {
       "task_id": "PY-02",
       "method": "PINNED_UNCHANGED_PRIVATE_PYTHON_CONSUMER_ALL_FUNCTIONS_EXECUTED_ISOLATED_STDLIB",
       "source_git_blob": "60e9c102da12b2950e32b784b46646e4d341897b",
@@ -368,6 +404,41 @@
       },
       "independent_reviewer": false,
       "hidden_acceptance": false
+    },
+    {
+      "task_id": "PY-06",
+      "method": "BOUND_PYTHON_SOURCE_METHOD_EXCERPT_WITH_SEMANTIC_NUMBER_HELPER_STUBS_NO_FULL_CONSUMER",
+      "source_git_blob": "262b2fb0d3ce62f35c3acb47adeac6b42f7ea036",
+      "test_git_blob": "c47d6aed4edc16a24149be9472c153f0cff1a8c6",
+      "source_method": "_validate_grounding",
+      "source_excerpt": {
+        "length_bytes_ascii": 1825,
+        "weak_fnv1a32": "9177ac80",
+        "python_version": "3.13.5",
+        "method_executed_with_original_function_body": true,
+        "isolated_private_temp_deleted": true
+      },
+      "checks": {
+        "total": 5,
+        "reference_pass": 5,
+        "expected_mutant_discrimination": 1,
+        "mutant_different_in_only_case": "derived_8years_to_96months",
+        "derived_ref": "UNGROUNDED_NUMERIC",
+        "derived_mutant": "PASS",
+        "unchanged_negative_controls": 4
+      },
+      "original_consumer_test_executed": false,
+      "full_payment_schema_validation_executed": false,
+      "pinned_original_test_function_count": 4,
+      "stubbed_dependencies": [
+        "_evidence_number_tokens",
+        "_iter_semantic_numbers",
+        "_number_token",
+        "_numeric_tokens",
+        "PaymentEvidence shape"
+      ],
+      "independent_reviewer": false,
+      "heldout": false
     }
   ],
   "limits": [
@@ -381,7 +452,8 @@
     "PY-02 and PY-05 full original consumer test functions were invoked via stdlib runpy/unittest with isolated temporary packages, not pytest plugins or complete production application stacks.",
     "APP-01/APP-02/APP-03 original unchanged consumer JavaScript test text was executed with V8 shims (assert, fs, path, vm), not in an original native Node process; no independent or full original Node test certification is claimed.",
     "APP-04 original unchanged static policy-text consumer test passed BOTH reference and the actual gap-reuse mutant under V8 shims. Thus it is NOT an adequate mutation-catching consumer test; the separate pinned-source behavior oracle catches the regression. This is a verified test coverage gap, not calibration success.",
-    "PY-04 original 6-function consumer suite now executed on pinned private source with isolated Python 3.13.5 stdlib harness. Initial seo-tail-drop mutant failed two tests (REJECTED), revised videos-omission mutant failed exactly the intended full-registry assertion; this is a self-observed public calibration, not independent acceptance, full legacy app initialization or held-out model evaluation."
+    "PY-04 original 6-function consumer suite now executed on pinned private source with isolated Python 3.13.5 stdlib harness. Initial seo-tail-drop mutant failed two tests (REJECTED), revised videos-omission mutant failed exactly the intended full-registry assertion; this is a self-observed public calibration, not independent acceptance, full legacy app initialization or held-out model evaluation.",
+    "PY-01 and PY-06 are isolated exact source METHOD-EXCERPT executions on Python 3.13.5 using bounded dependency stubs, NOT unchanged original consumer test suite runs, complete jsonschema/semantic engine, paid model calls, or independent approval. FNV-1a excerpt ID is weak and supplemental; true source identity is the pinned original Git blob."
   ],
   "source_structural_observations": [],
   "historical_source_structural_observations": [
