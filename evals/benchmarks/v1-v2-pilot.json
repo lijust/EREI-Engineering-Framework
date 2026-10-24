@@ -221,7 +221,7 @@
       "family": "registry-maintenance",
       "risk": "L1",
       "proposed_task": "Derive full update tokens from the registry and retain unavailable/partial source semantics.",
-      "fixture_preparation": "Pinned source export plus one exact mutation; public calibration only. Original tests remain unchanged.",
+      "fixture_preparation": "Exact pinned private source and unchanged six-function consumer test. Initial tail-drop seo mutant failed two original assertions and was REJECTED as off-target; revised single-line omission of videos yields baseline 6/6 PASS, mutant 5/6 PASS and only expected full-registry assertion FAIL under isolated Python 3.13.5 stdlib harness. Self-observed calibration, NOT independent review or full application integration.",
       "state": "PUBLIC_CALIBRATION_RECIPE_PREPARED",
       "source": {
         "repository": "lijust/EREI-3.2",
@@ -229,7 +229,7 @@
         "path": "tests/unit/test_project_update_presets.py",
         "git_blob": "5317a2b368150bd81031815dcc389db81d61334d"
       },
-      "fixture_sha256": "b99221e41fbd67e36745563c4a5398b72ff8b349997097a7a7f76202a0ac56de",
+      "fixture_sha256": "3f73c0fd367854c1eff86434f8a897dee20eb07b58f41e59255e181c8bc30b65",
       "prompt_sha256": "deb8c562b6732b0cddc342b89ca628fd637d4a047c91339e5de31e101003212c",
       "hidden_acceptance_sha256": null,
       "calibration_package": {
