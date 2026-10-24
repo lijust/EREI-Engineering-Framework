@@ -204,7 +204,7 @@
         "before": "    if (cache_) return cache_;",
         "after": "    if (false) return cache_;"
       },
-      "expected_assertion": "APP05_REPOSITORY_PARITY_AND_CACHE",
+      "expected_assertion": "APP05_CACHE_LOAD_ONCE",
       "prompt": "Repair the generated ErrorCatalogRepository candidate so its provider access stays outside ErrorService and its one-load catalog caching, user-facing code/message/details/http and fallback behavior match the original ErrorService. A synthetic cache-guard mutation rereads the provider on subsequent calls; restore caching without changing the original source, candidate file inventory or production deployment. Use the public offline behavioral oracle only.",
       "prompt_sha256": "a390806eafd28c647849de711ccc1741a36f9e920718a9690ccb278f0cd19969",
       "starter_file_sha256": {
