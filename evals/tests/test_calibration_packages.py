@@ -174,7 +174,7 @@ class CalibrationTests(unittest.TestCase):
         self.assertEqual(consumer["mutant_original_test_line"], 57)
         self.assertTrue(consumer["mutant_assertion_recovered"])
         self.assertTrue(consumer["no_external_db_network"])
-        self.assertFalse(consumer["not_real_postgres"] is False)
+        self.assertTrue(consumer["not_real_postgres"])
         self.assertEqual(observed["PY-03"]["source_git_blob"],
                          next(f["git_blob"] for f in tasks["PY-03"]["files"]
                               if f["path"] == tasks["PY-03"]["mutation"]["path"]))
