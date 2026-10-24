@@ -79,7 +79,7 @@ class CIRequiredAssuranceCoverageTests(unittest.TestCase):
             "run: python -m unittest discover -s tools/tests -p 'test_*.py' -v",
             section,
         )
-        hdr = src.split("\nconcurrency:", 1)[0]
+        hdr = src.split("\npermissions:", 1)[0]
         self.assertIn("on:\n  pull_request:\n  push:\n", hdr)
         self.assertIn("      - main\n", hdr)
         self.assertNotIn("paths:", hdr)
