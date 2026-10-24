@@ -167,6 +167,14 @@ class CalibrationTests(unittest.TestCase):
             observed["APP-06"]["reference"]["wrong_subscriber_error"],
             "AUTHORITY_SNAPSHOT_CONTEXT_MISMATCH")
         self.assertIs(observed["APP-06"]["one_line_mutant"]["wrong_subscriber_rejected"], False)
+        consumer = observed["APP-06"]["original_consumer_run"]
+        self.assertIs(observed["APP-06"]["original_consumer_test_executed"], True)
+        self.assertEqual(consumer["reference_exit_code"], 0)
+        self.assertEqual(consumer["mutant_exit_code"], 1)
+        self.assertEqual(consumer["mutant_original_test_line"], 57)
+        self.assertTrue(consumer["mutant_assertion_recovered"])
+        self.assertTrue(consumer["no_external_db_network"])
+        self.assertFalse(consumer["not_real_postgres"] is False)
         self.assertEqual(observed["PY-03"]["source_git_blob"],
                          next(f["git_blob"] for f in tasks["PY-03"]["files"]
                               if f["path"] == tasks["PY-03"]["mutation"]["path"]))
