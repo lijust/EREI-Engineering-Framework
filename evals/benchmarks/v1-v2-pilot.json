@@ -158,17 +158,21 @@
       "family": "provider-recovery",
       "risk": "L2",
       "proposed_task": "Preserve evidence and reject unsupported or provider-error normalization without real provider calls.",
-      "fixture_preparation": "Inject one error-to-success mapping in a fixture with FakeProvider.",
-      "state": "PROPOSAL_FIXTURE_NOT_PREPARED",
+      "fixture_preparation": "Pinned original 20-function consumer test plus normalizer and provider. One exact fail-open mutation falsely maps FakeProvider AIRequestError to NORMALIZED. Offline opt-in Python -I -B with exact local jsonschema/transitive dependency versions; fail closed on mismatched versions. No real provider, no live model, no production data.",
+      "state": "PUBLIC_CALIBRATION_RECIPE_PREPARED",
       "source": {
         "repository": "lijust/EREI-3.2",
         "commit": "87d730ddc3547f863de2a6895e91f9b83e9c6e72",
         "path": "tests/unit/test_payment_plan_semantic_normalizer.py",
         "git_blob": "8a737ebd879d1ee3757f12adf00c473c434d29e6"
       },
-      "fixture_sha256": null,
-      "prompt_sha256": null,
-      "hidden_acceptance_sha256": null
+      "fixture_sha256": "147758bdb3544c3ac610960a3037d880ab0c41242109174c45e75dbcbf5844c8",
+      "prompt_sha256": "20e1c5914528b1f095ac010ee286fbd41dfff9b9f23dd96ebe575cbbd7502715",
+      "hidden_acceptance_sha256": null,
+      "calibration_package": {
+        "path": "evals/benchmarks/calibration-packages.json",
+        "task_id": "PY-01"
+      }
     },
     {
       "task_id": "PY-02",
