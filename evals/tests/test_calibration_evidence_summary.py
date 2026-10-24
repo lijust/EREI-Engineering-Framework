@@ -24,17 +24,20 @@ class EvidenceSummaryTests(unittest.TestCase):
         result = summarizer.summarize(self.catalog, self.receipt)
         self.assertEqual(result["recipe_preparation"], "12/12")
         self.assertEqual(result["source_behavior_observations"], "9/12")
+        self.assertEqual(result["source_structural_observations"], "1/12")
+        self.assertEqual(result["source_evidence_coverage"], "10/12")
         self.assertEqual(result["stage_counts"], {
             summarizer.FULL: 3,
             summarizer.PARTIAL: 1,
             summarizer.V8: 3,
             summarizer.METHOD: 2,
-            summarizer.NONE: 3,
+            summarizer.STRUCTURAL: 1,
+            summarizer.NONE: 2,
         })
         self.assertEqual(result["task_states"]["APP-04"], summarizer.METHOD)
         self.assertEqual(result["task_states"]["PY-03"], summarizer.PARTIAL)
         self.assertEqual(result["task_states"]["PY-01"], summarizer.NONE)
-        self.assertEqual(result["task_states"]["PY-04"], summarizer.NONE)
+        self.assertEqual(result["task_states"]["PY-04"], summarizer.STRUCTURAL)
         self.assertEqual(result["task_states"]["PY-06"], summarizer.NONE)
         self.assertEqual(result["independent_full_source_calibrations"], "0/12")
         self.assertEqual(result["model_comparisons"], "0/48")
@@ -79,6 +82,33 @@ class EvidenceSummaryTests(unittest.TestCase):
         record["full_node_runtime_executed"] = True
         with self.assertRaisesRegex(ValueError, "virtualized"):
             summarizer.summarize(self.catalog, receipt)
+
+    def test_structural_py04_never_inflates_runtime_or_consumer_calibration(self):
+        receipt = copy.deepcopy(self.receipt)
+        item = receipt["source_structural_observations"][0]
+        self.assertEqual(item["task_id"], "PY-04")
+        self.assertEqual(item["test_git_blob"], "5317a2b368150bd81031815dcc389db81d61334d")
+        for key, value in (
+            ("python_runtime_executed", True),
+            ("original_consumer_test_executed", True),
+        ):
+            with self.subTest(key=key):
+                poisoned = copy.deepcopy(receipt)
+                poisoned["source_structural_observations"][0][key] = value
+                with self.assertRaisesRegex(ValueError, "runtime execution"):
+                    summarizer.summarize(self.catalog, poisoned)
+        poisoned = copy.deepcopy(receipt)
+        poisoned["source_structural_observations"][0]["observation"]["mutant_full_tokens"] = 20
+        with self.assertRaisesRegex(ValueError, "runtime execution"):
+            summarizer.summarize(self.catalog, poisoned)
+        poisoned = copy.deepcopy(receipt)
+        poisoned["source_executions"].append(copy.deepcopy(item))
+        with self.assertRaisesRegex(ValueError, "overlapping"):
+            summarizer.summarize(self.catalog, poisoned)
+        poisoned = copy.deepcopy(receipt)
+        poisoned["source_structural_observations"].append(copy.deepcopy(item))
+        with self.assertRaisesRegex(ValueError, "Duplicate"):
+            summarizer.summarize(self.catalog, poisoned)
 
     def test_duplicate_unknown_or_changed_denominator_fail_closed(self):
         receipt = copy.deepcopy(self.receipt)
