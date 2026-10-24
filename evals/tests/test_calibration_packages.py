@@ -246,7 +246,7 @@ class CalibrationTests(unittest.TestCase):
             encoding="utf-8"))
         self.assertEqual(len(plan["tasks"]), 12)
         by_id = {package["task_id"]: package for package in catalog["packages"]}
-        self.assertEqual(len(by_id), 8)
+        self.assertEqual(len(by_id), 9)
         linked = set()
         for task in plan["tasks"]:
             self.assertIsNone(task["hidden_acceptance_sha256"])
