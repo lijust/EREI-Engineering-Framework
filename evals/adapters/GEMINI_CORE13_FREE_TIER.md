@@ -42,7 +42,7 @@ This prompts for the key invisibly again and issues **one GET** for `models/gemi
 
 A *later* explicitly approved and controlled one-case smoke now writes `reason_category` as safe `GEMINI_HTTP_ERROR` / `GEMINI_TRANSPORT_ERROR` and `provider_http_status` for denial, rather than losing the HTTP code. **Use a new evidence directory `smoke-002` because the original `smoke-001` is preserved and must not be overwritten.** Never repeat the model POST merely to discover a quota issue before the metadata GET.
 
-**Critical reviewer safety fix:** Codex also caught that the frozen suite JSON and scorer Python could be modified under Git `assume-unchanged`. Before parsing or executing, the new code verifies their on-disk bytes against exact frozen Git blobs, in addition to the original Framework Markdown artifact byte verification. This is necessary before any retry and does not confer independent model admission.
+**Critical reviewer safety fixes:** Codex caught that the frozen suite/scorer could be modified under Git `assume-unchanged`, that cached `evals/__pycache__/runner*.pyc` could run despite checking source bytes (**P1**), and that clean Windows CRLF checkouts could be incorrectly rejected (**P2**). The current implementation now **reads the suite JSON directly from the immutable PR #98 Git blob** and **compiles/executes the scorer from Git blob bytes**, without reading the worktree scorer source or importing a cached `.pyc`. Public Framework Markdown artifacts are still independently compared against their committed Git blobs. Both safety regressions and clean-CRLF behavior are covered by offline tests. This is necessary before another smoke and does not confer independent model admission.
 
 ---
 
