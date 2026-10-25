@@ -105,45 +105,91 @@ class CoreOneCaseTests(unittest.TestCase):
                 self.assertEqual((Path(folder) / "provider-raw.json").read_bytes(), raw)
                 self.assertFalse((Path(folder) / "adapter-normalized.json").exists())
 
-    def test_frozen_case_and_runner_bytes_reject_hidden_changes(self):
+    def test_suites_are_read_only_immutable_git_blobs_not_worktree(self):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)
-            suite_name = "evals/cases/task-learning-review.eval.json"
-            for path in ("evals/runner.py", suite_name):
-                with self.subTest(path=path):
-                    real = root / path
-                    real.parent.mkdir(parents=True, exist_ok=True)
-                    real.write_bytes(b"malicious changed worktree bytes")
-                    with mock.patch.object(
-                        smoke.subprocess, "check_output", return_value=b"original immutable blob"
-                    ) as git:
-                        with self.assertRaisesRegex(
-                            smoke.gemini.GeminiAdapterError, "bytes differ"
-                        ):
-                            smoke.verify_exact_target_source_file(root, path)
-                        self.assertIn("show", git.call_args.args[0])
+            rel = "evals/cases/task-learning-review.eval.json"
+            path = root / rel
+            path.parent.mkdir(parents=True)
+            path.write_bytes(b'{"poisoned_worktree": "PRIVATE-MUST-NOT-SEND"}')
+            blob = json.dumps({
+                "suite_id": "task-learning-review-v1",
+                "artifact": "skills/task-learning-capture + workflows/learning-review",
+                "cases": [{
+                    "id": key, "input": {"prompt": "TRUSTED COMMITTED CASE"},
+                    "expectations": [{"type": "behavioral_simulation"}],
+                } for key in smoke.CASES["task-learning-review.eval.json"]],
+            }).encode("utf-8")
+            fake_runner = mock.Mock()
+            fake_runner.strict_json_loads.side_effect = json.loads
+            fake_runner.validate_suite.return_value = []
+            with mock.patch.object(smoke.subprocess, "check_output", return_value=blob) as git:
+                suite, case, req = smoke.load_one(
+                    root, "TLR-001-SUCCESS-STILL-LEARNING-DATA", fake_runner
+                )
+                self.assertEqual(case["input"]["prompt"], "TRUSTED COMMITTED CASE")
+                self.assertNotIn("PRIVATE-MUST-NOT-SEND", str(req))
+                self.assertIn("show", git.call_args.args[0])
+                self.assertEqual(git.call_args.args[0][-1],
+                                 smoke.gemini.EXPECTED_TARGET_HEAD + ":" + rel)
             with self.assertRaisesRegex(
                 smoke.gemini.GeminiAdapterError, "unexpected target evaluation"
             ):
-                smoke.verify_exact_target_source_file(root, "secrets/private.env")
+                smoke.frozen_blob(root, "secrets/private.env")
 
-    def test_malicious_case_is_blocked_before_it_enters_a_prompt(self):
+    def test_scorer_executes_git_blob_without_loading_poisoned_pyc(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            py_file = root / "evals" / "runner.py"
+            py_file.parent.mkdir(parents=True)
+            py_file.write_text(
+                "MARKER = 'PRIVATE-MUST-NOT-EXECUTE'\n",
+                encoding="utf-8",
+            )
+            pycache = py_file.parent / "__pycache__"
+            pycache.mkdir()
+            (pycache / "runner.cpython-312.pyc").write_bytes(b"POISONED-PYC")
+            git_source = b"MARKER = 'ORIGINAL_VERIFIED_GIT_BLOB'\n"
+            with mock.patch.object(
+                smoke.subprocess, "check_output", return_value=git_source
+            ) as git:
+                loaded = smoke.frozen_runner(root)
+            self.assertEqual(loaded.MARKER, "ORIGINAL_VERIFIED_GIT_BLOB")
+            self.assertIn("show", git.call_args.args[0])
+            self.assertEqual(git.call_args.args[0][-1],
+                             smoke.gemini.EXPECTED_TARGET_HEAD + ":evals/runner.py")
+            self.assertEqual(len(list(pycache.iterdir())), 1)
+
+    def test_crlf_worktree_cannot_block_valid_git_blob_case_or_scorer(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            path = root / "evals" / "runner.py"
+            path.parent.mkdir(parents=True)
+            path.write_bytes(b"MARKER = 'WORKTREE'\r\n")
+            with mock.patch.object(
+                smoke.subprocess, "check_output",
+                return_value=b"MARKER = 'PINNED'\n",
+            ):
+                scorer = smoke.frozen_runner(root)
+            self.assertEqual(scorer.MARKER, "PINNED")
+
+    def test_frozen_suite_tamper_fails_before_model_prompt_or_network(self):
         with (
             mock.patch.object(smoke.gemini, "verify_frozen_target"),
             mock.patch.object(smoke, "frozen_runner", return_value=mock.Mock()),
-            mock.patch.object(smoke, "verify_exact_target_source_file",
-                              side_effect=smoke.gemini.GeminiAdapterError("bytes differ")),
+            mock.patch.object(smoke, "frozen_blob",
+                              side_effect=smoke.gemini.GeminiAdapterError("blob unavailable")),
             mock.patch.object(smoke.gemini, "prepare_one") as build,
             mock.patch.object(smoke.gemini, "generate_raw_once") as api,
         ):
-            with self.assertRaisesRegex(smoke.gemini.GeminiAdapterError, "bytes differ"):
+            with self.assertRaisesRegex(smoke.gemini.GeminiAdapterError, "blob unavailable"):
                 smoke.prepare(Path("."), "TLR-001-SUCCESS-STILL-LEARNING-DATA", Path("."))
             build.assert_not_called()
             api.assert_not_called()
 
     def test_offline_preflight_uses_target_runner_and_single_case(self):
         fake = mock.Mock()
-        fake.load_json.return_value = {
+        fake.strict_json_loads.return_value = {
             "suite_id": "task-learning-review-v1",
             "artifact": "skills/task-learning-capture + workflows/learning-review",
             "cases": [{
@@ -157,7 +203,7 @@ class CoreOneCaseTests(unittest.TestCase):
         with (
             mock.patch.object(smoke.gemini, "verify_frozen_target") as identity,
             mock.patch.object(smoke, "frozen_runner", return_value=fake),
-            mock.patch.object(smoke, "verify_exact_target_source_file"),
+            mock.patch.object(smoke, "frozen_blob", return_value=b'{"synthetic":"fixture"}'),
             mock.patch.object(smoke, "source_identity",
                               return_value={"adapter_source_revision": "a" * 40}),
             mock.patch.object(smoke.gemini, "prepare_one", return_value="prompt") as build,
