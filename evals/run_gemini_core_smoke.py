@@ -56,8 +56,36 @@ def json_bytes(value: object) -> bytes:
                        sort_keys=True, indent=2) + "\n").encode("utf-8")
 
 
+def verify_exact_target_source_file(root: Path, relative_path: str) -> None:
+    """Reject hidden worktree modifications of suite/scorer BEFORE reading/executing.
+
+    Git assume-unchanged can mask changes from status; compare raw bytes with
+    the Git blob at the exact immutable PR #98 commit. No model calls here.
+    """
+    allowed = {"evals/runner.py"} | {
+        "evals/cases/" + name for name in CASES
+    }
+    if relative_path not in allowed:
+        raise gemini.GeminiAdapterError("unexpected target evaluation file")
+    env = {k: v for k, v in os.environ.items()
+           if not k.upper().startswith("GIT_")}
+    try:
+        blob = subprocess.check_output(
+            ["git", "-C", str(root.resolve()), "show",
+             f"{gemini.EXPECTED_TARGET_HEAD}:{relative_path}"],
+            text=False, stdin=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+            timeout=10, env=env,
+        )
+        local = (root / relative_path).read_bytes()
+    except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
+        raise gemini.GeminiAdapterError("frozen target source verification unavailable") from None
+    if local != blob:
+        raise gemini.GeminiAdapterError("frozen target suite/scorer bytes differ from original Git blob")
+
+
 def frozen_runner(root: Path):
     """Load scorer code from the actual pinned *target*, not adapter checkout."""
+    verify_exact_target_source_file(root, "evals/runner.py")
     path = root / "evals" / "runner.py"
     spec = importlib.util.spec_from_file_location("erei_frozen_core_scorer", path)
     if not spec or not spec.loader:
@@ -92,6 +120,7 @@ def load_one(root: Path, case_id: str, evaluator) -> tuple[dict, dict, dict]:
     name = next((name for name, ids in CASES.items() if case_id in ids), None)
     if name is None:
         raise gemini.GeminiAdapterError("case ID outside frozen Core13")
+    verify_exact_target_source_file(root, "evals/cases/" + name)
     path = root / "evals" / "cases" / name
     suite = evaluator.load_json(path)
     errors = evaluator.validate_suite(suite, str(path))
