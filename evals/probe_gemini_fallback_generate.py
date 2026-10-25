@@ -47,12 +47,18 @@ def probe(*, model: str, key: str, opener: Any = None) -> dict:
         if len(payload) > MAX_RESPONSE_BYTES:
             return {"status": "PROVIDER_RESPONSE_OVERSIZE", "counted_core_cases": 0}
         envelope = json.loads(payload)
+        if not isinstance(envelope, dict):
+            return {"status": "PROVIDER_RESPONSE_INVALID", "counted_core_cases": 0}
         candidates = envelope.get("candidates")
         if not isinstance(candidates, list) or len(candidates) != 1:
             return {"status": "PROVIDER_RESPONSE_INVALID", "counted_core_cases": 0}
         candidate = candidates[0]
+        if not isinstance(candidate, dict):
+            return {"status": "PROVIDER_RESPONSE_INVALID", "counted_core_cases": 0}
         content = candidate.get("content", {})
         parts = content.get("parts", []) if isinstance(content, dict) else []
+        if not isinstance(parts, list):
+            return {"status": "PROVIDER_RESPONSE_INVALID", "counted_core_cases": 0}
         text = "".join(p.get("text", "") for p in parts
                        if isinstance(p, dict) and isinstance(p.get("text"), str))
         model_version = envelope.get("modelVersion")
@@ -79,7 +85,7 @@ def probe(*, model: str, key: str, opener: Any = None) -> dict:
         return {"status": "MODEL_DIAGNOSTIC_HTTP_ERROR",
                 "http_status": err.code if type(err.code) is int else None,
                 "requested_model": model, "counted_core_cases": 0}
-    except (OSError, urllib.error.URLError, ValueError, TypeError):
+    except (OSError, urllib.error.URLError, ValueError, TypeError, RuntimeError):
         return {"status": "MODEL_DIAGNOSTIC_TRANSPORT_OR_PARSE_ERROR",
                 "requested_model": model, "counted_core_cases": 0}
 
