@@ -5,6 +5,31 @@ derived from the existing `MASTER_PLAN.md §5` checklist; it does **not**
 install a new governance service or create a Stable release gate. No actual
 Internal pilot was executed or approved in preparing this document.
 
+## Update 2026-10-25 — APPROVED exception: two AI review channels plus owner risk acceptance (synthetic Internal ONLY)
+
+**Owner decision:** The owner explicitly approved replacing the *human independent reviewers for a tightly isolated synthetic-only Internal trial* with multiple AI reviews and owner risk acceptance. The authorization has **no effect on Stable**, on real consumer/prod data, or on original P1 review history. The [program master-plan §5](MASTER_PLAN.md#5-internal-release-أقل-نطاق-مفيد-وآمن) has been updated in the same documentation-only PR; the former strict independent human signoff remains the **default**. Where older sections below say independent human review is required for Internal, this approved alternate lane takes priority **only for the exact synthetic scope** below.
+
+| Alternative admission element | Status and precise provenance |
+| --- | --- |
+| **Owner acceptance of substitute review procedure** | **APPROVED in conversation 2026-10-25**, explicitly limited to Synthetic Internal; not signed independent human approval |
+| **AI channel A** | GitHub Codex PR #98 bot review **on SHA 31d4e518b9e71a9585df9097e7ca07a7e25af916**: no major issues reported; model identity/provider independence not assured |
+| **AI channel B** | GPT-6 separate source-and-test review [on PR #98](https://github.com/lijust/EREI-Engineering-Framework/pull/98#issuecomment-6392043597) same exact source: `ACCEPT_WITH_EXPLICIT_LIMITS_SYNTHETIC_CI_ONLY`; not an independent human |
+| **Original P1 #84/#86/#88** | Source fixes and protective denial verified within specific synthetic scope by Channel B; historical App ledger restoration remains **blocked**. Threads remain open for Stable/real consumers; no automatic resolution |
+| **Other source issues #91/#94/#95/#98** | Combined-source failure/denial plus exact-head tests verified by CI; no positive release authority or Independent calibration accepted |
+| **Owner residual-risk exception** | **APPROVED FOR SYNTHETIC CI ONLY:** AI-only review limitations, GitHub artifacts expire in 14 days, fixture clock intentionally mocked, no disk-full/power-loss/concurrent writer simulation, inherited Git environment hazard outside trusted hosted runner, no real consumer recovery, no model-efficacy proof. Any emerging P0/P1 affecting this synthetic scope must block |
+| **Release scope** | **EXCLUDED:** Stable, paid model trials, production or real consumer deployment, GitHub/settings changes, project pins, secrets, external users, ledger/app data writes, grants of security authority |
+| **Frozen target** | Source HEAD `31d4e518b9e71a9585df9097e7ca07a7e25af916`; Git tree `913c6a0daaa7a6efa7d6d2148aa0294812fab360` |
+| **Frozen fixture SHA-256** | `72de745e67512575615ded69a7276f6764ee3bbaecc4e60c3b788edc1b9ac4f8` (pre-mutation inputs; 3.11 and 3.12 agree) |
+| **Operational operator** | GitHub-hosted Windows read-only PR98 workflow under `lijust` owner control; no persistent personal runner, no project data or secrets. Owner accountable for scope and stopping |
+| **Rollback technical custodian** | T14 ephemeral test runner: creates baseline and V2 archive in temp paths; verifies complete restore, preserves V2 history and outstanding `IMMEDIATE_REVIEW` during test; artifacts retained in GitHub Actions 14 days. **No independent third-party archive custodian is claimed** |
+| **Timebox / users** | Max **15 minutes** for each admitted workflow job, **zero external users**. Jobs with timeout and fail-closed. No whole-project cutover |
+| **Mandatory final gate** | **An explicit new owner `ADMIT_SYNTHETIC_CI_ONLY` decision tied to the exact SHA/tree/fixture before a NEW CI run.** A newly executed exact-head synthetic T14 proof after this decision may establish the limited Internal synthetic pilot's results; earlier CI cannot be backdated/relabelled. |
+| **Stable gate** | **UNCHANGED BLOCKED** — requires genuine human independent security/architecture reviews and exact-target Core V2 and V1/V2 comparisons under existing release approvals |
+
+**Immediate current status at documentation update:** `ALTERNATE_REVIEW_PATH_APPROVED / TWO_AI_CHANNELS_DOCUMENTED / OWNER_RISK_ACCEPTED_FOR_SYNTHETIC_ONLY / PRE_ADMISSION_EVIDENCE_GREEN`. **No claimed prior Internal pilot.** When the specific admission and a new run are recorded, the verdict must distinguish `SYNTHETIC_INTERNAL_PILOT_PASS` from `Stable_READY` or operational rollout. This is not a new governance system.
+
+---
+
 ## Owner-scoped admission decision — 2026-10-25 (REVIEW RECORD ONLY)
 
 **Status: OWNER_SCOPE_APPROVED / NOT_ADMITTED.** The repository owner explicitly instructed that bounded decisions, approval and authorization proceed. The scope was recorded in the existing [T14 issue #81](https://github.com/lijust/EREI-Engineering-Framework/issues/81#issuecomment-6391909606), not as a qualified independent security or architecture signoff. **This document update is on a separate review-only documentation branch; it does not modify the already-tested source, SHA, tree or fixtures of candidate PR #98.** No protected-main merge or real Internal pilot launch is authorized.
