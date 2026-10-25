@@ -240,6 +240,49 @@ def _unique(pairs: list[tuple[str, object]]) -> dict:
     return result
 
 
+def inspect_request_offline(prepared: dict, *, model: str) -> dict:
+    """No-network exact outbound payload diff; no prompts, keys or file writes."""
+    raw = gemini.build_generation_body(prepared["prompt"], model=model)
+    payload = json.loads(raw)
+    cfg = payload["generationConfig"]
+    # The historical successful READY diagnostic used another request shape.
+    # It is a *contrast*, never a causal finding or Core acceptance receipt.
+    return {
+        "kind": "CORE13_REQUEST_SHAPE_INSPECTION_NO_API",
+        "case_id": prepared["case"]["id"],
+        "suite_id": prepared["suite"]["suite_id"],
+        "model": model,
+        "framework_head": gemini.EXPECTED_TARGET_HEAD,
+        "framework_tree": gemini.EXPECTED_TARGET_TREE,
+        "adapter_head": prepared["adapter_source"]["adapter_source_revision"],
+        "prompt_utf8_bytes": len(prepared["prompt"].encode("utf-8")),
+        "request_body_utf8_bytes": len(raw),
+        "prompt_sha256": sha(prepared["prompt"].encode("utf-8")),
+        "request_body_sha256": sha(raw),
+        "core_generation_config": cfg,
+        "successful_control_from_owner": {
+            "model": "gemini-3.6-flash",
+            "prompt": "constant-public-READY-probe",
+            "max_output_tokens": 64,
+            "response_mime_type_specified": False,
+            "thinking_level_specified": False,
+            "outcome": "HTTP_200_READY",
+        },
+        "unisolated_differences": [
+            "entire_framework_prompt_content_and_size",
+            "max_output_tokens_64_vs_4096",
+            "plain_text_vs_json_response_mime_type",
+            "default_vs_low_thinking_level",
+        ],
+        "cause_of_http_503": "NOT_ESTABLISHED_BY_OFFLINE_COMPARISON",
+        "network_requests": 0,
+        "model_calls": 0,
+        "accepted_core_cases": 0,
+        "independent_acceptance": False,
+        "stable_ready": False,
+    }
+
+
 def main(argv=None) -> int:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--target-root", type=Path, required=True)
@@ -247,20 +290,30 @@ def main(argv=None) -> int:
                    help="pin exact runtime; select gemini-3.6-flash for the verified fallback")
     p.add_argument("--case-id", choices=sorted(
         item for ids in CASES.values() for item in ids), required=True)
-    p.add_argument("--output-dir", type=Path, required=True)
+    p.add_argument("--output-dir", type=Path,
+                   help="required only for a live one-case evidence run")
     p.add_argument("--timeout", type=float, default=90)
+    p.add_argument("--inspect-request", action="store_true",
+                   help="offline exact payload shape, no key, no network, no writes")
     p.add_argument("--live", action="store_true")
     p.add_argument("--confirm-free-tier", action="store_true",
                    help="owner confirms key belongs to EREI Gemini Free tier")
     a = p.parse_args(argv)
     try:
-        if not a.live or not a.confirm_free_tier:
-            raise gemini.GeminiAdapterError("explicit --live AND --confirm-free-tier required")
+        if a.inspect_request:
+            if a.live or a.confirm_free_tier or a.output_dir is not None:
+                raise gemini.GeminiAdapterError("offline inspection cannot be combined with live flags or output paths")
+        elif not a.live or not a.confirm_free_tier or a.output_dir is None:
+            raise gemini.GeminiAdapterError("live requires --live, --confirm-free-tier and --output-dir")
         if not 5 <= a.timeout <= 120:
             raise gemini.GeminiAdapterError("timeout must be 5..120 seconds")
         gemini.model_endpoint(a.model)
         adapter_root = Path(__file__).resolve().parents[1]
         prepared = prepare(a.target_root, a.case_id, adapter_root)
+        if a.inspect_request:
+            print(json.dumps(inspect_request_offline(prepared, model=a.model),
+                             ensure_ascii=False, sort_keys=True))
+            return 0
         output = a.output_dir.expanduser().resolve()
         for prohibited in (prepared["root"], adapter_root):
             if output == prohibited or prohibited in output.parents:
