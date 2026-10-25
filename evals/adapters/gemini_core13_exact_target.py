@@ -22,8 +22,17 @@ try:
 except ImportError:
     import copilot_cli_exact_target as contract
 
-MODEL = "gemini-3.8-flash"
-API_URL = "https://generativelanguage.googleapis.com/v1beta/models/" + MODEL + ":generateContent"
+MODEL = "gemini-3.8-flash"  # legacy default, never used for approved 3.6 Core
+CORE_MODELS = ("gemini-3.8-flash", "gemini-3.6-flash")
+API_BASE = "https://generativelanguage.googleapis.com/v1beta/models/"
+API_URL = API_BASE + MODEL + ":generateContent"
+
+
+def model_endpoint(model: str) -> str:
+    """Exact allowed stable Gemini API ID, no latest aliases or raw URL."""
+    if model not in CORE_MODELS:
+        raise GeminiAdapterError("unapproved Core model; no API request")
+    return API_BASE + model + ":generateContent"
 EXPECTED_TARGET_HEAD = "31d4e518b9e71a9585df9097e7ca07a7e25af916"
 EXPECTED_TARGET_TREE = "913c6a0daaa7a6efa7d6d2148aa0294812fab360"
 MAX_REQUEST_BYTES = 200_000
@@ -164,8 +173,9 @@ def parse_gemini_result(payload: bytes) -> dict:
         raise GeminiAdapterError("invalid/incomplete model response; do not count as passed") from ex
 
 
-def generate_raw_once(prompt: str, *, key: str, timeout: float) -> bytes:
+def generate_raw_once(prompt: str, *, key: str, timeout: float, model: str = MODEL) -> bytes:
     """One HTTPS POST; return bounded raw provider envelope for local custody."""
+    endpoint = model_endpoint(model)
     if not isinstance(key, str) or not key.strip():
         raise GeminiAdapterError("GEMINI_API_KEY missing from process environment")
     if key != key.strip() or any(c in key for c in "\r\n\x00") or not key.isascii():
@@ -184,7 +194,7 @@ def generate_raw_once(prompt: str, *, key: str, timeout: float) -> bytes:
     if len(raw) > MAX_REQUEST_BYTES:
         raise GeminiAdapterError("API body exceeds allowed bound")
     req = urllib.request.Request(
-        API_URL,
+        endpoint,
         headers={
             "x-goog-api-key": key,
             "Content-Type": "application/json",
@@ -214,9 +224,9 @@ def generate_raw_once(prompt: str, *, key: str, timeout: float) -> bytes:
     return content
 
 
-def generate_once(prompt: str, *, key: str, timeout: float) -> dict:
+def generate_once(prompt: str, *, key: str, timeout: float, model: str = MODEL) -> dict:
     """Existing normalized adapter contract used by CLI and unit tests."""
-    return parse_gemini_result(generate_raw_once(prompt, key=key, timeout=timeout))
+    return parse_gemini_result(generate_raw_once(prompt, key=key, timeout=timeout, model=model))
 
 
 def main(argv=None):
