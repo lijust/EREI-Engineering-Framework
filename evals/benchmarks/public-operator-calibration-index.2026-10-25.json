@@ -1,0 +1,342 @@
+{
+  "schema_version": 1,
+  "kind": "SELF_REPORTED_OPERATOR_CALIBRATION_INDEX",
+  "observed_date": "2026-10-25",
+  "evidence_origin": "OPERATOR_SUPPLIED_SANITIZED_CLI_OUTPUT_NOT_INDEPENDENTLY_WITNESSED",
+  "framework_commit_sha": "8bc26deddcb9ebd10c24d5cb482b6b8e50827d9d",
+  "catalog_sha256": "53eb055dd5b1f3d174ac0fe52d44a304b3f39118b984e5b15b6485f8a1d69b4a",
+  "runtime": {
+    "os_family": "Windows",
+    "python_version": "3.12.10",
+    "node_version": "v24.22.1",
+    "python_dependencies": "ISOLATED_PINNED_VENV_OPERATOR_REPORTED"
+  },
+  "confidentiality": "Public digest/count/status only; no original private source or raw consumer traces; source repos/commits in immutable public recipe catalog.",
+  "authority": {
+    "execution_authorized": false,
+    "model_executions": 0,
+    "independent_review": "NOT_PERFORMED",
+    "hidden_acceptance": "NOT_PERFORMED",
+    "model_comparisons": "0/48",
+    "exact_target_runtime_evidence": "0/13",
+    "internal_admission": "HOLD_NOT_ADMITTED",
+    "stable_release": "BLOCKED",
+    "release_authorized": false,
+    "effectiveness": "NOT_ESTABLISHED"
+  },
+  "scope_note": "An original test file may exercise mocked Apps Script dependencies; provenance and runtime environment are independent axes. FULL_ORIGINAL_OFFLINE evidence does not mean production integration.",
+  "observations": [
+    {
+      "task_id": "APP-01",
+      "verified_pinned_file_count": 2,
+      "test_origin": "ORIGINAL_CONSUMER_TEST_FILE",
+      "execution_environment": "NODE_OFFLINE_WITH_APPS_SCRIPT_SHIMS",
+      "complete_original_consumer_offline": false,
+      "reference": {
+        "returncode": 0,
+        "tests": null,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "stdout_sha256": "1ed8f5e72e286c32905ab5d065333f0a863bea6f0ed75528baab14ed8231663b"
+      },
+      "mutant": {
+        "returncode": 1,
+        "expected_assertion_detected": true,
+        "failures": null,
+        "errors": null,
+        "skipped": null
+      },
+      "public_calibration_passed": true,
+      "independently_verified": false,
+      "consumer_integration_executed": false,
+      "production_writes": 0
+    },
+    {
+      "task_id": "APP-02",
+      "verified_pinned_file_count": 3,
+      "test_origin": "ORIGINAL_CONSUMER_TEST_FILE",
+      "execution_environment": "NODE_OFFLINE_WITH_APPS_SCRIPT_SHIMS",
+      "complete_original_consumer_offline": false,
+      "reference": {
+        "returncode": 0,
+        "tests": null,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "stdout_sha256": "9d99085dcca063c9460af4f1d3b866f9469b92f68b6c4c369bd7a20b39d20fec"
+      },
+      "mutant": {
+        "returncode": 1,
+        "expected_assertion_detected": true,
+        "failures": null,
+        "errors": null,
+        "skipped": null
+      },
+      "public_calibration_passed": true,
+      "independently_verified": false,
+      "consumer_integration_executed": false,
+      "production_writes": 0
+    },
+    {
+      "task_id": "APP-03",
+      "verified_pinned_file_count": 7,
+      "test_origin": "ORIGINAL_CONSUMER_TEST_FILE",
+      "execution_environment": "NODE_OFFLINE_WITH_APPS_SCRIPT_SHIMS",
+      "complete_original_consumer_offline": false,
+      "reference": {
+        "returncode": 0,
+        "tests": null,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "stdout_sha256": "d4f0b24847445b595684505ab4853ac7faa2cb27446262c158d03c0962e0bafc"
+      },
+      "mutant": {
+        "returncode": 1,
+        "expected_assertion_detected": true,
+        "failures": null,
+        "errors": null,
+        "skipped": null
+      },
+      "public_calibration_passed": true,
+      "independently_verified": false,
+      "consumer_integration_executed": false,
+      "production_writes": 0
+    },
+    {
+      "task_id": "APP-04",
+      "verified_pinned_file_count": 2,
+      "test_origin": "FRAMEWORK_OWNED_BOUNDED_ORACLE",
+      "execution_environment": "NODE_OFFLINE_VM_SOURCE_BEHAVIOR",
+      "complete_original_consumer_offline": false,
+      "reference": {
+        "returncode": 0,
+        "tests": null,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "stdout_sha256": "c13b1ab35dd83e57c7bca87159d02ab49ae8ae59a0fe6a57cf7eae90c59a3c22"
+      },
+      "mutant": {
+        "returncode": 1,
+        "expected_assertion_detected": true,
+        "failures": null,
+        "errors": null,
+        "skipped": null
+      },
+      "public_calibration_passed": true,
+      "independently_verified": false,
+      "consumer_integration_executed": false,
+      "production_writes": 0
+    },
+    {
+      "task_id": "APP-05",
+      "verified_pinned_file_count": 3,
+      "test_origin": "FRAMEWORK_OWNED_BOUNDED_ORACLE",
+      "execution_environment": "NODE_OFFLINE_VM_SOURCE_BEHAVIOR",
+      "complete_original_consumer_offline": false,
+      "reference": {
+        "returncode": 0,
+        "tests": null,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "stdout_sha256": "d446430d1e44a77adede97366f912f3ef52ad87bed29babe9b0b902d1e377b8d"
+      },
+      "mutant": {
+        "returncode": 1,
+        "expected_assertion_detected": true,
+        "failures": null,
+        "errors": null,
+        "skipped": null
+      },
+      "public_calibration_passed": true,
+      "independently_verified": false,
+      "consumer_integration_executed": false,
+      "production_writes": 0
+    },
+    {
+      "task_id": "APP-06",
+      "verified_pinned_file_count": 2,
+      "test_origin": "ORIGINAL_CONSUMER_TEST_FILE",
+      "execution_environment": "NODE_OFFLINE_ORIGINAL_CONSUMER_TEST",
+      "complete_original_consumer_offline": true,
+      "reference": {
+        "returncode": 0,
+        "tests": null,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "stdout_sha256": "29d5fa06b73310ab69b387d1d32aa32868ed5995974b519972670304e74ca225"
+      },
+      "mutant": {
+        "returncode": 1,
+        "expected_assertion_detected": true,
+        "failures": null,
+        "errors": null,
+        "skipped": null
+      },
+      "public_calibration_passed": true,
+      "independently_verified": false,
+      "consumer_integration_executed": false,
+      "production_writes": 0
+    },
+    {
+      "task_id": "PY-01",
+      "verified_pinned_file_count": 3,
+      "test_origin": "ORIGINAL_CONSUMER_TEST_FILE",
+      "execution_environment": "PYTHON_OFFLINE_UNITTEST_FUNCTION_ADAPTER",
+      "complete_original_consumer_offline": true,
+      "reference": {
+        "returncode": 0,
+        "tests": 20,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "stdout_sha256": "089efc9a3bbf188b34b47bada25fd8a0b99a5a55bfb2ea2c3625b28472c9e18e"
+      },
+      "mutant": {
+        "returncode": 1,
+        "expected_assertion_detected": true,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0
+      },
+      "public_calibration_passed": true,
+      "independently_verified": false,
+      "consumer_integration_executed": false,
+      "production_writes": 0
+    },
+    {
+      "task_id": "PY-02",
+      "verified_pinned_file_count": 2,
+      "test_origin": "ORIGINAL_CONSUMER_TEST_FILE",
+      "execution_environment": "PYTHON_OFFLINE_UNITTEST_FUNCTION_ADAPTER",
+      "complete_original_consumer_offline": true,
+      "reference": {
+        "returncode": 0,
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "stdout_sha256": "c680edebea55fb8dc89bf151905b7fa31f63fe942ddbe8698d1972abc454b001"
+      },
+      "mutant": {
+        "returncode": 1,
+        "expected_assertion_detected": true,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0
+      },
+      "public_calibration_passed": true,
+      "independently_verified": false,
+      "consumer_integration_executed": false,
+      "production_writes": 0
+    },
+    {
+      "task_id": "PY-03",
+      "verified_pinned_file_count": 2,
+      "test_origin": "FRAMEWORK_OWNED_BOUNDED_ORACLE",
+      "execution_environment": "PYTHON_OFFLINE_AST_BOUNDARY_METHOD_ORACLE",
+      "complete_original_consumer_offline": false,
+      "reference": {
+        "returncode": 0,
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "stdout_sha256": "e8fe1931f7622e0f11e35b9b07b5b1c121563292608493dd9049e7e359879941"
+      },
+      "mutant": {
+        "returncode": 1,
+        "expected_assertion_detected": true,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0
+      },
+      "public_calibration_passed": true,
+      "independently_verified": false,
+      "consumer_integration_executed": false,
+      "production_writes": 0
+    },
+    {
+      "task_id": "PY-04",
+      "verified_pinned_file_count": 3,
+      "test_origin": "ORIGINAL_CONSUMER_TEST_FILE",
+      "execution_environment": "PYTHON_OFFLINE_UNITTEST_FUNCTION_ADAPTER",
+      "complete_original_consumer_offline": true,
+      "reference": {
+        "returncode": 0,
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "stdout_sha256": "603fe87a21942d449bd08dbb642972ecdae02a818b6f0b1730dcb3d4287e17d8"
+      },
+      "mutant": {
+        "returncode": 1,
+        "expected_assertion_detected": true,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0
+      },
+      "public_calibration_passed": true,
+      "independently_verified": false,
+      "consumer_integration_executed": false,
+      "production_writes": 0
+    },
+    {
+      "task_id": "PY-05",
+      "verified_pinned_file_count": 2,
+      "test_origin": "ORIGINAL_CONSUMER_TEST_FILE",
+      "execution_environment": "PYTHON_OFFLINE_UNITTEST_FUNCTION_ADAPTER",
+      "complete_original_consumer_offline": true,
+      "reference": {
+        "returncode": 0,
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "stdout_sha256": "603fe87a21942d449bd08dbb642972ecdae02a818b6f0b1730dcb3d4287e17d8"
+      },
+      "mutant": {
+        "returncode": 1,
+        "expected_assertion_detected": true,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0
+      },
+      "public_calibration_passed": true,
+      "independently_verified": false,
+      "consumer_integration_executed": false,
+      "production_writes": 0
+    },
+    {
+      "task_id": "PY-06",
+      "verified_pinned_file_count": 10,
+      "test_origin": "ORIGINAL_CONSUMER_TEST_FILE",
+      "execution_environment": "PYTHON_OFFLINE_UNITTEST_FUNCTION_ADAPTER",
+      "complete_original_consumer_offline": true,
+      "reference": {
+        "returncode": 0,
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "stdout_sha256": "c680edebea55fb8dc89bf151905b7fa31f63fe942ddbe8698d1972abc454b001"
+      },
+      "mutant": {
+        "returncode": 1,
+        "expected_assertion_detected": true,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0
+      },
+      "public_calibration_passed": true,
+      "independently_verified": false,
+      "consumer_integration_executed": false,
+      "production_writes": 0
+    }
+  ]
+}
