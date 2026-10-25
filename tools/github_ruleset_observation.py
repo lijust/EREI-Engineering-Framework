@@ -121,6 +121,8 @@ def assess_public_main_ruleset(
     bypass = _items(rule.get("bypass_actors"), "ruleset.bypass_actors")
     if bypass:
         raise ObservationError("main ruleset bypass actors present")
+    if rule.get("current_user_can_bypass") != "never":
+        raise ObservationError("current authenticated principal may bypass ruleset")
     active_rules = _items(rule.get("rules"), "ruleset.rules")
     by_type: dict[str, dict] = {}
     for entry in active_rules:
