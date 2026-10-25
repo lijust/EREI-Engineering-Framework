@@ -45,12 +45,16 @@ def good_response():
 
 class GeminiCore13AdapterTests(unittest.TestCase):
     def test_candidate_bound_and_contract_enforced_without_api(self):
-        with mock.patch.object(gemini.contract, "resolve_artifact",
-                               return_value=[("skills/task-learning-capture/SKILL.md", "public contract")]):
+        with (
+            mock.patch.object(gemini.contract, "resolve_artifact",
+                              return_value=[("skills/task-learning-capture/SKILL.md", "public contract")]),
+            mock.patch.object(gemini, "verify_artifact_bytes") as verify,
+        ):
             prompt = gemini.prepare_one(blind_request(), Path("."))
             self.assertIn("Synthetic engineering decision", prompt)
             self.assertIn("public contract", prompt)
             self.assertNotIn("reference_actions", prompt)
+            verify.assert_called_once()
         for change in ("version", "artifact", "private_context", "hidden_expectations"):
             req = blind_request()
             if change == "version":
@@ -88,6 +92,41 @@ class GeminiCore13AdapterTests(unittest.TestCase):
         with mock.patch.object(gemini.subprocess, "check_output", side_effect=dirty):
             with self.assertRaisesRegex(gemini.GeminiAdapterError, "dirty"):
                 gemini.verify_frozen_target(Path("."))
+
+    def test_assume_unchanged_artifact_content_is_rejected_by_blob_comparison(self):
+        artifacts = [("skills/task-learning-capture/SKILL.md", "untracked-private-replacement")]
+        with mock.patch.object(gemini.subprocess, "check_output",
+                               return_value=b"actual committed public contract") as git:
+            with self.assertRaisesRegex(gemini.GeminiAdapterError, "differ from frozen"):
+                gemini.verify_artifact_bytes(Path("."), artifacts)
+            self.assertIn("show", git.call_args.args[0])
+        with (
+            mock.patch.object(gemini.contract, "resolve_artifact", return_value=artifacts),
+            mock.patch.object(gemini.subprocess, "check_output",
+                              return_value=b"actual committed public contract"),
+            mock.patch.object(gemini.contract, "build_direct_prompt") as build,
+        ):
+            with self.assertRaisesRegex(gemini.GeminiAdapterError, "differ from frozen"):
+                gemini.prepare_one(blind_request(), Path("."))
+            build.assert_not_called()
+
+    def test_header_value_error_cannot_leak_key_or_trigger_network(self):
+        for bad in ("AIza-secret-MUST-NOT-LOG\\n", "AIza-secret-MUST-NOT-LOG\\r"):
+            raw_key = bad.replace("\\n", "\n").replace("\\r", "\r")
+            with self.subTest(bad=bad), (
+                mock.patch.object(gemini.urllib.request, "build_opener") as opener,
+            ):
+                with self.assertRaises(gemini.GeminiAdapterError) as caught:
+                    gemini.generate_raw_once("synthetic only", key=raw_key, timeout=90)
+                self.assertNotIn("MUST-NOT-LOG", str(caught.exception))
+                opener.assert_not_called()
+        with mock.patch.object(gemini.urllib.request, "build_opener") as opener:
+            opener.return_value.open.side_effect = ValueError(
+                "Invalid header value b'AIza-secret-MUST-NOT-LOG\\n'"
+            )
+            with self.assertRaises(gemini.GeminiAdapterError) as caught:
+                gemini.generate_raw_once("public", key="AIzaTESTVALIDKEY", timeout=90)
+            self.assertNotIn("MUST-NOT-LOG", str(caught.exception))
 
     def test_no_key_no_live_and_no_unbounded_timeout(self):
         with self.assertRaisesRegex(gemini.GeminiAdapterError, "missing"):
