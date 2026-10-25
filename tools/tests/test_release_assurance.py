@@ -208,11 +208,14 @@ class ReleaseAssuranceTests(unittest.TestCase):
 
     @contextmanager
     def stable_patches(self):
+        # Isolate unrelated manifest/evidence validation with explicit synthetic
+        # authorities. Real authority denial is covered by boundary tests.
         with self.scope_patch(), \
+             mock.patch.object(release_assurance.release_approval, "verify_approval_authority", return_value=None), \
              mock.patch.object(
                  release_assurance.assurance_enforcement,
-                 "verify_authenticated_equivalence",
-                 return_value={"status": "verified", "stable_enforcement_satisfied": True},
+                 "verify_effective_enforcement",
+                 return_value={"status": "verified", "mode": "synthetic_test_only"},
              ), \
              mock.patch.object(
                  release_assurance.github_review_provenance,
@@ -316,7 +319,7 @@ class ReleaseAssuranceTests(unittest.TestCase):
                  self.assertRaisesRegex(release_assurance.ReleaseError, "server branch/status-check enforcement"):
                 release_assurance.validate_manifest(self.stable(), repo_root=root)
 
-    def test_v2_stable_reaches_eval_gate_when_equivalent_enforcement_is_verified(self):
+    def test_v2_stable_reaches_eval_gate_with_explicit_synthetic_authority(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             self.write_scope_root(root)

@@ -1,0 +1,86 @@
+name: T14 Isolated Rollback Drill (PR 94 Only)
+
+on:
+  pull_request:
+    paths:
+      - 'tools/tests/drill_task_learning_rollback.py'
+      - 'tools/t14_capture_evidence.py'
+      - 'tools/tests/test_t14_capture_evidence.py'
+      - 'learning/INTERNAL_ROLLBACK_DRILL.md'
+      - '.github/workflows/t14-isolated-rollback-drill.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  isolated-drill:
+    if: ${{ github.event.pull_request.number == 94 && github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: windows-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.11', '3.12']
+    steps:
+      - name: Checkout exact PR source with V1 Stable history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Run opt-in synthetic rollback drill with frozen V1 bytes
+        shell: powershell
+        env:
+          PYTHON_VERSION: ${{ matrix.python-version }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $target = (git rev-parse HEAD).Trim()
+          if ($LASTEXITCODE -ne 0 -or $target -notmatch '^[a-f0-9]{40}$') { throw 'invalid Git checkout HEAD' }
+          $env:EREI_T14_TARGET = $target
+          $env:EREI_T14_V1_PATH = Join-Path $env:RUNNER_TEMP ('erei-t14-stable-v1-' + $env:PYTHON_VERSION + '.py')
+          $env:EREI_T14_EVIDENCE_DIR = Join-Path $env:RUNNER_TEMP ('erei-t14-evidence-' + $env:PYTHON_VERSION)
+          New-Item -ItemType Directory -Path $env:EREI_T14_EVIDENCE_DIR -Force | Out-Null
+          'Preflight started; do not accept without capture-verdict.json' | Set-Content -LiteralPath (Join-Path $env:EREI_T14_EVIDENCE_DIR 'preflight.txt')
+          try {
+            @'
+          import hashlib
+          import os
+          from pathlib import Path
+          import subprocess
+
+          ref = "69079018606750312344cb3c648952b9ab72d35b"
+          result = subprocess.run(
+              ["git", "show", ref + ":tools/task_learning.py"],
+              stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+              timeout=30, check=True,
+          )
+          original = result.stdout
+          expected = "336037ea356c91d780f61684889b7c92c5d2bde21a8fff2591fec95e559be8f2"
+          if hashlib.sha256(original).hexdigest() != expected:
+              raise SystemExit("Frozen V1 source bytes failed digest verification")
+          Path(os.environ["EREI_T14_V1_PATH"]).write_bytes(original)
+          print("PASS frozen V1 immutable source SHA256", expected)
+          '@ | python -B -
+            if ($LASTEXITCODE -ne 0) { throw 'frozen V1 export failed' }
+
+            # The helper captures stdout, stderr, subprocess exit status and
+            # verdict before applying any report gate, including on failure.
+            & python -B tools/t14_capture_evidence.py --v1-tool $env:EREI_T14_V1_PATH --target-ref $env:EREI_T14_TARGET --evidence-dir $env:EREI_T14_EVIDENCE_DIR
+            if ($LASTEXITCODE -ne 0) { throw 'T14 synthetic rollback evidence capture failed; inspect uploaded artifact' }
+            Write-Host "PASS T14 isolated four-case rollback drill with captured evidence at $target"
+          } finally {
+            Remove-Item -LiteralPath $env:EREI_T14_V1_PATH -Force -ErrorAction SilentlyContinue
+          }
+
+      - name: Retain T14 structured evidence even when drill fails
+        if: ${{ always() && github.event.pull_request.number == 94 && github.event.pull_request.head.repo.full_name == github.repository }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: t14-rollback-python-${{ matrix.python-version }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/erei-t14-evidence-${{ matrix.python-version }}/
+          if-no-files-found: error
+          retention-days: 14

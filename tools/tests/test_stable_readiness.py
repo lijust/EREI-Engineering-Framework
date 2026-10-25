@@ -467,13 +467,33 @@ class StructuredApprovalReadinessTests(unittest.TestCase):
         self._commit("stable manifest")
         return architecture_ref, security_ref
 
-    def test_structured_approved_records_pass_readiness_gate(self):
+    def test_history_binding_with_synthetic_approval_authority(self):
         architecture_ref, security_ref = self._build()
-        result = approval_gate(self.repo, self.target, True)
+        # Isolate immutable history checks; this is not positive authority proof.
+        with mock.patch.object(stable_readiness.release_approval, "verify_approval_authority"):
+            result = approval_gate(self.repo, self.target, True)
         self.assertEqual(result["status"], "pass")
         self.assertEqual(result["validated_records"], 2)
         self.assertEqual(result["approvals"]["architecture"]["bound_ref"], architecture_ref)
         self.assertEqual(result["approvals"]["security"]["bound_ref"], security_ref)
+
+    def test_authenticated_reviews_do_not_pass_readiness_authority(self):
+        self._build()
+        result = approval_gate(self.repo, self.target, True)
+        self.assertEqual(result["status"], "blocked")
+        self.assertIn("independent principals", result["reason"])
+
+    def test_readiness_propagates_missing_independent_authority(self):
+        self._build()
+        with mock.patch.object(
+            stable_readiness.release_approval, "verify_approval_authority",
+            side_effect=stable_readiness.release_approval.ReleaseApprovalError("independent authority unavailable"),
+        ) as authority:
+            result = approval_gate(self.repo, self.target, True)
+        authority.assert_called_once()
+        self.assertEqual(len(authority.call_args.args[0]), 2)
+        self.assertEqual(result["status"], "blocked")
+        self.assertIn("independent authority unavailable", result["reason"])
 
     def test_target_bound_scope_drift_blocks_approval_gate(self):
         self._build()
