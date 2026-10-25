@@ -21,8 +21,47 @@ The model endpoint ID is exactly `gemini-3.8-flash`. Only synthetic public Frame
 
 ## Commands for offline tests (no key, no usage)
 
+From the checkout of this adapter branch:
+
 ```powershell
-python -b -m unittest evals.tests.test_gemini_core13_exact_target -v
+python -m unittest evals.tests.test_gemini_core13_exact_target evals.tests.test_gemini_core_smoke -v
 ```
 
-**Current gate:** `ADAPTER_OFFLINE_VALIDATION_ONLY`; `CORE_ACTUAL_MODEL_EVIDENCE=0/13`. Further live use requires securely configuring a Free-tier-project key locally, approving the exact bounded single-case invocation and persistence contract, and confirming that quota capacity remains. **Do not paste keys into GitHub issues or this conversation.**
+## Exactly one genuine Core case: owner-operated LOCAL smoke
+
+**Never run on a GitHub hosted runner and NEVER paste a key in GitHub, ChatGPT or a command line.** The script `evals/run_gemini_core_smoke.py` prompts invisibly with Python `getpass` if `GEMINI_API_KEY` is unset. No key value is persisted. The owner must first verify in Google AI Studio that **the actual key** is part of **EREI Gemini (Free tier)**; an account screenshot by itself is not proof that every key belongs to that project.
+
+Place the two independent **public repo** checkouts on a local Windows machine (use new folders, not your working project clones):
+
+```powershell
+cd "$env:userprofile\desktop"
+git clone https://github.com/lijust/EREI-Engineering-Framework.git erei-core13-adapter
+cd .\erei-core13-adapter
+git fetch origin pull/101/head
+git checkout --detach <PR101_CI_VERIFIED_SHA>
+cd "$env:userprofile\desktop"
+git clone https://github.com/lijust/EREI-Engineering-Framework.git erei-core13-target
+cd .\erei-core13-target
+git fetch origin pull/98/head
+git checkout --detach 31d4e518b9e71a9585df9097e7ca07a7e25af916
+cd "$env:userprofile\desktop\erei-core13-adapter"
+```
+
+Use the exact HEAD SHA listed in **PR #101 after its latest CI success** in place of `<PR101_CI_VERIFIED_SHA>`. `<...>` is a placeholder, not literal PowerShell syntax. `target-root` is checked for exact HEAD, Git tree and **clean worktree**. `adapter` checkout must also be clean. New evidence directory **must be outside both Git checkouts** and must not exist. The script only accepts one canonical Core13 case ID, never a whole suite.
+
+```powershell
+python -m evals.run_gemini_core_smoke --target-root "$env:userprofile\desktop\erei-core13-target" --case-id TLR-001-SUCCESS-STILL-LEARNING-DATA --output-dir "$env:userprofile\desktop\erei-core13-evidence\smoke-001" --timeout 90 --live --confirm-free-tier
+```
+
+This exact command performs at most **one** Gemini API `generateContent` request and does not automatically retry on 429 or malformed output. Requires valid Free-tier key, owner's quota, and suitable local network. It never uses paid-model budgets automatically. Before doing the call, it validates the frozen source/adapter identity and a public-only V2 blinded action-simulation contract. It uses the **frozen target runner/scorer** to score the response; it does not send private expectations to Gemini.
+
+If the one call returns, output is retained *locally* under `erei-core13-evidence\smoke-001`:
+- `blind-request.json` (one blinded public-only model input; no key);
+- `provider-raw.json` (**exact original Gemini envelope including response, `modelVersion`, `responseId`, `usageMetadata`**; do not publish before inspecting);
+- `adapter-normalized.json` (typed model response, only on parse success);
+- `verdict.json` (frozen-target scorer result plus hashes, actual usage metadata, real source HEAD/tree and adapter commit, with `evidence_kind=observed_unverified` and `independently_accepted=false`);
+- `attempt-failed.json` on a blocked remote attempt without a response, with no silent retry.
+
+An actual response **may** fail scoring; this is still an authentic observed attempt, not a pass. A passing local response is an **unverified first model receipt** requiring later independent evidence review, not `Stable` or automatically admitted Core 13. There is no durable signed remote artifact authority in the smoke. **Do not send the API key or private raw response in chat.** Share only the sanitized command summary (case_id, pass, model_version, usage_metadata and status) to plan the next bounded cases.
+
+**Current gate until the owner invokes this command:** `ADAPTER_OFFLINE_VALIDATION_ONLY`; `CORE_ACTUAL_MODEL_EVIDENCE=0/13`. No Copilot workflow reactivation, no new billing account and no EREI/SAE-DB private data needed.
