@@ -187,15 +187,11 @@ def parse_gemini_result(payload: bytes) -> dict:
         raise GeminiAdapterError("invalid/incomplete model response; do not count as passed") from ex
 
 
-def generate_raw_once(prompt: str, *, key: str, timeout: float, model: str = MODEL) -> bytes:
-    """One HTTPS POST; return bounded raw provider envelope for local custody."""
-    endpoint = model_endpoint(model)
-    if not isinstance(key, str) or not key.strip():
-        raise GeminiAdapterError("GEMINI_API_KEY missing from process environment")
-    if key != key.strip() or any(c in key for c in "\r\n\x00") or not key.isascii():
-        raise GeminiAdapterError("API key contains invalid HTTP header characters")
-    if not 5 <= timeout <= 120:
-        raise GeminiAdapterError("timeout out of bounded 5–120 second range")
+def build_generation_body(prompt: str, *, model: str = MODEL) -> bytes:
+    """Canonical bytes used by BOTH the live call and no-network inspection."""
+    model_endpoint(model)
+    if not isinstance(prompt, str) or not prompt:
+        raise GeminiAdapterError("invalid Core prompt")
     body = {
         "contents": [{"role": "user", "parts": [{"text": prompt}]}],
         "generationConfig": {
@@ -207,6 +203,19 @@ def generate_raw_once(prompt: str, *, key: str, timeout: float, model: str = MOD
     raw = json.dumps(body, ensure_ascii=False, separators=(",", ":"), allow_nan=False).encode("utf-8")
     if len(raw) > MAX_REQUEST_BYTES:
         raise GeminiAdapterError("API body exceeds allowed bound")
+    return raw
+
+
+def generate_raw_once(prompt: str, *, key: str, timeout: float, model: str = MODEL) -> bytes:
+    """One HTTPS POST; return bounded raw provider envelope for local custody."""
+    endpoint = model_endpoint(model)
+    if not isinstance(key, str) or not key.strip():
+        raise GeminiAdapterError("GEMINI_API_KEY missing from process environment")
+    if key != key.strip() or any(c in key for c in "\r\n\x00") or not key.isascii():
+        raise GeminiAdapterError("API key contains invalid HTTP header characters")
+    if not 5 <= timeout <= 120:
+        raise GeminiAdapterError("timeout out of bounded 5–120 second range")
+    raw = build_generation_body(prompt, model=model)
     req = urllib.request.Request(
         endpoint,
         headers={
