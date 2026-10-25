@@ -332,7 +332,8 @@ class CoreOneCaseTests(unittest.TestCase):
             ["--live"], ["--confirm-free-tier"],
             ["--output-dir", "./no-writes"], ["--live", "--confirm-free-tier"],
         ):
-            with self.subTest(flags=suffix), (
+            with (
+                self.subTest(flags=suffix),
                 mock.patch.object(smoke, "prepare") as preflight,
                 mock.patch.object(smoke.gemini, "generate_raw_once") as api,
                 mock.patch.object(smoke.getpass, "getpass") as secret,
