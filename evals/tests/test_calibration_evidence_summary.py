@@ -161,5 +161,105 @@ class EvidenceSummaryTests(unittest.TestCase):
             summarizer.summarize(catalog, self.receipt)
 
 
+
+class CurrentOperatorEvidenceTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.catalog_bytes = summarizer.CATALOG.read_bytes()
+        cls.catalog = json.loads(cls.catalog_bytes)
+        cls.index = json.loads(summarizer.LATEST_INDEX.read_text(encoding="utf-8"))
+
+    def summary(self, index=None):
+        return summarizer.summarize_current_operator(
+            self.catalog, self.index if index is None else index,
+            self.catalog_bytes,
+        )
+
+    def test_exact_sha_bound_current_snapshot_separates_origin_from_environment(self):
+        result = self.summary()
+        self.assertEqual(result["self_reported_local_baseline_mutant_pass"], "12/12")
+        self.assertEqual(result["bound_framework_commit"],
+                         "8bc26deddcb9ebd10c24d5cb482b6b8e50827d9d")
+        self.assertEqual(result["original_consumer_test_files_invoked"], "9/12")
+        self.assertEqual(result["complete_original_consumer_offline"], "6/12")
+        self.assertEqual(result["original_js_tests_with_app_shims"], "3/12")
+        self.assertEqual(result["framework_owned_bounded_oracles"], "3/12")
+        self.assertEqual(result["task_scope"]["APP-01"]["test_origin"],
+                         "ORIGINAL_CONSUMER_TEST_FILE")
+        self.assertEqual(result["task_scope"]["APP-01"]["execution_environment"],
+                         "NODE_OFFLINE_WITH_APPS_SCRIPT_SHIMS")
+        self.assertFalse(result["task_scope"]["APP-01"]
+                         ["complete_original_consumer_offline"])
+        self.assertEqual(result["task_scope"]["APP-04"]["test_origin"],
+                         "FRAMEWORK_OWNED_BOUNDED_ORACLE")
+        self.assertFalse(result["task_scope"]["PY-03"]
+                         ["complete_original_consumer_offline"])
+        self.assertTrue(result["task_scope"]["PY-01"]
+                        ["complete_original_consumer_offline"])
+        self.assertFalse(result["operator_evidence_independently_verified"])
+        self.assertEqual(result["independent_source_acceptance"], "0/12")
+        self.assertEqual(result["internal_admission"], "HOLD_NOT_ADMITTED")
+        self.assertFalse(result["release_authorized"])
+
+    def test_history_is_not_rewritten_by_current_operator_index(self):
+        old = summarizer.summarize(self.catalog, json.loads(
+            summarizer.RECEIPT.read_text(encoding="utf-8")
+        ))
+        self.assertEqual(old["stage_counts"][summarizer.FULL], 4)
+        self.assertEqual(old["stage_counts"][summarizer.STUBBED_METHOD], 2)
+        self.assertEqual(self.summary()["complete_original_consumer_offline"], "6/12")
+
+    def test_promoted_authority_wrong_sha_and_wrong_catalog_fail_closed(self):
+        for key, value in [
+            ("independent_review", "APPROVED"),
+            ("model_comparisons", "1/48"),
+            ("internal_admission", "ADMITTED"),
+            ("release_authorized", True),
+        ]:
+            with self.subTest(key=key):
+                index = copy.deepcopy(self.index)
+                index["authority"][key] = value
+                with self.assertRaisesRegex(ValueError, "authority"):
+                    self.summary(index)
+        index = copy.deepcopy(self.index)
+        index["framework_commit_sha"] = "0" * 40
+        with self.assertRaisesRegex(ValueError, "Unbound"):
+            self.summary(index)
+        with self.assertRaisesRegex(ValueError, "Unbound"):
+            summarizer.summarize_current_operator(
+                self.catalog, self.index, b"changed catalog"
+            )
+
+    def test_scope_tampering_and_duplicates_fail_closed(self):
+        scenarios = [
+            ("test_origin", "ORIGINAL_CONSUMER_TEST_FILE"),
+            ("complete_original_consumer_offline", True),
+            ("execution_environment", "PRODUCTION_INTEGRATION"),
+            ("independently_verified", True),
+            ("consumer_integration_executed", True),
+            ("production_writes", 1),
+        ]
+        for key, value in scenarios:
+            with self.subTest(key=key):
+                index = copy.deepcopy(self.index)
+                record = next(r for r in index["observations"]
+                              if r["task_id"] == "APP-04")
+                record[key] = value
+                with self.assertRaisesRegex(ValueError, "scope"):
+                    self.summary(index)
+        index = copy.deepcopy(self.index)
+        index["observations"][1]["task_id"] = "APP-01"
+        with self.assertRaisesRegex(ValueError, "Duplicate"):
+            self.summary(index)
+        index = copy.deepcopy(self.index)
+        index["observations"][0]["reference"]["stdout_sha256"] = "zz"
+        with self.assertRaisesRegex(ValueError, "Unqualified"):
+            self.summary(index)
+        index = copy.deepcopy(self.index)
+        index["observations"][0]["mutant"]["returncode"] = 0
+        with self.assertRaisesRegex(ValueError, "Unqualified"):
+            self.summary(index)
+
+
 if __name__ == "__main__":
     unittest.main()
