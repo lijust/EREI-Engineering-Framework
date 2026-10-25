@@ -143,7 +143,8 @@ class CoreOneCaseTests(unittest.TestCase):
             ["--target-root", ".", "--case-id", "TLR-001-SUCCESS-STILL-LEARNING-DATA",
              "--output-dir", "./not-created", "--live"],
         ):
-            with self.subTest(args=args), (
+            with (
+                self.subTest(args=args),
                 mock.patch("sys.stderr", new_callable=io.StringIO),
                 mock.patch.object(smoke.gemini, "generate_raw_once") as api,
                 mock.patch.object(smoke, "prepare") as prep,
