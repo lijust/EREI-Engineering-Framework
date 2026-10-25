@@ -99,6 +99,28 @@ Use a **new** `smoke-004` directory; do **not** delete `smoke-001/002/003` or re
 
 ---
 
+## 25 October 2026 — offline differential after genuine Core HTTP 503 (no additional API)
+
+Owner's first FULL Core request on Gemini 3.6 Flash, `TLR-001`, separate local `smoke-004`, returned **HTTP 503** despite successful *non-Core* `READY` on the same model with a tiny public prompt. The backend did not return a scored Core response. **This does not establish that Framework behavior failed or that any particular parameter caused the 503.** These requests differ in at least FOUR simultaneous factors: prompt text and length, 64 vs 4,096 maximum output tokens, plain text vs `responseMimeType=application/json`, and default vs low thinking level.
+
+**No-model-call inspection on the reviewed local adapter checkout:** the owner can now inspect the **EXACT outgoing Core body** without reading or providing any API key, generating tokens, writing evidence or contacting Google. This is the same canonical request-body constructor used by the live call:
+
+```powershell
+cd "$env:userprofile\desktop\erei-core13-adapter"
+git fetch origin pull/101/head
+git checkout --detach <CURRENT_EXACT_PR101_CI_GREEN_SHA>
+git status --short
+python -m evals.run_gemini_core_smoke --model gemini-3.6-flash --target-root "$env:userprofile\desktop\erei-core13-target" --case-id TLR-001-SUCCESS-STILL-LEARNING-DATA --inspect-request
+```
+
+The command returns `prompt_utf8_bytes`, `request_body_utf8_bytes`, SHA256s, exact requested config, frozen Framework source SHA/tree and adapter SHA, plus the four confounded differences. It **never outputs the full prompt, hidden case expectations or API key**; `model_calls=0`, `accepted_core_cases=0`, `cause_of_http_503=NOT_ESTABLISHED_BY_OFFLINE_COMPARISON`. A passing offline inspection is not a solution to a provider 503, not a model readiness claim, and not justification for automatically repeating a 3.6/3.8 API POST.
+
+**Critical source safety:** the PR also checks that the ordered resolved Framework artifact paths match the exact frozen #98 declaration (`SKILL.md`, `SPEC.md`, `WORKFLOW.md` for TLR; only `WORKFLOW.md` for CCA). Even a symlink from an `assume-unchanged` tracked file to another *genuine* committed Markdown blob is rejected before constructing the prompt. This resolves the last previously identified Codex P2 path-substitution finding without creating another governance tool.
+
+**Operational next gate:** keep existing `smoke-001`…`smoke-004` unchanged, stop repeated identical API calls, review this no-network delta and supplier service availability before selecting a *single* controlled diagnostic. The current 3.6 successful minimal probe is **non-Core**, and genuine accepted Core results remain **0/13**; no Stable promotion.
+
+---
+
 ## Exactly one genuine Core case: owner-operated LOCAL smoke
 
 **Never run on a GitHub hosted runner and NEVER paste a key in GitHub, ChatGPT or a command line.** The script `evals/run_gemini_core_smoke.py` prompts invisibly with Python `getpass` if `GEMINI_API_KEY` is unset. No key value is persisted. Malformed keys/HTTP header exceptions are **redacted before logging** (a prior Codex P1), including the case of a trailing newline. The owner must first verify in Google AI Studio that **the actual key** is part of **EREI Gemini (Free tier)**; an account screenshot by itself is not proof that every key belongs to that project.
