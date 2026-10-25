@@ -76,8 +76,15 @@ def source_identity(adapter_root: Path) -> dict:
             text=True, stdin=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
             timeout=10, env=isolated,
         ).strip()
+        dirty = subprocess.check_output(
+            ["git", "-C", str(adapter_root), "status", "--porcelain", "--untracked-files=all"],
+            text=True, stdin=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+            timeout=10, env=isolated,
+        ).strip()
     except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
         raise gemini.GeminiAdapterError("adapter source revision unavailable") from None
+    if dirty:
+        raise gemini.GeminiAdapterError("adapter checkout is dirty; source is not reproducible")
     return {"adapter_source_revision": head}
 
 
@@ -147,12 +154,20 @@ def record_one(prepared: dict, output: Path, key: str, timeout: float) -> dict:
     }
     try:
         # Metadata comes from the response, not a locally invented token estimate.
-        envelope = json.loads(raw, object_pairs_hook=gemini.parse_gemini_result.__globals__.get(
-            "_missing", lambda pairs: _unique(pairs)
-        ))
+        envelope = json.loads(
+            raw,
+            object_pairs_hook=_unique,
+            parse_constant=lambda value: (_ for _ in ()).throw(ValueError("nonfinite JSON")),
+        )
+        if not isinstance(envelope, dict):
+            raise ValueError("invalid provider envelope")
         verdict["provider_model_version"] = envelope.get("modelVersion")
         verdict["provider_response_id"] = envelope.get("responseId")
         verdict["usage_metadata"] = envelope.get("usageMetadata")
+        if not isinstance(verdict["usage_metadata"], dict):
+            raise ValueError("provider usage metadata missing")
+        if not isinstance(verdict["provider_model_version"], str) or not verdict["provider_model_version"]:
+            raise ValueError("provider model version missing")
         normalized = gemini.parse_gemini_result(raw)
         (output / "adapter-normalized.json").write_bytes(json_bytes(normalized))
         scores = [
@@ -164,7 +179,7 @@ def record_one(prepared: dict, output: Path, key: str, timeout: float) -> dict:
         verdict["passed"] = bool(scores) and all(item[0] for item in scores)
         verdict["status"] = ("MODEL_RESPONSE_SCORED_PASS_UNVERIFIED"
                              if verdict["passed"] else "MODEL_RESPONSE_SCORED_FAIL_UNVERIFIED")
-    except (ValueError, TypeError, KeyError, gemini.GeminiAdapterError) as exc:
+    except (ValueError, TypeError, KeyError, AttributeError, gemini.GeminiAdapterError) as exc:
         verdict["status"] = "MODEL_RESPONSE_INVALID_UNVERIFIED"
         verdict["failure_type"] = type(exc).__name__
     (output / "verdict.json").write_bytes(json_bytes(verdict))
