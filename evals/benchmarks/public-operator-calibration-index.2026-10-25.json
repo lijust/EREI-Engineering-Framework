@@ -338,5 +338,7 @@
       "consumer_integration_executed": false,
       "production_writes": 0
     }
-  ]
+  ],
+  "catalog_canonical_lf_sha256": "9039f6bd9e3a8bff54f9cb13dcd712bac9aaa61ac3069902c96cafda35aeb1ef",
+  "catalog_binding_note": "Original catalog_sha256 is historical operator-reported CRLF-byte SHA256; catalog_canonical_lf_sha256 binds identical Git LF content across clean LF/CRLF working trees. Neither hash authenticates execution."
 }
