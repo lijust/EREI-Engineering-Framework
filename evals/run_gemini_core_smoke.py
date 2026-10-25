@@ -262,11 +262,18 @@ def main(argv=None) -> int:
                 "schema_version": 1, "case_id": a.case_id,
                 "source_head": gemini.EXPECTED_TARGET_HEAD,
                 "status": "MODEL_REQUEST_FAILED_NOT_SCORED",
-                "reason_category": type(exc).__name__,
+                "reason_category": exc.safe_code,
+                "provider_http_status": exc.http_status,
                 "evidence_kind": "observed_unverified",
                 "stable_ready": False,
             }))
-            print("MODEL_REQUEST_FAILED_NOT_SCORED (no auto retry)", file=sys.stderr)
+            print(
+                "MODEL_REQUEST_FAILED_NOT_SCORED: "
+                + exc.safe_code
+                + (f" HTTP_{exc.http_status}" if exc.http_status is not None else "")
+                + " (no auto retry; provider error and key redacted)",
+                file=sys.stderr,
+            )
             return 2
         print(json.dumps({
             "case_id": a.case_id, "status": result["status"],
