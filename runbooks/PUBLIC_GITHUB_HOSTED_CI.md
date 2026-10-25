@@ -18,6 +18,20 @@
 4. Do not reconnect long-lived personal Windows machines to untrusted public `pull_request` workflows. Scope any private self-hosted machines to private repositories; runner registration removal was user-reported, not independently queried.
 5. [T14 PR #94](https://github.com/lijust/EREI-Engineering-Framework/pull/94) now uses hosted Windows on its still-unmerged branch. Dedicated [run #40047051512](https://github.com/lijust/EREI-Engineering-Framework/actions/runs/40047051512) passed both Python 3.11/3.12 synthetic drill jobs and uploaded five-file evidence artifacts for each interpreter. Review its source and original P2 report-retention thread before merging; this is **not** real consumer rollback qualification.
 
+
+## T11 main Ruleset observation (public read-only, no release approval)
+
+The pre-existing `tools/github_ruleset_observation.py` review-candidate script on this branch can make a **public, anonymous GET** observation of the repository's current main protection without reading tokens or calling GitHub write APIs:
+
+```text
+python -B tools/github_ruleset_observation.py --live
+python -B -m unittest tools.tests.test_github_ruleset_observation -v
+```
+
+It verifies the repository metadata's **default branch is exactly `main`** (so `~DEFAULT_BRANCH` actually binds to it) and the exact Ruleset id `25712179`, active source/repository, protected `main`, no present-principal or listed-actor bypass/deletion/force-push, required PR, and GitHub Actions `assurance` from App ID `15368` under strict status checks. **Duplicate JSON keys**, nonfinite values and stale/mismatched source/branch metadata fail closed. The script intentionally reports `MAIN_CI_OBSERVED_RELEASE_BLOCKED`, `workflow_source_authenticated=false`, `release_branches_and_tags_covered=false`, `consumer_release_authorized=false`, and `stable_ready=false`, **even when all main checks pass or additional approvers are configured**. If API responses fail, drift or become unavailable, it exits nonzero. `--fixture` is an **untrusted offline replay**, not observed server evidence.
+
+A public API observation is unsigned and time-varying. It is **not** a substitute for independently pinned workflow source, rules covering `release/**`/tags, independently authorized release/security principals or consumer-side check. The historical `security/ASSURANCE_ENFORCEMENT.json` must **not** be set to `enforced` just because this observer is green; positive T11 remains separately blocked. This code does not touch main GitHub Ruleset settings, credentials, billing, model runtimes or consumer data.
+
 ## Boundaries
 
 CI green never proves trusted immutable workflow identity, independent security approval, consumer-side release enforcement, 13 genuine exact-target model evaluations, Internal qualification or Stable promotion. No project data/consumer pins, public GitHub ruleset settings, billing, secrets or paid AI are modified by this PR. Open-source disclosure audit is deferred by owner, with public visibility risk acknowledged.
