@@ -1,5 +1,20 @@
 # إعداد مقارنة V1/V2 — T15
 
+## T15 — preflight جديد للتجربة المقارنة دون دفع أو تشغيل نموذج (25 أكتوبر 2026)
+
+`evals/benchmarks/preflight_pilot.py` يعرض الحقول الناقصة **بأسمائها الدقيقة** قبل إجراء المقارنات الـ48 (12 مهمة × ذراعين × تكرارين)، ولا يعمل مع حالة `execution.authorized=true` أو خطة قابلة للتنفيذ، ولا يرسل طلبات شبكة أو ينشئ ملفات أو يستدعي أي نموذج:
+
+```text
+python -B evals/benchmarks/preflight_pilot.py --plan evals/benchmarks/v1-v2-pilot.json
+python -B -m unittest discover -s evals/tests -p 'test_pilot_preflight.py' -v
+```
+
+يتحقق الفحص من تثبيت V2 SHA وmodel/revision وruntime/environment/tool permissions digests، وحد token/وقت لكل تشغيل، وميزانية كلية مع مرجع موافقة مالك المشروع، ومراجع مستقل، وhidden acceptance لكل مهمة، وبصمة تحليل مسبق. **لا يختلق أيًّا منها**. حتى لو ملأ شخص جميع الحقول بقيم شكلية في نسخة اختبارية فإنه يُبقي `model_execution_authorized=false` و`hidden_acceptance_verified=false` و`independent_acceptance_verified=false` و`stable_ready=false`؛ إكمال البيانات ليس دليل صلاحية أو سلطة. أي `--records` اختياري لا بد أن يطابق SHA الخطة ويظل مخرجه غير معتمد المصدر.
+
+**النتيجة الحالية الصحيحة:** `48/48` خانات **لم تُنفذ** (24 لكل ذراع)، ولا توجد ميزانية مدفوعة معتمدة أو runtime/hidden acceptance موقعة؛ لا يُعاد وصف المعايرات المحلية الـ12 بأنها تجارب V1/V2. حالات Core الـ13 مسار مستقل. لا يسمح هذا الفحص بإطلاق التجربة أو الاتصال بمصادر EREI أو SAE-DB الخاصة.
+
+---
+
 ## الحالة الحالية — 2026-10-25 (بصمات تشغيل ذاتية وليست اعتمادًا مستقلًا)
 
 الملف [`public-operator-calibration-index.2026-10-25.json`](public-operator-calibration-index.2026-10-25.json)
