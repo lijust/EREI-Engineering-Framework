@@ -13,10 +13,10 @@
 ## Operating checklist
 
 1. Verify Framework PR on real GitHub-hosted Windows for Python 3.11/3.12, including Assurance, Bootstrap, and Evals; confirm actual runner metadata and job conclusions.
-2. Merge only by PR under Ruleset `EREI-Main-Protection`, id `25712179`; currently deletion and force-push denied, PR required, 0 review approvals and 0 required status checks.
-3. After a successful hosted push, choose required check context names from live completed hosted jobs before enabling status checks. Preserve standard job names. Demonstrate failed PR remains blocked without requiring unavailable external approvers.
-4. Do not reconnect long-lived personal Windows machines to untrusted public pull_request workflows. Scope any private self-hosted machines to private repositories.
-5. [T14 PR #94](https://github.com/lijust/EREI-Engineering-Framework/pull/94) has a separate opt-in rollback workflow originally pointed to self-hosted Windows. Retarget that workflow on its own branch after this main migration, and rerun its exact-head synthetic drill.
+2. Merge only by PR under **active** Ruleset `EREI-Main-Protection` (id `25712179`). For the default branch it requires the GitHub Actions `assurance` check (App ID 15368), with strict/up-to-date status checks, no bypass, no force push or deletion, and **0** required independent reviews. This Ruleset does not by itself cover release branches/tags.
+3. Keep the globally required `assurance` job unfiltered for all PRs and `main` pushes; Bootstrap/Evals/Runtime are path-filtered and **must not** be made globally required without their trigger contracts changing. Verify each current PR and new `main` SHA from actual GitHub-hosted run results. Never treat a green status as an authenticated immutable workflow or Stable release authority.
+4. Do not reconnect long-lived personal Windows machines to untrusted public `pull_request` workflows. Scope any private self-hosted machines to private repositories; runner registration removal was user-reported, not independently queried.
+5. [T14 PR #94](https://github.com/lijust/EREI-Engineering-Framework/pull/94) now uses hosted Windows on its still-unmerged branch. Dedicated [run #40047051512](https://github.com/lijust/EREI-Engineering-Framework/actions/runs/40047051512) passed both Python 3.11/3.12 synthetic drill jobs and uploaded five-file evidence artifacts for each interpreter. Review its source and original P2 report-retention thread before merging; this is **not** real consumer rollback qualification.
 
 ## Boundaries
 
