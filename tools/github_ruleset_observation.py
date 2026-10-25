@@ -74,7 +74,7 @@ def _unique_json_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
 
 
 def _nonfinite_json(value: str) -> Any:
-    raise ObservationError("non-finite JSON constant: " + value)
+    raise ValueError("non-finite JSON constant: " + value)
 
 
 def strict_json(payload: bytes | str) -> Any:
