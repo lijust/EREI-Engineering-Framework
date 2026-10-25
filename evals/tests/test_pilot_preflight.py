@@ -60,14 +60,19 @@ class PilotPreflightTests(unittest.TestCase):
                 preflight.preflight(p)
 
     def test_missing_or_fake_budget_cannot_create_budget_approval(self):
-        variants = (0, -1, 0.0, "100", True, 1e309)
-        for value in variants:
+        for value in (0, -1, 0.0, "100", True):
             p = copy.deepcopy(self.plan)
             p["execution"]["total_budget_usd"] = value
             result = preflight.preflight(p)
             self.assertIn("EXECUTION_TOTAL_BUDGET_USD_MISSING",
                           result["blocking_preparation_fields"])
             self.assertFalse(result["model_execution_authorized"])
+        # Infinity is not a JSON-representable plan value at all: reject,
+        # rather than convert to a missing-field report or zero cost.
+        p = copy.deepcopy(self.plan)
+        p["execution"]["total_budget_usd"] = float("inf")
+        with self.assertRaises(ValueError):
+            preflight.preflight(p)
 
     def test_filled_fields_not_release_authority_or_independent_acceptance(self):
         p = copy.deepcopy(self.plan)
