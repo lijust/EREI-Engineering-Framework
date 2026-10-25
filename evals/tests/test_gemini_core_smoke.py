@@ -293,6 +293,60 @@ class CoreOneCaseTests(unittest.TestCase):
             build.assert_called_once()
             api.assert_not_called()
 
+    def test_inspect_actual_core_payload_offline_never_reads_key_or_calls_model(self):
+        args = [
+            "--target-root", ".", "--case-id",
+            "TLR-001-SUCCESS-STILL-LEARNING-DATA",
+            "--model", "gemini-3.6-flash", "--inspect-request",
+        ]
+        with (
+            mock.patch.object(smoke, "prepare", return_value=prepared()) as preflight,
+            mock.patch.object(smoke.gemini, "generate_raw_once") as api,
+            mock.patch.object(smoke.getpass, "getpass") as key,
+            mock.patch("sys.stdout", new_callable=io.StringIO) as out,
+        ):
+            self.assertEqual(smoke.main(args), 0)
+        summary = json.loads(out.getvalue())
+        self.assertEqual(summary["kind"], "CORE13_REQUEST_SHAPE_INSPECTION_NO_API")
+        self.assertEqual(summary["model"], "gemini-3.6-flash")
+        self.assertGreater(summary["prompt_utf8_bytes"], 5)
+        self.assertGreater(summary["request_body_utf8_bytes"], summary["prompt_utf8_bytes"])
+        self.assertEqual(summary["core_generation_config"]["maxOutputTokens"], 4096)
+        self.assertEqual(summary["core_generation_config"]["responseMimeType"],
+                         "application/json")
+        self.assertEqual(summary["core_generation_config"]["thinkingConfig"],
+                         {"thinkingLevel": "low"})
+        self.assertEqual(summary["successful_control_from_owner"]["max_output_tokens"], 64)
+        self.assertEqual(summary["cause_of_http_503"],
+                         "NOT_ESTABLISHED_BY_OFFLINE_COMPARISON")
+        self.assertEqual(summary["model_calls"], 0)
+        self.assertEqual(summary["network_requests"], 0)
+        self.assertEqual(summary["accepted_core_cases"], 0)
+        self.assertFalse(summary["stable_ready"])
+        preflight.assert_called_once()
+        api.assert_not_called()
+        key.assert_not_called()
+
+    def test_inspect_cannot_coexist_with_live_authority_or_output_dir(self):
+        for suffix in (
+            ["--live"], ["--confirm-free-tier"],
+            ["--output-dir", "./no-writes"], ["--live", "--confirm-free-tier"],
+        ):
+            with self.subTest(flags=suffix), (
+                mock.patch.object(smoke, "prepare") as preflight,
+                mock.patch.object(smoke.gemini, "generate_raw_once") as api,
+                mock.patch.object(smoke.getpass, "getpass") as secret,
+                mock.patch("sys.stderr", new_callable=io.StringIO),
+            ):
+                self.assertEqual(smoke.main([
+                    "--target-root", ".", "--case-id",
+                    "TLR-001-SUCCESS-STILL-LEARNING-DATA",
+                    "--inspect-request", *suffix,
+                ]), 2)
+                preflight.assert_not_called()
+                api.assert_not_called()
+                secret.assert_not_called()
+
     def test_no_live_or_no_free_tier_owner_confirmation_never_calls_model(self):
         for args in (
             ["--target-root", ".", "--case-id", "TLR-001-SUCCESS-STILL-LEARNING-DATA",
