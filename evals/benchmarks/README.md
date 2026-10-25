@@ -1,5 +1,42 @@
 # إعداد مقارنة V1/V2 — T15
 
+## الحالة الحالية — 2026-10-25 (بصمات تشغيل ذاتية وليست اعتمادًا مستقلًا)
+
+الملف [`public-operator-calibration-index.2026-10-25.json`](public-operator-calibration-index.2026-10-25.json)
+هو **فهرس إيصالات محلية منقّاة قدمها المشغّل** مرتبطة بالـFramework source
+`8bc26deddcb9ebd10c24d5cb482b6b8e50827d9d` و
+catalog SHA-256 `53eb055dd5b1f3d174ac0fe52d44a304b3f39118b984e5b15b6485f8a1d69b4a`.
+**12/12 baseline-mutant PASS محليًا وفق إفادات المشغّل؛ 0/12 اعتماد مستقل**.
+لا يحتوي الفهرس على شيفرة المشاريع الخاصة أو stdout/stderr الأصلي أو أسرار.
+البصمات تربط الوصف بمخرجات مقدمة، ولا تثبت وقوع التشغيل باستقلال.
+
+لا يُخلط **أصل الاختبار** مع **بيئة التنفيذ**: **9/12** استخدمت ملف
+اختبار مستهلك أصليًا غير معدّل، منها **3/12** اختبارات JavaScript أصلية
+تُحاكي اعتماديات Apps Script داخل Node، و**6/12** ملفات اختبار أصلية كاملة
+ضمن offline harness محدد (APP-06؛ PY-01/02/04/05/06، حيث دوال Python
+تُستدعى بواسطة unittest adapter لا pytest/التطبيق الكامل). أما **3/12**
+المتبقية (APP-04/05، PY-03) فنُفذت بواسطة Framework-owned bounded oracles
+**دون تنفيذ ملف اختبار المستهلك الأصلي في مسار المعايرة النهائي**.
+**0** من الاختبارات السابقة يمثل Google Sheets integration أو production
+integration أو hidden acceptance؛ Internal=`HOLD_NOT_ADMITTED` وStable=`BLOCKED`.
+التشغيل الموثق على SHA سالف الذكر لا يُنسب آليًا إلى أي SHA توثيقي لاحق.
+
+الملخص الآلي `summarize_calibration_evidence.py` يُبقي ملف الملاحظات
+`public-source-oracle-observation.2026-10-24.json` **تاريخيًا دون تعديل**،
+ويعرض `current_operator_snapshot` منفصلًا، مع رفض أي تزوير يرفع
+الاعتماد أو التشغيل أو المقارنة. لا حاجة لإعادة الـ12 لاختبار التوثيق.
+
+**ما تبقى منفصلًا:** T15 independent acceptance `0/12`، نموذج V1/V2
+`0/48`، Core exact-target `0/13`؛ هذه ليست بوابات إطلاق تجربة Internal
+اصطناعية محدودة بذاتها. تجربة Internal ما زالت تحتاج هدف SHA/tree **مجمّعًا**
+ومراجعَين مستقلَين وoperator/custodian وتفويض نطاق ومدخلات ووقت في
+[`INTERNAL_PILOT_ADMISSION_2026-10-24.md`](../../governance/v2-remediation/INTERNAL_PILOT_ADMISSION_2026-10-24.md).
+لا دمج أو إطلاق أو تشغيل paid models أُذن به.
+
+---
+
+### سجل الإعداد التاريخي أدناه — ليس الحالة الحالية
+
 الحالة: **DRAFT_NOT_EXECUTABLE**. لا تشغيل نموذج أو ميزانية معتمدة أو نتيجة
 مقارنة. `v1-v2-pilot.json` يحتوي 12 مقترحًا من اختبارات فعلية في المشروعين،
 مع commit وGit blob لكل مرجع. أُعدت **12/12 وصفة معايرة عامة من حيث المصدر والمراجع والـhashes**،
