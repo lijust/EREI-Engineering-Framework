@@ -25,6 +25,12 @@ def blind_request():
     }
 
 
+def frozen_artifacts():
+    return [(path, "public contract") for path in
+            gemini.FROZEN_CORE_ARTIFACT_PATHS[
+                "skills/task-learning-capture + workflows/learning-review"]]
+
+
 def good_response():
     return json.dumps({
         "candidates": [{
@@ -47,7 +53,7 @@ class GeminiCore13AdapterTests(unittest.TestCase):
     def test_candidate_bound_and_contract_enforced_without_api(self):
         with (
             mock.patch.object(gemini.contract, "resolve_artifact",
-                              return_value=[("skills/task-learning-capture/SKILL.md", "public contract")]),
+                              return_value=frozen_artifacts()),
             mock.patch.object(gemini, "verify_artifact_bytes") as verify,
         ):
             prompt = gemini.prepare_one(blind_request(), Path("."))
@@ -127,7 +133,8 @@ class GeminiCore13AdapterTests(unittest.TestCase):
                 gemini.verify_frozen_target(Path("."))
 
     def test_assume_unchanged_artifact_content_is_rejected_by_blob_comparison(self):
-        artifacts = [("skills/task-learning-capture/SKILL.md", "untracked-private-replacement")]
+        artifacts = frozen_artifacts()
+        artifacts[0] = (artifacts[0][0], "untracked-private-replacement")
         with mock.patch.object(gemini.subprocess, "check_output",
                                return_value=b"actual committed public contract") as git:
             with self.assertRaisesRegex(gemini.GeminiAdapterError, "differ from frozen"):
@@ -143,6 +150,37 @@ class GeminiCore13AdapterTests(unittest.TestCase):
             with self.assertRaisesRegex(gemini.GeminiAdapterError, "differ from frozen"):
                 gemini.prepare_one(blind_request(), Path("."))
             build.assert_not_called()
+
+    def test_symlink_to_another_committed_artifact_cannot_change_declared_contract(self):
+        original = frozen_artifacts()
+        fake = list(original)
+        # Replaced symlink points at a different VALID committed Markdown blob:
+        # old byte-comparison alone would accept the destination path and bytes.
+        fake[0] = ("workflows/learning-review/WORKFLOW.md", original[0][1])
+        for wrong in (fake, list(reversed(original)), original[:-1], original + original[:1]):
+            with self.subTest(paths=[x[0] for x in wrong]), (
+                mock.patch.object(gemini.contract, "resolve_artifact", return_value=wrong),
+                mock.patch.object(gemini, "verify_artifact_bytes") as blob_verify,
+                mock.patch.object(gemini.contract, "build_direct_prompt") as build,
+            ):
+                with self.assertRaisesRegex(gemini.GeminiAdapterError,
+                                             "differ from frozen declaration"):
+                    gemini.prepare_one(blind_request(), Path("."))
+                blob_verify.assert_not_called()
+                build.assert_not_called()
+
+    def test_declared_capability_workflow_has_exact_single_file(self):
+        request = blind_request()
+        request["artifact"] = "workflows/candidate-capability-adoption"
+        expected = [(path, "public") for path in
+                    gemini.FROZEN_CORE_ARTIFACT_PATHS[request["artifact"]]]
+        with (
+            mock.patch.object(gemini.contract, "resolve_artifact", return_value=expected),
+            mock.patch.object(gemini, "verify_artifact_bytes") as verify,
+        ):
+            prompt = gemini.prepare_one(request, Path("."))
+            self.assertIn("public", prompt)
+            verify.assert_called_once()
 
     def test_header_value_error_cannot_leak_key_or_trigger_network(self):
         for bad in ("AIza-secret-MUST-NOT-LOG\\n", "AIza-secret-MUST-NOT-LOG\\r"):
