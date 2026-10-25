@@ -20,6 +20,9 @@ def valid_report():
         "v1_tool_sha256": capture.V1_SHA256,
         "isolated_checkout_ref": TARGET,
         "checkout_identity_verified": True,
+        "synthetic_input_sha256": "a" * 64,
+        "fixture_consistent_across_cases": True,
+        "fixture_approved_by_independent_reviewer": False,
         "v2_source_sha256": {
             key: hashlib.sha256((ROOT / key).read_bytes()).hexdigest()
             for key in (
@@ -61,6 +64,8 @@ class T14EvidenceCaptureTests(unittest.TestCase):
         self.assertEqual(evidence["drill-exit-code.txt"], b"0\n")
         verdict = json.loads(evidence["capture-verdict.json"])
         self.assertTrue(verdict["accepted"])
+        self.assertEqual(verdict["synthetic_input_sha256"], "a" * 64)
+        self.assertFalse(verdict["synthetic_fixture_independently_approved"])
         self.assertFalse(verdict["live_adoption"])
         self.assertFalse(verdict["internal_release_qualified"])
         self.assertFalse(verdict["independent_security_approval"])
@@ -87,6 +92,10 @@ class T14EvidenceCaptureTests(unittest.TestCase):
     def test_success_exit_with_untrusted_metadata_is_denied_and_retained(self):
         for change in ({"isolated_checkout_ref": "b" * 40},
                        {"internal_release_qualified": True},
+                       {"synthetic_input_sha256": None},
+                       {"synthetic_input_sha256": "z" * 64},
+                       {"fixture_consistent_across_cases": False},
+                       {"fixture_approved_by_independent_reviewer": True},
                        {"tests_run": 3}, {"passed": False}):
             with self.subTest(change=change):
                 report = valid_report()
