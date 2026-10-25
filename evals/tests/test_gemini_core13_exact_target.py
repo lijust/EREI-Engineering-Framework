@@ -72,6 +72,37 @@ class GeminiCore13AdapterTests(unittest.TestCase):
         self.assertEqual(gemini.MODEL, "gemini-3.8-flash")
         self.assertIn("/models/gemini-3.8-flash:generateContent", gemini.API_URL)
 
+    def test_diagnostic_verified_gemini_36_is_explicit_stable_core_runtime(self):
+        self.assertEqual(gemini.model_endpoint("gemini-3.6-flash"),
+                         "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent")
+        class Reply:
+            def __enter__(self):
+                return self
+            def __exit__(self, *_):
+                return False
+            def read(self, n):
+                return good_response()
+        client = mock.Mock()
+        client.open.return_value = Reply()
+        with mock.patch.object(gemini.urllib.request, "build_opener", return_value=client):
+            response = gemini.generate_raw_once("PUBLIC CORE PROMPT", key="test-key", timeout=45,
+                                                model="gemini-3.6-flash")
+        self.assertEqual(response, good_response())
+        client.open.assert_called_once()
+        req = client.open.call_args.args[0]
+        self.assertEqual(req.get_method(), "POST")
+        self.assertEqual(req.full_url, gemini.model_endpoint("gemini-3.6-flash"))
+        self.assertNotIn("test-key", req.data.decode("utf-8"))
+        self.assertNotIn("tools", json.loads(req.data))
+
+    def test_model_alias_or_unapproved_model_rejected_before_any_api_call(self):
+        for model in ("gemini-latest", "gemini-3.5-flash-lite", "gemini-3.6-flash-preview", ""):
+            with self.subTest(model=model):
+                with mock.patch.object(gemini.urllib.request, "build_opener") as client:
+                    with self.assertRaisesRegex(gemini.GeminiAdapterError, "unapproved"):
+                        gemini.generate_raw_once("PUBLIC", key="test-key", timeout=60, model=model)
+                    client.assert_not_called()
+
     def test_target_check_rejects_wrong_head_or_tree(self):
         values = [
             gemini.EXPECTED_TARGET_HEAD, gemini.EXPECTED_TARGET_TREE,
