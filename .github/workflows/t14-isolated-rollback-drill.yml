@@ -25,6 +25,7 @@ jobs:
       - name: Checkout exact PR source with V1 Stable history
         uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
           persist-credentials: false
 
@@ -36,10 +37,12 @@ jobs:
         shell: powershell
         env:
           PYTHON_VERSION: ${{ matrix.python-version }}
+          EREI_T14_EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}
         run: |
           $ErrorActionPreference = 'Stop'
           $target = (git rev-parse HEAD).Trim()
           if ($LASTEXITCODE -ne 0 -or $target -notmatch '^[a-f0-9]{40}$') { throw 'invalid Git checkout HEAD' }
+          if ($target -cne $env:EREI_T14_EXPECTED_HEAD) { throw 'T14 source HEAD differs from exact PR head; fail closed' }
           $env:EREI_T14_TARGET = $target
           $env:EREI_T14_V1_PATH = Join-Path $env:RUNNER_TEMP ('erei-t14-stable-v1-' + $env:PYTHON_VERSION + '.py')
           $env:EREI_T14_EVIDENCE_DIR = Join-Path $env:RUNNER_TEMP ('erei-t14-evidence-' + $env:PYTHON_VERSION)
