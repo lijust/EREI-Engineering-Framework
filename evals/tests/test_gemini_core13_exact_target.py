@@ -81,6 +81,8 @@ class GeminiCore13AdapterTests(unittest.TestCase):
             gemini.verify_frozen_target(Path("."))
             self.assertEqual(cmd.call_count, 4)
             self.assertNotIn("GIT_DIR", cmd.call_args.kwargs["env"])
+            for call in cmd.call_args_list:
+                self.assertEqual(call.args[0][:2], ["git", "--no-replace-objects"])
         for pos in (0, 1):
             drift = list(values)
             drift[pos] = "a" * 40
@@ -100,6 +102,7 @@ class GeminiCore13AdapterTests(unittest.TestCase):
             with self.assertRaisesRegex(gemini.GeminiAdapterError, "differ from frozen"):
                 gemini.verify_artifact_bytes(Path("."), artifacts)
             self.assertIn("show", git.call_args.args[0])
+            self.assertEqual(git.call_args.args[0][:2], ["git", "--no-replace-objects"])
         with (
             mock.patch.object(gemini.contract, "resolve_artifact", return_value=artifacts),
             mock.patch.object(gemini.subprocess, "check_output",
