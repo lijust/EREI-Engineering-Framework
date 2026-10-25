@@ -144,7 +144,7 @@ def generate_raw_once(prompt: str, *, key: str, timeout: float) -> bytes:
         "generationConfig": {
             "responseMimeType": "application/json",
             "maxOutputTokens": 4096,
-            "temperature": 0,
+            "thinkingConfig": {"thinkingLevel": "low"},
         },
     }
     raw = json.dumps(body, ensure_ascii=False, separators=(",", ":"), allow_nan=False).encode("utf-8")
