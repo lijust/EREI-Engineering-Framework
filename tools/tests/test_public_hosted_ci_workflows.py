@@ -27,6 +27,21 @@ class PublicHostedCIWorkflowTests(unittest.TestCase):
                 self.assertNotIn("secrets.", body)
                 self.assertNotIn('py "-3.12"', body)
 
+    def test_t14_synthetic_drill_is_scoped_to_review_prs_with_read_only_permissions(self):
+        body = (ROOT / ".github/workflows/t14-isolated-rollback-drill.yml").read_text(
+            encoding="utf-8"
+        )
+        guard = ("(github.event.pull_request.number == 94 || "
+                 "github.event.pull_request.number == 98) && "
+                 "github.event.pull_request.head.repo.full_name == github.repository")
+        self.assertEqual(body.count(guard), 2, "both drill and retention need scope guard")
+        self.assertIn("permissions:\n  contents: read", body)
+        self.assertIn("persist-credentials: false", body)
+        self.assertIn("runs-on: windows-latest", body)
+        self.assertIn("retention-days: 14", body)
+        self.assertNotIn("pull_request_target:", body)
+        self.assertNotIn("secrets.", body)
+
     def test_preflight_is_hosted(self):
         body = (ROOT / ".github/workflows/self-hosted-runner-preflight.yml").read_text(encoding="utf-8")
         self.assertIn("runs-on: windows-latest", body)
