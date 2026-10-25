@@ -180,12 +180,28 @@ def summarize_current_operator(catalog: dict[str, Any], index: dict[str, Any],
     Origin (original versus Framework oracle) and environment (offline
     emulator versus function adapter) remain separate dimensions.
     """
+    # The Windows operator receipt hashed the raw catalog *CRLF* bytes;
+    # GitHub's canonical blob is LF and valid Linux checkouts also use LF.
+    # Keep BOTH fixed SHA-256 identities (not just a caller-chosen digest).
+    # Normalizing only line endings does not permit modified JSON semantics.
+    lf_catalog = catalog_bytes.replace(b"\r\n", b"\n")
+    if b"\r" in lf_catalog:
+        raise ValueError("Unbound or untrusted operator observation index")
+    actual_lf = hashlib.sha256(lf_catalog).hexdigest()
+    actual_original_crlf = hashlib.sha256(
+        lf_catalog.replace(b"\n", b"\r\n")
+    ).hexdigest()
     if (catalog.get("execution_authorized") is not False
             or index.get("kind") != "SELF_REPORTED_OPERATOR_CALIBRATION_INDEX"
             or index.get("schema_version") != 1
             or index.get("evidence_origin")
             != "OPERATOR_SUPPLIED_SANITIZED_CLI_OUTPUT_NOT_INDEPENDENTLY_WITNESSED"
-            or index.get("catalog_sha256") != hashlib.sha256(catalog_bytes).hexdigest()
+            or actual_lf
+            != "9039f6bd9e3a8bff54f9cb13dcd712bac9aaa61ac3069902c96cafda35aeb1ef"
+            or index.get("catalog_canonical_lf_sha256") != actual_lf
+            or actual_original_crlf
+            != "53eb055dd5b1f3d174ac0fe52d44a304b3f39118b984e5b15b6485f8a1d69b4a"
+            or index.get("catalog_sha256") != actual_original_crlf
             or index.get("framework_commit_sha")
             != "8bc26deddcb9ebd10c24d5cb482b6b8e50827d9d"):
         raise ValueError("Unbound or untrusted operator observation index")
