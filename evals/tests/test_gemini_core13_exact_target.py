@@ -130,6 +130,8 @@ class GeminiCore13AdapterTests(unittest.TestCase):
         self.assertEqual(opener.request.get_header("X-goog-api-key"), "mock-secret-only")
         body = json.loads(opener.request.data)
         self.assertEqual(body["generationConfig"]["responseMimeType"], "application/json")
+        self.assertEqual(body["generationConfig"]["thinkingConfig"], {"thinkingLevel": "low"})
+        self.assertNotIn("temperature", body["generationConfig"])
         self.assertNotIn("tools", body)
         self.assertNotIn("mock-secret-only", opener.request.data.decode())
         self.assertEqual(result["output"]["decision"], "omit_task")
