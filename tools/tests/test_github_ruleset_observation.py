@@ -46,6 +46,7 @@ def sample():
         ],
     }
     return {
+        "repository": {"full_name": obs.REPOSITORY, "default_branch": "main", "private": False},
         "branch": {
             "name": "main",
             "protected": True,
@@ -59,7 +60,7 @@ def sample():
 def assess(data=None, *, mode="LIVE_PUBLIC_API"):
     d = sample() if data is None else data
     return obs.assess_public_main_ruleset(
-        d["branch"], d["rulesets"], d["details"], mode=mode
+        d["repository"], d["branch"], d["rulesets"], d["details"], mode=mode
     )
 
 
@@ -90,16 +91,28 @@ class PublicRulesetObserverTests(unittest.TestCase):
     def test_live_fetch_uses_three_exact_read_only_paths(self):
         inputs = sample()
         paths = [
-            "/branches/main", "/rulesets",
+            "/", "/branches/main", "/rulesets",
             "/rulesets/25712179",
         ]
         fetch = mock.Mock(side_effect=[
-            inputs["branch"], inputs["rulesets"], inputs["details"]
+            inputs["repository"], inputs["branch"], inputs["rulesets"], inputs["details"]
         ])
         result = obs.observe(fetch)
         self.assertEqual(fetch.call_args_list, [mock.call(s) for s in paths])
         self.assertEqual(result["observation_mode"], "LIVE_PUBLIC_API")
         self.assertFalse(result["stable_ready"])
+
+    def test_default_branch_changes_block_main_ruleset_observation(self):
+        for default in ("develop", "", None, "release"):
+            with self.subTest(default=default):
+                data = sample()
+                data["repository"]["default_branch"] = default
+                with self.assertRaisesRegex(obs.ObservationError, "default-branch drift"):
+                    assess(data)
+        data = sample()
+        data["repository"]["full_name"] = "someone-else/repo"
+        with self.assertRaisesRegex(obs.ObservationError, "identity"):
+            assess(data)
 
     def test_offline_replay_never_authenticates_observation(self):
         x = assess(mode="OFFLINE_FIXTURE_UNTRUSTED")
@@ -227,6 +240,44 @@ class PublicRulesetObserverTests(unittest.TestCase):
             self.assertNotIn("authorization", {
                 k.lower() for k in req.headers
             })
+
+    def test_duplicate_conflicting_json_keys_fail_before_protection_assessment(self):
+        from json import dumps
+        details = dumps(sample()["details"]).replace(
+            '"enforcement": "active"',
+            '"enforcement": "disabled", "enforcement": "active"',
+            1,
+        )
+        with mock.patch.object(obs.urllib.request, "build_opener") as opener:
+            response = mock.MagicMock()
+            response.__enter__.return_value.read.return_value = details.encode("utf-8")
+            opener.return_value.open.return_value = response
+            with self.assertRaisesRegex(obs.ObservationError, "duplicate JSON key"):
+                obs.public_json("/rulesets/25712179")
+        for raw in (
+            '{"bypass_actors": [{"id":1}], "bypass_actors": []}',
+            '{"outer":{"required_approvals":2,"required_approvals":0}}',
+        ):
+            with self.subTest(raw=raw):
+                with self.assertRaisesRegex(obs.ObservationError, "duplicate JSON key"):
+                    obs.strict_json(raw)
+
+    def test_offline_fixture_duplicate_keys_rejected(self):
+        import json
+        import tempfile
+        from pathlib import Path
+
+        data = sample()
+        raw = json.dumps(data).replace(
+            '"default_branch": "main"',
+            '"default_branch": "develop", "default_branch": "main"',
+            1,
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            file = Path(tmp) / "fixture.json"
+            file.write_text(raw, encoding="utf-8")
+            with mock.patch("sys.stderr"):
+                self.assertEqual(obs.main(["--fixture", str(file)]), 2)
 
     def test_nonfinite_json_rejected(self):
         with mock.patch.object(obs.urllib.request, "build_opener") as opener:
