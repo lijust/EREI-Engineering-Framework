@@ -56,42 +56,50 @@ def json_bytes(value: object) -> bytes:
                        sort_keys=True, indent=2) + "\n").encode("utf-8")
 
 
-def verify_exact_target_source_file(root: Path, relative_path: str) -> None:
-    """Reject hidden worktree modifications of suite/scorer BEFORE reading/executing.
+FROZEN_EVAL_FILES = {"evals/runner.py"} | {
+    "evals/cases/" + name for name in CASES
+}
 
-    Git assume-unchanged can mask changes from status; compare raw bytes with
-    the Git blob at the exact immutable PR #98 commit. No model calls here.
+
+def frozen_blob(root: Path, relative_path: str) -> bytes:
+    """Read original target Git object directly; never consume worktree or pyc.
+
+    CRLF checkouts, git assume-unchanged and ignored __pycache__ cannot
+    influence the source used for the blind prompt or evaluator.
     """
-    allowed = {"evals/runner.py"} | {
-        "evals/cases/" + name for name in CASES
-    }
-    if relative_path not in allowed:
+    if relative_path not in FROZEN_EVAL_FILES:
         raise gemini.GeminiAdapterError("unexpected target evaluation file")
-    env = {k: v for k, v in os.environ.items()
-           if not k.upper().startswith("GIT_")}
+    env = {k: v for k, v in os.environ.items() if not k.upper().startswith("GIT_")}
     try:
         blob = subprocess.check_output(
             ["git", "-C", str(root.resolve()), "show",
              f"{gemini.EXPECTED_TARGET_HEAD}:{relative_path}"],
-            text=False, stdin=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+            stdin=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
             timeout=10, env=env,
         )
-        local = (root / relative_path).read_bytes()
     except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
-        raise gemini.GeminiAdapterError("frozen target source verification unavailable") from None
-    if local != blob:
-        raise gemini.GeminiAdapterError("frozen target suite/scorer bytes differ from original Git blob")
+        raise gemini.GeminiAdapterError("immutable evaluation Git blob unavailable") from None
+    if not isinstance(blob, bytes) or not blob or len(blob) > 512_000:
+        raise gemini.GeminiAdapterError("invalid/oversize frozen evaluator Git blob")
+    return blob
 
 
 def frozen_runner(root: Path):
-    """Load scorer code from the actual pinned *target*, not adapter checkout."""
-    verify_exact_target_source_file(root, "evals/runner.py")
+    """Compile and exec VERIFIED Git blob bytes only; do not load cached pyc."""
+    import types
+
+    code_bytes = frozen_blob(root, "evals/runner.py")
     path = root / "evals" / "runner.py"
-    spec = importlib.util.spec_from_file_location("erei_frozen_core_scorer", path)
-    if not spec or not spec.loader:
-        raise gemini.GeminiAdapterError("frozen target scorer unavailable")
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
+    try:
+        source = code_bytes.decode("utf-8-sig")
+        executable = compile(source, str(path), "exec", dont_inherit=True)
+    except (UnicodeError, SyntaxError, ValueError) as exc:
+        raise gemini.GeminiAdapterError("frozen evaluator source invalid") from None
+    module = types.ModuleType("erei_frozen_core_scorer")
+    module.__file__ = str(path)
+    module.__package__ = ""
+    # exec does NOT import using SourceFileLoader and does NOT consult .pyc.
+    exec(executable, module.__dict__)
     return module
 
 
@@ -120,9 +128,13 @@ def load_one(root: Path, case_id: str, evaluator) -> tuple[dict, dict, dict]:
     name = next((name for name, ids in CASES.items() if case_id in ids), None)
     if name is None:
         raise gemini.GeminiAdapterError("case ID outside frozen Core13")
-    verify_exact_target_source_file(root, "evals/cases/" + name)
     path = root / "evals" / "cases" / name
-    suite = evaluator.load_json(path)
+    try:
+        suite = evaluator.strict_json_loads(
+            frozen_blob(root, "evals/cases/" + name).decode("utf-8-sig")
+        )
+    except (UnicodeError, ValueError, TypeError):
+        raise gemini.GeminiAdapterError("frozen suite Git blob invalid") from None
     errors = evaluator.validate_suite(suite, str(path))
     if errors:
         raise gemini.GeminiAdapterError("frozen source suite invalid")
