@@ -172,7 +172,7 @@ class LiveServerEnforcementTests(unittest.TestCase):
                     with self.assertRaisesRegex(assurance_enforcement.EnforcementError, flag):
                         self.verify(pair)
 
-    def test_server_and_fallback_are_alternative_authenticated_proofs(self):
+    def test_server_proof_is_distinct_from_review_only_fallback(self):
         both = record()
         both["fallback"]["equivalent_enforcement_verified"] = True
         both["fallback"]["equivalence_target_ref"] = "a" * 40
@@ -191,10 +191,10 @@ class LiveServerEnforcementTests(unittest.TestCase):
             "verify_authenticated_equivalence",
             return_value={"status": "verified", "review": {"pull_request_number": 77}},
         ):
-            proof = assurance_enforcement.verify_effective_enforcement(
-                __import__("pathlib").Path("."), both, expected_target="a" * 40,
-            )
-            self.assertEqual(proof["mode"], "fallback")
+            with self.assertRaisesRegex(assurance_enforcement.EnforcementError, "review.*does not establish"):
+                assurance_enforcement.verify_effective_enforcement(
+                    __import__("pathlib").Path("."), both, expected_target="a" * 40,
+                )
 
         with mock.patch.object(
             assurance_enforcement, "verify_live_server_enforcement",

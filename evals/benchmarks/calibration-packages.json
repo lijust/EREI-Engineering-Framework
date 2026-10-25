@@ -1,0 +1,570 @@
+{
+  "schema_version": 1,
+  "purpose": "PUBLIC_CALIBRATION_NOT_HIDDEN_ACCEPTANCE",
+  "execution_authorized": false,
+  "packages": [
+    {
+      "task_id": "APP-01",
+      "state": "PUBLIC_CALIBRATION_ONLY",
+      "source": {
+        "repository": "lijust/EREI-App-Google",
+        "commit": "6d32e7a14a4324dbdea228f695d6b75e0b8bd246",
+        "export_directory": "app"
+      },
+      "runtime": "node",
+      "files": [
+        {
+          "path": "apps/developer-validation-intake/Code.gs",
+          "git_blob": "5f8ee6b20a2a3cb289704361c7a02e34681b1c16"
+        },
+        {
+          "path": "tests/developer-validation-idempotent-sheet-ensure.test.js",
+          "git_blob": "8b51f8d033c1216261944375e6a5381f50aba18c"
+        }
+      ],
+      "test_path": "tests/developer-validation-idempotent-sheet-ensure.test.js",
+      "python_tests": [],
+      "mutation": {
+        "path": "apps/developer-validation-intake/Code.gs",
+        "before": "let needsHeaderWrite=created;",
+        "after": "let needsHeaderWrite=true;"
+      },
+      "expected_assertion": "AssertionError [ERR_ASSERTION]",
+      "prompt": "Repair dviEnsure_ so a sheet whose headers and frozen-row count already match is not rewritten or restyled. Initialize missing/blank sheets correctly and preserve the existing return value. Use the fake-sheet regression test; do not call Apps Script services.",
+      "prompt_sha256": "2e8373692329444fc0114fd3bf5751e5aa47eca790e396d1652f36dcd5683b03",
+      "starter_file_sha256": {
+        "apps/developer-validation-intake/Code.gs": "8af9b57eb8cab1c6e4dea335f31da7f36aa767beb2c1c4c6396b0ccff2b59855",
+        "tests/developer-validation-idempotent-sheet-ensure.test.js": "d56711a42700079d37b646e2e6d38dbd44d88a1f60078f560030f330dbb534be"
+      },
+      "expected_assertion_line": 41
+    },
+    {
+      "task_id": "APP-02",
+      "state": "PUBLIC_CALIBRATION_ONLY",
+      "source": {
+        "repository": "lijust/EREI-App-Google",
+        "commit": "6d32e7a14a4324dbdea228f695d6b75e0b8bd246",
+        "export_directory": "app"
+      },
+      "runtime": "node",
+      "files": [
+        {
+          "path": "apps/developer-validation-intake/Code.gs",
+          "git_blob": "5f8ee6b20a2a3cb289704361c7a02e34681b1c16"
+        },
+        {
+          "path": "architecture/data-validation/developer-sales-validation-contract.v1.json",
+          "git_blob": "4990213eace39476c14f502d80d3b71677597658"
+        },
+        {
+          "path": "tests/developer-validation-field-consensus.test.js",
+          "git_blob": "99ff5520076c176b3f1389d2081241f030c2e406"
+        }
+      ],
+      "test_path": "tests/developer-validation-field-consensus.test.js",
+      "python_tests": [],
+      "mutation": {
+        "path": "apps/developer-validation-intake/Code.gs",
+        "before": "if(Number.isFinite(n)) return String(n);",
+        "after": "if(Number.isFinite(n)) return raw;"
+      },
+      "expected_assertion": "AssertionError [ERR_ASSERTION]",
+      "prompt": "Repair coordinate consensus so equivalent finite numeric spellings agree while different coordinates, missing validators and unresolved evidence remain distinct. Preserve the first accepted source spelling and existing field-level decision contracts. Run the offline consensus test.",
+      "prompt_sha256": "fcea4198709f4398817f8f3f1563e416667e327a024c2ac923f5501ce000bf3c",
+      "starter_file_sha256": {
+        "apps/developer-validation-intake/Code.gs": "2b441a94f5567ee9fa8f9dd868d7f8e943f07b719c7c9cfffac177c72718a8a5",
+        "architecture/data-validation/developer-sales-validation-contract.v1.json": "778024e97b6ea842248794f60879abe67840ee46564528da519aefbfbafdbe50",
+        "tests/developer-validation-field-consensus.test.js": "6e0fad36834d24af0790023fba10778ba5a176fd3fcb993b008ee3a943128115"
+      },
+      "expected_assertion_line": 32
+    },
+    {
+      "task_id": "APP-03",
+      "state": "PUBLIC_CALIBRATION_ONLY",
+      "source": {
+        "repository": "lijust/EREI-App-Google",
+        "commit": "6d32e7a14a4324dbdea228f695d6b75e0b8bd246",
+        "export_directory": "app"
+      },
+      "runtime": "node",
+      "files": [
+        {
+          "path": "apps/developer-validation-intake/MissingProjectInsertReadiness.gs",
+          "git_blob": "6c2b8b02afa9044f21c547f1f19a93820ce7c9ff"
+        },
+        {
+          "path": "apps/developer-validation-intake/MissingProjectStaging.gs",
+          "git_blob": "5d9e632e949ae0ad561c9f064ff9f77aae427dd5"
+        },
+        {
+          "path": "apps/developer-validation-intake/ResidualMutationReadiness.gs",
+          "git_blob": "a058b10142976e1720a6a4bf7853f036be2c3e5d"
+        },
+        {
+          "path": "architecture/data-validation/developer-sales-validation-contract.v1.json",
+          "git_blob": "4990213eace39476c14f502d80d3b71677597658"
+        },
+        {
+          "path": "architecture/data-validation/developer-validation-candidate-runtime-package.v1.json",
+          "git_blob": "94fc797ad9939a00d7b18fd4b1cecffe2cecef7b"
+        },
+        {
+          "path": "architecture/data-validation/developer-validation-source-provenance-policy-review.2026-09-27.json",
+          "git_blob": "2c037a8f4f3c57ad9929e50a6dbf2eadcab54a61"
+        },
+        {
+          "path": "tests/developer-validation-source-provenance-policy.test.js",
+          "git_blob": "90ae74e4bbd7939731cce4fc4e0d7c94ebee0883"
+        }
+      ],
+      "test_path": "tests/developer-validation-source-provenance-policy.test.js",
+      "python_tests": [],
+      "mutation": {
+        "path": "apps/developer-validation-intake/MissingProjectInsertReadiness.gs",
+        "before": "    p.mappingStatus==='Master'?'Master':'',\n    '',\n    '',\n    '',",
+        "after": "    p.mappingStatus==='Master'?'Master':'',\n    p.masterDeveloperId||'',\n    '',\n    '',"
+      },
+      "expected_assertion": "source_developer_id must stay blank for DVI-origin",
+      "expected_assertion_line": 59,
+      "prompt": "Repair missing-project insert planning so DVI-origin proposals leave external source_developer_id and source_developer_name blank. Do not copy the local master developer identity into external provenance. Preserve the separate write authorization and audit-linkage blockers, the unreserved project ID, and the rest of the planned row. Use only the offline fake-context provenance test; do not call Apps Script or write Master data.",
+      "prompt_sha256": "097571abfe8ed8d1b42e564fd08b8e99bd5b8a0008f582cdd019d6b81c658d5c",
+      "starter_file_sha256": {
+        "apps/developer-validation-intake/MissingProjectInsertReadiness.gs": "e8402451187baa48c40e28e47c78b92c37f2c1b39ea0cda96b3926c7a56b1fc5",
+        "apps/developer-validation-intake/MissingProjectStaging.gs": "9994d74e2df95a4fb91e1a11a93588a080ba55ca967d4ea2ba375d24bac61da8",
+        "apps/developer-validation-intake/ResidualMutationReadiness.gs": "e65c5522f7391bdbdbd98019a5f2a601d6d6ef9c173f761646e1285badd38c85",
+        "architecture/data-validation/developer-sales-validation-contract.v1.json": "778024e97b6ea842248794f60879abe67840ee46564528da519aefbfbafdbe50",
+        "architecture/data-validation/developer-validation-candidate-runtime-package.v1.json": "ff3341aa3c74acb38a788cca197974f77b8608317c944872631ea27bdfb832ce",
+        "architecture/data-validation/developer-validation-source-provenance-policy-review.2026-09-27.json": "db965682677f4b1e126dd3fe39e0a4e2b88b455ef2f3271cf10f2477aa4fc5e9",
+        "tests/developer-validation-source-provenance-policy.test.js": "d5ca6735096b4be4c2ec0edceb953b1db949260bf54420e320e3810cd35ddcd6"
+      }
+    },
+    {
+      "task_id": "APP-04",
+      "state": "PUBLIC_CALIBRATION_ONLY",
+      "source": {
+        "repository": "lijust/EREI-App-Google",
+        "commit": "6d32e7a14a4324dbdea228f695d6b75e0b8bd246",
+        "export_directory": "app"
+      },
+      "runtime": "node",
+      "files": [
+        {
+          "path": "apps/developer-validation-intake/MissingProjectInsertReadiness.gs",
+          "git_blob": "6c2b8b02afa9044f21c547f1f19a93820ce7c9ff"
+        },
+        {
+          "path": "tests/developer-validation-project-id-policy.test.js",
+          "git_blob": "3f0c48f0b98d180fd242d1affed87ff0d87d6418"
+        }
+      ],
+      "test_path": "tests/developer-validation-project-id-policy.test.js",
+      "python_tests": [],
+      "behavioral_oracle": "APP04_PROJECT_ID_MAX_PLUS_ONE",
+      "mutation": {
+        "path": "apps/developer-validation-intake/MissingProjectInsertReadiness.gs",
+        "before": "? projectIdMax+1\n    : null;",
+        "after": "? projectIdMin+1\n    : null;"
+      },
+      "expected_assertion": "APP04_MAX_PLUS_ONE_NO_GAP_REUSE",
+      "prompt": "Repair the source-owned DVI project-ID preview so a current Master inventory with IDs 2 and 5 yields provisional next ID 6, never a reused gap (3). Preserve exact 13-column contract and write-time-only locked allocation: preview must not reserve IDs or grant Master writes. Run the public offline behavioral oracle; do not connect to Google Sheets.",
+      "prompt_sha256": "203694205d2501ea9f957cbe9614242ced9d4f8186aa8b6353b3edb22a80230d",
+      "starter_file_sha256": {
+        "apps/developer-validation-intake/MissingProjectInsertReadiness.gs": "9bd59cdbc85824cc012be6d0b6fc7b9f29aa94ef0d32aebdb215ba0b8b385526",
+        "tests/developer-validation-project-id-policy.test.js": "bb7b96d9ff761e9c5f0d97132aaec4177c07e2aab7f2f4abe894af29b151c15e"
+      }
+    },
+    {
+      "task_id": "APP-05",
+      "state": "PUBLIC_CALIBRATION_ONLY",
+      "source": {
+        "repository": "lijust/EREI-App-Google",
+        "commit": "6d32e7a14a4324dbdea228f695d6b75e0b8bd246",
+        "export_directory": "app"
+      },
+      "runtime": "node",
+      "files": [
+        {
+          "path": "tools/build-error-catalog-repository-candidate.js",
+          "git_blob": "6b799f6b2c5b5ae21d4ee911683ea47203de7e6a"
+        },
+        {
+          "path": "src/11_ErrorService.gs",
+          "git_blob": "7aa6f1a899aaa72f2f359b048402ed7d6927c28c"
+        },
+        {
+          "path": "tests/error-catalog-repository-candidate.test.js",
+          "git_blob": "68c41b198d0a3d634fd84cfc7f417e8b5d6807b8"
+        }
+      ],
+      "test_path": "tests/error-catalog-repository-candidate.test.js",
+      "python_tests": [],
+      "behavioral_oracle": "APP05_REPOSITORY_CACHE_PARITY",
+      "mutation": {
+        "path": "tools/build-error-catalog-repository-candidate.js",
+        "before": "    if (cache_) return cache_;",
+        "after": "    if (false) return cache_;"
+      },
+      "expected_assertion": "APP05_CACHE_LOAD_ONCE",
+      "prompt": "Repair the generated ErrorCatalogRepository candidate so its provider access stays outside ErrorService and its one-load catalog caching, user-facing code/message/details/http and fallback behavior match the original ErrorService. A synthetic cache-guard mutation rereads the provider on subsequent calls; restore caching without changing the original source, candidate file inventory or production deployment. Use the public offline behavioral oracle only.",
+      "prompt_sha256": "a390806eafd28c647849de711ccc1741a36f9e920718a9690ccb278f0cd19969",
+      "starter_file_sha256": {
+        "tools/build-error-catalog-repository-candidate.js": "ca684cd6c1349f2df2fc73de7ecd548f28368b9572ed541185132839698f91a7",
+        "src/11_ErrorService.gs": "827604d32d536e1926c3e4aacfbecda5133036523857242feceeb82347d2ca2d",
+        "tests/error-catalog-repository-candidate.test.js": "379f8c6252c4fa2a958a0c7ee09c9affda559dcc41700dda9b4f95d99be306ab"
+      }
+    },
+    {
+      "task_id": "APP-06",
+      "state": "PUBLIC_CALIBRATION_ONLY",
+      "source": {
+        "repository": "lijust/EREI-App-Google",
+        "commit": "6d32e7a14a4324dbdea228f695d6b75e0b8bd246",
+        "export_directory": "app"
+      },
+      "runtime": "node",
+      "files": [
+        {
+          "path": "runtime/node/ProductionEdgeContextResolver.js",
+          "git_blob": "bd18ab81be52894becd09855a2ae5db31a9c692d"
+        },
+        {
+          "path": "tests/prd03-production-edge-context-resolver.test.js",
+          "git_blob": "6c69478e0b03b435fbc4a26a0175023c5c288658"
+        }
+      ],
+      "test_path": "tests/prd03-production-edge-context-resolver.test.js",
+      "python_tests": [],
+      "mutation": {
+        "path": "runtime/node/ProductionEdgeContextResolver.js",
+        "before": "throw contextError('AUTHORITY_SNAPSHOT_CONTEXT_MISMATCH', 'Authorization context resolution failed.');",
+        "after": "return snapshot;"
+      },
+      "expected_assertion": "Missing expected rejection.",
+      "prompt": "Repair the production edge context resolver so subscriber/workspace mismatches fail closed. Preserve the single authority-snapshot repository call and mandatory identity checks. Work only with the injected fake repository; do not contact a live database.",
+      "prompt_sha256": "21d3e80de02de316d4e9812bbaea95ceee22956716c00eb20244803f114b86e4",
+      "starter_file_sha256": {
+        "runtime/node/ProductionEdgeContextResolver.js": "b01b260aaad343c48dfddff573cf3aadb19bee9a53e26155938df2dbb72f3d12",
+        "tests/prd03-production-edge-context-resolver.test.js": "5e5615ed030dacbdafe9c01a0bba4afd2013afac6f46815741421a2cbafd79be"
+      },
+      "expected_assertion_line": 57
+    },
+    {
+      "task_id": "PY-01",
+      "state": "PUBLIC_CALIBRATION_ONLY",
+      "source": {
+        "repository": "lijust/EREI-3.2",
+        "commit": "87d730ddc3547f863de2a6895e91f9b83e9c6e72",
+        "export_directory": "py"
+      },
+      "runtime": "python",
+      "files": [
+        {
+          "path": "core/ai/payment_plan_normalizer.py",
+          "git_blob": "262b2fb0d3ce62f35c3acb47adeac6b42f7ea036"
+        },
+        {
+          "path": "core/ai/provider.py",
+          "git_blob": "0b3d7be681246439c3b9bad00dcb8b4a89d6c110"
+        },
+        {
+          "path": "tests/unit/test_payment_plan_semantic_normalizer.py",
+          "git_blob": "8a737ebd879d1ee3757f12adf00c473c434d29e6"
+        }
+      ],
+      "test_path": "tests/unit/test_payment_plan_semantic_normalizer.py",
+      "dependency_versions": {
+        "jsonschema": "4.26.0",
+        "attrs": "26.1.0",
+        "referencing": "0.37.0",
+        "rpds-py": "2026.5.1",
+        "jsonschema-specifications": "2025.9.1"
+      },
+      "python_tests": [
+        "test_single_english_plan_is_structured_without_losing_evidence",
+        "test_multiple_plans_remain_independent_objects_not_ranges",
+        "test_arabic_digits_percentages_and_years_are_grounded",
+        "test_mixed_language_discount_maintenance_and_handover_are_supported",
+        "test_booking_contract_delivery_balloon_and_schedule_are_supported",
+        "test_unknown_values_are_null_not_zero",
+        "test_explicit_zero_is_allowed_only_when_present_in_evidence",
+        "test_source_conflict_is_fail_closed_and_provider_is_not_called",
+        "test_hallucinated_numeric_value_is_rejected",
+        "test_derived_month_conversion_is_rejected_when_not_explicit",
+        "test_schema_mismatch_is_rejected_again_after_provider",
+        "test_provider_failure_does_not_destroy_raw_evidence",
+        "test_missing_evidence_fails_closed_without_provider_call",
+        "test_explicit_no_payment_plan_skips_provider",
+        "test_duplicate_semantic_plans_are_deduplicated_exactly",
+        "test_economic_alternatives_are_not_deduplicated",
+        "test_existing_nawy_raw_structured_contract_is_preserved",
+        "test_existing_aqarmap_conflict_never_calls_provider",
+        "test_existing_realestate_raw_text_and_contract_timing_are_preserved",
+        "test_currency_is_rejected_when_not_explicit_in_evidence"
+      ],
+      "mutation": {
+        "path": "core/ai/payment_plan_normalizer.py",
+        "before": "        except AIProviderError:\n            return PaymentNormalizationResult(PROVIDER_ERROR, (), rows, failure_reason=\"PROVIDER_ERROR\")",
+        "after": "        except AIProviderError:\n            return PaymentNormalizationResult(NORMALIZED, (), rows, failure_reason=\"PROVIDER_ERROR\")"
+      },
+      "expected_assertion": "test_provider_failure_does_not_destroy_raw_evidence",
+      "prompt": "Fix SemanticPaymentPlanNormalizer provider-error handling so a failed FakeProvider request returns PROVIDER_ERROR without fabricated NORMALIZED success or erasing raw source evidence. Preserve all 20 original payment plan consumer contracts, including hallucination rejection, conflict, plan alternatives and schema mismatch. Use only the pinned offline local Python dependency environment and the fake provider; do not invoke any real model API.",
+      "prompt_sha256": "20e1c5914528b1f095ac010ee286fbd41dfff9b9f23dd96ebe575cbbd7502715",
+      "starter_file_sha256": {
+        "core/ai/payment_plan_normalizer.py": "560a3bc41aef076c73c615fce6666d5614a591a148b7d34ff447d79b4c1d090b",
+        "core/ai/provider.py": "d5180eeb08a61a2f5ea1faaa806c01a3801323ce6772fc5da530d8f58f2027ed",
+        "tests/unit/test_payment_plan_semantic_normalizer.py": "fd30382285877cc28544f10fecfa814afd443b21e2d48c90c9cda5583817c7cb"
+      }
+    },
+    {
+      "task_id": "PY-02",
+      "state": "PUBLIC_CALIBRATION_ONLY",
+      "source": {
+        "repository": "lijust/EREI-3.2",
+        "commit": "87d730ddc3547f863de2a6895e91f9b83e9c6e72",
+        "export_directory": "py"
+      },
+      "runtime": "python",
+      "files": [
+        {
+          "path": "core/ai/semantic_cache.py",
+          "git_blob": "60e9c102da12b2950e32b784b46646e4d341897b"
+        },
+        {
+          "path": "tests/unit/test_erei_semantic_harvest_cache.py",
+          "git_blob": "ff2a5512ab62bc57620857cec3e27152d586a683"
+        }
+      ],
+      "test_path": "tests/unit/test_erei_semantic_harvest_cache.py",
+      "python_tests": [
+        "test_semantic_evidence_hash_is_order_stable",
+        "test_cache_retains_first_result_for_same_semantic_key",
+        "test_attempt_ledger_does_not_poison_reusable_result_cache",
+        "test_file_cache_creates_only_requested_semantic_database"
+      ],
+      "mutation": {
+        "path": "core/ai/semantic_cache.py",
+        "before": "    def record_attempt(self, entry: SemanticCacheEntry) -> int:\n        cursor",
+        "after": "    def record_attempt(self, entry: SemanticCacheEntry) -> int:\n        self.put(entry)\n        cursor"
+      },
+      "expected_assertion": "test_attempt_ledger_does_not_poison_reusable_result_cache",
+      "prompt": "Repair the semantic cache so failed attempts remain auditable in the attempts ledger without entering the reusable result cache. Preserve append-once successful results and deterministic evidence identity. Use in-memory or temporary SQLite only.",
+      "prompt_sha256": "f013a16254d62f77bf47df9b33dd323d627ea852328b0ae1922ead0e0a68f44e",
+      "starter_file_sha256": {
+        "core/ai/semantic_cache.py": "71e4d0d7840c7683797536a2cfaaab680e680198e9fffd61ec0d3b8ee8d75bff",
+        "tests/unit/test_erei_semantic_harvest_cache.py": "bdba605df136c07258f3e1f3ca9fdc1828a31f76d7ca7f3b6a692c385c332657"
+      }
+    },
+    {
+      "task_id": "PY-03",
+      "state": "PUBLIC_CALIBRATION_ONLY",
+      "source": {
+        "repository": "lijust/EREI-3.2",
+        "commit": "87d730ddc3547f863de2a6895e91f9b83e9c6e72",
+        "export_directory": "py"
+      },
+      "runtime": "python",
+      "files": [
+        {
+          "path": "extractors/nawy/payment_section_boundary_extractor.py",
+          "git_blob": "6f165f875aa3aec8db8b2d2ff26eedfa904bd473"
+        },
+        {
+          "path": "tests/unit/test_nawy_payment_section_boundary.py",
+          "git_blob": "2a1353992f626bdf9d8b58db9a0d18f3c15be4c6"
+        }
+      ],
+      "test_path": "tests/unit/test_nawy_payment_section_boundary.py",
+      "behavioral_oracle": "PY03_NAWY_EXACT_BOUNDARY",
+      "python_tests": [
+        "test_exact_english_marker",
+        "test_exact_arabic_marker",
+        "test_exact_not_substring_boundary"
+      ],
+      "mutation": {
+        "path": "extractors/nawy/payment_section_boundary_extractor.py",
+        "before": "            if cls._normalized_boundary_text(line) in stops:\n                break",
+        "after": "            if any(stop in cls._normalized_boundary_text(line) for stop in stops):\n                break"
+      },
+      "expected_assertion": "test_exact_not_substring_boundary",
+      "prompt": "Restore the Nawy payment-page boundary to an exact normalized marker check, not substring matching. In English and Arabic, strip explicit page chrome after payment lines, but preserve evidence lines such as 'Location on Map benefit included in project access' that contain only a substring of a marker. Do not change payment economics or network/provider behavior. Use the provided offline public boundary oracle.",
+      "prompt_sha256": "6ece9f33d9937f91152e250764863090356652e97626d57ac03f10e01413d658",
+      "starter_file_sha256": {
+        "extractors/nawy/payment_section_boundary_extractor.py": "31091e73a2eac817b0acd5db84946394c2213789fff91c07aa79d8d221d7ed19",
+        "tests/unit/test_nawy_payment_section_boundary.py": "57b57228221479d665f63e8dd98f6ac45b0c276f14004a791228671bccdf3098"
+      }
+    },
+    {
+      "task_id": "PY-04",
+      "state": "PUBLIC_CALIBRATION_ONLY",
+      "source": {
+        "repository": "lijust/EREI-3.2",
+        "commit": "87d730ddc3547f863de2a6895e91f9b83e9c6e72",
+        "export_directory": "py"
+      },
+      "runtime": "python",
+      "files": [
+        {
+          "path": "core/project_update_presets.py",
+          "git_blob": "2d0960ec3d909bfd24bbb7cfa3084b280f774c57"
+        },
+        {
+          "path": "core/project_field_registry.py",
+          "git_blob": "17c82850ef60fd436b52aa18810cabfa6643dea6"
+        },
+        {
+          "path": "tests/unit/test_project_update_presets.py",
+          "git_blob": "5317a2b368150bd81031815dcc389db81d61334d"
+        }
+      ],
+      "test_path": "tests/unit/test_project_update_presets.py",
+      "python_tests": [
+        "test_every_project_preset_references_registered_tokens",
+        "test_full_project_details_preset_tracks_registry_without_duplicate_allowlist",
+        "test_core_details_preset_contains_identity_and_location_contract",
+        "test_aqarmap_full_preset_has_fail_closed_unavailable_fields",
+        "test_nawy_full_preset_has_no_unavailable_project_fields",
+        "test_all_sources_full_preset_is_partial_where_capabilities_differ"
+      ],
+      "mutation": {
+        "path": "core/project_update_presets.py",
+        "before": "tuple(spec.token for spec in PROJECT_FIELD_REGISTRY.specs),",
+        "after": "tuple(spec.token for spec in PROJECT_FIELD_REGISTRY.specs if spec.token != \"videos\"),"
+      },
+      "expected_assertion": "test_full_project_details_preset_tracks_registry_without_duplicate_allowlist",
+      "prompt": "Repair Full Project Details so it includes every registered project-field token in registry order, without a second hard-coded allowlist. Preserve all other presets and per-source unavailable/partial capability semantics. Use the supplied offline registry tests.",
+      "prompt_sha256": "deb8c562b6732b0cddc342b89ca628fd637d4a047c91339e5de31e101003212c",
+      "starter_file_sha256": {
+        "core/project_update_presets.py": "1a78015a1acc1ce4225b406c232c81de5aac9f05d46452aa7cc0e7e57b879ff0",
+        "core/project_field_registry.py": "281fbf1ca37cbc35f85906d37d330c2af101686eedd7c1d72f8a1e2f5371bb35",
+        "tests/unit/test_project_update_presets.py": "0b29430051d1ba079df2dd715a3833138ef492720ec1623dc4d11cb123057b50"
+      }
+    },
+    {
+      "task_id": "PY-05",
+      "state": "PUBLIC_CALIBRATION_ONLY",
+      "source": {
+        "repository": "lijust/EREI-3.2",
+        "commit": "87d730ddc3547f863de2a6895e91f9b83e9c6e72",
+        "export_directory": "py"
+      },
+      "runtime": "python",
+      "files": [
+        {
+          "path": "desktop/app/launcher_unit_type_normalizer.py",
+          "git_blob": "145a541a9c6e43b06dbea6cd7efd795e1db65f20"
+        },
+        {
+          "path": "tests/unit/test_launcher_unit_type_normalizer.py",
+          "git_blob": "a137cfe8107a7f400da9546681198e4595efe130"
+        }
+      ],
+      "test_path": "tests/unit/test_launcher_unit_type_normalizer.py",
+      "python_tests": [
+        "test_load_unit_type_mapping_uses_short_lived_connection_and_normalizes_keys",
+        "test_load_unit_type_mapping_returns_empty_mapping_on_db_errors",
+        "test_canonical_unit_type_uses_mapping_without_extra_normalization",
+        "test_normalize_unit_type_prefers_mapping_then_room_fallbacks",
+        "test_normalize_unit_type_uses_project_type_collision_as_invalid_unit_type",
+        "test_normalize_unit_type_preserves_valid_labels_and_title_cases_uppercase_values"
+      ],
+      "mutation": {
+        "path": "desktop/app/launcher_unit_type_normalizer.py",
+        "before": "            conn.close()",
+        "after": "            pass"
+      },
+      "expected_assertion": "test_load_unit_type_mapping_uses_short_lived_connection_and_normalizes_keys",
+      "prompt": "Repair mapping connection cleanup while preserving error fallback, key normalization and unit-type/room-count behavior. A connection obtained by load_unit_type_mapping must be closed even if reading fails. Use fake connections only.",
+      "prompt_sha256": "5ddd47f6f5ff395fc69a600ccb51469fa6a59d0f1a5220505d0c4a97e636d015",
+      "starter_file_sha256": {
+        "desktop/app/launcher_unit_type_normalizer.py": "74f3fdbb5bc4ad16619794aa00b873d1e3e202b0b9097d92fb2ddbe3ae5178f8",
+        "tests/unit/test_launcher_unit_type_normalizer.py": "215a19716456c8add4897cdf551b88f0be21b26d421927e2316dde6099f5a05e"
+      }
+    },
+    {
+      "task_id": "PY-06",
+      "state": "PUBLIC_CALIBRATION_ONLY",
+      "source": {
+        "repository": "lijust/EREI-3.2",
+        "commit": "87d730ddc3547f863de2a6895e91f9b83e9c6e72",
+        "export_directory": "py"
+      },
+      "runtime": "python",
+      "files": [
+        {
+          "path": "core/ai/payment_plan_normalizer.py",
+          "git_blob": "262b2fb0d3ce62f35c3acb47adeac6b42f7ea036"
+        },
+        {
+          "path": "core/ai/provider.py",
+          "git_blob": "0b3d7be681246439c3b9bad00dcb8b4a89d6c110"
+        },
+        {
+          "path": "core/ai/semantic_domains.py",
+          "git_blob": "e367fe7ad222859d707751c103e73dd92169a40c"
+        },
+        {
+          "path": "core/ai/semantic_address.py",
+          "git_blob": "e38a02c1f01f64fbe2532e86a57f2b825308ebb5"
+        },
+        {
+          "path": "core/ai/semantic_facilities.py",
+          "git_blob": "e5475327f38cb600a04efd76032751b666f242ef"
+        },
+        {
+          "path": "core/ai/semantic_harvest.py",
+          "git_blob": "a6823bdf6ceda210207c1034ba5c5425c0744b38"
+        },
+        {
+          "path": "core/ai/semantic_project_intelligence.py",
+          "git_blob": "edfed610197e41cbd3f11c9f43f4e01aee3abb99"
+        },
+        {
+          "path": "core/ai/semantic_unit_types.py",
+          "git_blob": "892d55e980f8a1f4b60fff4c480a2a8324d8f953"
+        },
+        {
+          "path": "core/ai/semantic_cache.py",
+          "git_blob": "60e9c102da12b2950e32b784b46646e4d341897b"
+        },
+        {
+          "path": "tests/unit/test_payment_plan_explicit_number_word_grounding.py",
+          "git_blob": "c47d6aed4edc16a24149be9472c153f0cff1a8c6"
+        }
+      ],
+      "test_path": "tests/unit/test_payment_plan_explicit_number_word_grounding.py",
+      "dependency_versions": {
+        "jsonschema": "4.26.0",
+        "attrs": "26.1.0",
+        "referencing": "0.37.0",
+        "rpds-py": "2026.5.1",
+        "jsonschema-specifications": "2025.9.1"
+      },
+      "python_tests": [
+        "test_payment_harvest_prompt_version_bumps_for_grounding_semantics",
+        "test_explicit_two_months_may_ground_after_months_2",
+        "test_explicit_compound_number_words_are_grounded_without_arithmetic",
+        "test_word_number_grounding_does_not_allow_derived_year_to_month_conversion"
+      ],
+      "mutation": {
+        "path": "core/ai/payment_plan_normalizer.py",
+        "before": "            if token is not None and token not in evidence_tokens:",
+        "after": "            if token is not None and token not in evidence_tokens and field != \"installment_months\":"
+      },
+      "expected_assertion": "test_word_number_grounding_does_not_allow_derived_year_to_month_conversion",
+      "prompt": "Restore evidence grounding for installment months. Explicit English number words (including compound numbers) and exact 'after two months' are valid source tokens; an inferred eight-years-to-96-months conversion is not source-grounded and must be rejected. Preserve all four pinned public consumer tests, raw source evidence and fake provider isolation. Do not use any real provider, network or production data.",
+      "prompt_sha256": "6b6ac01661559a0ad9a5300bf9c8fd4aa7c6b6936ccd6920c4880f7ee92496ed",
+      "starter_file_sha256": {
+        "core/ai/payment_plan_normalizer.py": "8f5a239e06661b5380a5bdcecf08ce1dec88e4e339af057a0e7f407a05738fde",
+        "core/ai/provider.py": "d5180eeb08a61a2f5ea1faaa806c01a3801323ce6772fc5da530d8f58f2027ed",
+        "core/ai/semantic_domains.py": "94813fc360e3afb100c626552b99f2f32c3d55acbc209d368c705bbe228e588d",
+        "core/ai/semantic_address.py": "801f7e8585c67e7de42478e651ed753a42e2cd62508c3614e786c31d4faea3a4",
+        "core/ai/semantic_facilities.py": "0d0f2c1052e3a96c98e4d23cce43f73016c874f1d6df61aa29615d72ae11078f",
+        "core/ai/semantic_harvest.py": "f4fce97063d2750257f6ca527ee1694f1224e2a1e7717b301e1d63bc3b2fa446",
+        "core/ai/semantic_project_intelligence.py": "a293e2272048946f0dab19b18edfed92141e3fa19e737302101f13f3f79e4c43",
+        "core/ai/semantic_unit_types.py": "b97fe7e8746bd395009d5a1c350067235bd72a84153385a510277e19a44064ff",
+        "core/ai/semantic_cache.py": "033fd4b00c4ea8107a375aedb24aa7d127a4de04f6ec87d5b6cf170cb12dfdd0",
+        "tests/unit/test_payment_plan_explicit_number_word_grounding.py": "a548e569c75ba25e862ac926fdcf21a2c027dad17ebcd0aadf5fb0f4997f3a3d"
+      }
+    }
+  ]
+}

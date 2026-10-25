@@ -219,9 +219,9 @@ def verify_effective_enforcement(
 ) -> dict:
     """Authenticate at least one asserted enforcement path.
 
-    Classic server enforcement and independent fallback equivalence are
-    alternatives, not cumulative requirements. Never treat an assertion,
-    missing API response, or unverifiable reviewer as a valid proof.
+    A live server proof may authorize its supported path. The current fallback
+    authenticates a review only; no deployed equivalent-authority verifier is
+    connected, so that path always denies Stable promotion.
     """
     declared = validate_enforcement(value, expected_target=expected_target)
     if not declared["stable_enforcement_satisfied"]:
@@ -237,16 +237,17 @@ def verify_effective_enforcement(
 
     if declared["fallback_equivalent_verified"]:
         try:
-            proof = verify_authenticated_equivalence(
+            verify_authenticated_equivalence(
                 repo_root,
                 value,
                 expected_target=expected_target,
                 closure_ref=closure_ref,
                 token=token,
             )
-            if proof.get("status") != "verified":
-                raise EnforcementError("fallback review did not yield verified provenance")
-            return {"status": "verified", "mode": "fallback", "server": None, "fallback": proof}
+            raise EnforcementError(
+                "authenticated review does not establish effective enforcement; "
+                "independent authority verifier is unavailable"
+            )
         except EnforcementError as exc:
             errors.append(f"fallback: {exc}")
 
@@ -288,7 +289,8 @@ def verify_authenticated_equivalence(
         )
     except github_review_provenance.ReviewProvenanceError as exc:
         raise EnforcementError(f"authenticated enforcement review provenance failed: {exc}") from exc
-    return {"status": "verified", **result, "review": review}
+    return {"status": "authenticated_review_only", "authority_verified": False,
+            "declared_control": result, "review": review}
 
 
 def main(argv=None) -> int:
