@@ -1,4 +1,4 @@
-name: T14 Isolated Rollback Drill (PR 94 Only)
+name: T14 Isolated Rollback Drill (Scoped PR 94/98)
 
 on:
   pull_request:
@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   isolated-drill:
-    if: ${{ github.event.pull_request.number == 94 && github.event.pull_request.head.repo.full_name == github.repository }}
+    if: ${{ (github.event.pull_request.number == 94 || github.event.pull_request.number == 98) && github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: windows-latest
     timeout-minutes: 15
     strategy:
@@ -77,7 +77,7 @@ jobs:
           }
 
       - name: Retain T14 structured evidence even when drill fails
-        if: ${{ always() && github.event.pull_request.number == 94 && github.event.pull_request.head.repo.full_name == github.repository }}
+        if: ${{ always() && (github.event.pull_request.number == 94 || github.event.pull_request.number == 98) && github.event.pull_request.head.repo.full_name == github.repository }}
         uses: actions/upload-artifact@v4
         with:
           name: t14-rollback-python-${{ matrix.python-version }}-${{ github.run_id }}-${{ github.run_attempt }}
