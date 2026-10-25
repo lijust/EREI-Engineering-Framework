@@ -27,6 +27,25 @@ From the checkout of this adapter branch:
 python -m unittest evals.tests.test_gemini_core13_exact_target evals.tests.test_gemini_core_smoke -v
 ```
 
+## Diagnosing `MODEL_REQUEST_FAILED_NOT_SCORED` without a second model call
+
+The original smoke script at `ee4f0c4` suppresses its HTTP status and writes only `reason_category=GeminiAdapterError` to `smoke-001/attempt-failed.json`. Therefore the error alone **does NOT identify** an invalid key, missing permission, HTTP 400 payload issue, 403 model restriction, 429 project quota or a network timeout. Do not delete `smoke-001` or automatically retry the paid/limited POST.
+
+The updated branch includes `evals/probe_gemini_access.py`. After checking out the **CI-green new PR #101 SHA**, run:
+
+```powershell
+cd "$env:userprofile\desktop\erei-core13-adapter"
+python -m evals.probe_gemini_access --metadata-only
+```
+
+This prompts for the key invisibly again and issues **one GET** for `models/gemini-3.8-flash` metadata. **No `generateContent` call and no output token generation.** It emits only a safe HTTP status, model name match, and `generateContent` method presence. A 200 response verifies only key/model metadata access, **not** free-tier identity or entitlement to execute costly model calls; a 400/401/403/404 status suggests key/project/model access problems, 429 a quota issue; transport error suggests networking/proxy/TLS. The endpoint intentionally never prints Google's free-form error body, the secret, or any response content.
+
+A *later* explicitly approved and controlled one-case smoke now writes `reason_category` as safe `GEMINI_HTTP_ERROR` / `GEMINI_TRANSPORT_ERROR` and `provider_http_status` for denial, rather than losing the HTTP code. **Use a new evidence directory `smoke-002` because the original `smoke-001` is preserved and must not be overwritten.** Never repeat the model POST merely to discover a quota issue before the metadata GET.
+
+**Critical reviewer safety fix:** Codex also caught that the frozen suite JSON and scorer Python could be modified under Git `assume-unchanged`. Before parsing or executing, the new code verifies their on-disk bytes against exact frozen Git blobs, in addition to the original Framework Markdown artifact byte verification. This is necessary before any retry and does not confer independent model admission.
+
+---
+
 ## Exactly one genuine Core case: owner-operated LOCAL smoke
 
 **Never run on a GitHub hosted runner and NEVER paste a key in GitHub, ChatGPT or a command line.** The script `evals/run_gemini_core_smoke.py` prompts invisibly with Python `getpass` if `GEMINI_API_KEY` is unset. No key value is persisted. Malformed keys/HTTP header exceptions are **redacted before logging** (a prior Codex P1), including the case of a trailing newline. The owner must first verify in Google AI Studio that **the actual key** is part of **EREI Gemini (Free tier)**; an account screenshot by itself is not proof that every key belongs to that project.
