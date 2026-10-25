@@ -8,6 +8,7 @@ PUBLIC_PR_WORKFLOWS = (
     "framework-evals.yml",
     "project-bootstrap-tests.yml",
     "runtime-adapter-tests.yml",
+    "t14-isolated-rollback-drill.yml",
 )
 
 
@@ -25,6 +26,18 @@ class PublicHostedCIWorkflowTests(unittest.TestCase):
                 self.assertIn("permissions:\n  contents: read", body)
                 self.assertNotIn("secrets.", body)
                 self.assertNotIn('py "-3.12"', body)
+
+    def test_t14_rollback_checkout_is_exact_pr_head(self):
+        body = (ROOT / ".github/workflows/t14-isolated-rollback-drill.yml").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("github.event.pull_request.number == 94", body)
+        self.assertIn("ref: ${{ github.event.pull_request.head.sha }}", body)
+        self.assertIn("EREI_T14_EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}", body)
+        self.assertIn("if ($target -cne $env:EREI_T14_EXPECTED_HEAD)", body)
+        self.assertIn("persist-credentials: false", body)
+        self.assertIn("permissions:\n  contents: read", body)
+        self.assertIn("retention-days: 14", body)
 
     def test_preflight_is_hosted(self):
         body = (ROOT / ".github/workflows/self-hosted-runner-preflight.yml").read_text(encoding="utf-8")
