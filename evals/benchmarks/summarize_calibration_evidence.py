@@ -6,6 +6,7 @@ No network, consumer code execution, private file access or model calls.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 from typing import Any
@@ -13,6 +14,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parent
 CATALOG = ROOT / "calibration-packages.json"
 RECEIPT = ROOT / "public-source-oracle-observation.2026-10-24.json"
+LATEST_INDEX = ROOT / "public-operator-calibration-index.2026-10-25.json"
 
 FULL = "ORIGINAL_CONSUMER_FILE_SELF_REPORTED_OFFLINE"
 PARTIAL = "ORIGINAL_CONSUMER_FUNCTION_PARTIAL_SELF_REPORTED"
@@ -169,10 +171,148 @@ def summarize(catalog: dict[str, Any], receipt: dict[str, Any]) -> dict[str, Any
     }
 
 
+
+def summarize_current_operator(catalog: dict[str, Any], index: dict[str, Any],
+                               catalog_bytes: bytes) -> dict[str, Any]:
+    """Count sanitized, SHA-bound *operator claims* without promoting authority.
+
+    The 2026-10-24 source-oracle file remains historical and immutable.
+    Origin (original versus Framework oracle) and environment (offline
+    emulator versus function adapter) remain separate dimensions.
+    """
+    if (catalog.get("execution_authorized") is not False
+            or index.get("kind") != "SELF_REPORTED_OPERATOR_CALIBRATION_INDEX"
+            or index.get("schema_version") != 1
+            or index.get("evidence_origin")
+            != "OPERATOR_SUPPLIED_SANITIZED_CLI_OUTPUT_NOT_INDEPENDENTLY_WITNESSED"
+            or index.get("catalog_sha256") != hashlib.sha256(catalog_bytes).hexdigest()
+            or index.get("framework_commit_sha")
+            != "8bc26deddcb9ebd10c24d5cb482b6b8e50827d9d"):
+        raise ValueError("Unbound or untrusted operator observation index")
+
+    forbidden_authority = {
+        "execution_authorized": False, "model_executions": 0,
+        "independent_review": "NOT_PERFORMED",
+        "hidden_acceptance": "NOT_PERFORMED",
+        "model_comparisons": "0/48",
+        "exact_target_runtime_evidence": "0/13",
+        "internal_admission": "HOLD_NOT_ADMITTED",
+        "stable_release": "BLOCKED",
+        "release_authorized": False,
+        "effectiveness": "NOT_ESTABLISHED",
+    }
+    if index.get("authority") != forbidden_authority:
+        raise ValueError("Operator data cannot grant review, pilot or release authority")
+    expected = {package["task_id"]: package for package in catalog["packages"]}
+    records = index.get("observations")
+    if (len(expected) != 12 or not isinstance(records, list)
+            or len(records) != 12):
+        raise ValueError("Expected twelve immutable source calibration tasks")
+    source_env = {
+        "APP-01": ("ORIGINAL_CONSUMER_TEST_FILE",
+                   "NODE_OFFLINE_WITH_APPS_SCRIPT_SHIMS", False, None),
+        "APP-02": ("ORIGINAL_CONSUMER_TEST_FILE",
+                   "NODE_OFFLINE_WITH_APPS_SCRIPT_SHIMS", False, None),
+        "APP-03": ("ORIGINAL_CONSUMER_TEST_FILE",
+                   "NODE_OFFLINE_WITH_APPS_SCRIPT_SHIMS", False, None),
+        "APP-04": ("FRAMEWORK_OWNED_BOUNDED_ORACLE",
+                   "NODE_OFFLINE_VM_SOURCE_BEHAVIOR", False, None),
+        "APP-05": ("FRAMEWORK_OWNED_BOUNDED_ORACLE",
+                   "NODE_OFFLINE_VM_SOURCE_BEHAVIOR", False, None),
+        "APP-06": ("ORIGINAL_CONSUMER_TEST_FILE",
+                   "NODE_OFFLINE_ORIGINAL_CONSUMER_TEST", True, None),
+        "PY-01": ("ORIGINAL_CONSUMER_TEST_FILE",
+                   "PYTHON_OFFLINE_UNITTEST_FUNCTION_ADAPTER", True, 20),
+        "PY-02": ("ORIGINAL_CONSUMER_TEST_FILE",
+                   "PYTHON_OFFLINE_UNITTEST_FUNCTION_ADAPTER", True, 4),
+        "PY-03": ("FRAMEWORK_OWNED_BOUNDED_ORACLE",
+                   "PYTHON_OFFLINE_AST_BOUNDARY_METHOD_ORACLE", False, 3),
+        "PY-04": ("ORIGINAL_CONSUMER_TEST_FILE",
+                   "PYTHON_OFFLINE_UNITTEST_FUNCTION_ADAPTER", True, 6),
+        "PY-05": ("ORIGINAL_CONSUMER_TEST_FILE",
+                   "PYTHON_OFFLINE_UNITTEST_FUNCTION_ADAPTER", True, 6),
+        "PY-06": ("ORIGINAL_CONSUMER_TEST_FILE",
+                   "PYTHON_OFFLINE_UNITTEST_FUNCTION_ADAPTER", True, 4),
+    }
+    if set(source_env) != set(expected):
+        raise ValueError("Changed current operator task denominator")
+    hex_digits = frozenset("0123456789abcdef")
+    seen: set[str] = set()
+    summary: dict[str, dict[str, Any]] = {}
+    for record in records:
+        task = record["task_id"]
+        if task in seen or task not in source_env:
+            raise ValueError("Duplicate or unknown current operator task")
+        seen.add(task)
+        origin, environment, full_offline, tests = source_env[task]
+        if (record.get("test_origin") != origin
+                or record.get("execution_environment") != environment
+                or record.get("complete_original_consumer_offline") is not full_offline
+                or record.get("verified_pinned_file_count")
+                != len(expected[task]["files"])
+                or record.get("public_calibration_passed") is not True
+                or record.get("independently_verified") is not False
+                or record.get("consumer_integration_executed") is not False
+                or record.get("production_writes") != 0):
+            raise ValueError("Unsupported current operator scope or promotion")
+        baseline, mutant = record["reference"], record["mutant"]
+        digest = baseline.get("stdout_sha256")
+        if (not isinstance(digest, str) or len(digest) != 64
+                or any(char not in hex_digits for char in digest)
+                or baseline.get("returncode") != 0
+                or baseline.get("tests") != tests
+                or baseline.get("failures") != 0
+                or baseline.get("errors") != 0
+                or baseline.get("skipped") != 0
+                or mutant.get("returncode") != 1
+                or mutant.get("expected_assertion_detected") is not True
+                or mutant.get("failures") != (None if tests is None else 1)
+                or mutant.get("errors") != (None if tests is None else 0)
+                or mutant.get("skipped") != (None if tests is None else 0)):
+            raise ValueError("Unqualified operator baseline or mutant receipt")
+        summary[task] = {
+            "test_origin": origin,
+            "execution_environment": environment,
+            "complete_original_consumer_offline": full_offline,
+            "consumer_integration_executed": False,
+        }
+    if seen != set(expected):
+        raise ValueError("Incomplete operator observations")
+    original_count = sum(r["test_origin"] == "ORIGINAL_CONSUMER_TEST_FILE"
+                         for r in summary.values())
+    full_count = sum(r["complete_original_consumer_offline"]
+                     for r in summary.values())
+    if original_count != 9 or full_count != 6:
+        raise ValueError("Operator evidence tiers changed unexpectedly")
+    return {
+        "kind": "CURRENT_SELF_REPORTED_OPERATOR_CALIBRATION",
+        "bound_framework_commit": index["framework_commit_sha"],
+        "catalog_sha256": index["catalog_sha256"],
+        "self_reported_local_baseline_mutant_pass": "12/12",
+        "original_consumer_test_files_invoked": "9/12",
+        "complete_original_consumer_offline": "6/12",
+        "original_js_tests_with_app_shims": "3/12",
+        "framework_owned_bounded_oracles": "3/12",
+        "task_scope": summary,
+        "operator_evidence_independently_verified": False,
+        "independent_source_acceptance": "0/12",
+        "model_comparisons": "0/48",
+        "exact_target_runtime_evidence": "0/13",
+        "internal_admission": "HOLD_NOT_ADMITTED",
+        "stable_release": "BLOCKED",
+        "release_authorized": False,
+    }
+
+
 def main() -> int:
     catalog = json.loads(CATALOG.read_text(encoding="utf-8"))
     receipt = json.loads(RECEIPT.read_text(encoding="utf-8"))
-    print(json.dumps(summarize(catalog, receipt), ensure_ascii=False, indent=2))
+    current = json.loads(LATEST_INDEX.read_text(encoding="utf-8"))
+    historical = summarize(catalog, receipt)
+    historical["current_operator_snapshot"] = summarize_current_operator(
+        catalog, current, CATALOG.read_bytes()
+    )
+    print(json.dumps(historical, ensure_ascii=False, indent=2))
     return 0
 
 
