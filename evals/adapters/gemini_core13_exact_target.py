@@ -37,10 +37,19 @@ EXPECTED_TARGET_HEAD = "31d4e518b9e71a9585df9097e7ca07a7e25af916"
 EXPECTED_TARGET_TREE = "913c6a0daaa7a6efa7d6d2148aa0294812fab360"
 MAX_REQUEST_BYTES = 200_000
 MAX_RESPONSE_BYTES = 512_000
-PUBLIC_CORE_ARTIFACTS = {
-    "skills/task-learning-capture + workflows/learning-review",
-    "workflows/candidate-capability-adoption",
+# Exact committed membership/order on frozen #98 target. Never accept a
+# resolved symlink destination as a substitute for a declared Framework file.
+FROZEN_CORE_ARTIFACT_PATHS = {
+    "skills/task-learning-capture + workflows/learning-review": (
+        "skills/task-learning-capture/SKILL.md",
+        "skills/task-learning-capture/SPEC.md",
+        "workflows/learning-review/WORKFLOW.md",
+    ),
+    "workflows/candidate-capability-adoption": (
+        "workflows/candidate-capability-adoption/WORKFLOW.md",
+    ),
 }
+PUBLIC_CORE_ARTIFACTS = frozenset(FROZEN_CORE_ARTIFACT_PATHS)
 
 
 class GeminiAdapterError(RuntimeError):
@@ -128,6 +137,11 @@ def prepare_one(request: dict, root: Path) -> str:
     if request["context"]:
         raise GeminiAdapterError("nonempty context not allowed in synthetic-only pilot")
     artifacts = contract.resolve_artifact(root, request["artifact"])
+    actual = tuple(path for path, _ in artifacts)
+    if actual != FROZEN_CORE_ARTIFACT_PATHS[request["artifact"]]:
+        # Covers worktree symlinks with assume-unchanged that point at
+        # another *authentic* Git blob. Valid bytes alone are insufficient.
+        raise GeminiAdapterError("resolved Framework artifacts differ from frozen declaration")
     verify_artifact_bytes(root, artifacts)
     prompt = contract.build_direct_prompt(artifacts, case_input, {})
     if len(prompt.encode("utf-8")) > MAX_REQUEST_BYTES:
