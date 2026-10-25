@@ -1,5 +1,21 @@
 # EREI V2 REMEDIATION STATUS
 
+## التقدم الحالي المؤكد — 25 أكتوبر 2026 (يتقدم على جميع اللقطات أدناه)
+
+**نجح المسار الاصطناعي المحدود فقط بعد موافقة المالك، ولا يعني نجاح Internal Release التشغيلي أو Stable.** ثبتت المراجعة على [PR #98](https://github.com/lijust/EREI-Engineering-Framework/pull/98) **المفتوح وغير المدمج** عند source SHA `31d4e518b9e71a9585df9097e7ca07a7e25af916` وGit tree `913c6a0daaa7a6efa7d6d2148aa0294812fab360`، مع fixture SHA256 `72de745e67512575615ded69a7276f6764ee3bbaecc4e60c3b788edc1b9ac4f8`.
+
+- **Owner risk exception:** بدل المراجعة البشرية المستقلة للتجربة **الاصطناعية المعزولة وحدها**، وافق المالك على قناتَي مراجعة AI (GitHub Codex ثم GPT-6 source review) مع قبول المخاطر الباقية. [قرار ADMIT_SYNTHETIC_CI_ONLY](https://github.com/lijust/EREI-Engineering-Framework/issues/81#issuecomment-6392059800) سابق للتشغيلين الجديدين؛ لا ينطبق على Stable أو production.
+- **نتيجة التنفيذ الجديد:** [T14 #40149707722](https://github.com/lijust/EREI-Engineering-Framework/actions/runs/40149707722) على نفس SHA: Windows Python 3.11 **attempt 2: 4/4 PASS**؛ Python 3.12 **attempt 3: 4/4 PASS**. ملفات دليل منفصلة؛ hashes المخرجات وبصمة الـfixture متطابقة. [التقرير](https://github.com/lijust/EREI-Engineering-Framework/issues/81#issuecomment-6392081972).
+- **الأدلة قبل القبول:** Assurance **466 tools +146 evals PASS**، Bootstrap **466 tools على كل من Windows 3.11/3.12**، Evals **146 PASS**؛ كل ذلك اختبار مصدر وليس full consumer runtime/model benchmark.
+- **احتفاظ الأرشيف:** [فهرس SHA256 دائم نصيًا](evidence/T14_SYNTHETIC_CI_OWNER_ADMITTED_ARCHIVE_INDEX_2026-10-25.json) يحتوي artifact IDs وبصمات ZIP الأصلية وبصمة bundle تسليم المالك. نسختا ZIP متاحتان للمستخدم في حزمة تنزيل منفصلة، **وليستا مودعتين في GitHub source**؛ ولا تعدان إثبات custody مستقلة. Artifact retention في GitHub **14 يومًا**.
+- **حوكمة المشروع:** تحديث معايير §5 والتوثيق في [Draft PR #99](https://github.com/lijust/EREI-Engineering-Framework/pull/99) **المنفصل عن source PR #98**؛ لم يُدمج الاثنان في `main`. الاستثناء لا يغلق P1 threads #84/#86/#88 من الناحية المستقلة.
+- **لا تغيير في Stable:** مصدر T15 12/12 معايرة محلية **وفق إفادة المشغّل** عند SHA أقدم، قبول مستقل **0/12**؛ تجارب V1/V2 **0/48**؛ Core target runtime **0/13**؛ إثبات T11 enforcement النهائي وموافقتا Security/Architecture البشرية غير مكتملة؛ `stable_ready=false`.
+- **حدود النتيجة:** `SYNTHETIC_INTERNAL_CI_PILOT_PASS_WITH_LIMITS`، لكن `internal_release_qualified=false` و`live_adoption=false` في ملفات الاختبار نفسها. لا تجربة عميل أو rollback إنتاجي، ولا بيانات EREI/SAE-DB حية أو paid LLM أو تغيير Pin أو main.
+
+**الخطوة الهندسية التالية ذات القيمة:** تحضير واختبار سلطة T11 الحقيقية وT12 للأرشفة طويلة العمر بدون ادعاء توقيع مستقل، ثم تجهيز hidden acceptance/runtime/budget للـ13 Core والـ48 مقارنة دون تنفيذ مدفوع قبل تفويضه. لا داعي لإعادة الـ12 معايرة عند SHA الأصلي لمجرد تحديث التوثيق.
+
+---
+
 ## الحالة الحالية المعتمدة للقراءة — 2026-10-23 (تعلو لقطات 19–22 أكتوبر أدناه)
 
 > **مصدر الحقيقة:** [Master Tracker #68](https://github.com/lijust/EREI-Engineering-Framework/issues/68). الأقسام أدناه محفوظة **كلقطات تاريخية**، بما فيها الأوصاف `CURRENT` و`لم تُدمج` التي تعود لتواريخها ولا تمثل الوضع الحالي.
