@@ -76,6 +76,29 @@ The placeholder SHA is replaced by the last verified PR101 head, **not** a comma
 
 ---
 
+## 2026-10-25 — Gemini 3.6 Flash inference diagnostic succeeded, Core model now explicitly selectable
+
+Owner successfully ran the **standalone non-Core** `gemini-3.6-flash` diagnostic, obtaining `HTTP 200`, `finish_reason=STOP`, `returned_ready=true`, `provider_model_version=gemini-3.6-flash`. Provider reported **6 prompt tokens, 1 candidate token and 64 total tokens** (including other categories such as thinking). **Diagnostic remains `counted_core_cases=0`**, and cannot prove correctness of the Core13 behavior.
+
+Google's official model page lists `gemini-3.6-flash` as a stable model with structured output and thinking support; the standard pricing table lists **Free-tier input/output tokens**. This is **not** an API receipt for a Core case, nor proof of remaining per-project model quota. Source: https://ai.google.dev/gemini-api/docs/models/gemini-3.6-flash and https://ai.google.dev/gemini-api/docs/pricing.
+
+The Core adapter's current branch now supports **explicit `--model gemini-3.6-flash`** (stable exact ID only), while preserving the original **fixed Framework target PR #98 SHA/tree** and the original `gemini-3.8-flash` legacy default. The single-case launcher supplies the model to the single bounded `generateContent` call, records both **requested** and **provider-returned** model identity and refuses to score if they differ. The full original frozen case input + public Framework contracts are used, with separate immutable Git-backed scorer and case suites. **No Core case has yet been run on 3.6 as of this note.**
+
+After exact-head CI and security review, and after the owner checks the Free-tier remaining quota for **the 3.6 model**, the optional **one owner-operated behavioral smoke** is:
+
+```powershell
+cd "$env:userprofile\desktop\erei-core13-adapter"
+git fetch origin pull/101/head
+git checkout --detach <EXACT_NEW_CI_GREEN_PR101_SHA>
+git status --short
+remove-item env:gemini_api_key -erroraction silentlycontinue
+python -m evals.run_gemini_core_smoke --model gemini-3.6-flash --target-root "$env:userprofile\desktop\erei-core13-target" --case-id TLR-001-SUCCESS-STILL-LEARNING-DATA --output-dir "$env:userprofile\desktop\erei-core13-evidence\smoke-004" --timeout 90 --live --confirm-free-tier
+```
+
+Use a **new** `smoke-004` directory; do **not** delete `smoke-001/002/003` or rerun the old 3.8 Flash case. This command generates at most one real request and saves the provider raw JSON, usage metadata and local frozen-case scorer verdict. Any passing response is still labeled `observed_unverified` and requires independent examination before counted Core acceptance or a Stable promotion; **Core accepted 0/13, V1/V2 model comparisons 0/48**. If the selected provider model is unavailable at this time, stop and review the safe HTTP status rather than cycling more calls.
+
+---
+
 ## Exactly one genuine Core case: owner-operated LOCAL smoke
 
 **Never run on a GitHub hosted runner and NEVER paste a key in GitHub, ChatGPT or a command line.** The script `evals/run_gemini_core_smoke.py` prompts invisibly with Python `getpass` if `GEMINI_API_KEY` is unset. No key value is persisted. Malformed keys/HTTP header exceptions are **redacted before logging** (a prior Codex P1), including the case of a trailing newline. The owner must first verify in Google AI Studio that **the actual key** is part of **EREI Gemini (Free tier)**; an account screenshot by itself is not proof that every key belongs to that project.
