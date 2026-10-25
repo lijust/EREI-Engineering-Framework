@@ -1,0 +1,486 @@
+{
+  "schema": "EREI_PUBLIC_SOURCE_ORACLE_OBSERVATION_V1",
+  "date": "2026-10-24",
+  "classification": "SELF_REPORTED_UNATTESTED_SOURCE_EXECUTION",
+  "authority": {
+    "execution_authorized": false,
+    "model_executions": 0,
+    "independent_review": "NOT_PERFORMED",
+    "independent_hidden_acceptance": "NONE",
+    "effectiveness": "NOT_ESTABLISHED",
+    "stable_release": "BLOCKED",
+    "exact_target_runtime_evidence": "0/13",
+    "sampled_study_runs": "0/48"
+  },
+  "provenance": {
+    "source_repos": [
+      "lijust/EREI-App-Google",
+      "lijust/EREI-3.2"
+    ],
+    "sources_visibility": "PRIVATE",
+    "framework_visibility": "PUBLIC",
+    "source_pins_only": true,
+    "no_private_source_contents_published": true,
+    "operator": "ChatGPT tool-assisted execution, no independent witness",
+    "release_review_qualified": false
+  },
+  "pin_integrity": {
+    "distinct_git_blobs_readonly_verified": 35,
+    "distinct_app_files": 16,
+    "distinct_python_files": 19,
+    "git_blob_mismatches": 0,
+    "original_source_mutations_starter_sha256_verified": 12,
+    "mutation_match_failures": 0,
+    "disclaimer": "Read-only authenticated GitHub source pin identity and single-step starter hashes. Not full consumer test execution."
+  },
+  "source_executions": [
+    {
+      "task_id": "APP-01",
+      "method": "PRIVATE_PINNED_ORIGINAL_CONSUMER_JS_TEST_BODY_IN_ISOLATED_V8_VIRTUAL_FS",
+      "source_git_blob": "5f8ee6b20a2a3cb289704361c7a02e34681b1c16",
+      "test_git_blob": "8b51f8d033c1216261944375e6a5381f50aba18c",
+      "source_invoked": "dviEnsure_ via original unchanged consumer test",
+      "test_name": "tests/developer-validation-idempotent-sheet-ensure.test.js",
+      "reference": {
+        "status": "PASS",
+        "output_lines": 1
+      },
+      "single_mutant": {
+        "status": "FAIL",
+        "error_type": "AssertionError",
+        "assertion": "deepStrictEqual",
+        "original_test_approx_line": 41
+      },
+      "expected_mutation_detected": true,
+      "unchanged_original_consumer_test_text_executed": true,
+      "full_node_runtime_executed": false,
+      "environment": "No Node fs or native assert: V8 JS interpreter with fake require('fs','path','assert') and virtual pinned files.",
+      "heldout": false,
+      "independent_reviewer": false
+    },
+    {
+      "task_id": "APP-02",
+      "method": "PRIVATE_PINNED_ORIGINAL_CONSUMER_JS_TEST_BODY_IN_ISOLATED_V8_VIRTUAL_FS",
+      "source_git_blob": "5f8ee6b20a2a3cb289704361c7a02e34681b1c16",
+      "test_git_blob": "99ff5520076c176b3f1389d2081241f030c2e406",
+      "source_invoked": "dviEvidenceFieldDecision_ and dviConsensusValueKey_ via unchanged test",
+      "test_name": "tests/developer-validation-field-consensus.test.js",
+      "reference": {
+        "status": "PASS",
+        "output_lines": 1
+      },
+      "single_mutant": {
+        "status": "FAIL",
+        "error_type": "AssertionError",
+        "assertion": "strictEqual",
+        "original_test_approx_line": 32
+      },
+      "expected_mutation_detected": true,
+      "unchanged_original_consumer_test_text_executed": true,
+      "full_node_runtime_executed": false,
+      "environment": "No Node fs or native assert: V8 JS interpreter with fake require('fs','path','assert') and virtual pinned files.",
+      "heldout": false,
+      "independent_reviewer": false
+    },
+    {
+      "task_id": "APP-03",
+      "method": "PRIVATE_PINNED_ORIGINAL_CONSUMER_JS_TEST_BODY_IN_ISOLATED_V8_VIRTUAL_FS",
+      "source_git_blob": "6c2b8b02afa9044f21c547f1f19a93820ce7c9ff",
+      "test_git_blob": "90ae74e4bbd7939731cce4fc4e0d7c94ebee0883",
+      "source_invoked": "dviMissingProjectInsertAssess_ and dviMissingProjectInsertProvenancePlanRow_ via unchanged consumer",
+      "test_name": "tests/developer-validation-source-provenance-policy.test.js",
+      "reference": {
+        "status": "PASS",
+        "output_lines": 1
+      },
+      "single_mutant": {
+        "status": "FAIL",
+        "error_type": "AssertionError",
+        "assertion": "source_developer_id must stay blank for DVI-origin",
+        "original_test_approx_line": 59
+      },
+      "expected_mutation_detected": true,
+      "unchanged_original_consumer_test_text_executed": true,
+      "full_node_runtime_executed": false,
+      "environment": "No Node fs/vm/native assert; pinned original test body executed in V8 with virtual pinned files and VM/require emulators.",
+      "heldout": false,
+      "independent_reviewer": false
+    },
+    {
+      "task_id": "APP-04",
+      "method": "DIRECT_PINNED_PRIVATE_SOURCE_READONLY_JS_V8_MOCK",
+      "source_git_blob": "6c2b8b02afa9044f21c547f1f19a93820ce7c9ff",
+      "source_invoked": "dviMissingProjectInsertMasterInventory_",
+      "source_inputs": {
+        "project_ids": [
+          2,
+          5
+        ]
+      },
+      "reference": {
+        "minimum": 2,
+        "maximum": 5,
+        "gap_count": 2,
+        "next_project_id": 6
+      },
+      "single_mutant": {
+        "next_project_id": 3
+      },
+      "expected_mutation_detected": true,
+      "original_consumer_test_executed": false,
+      "heldout": false,
+      "original_unchanged_consumer_test_probe": {
+        "test_git_blob": "3f0c48f0b98d180fd242d1affed87ff0d87d6418",
+        "source_git_blob": "6c2b8b02afa9044f21c547f1f19a93820ce7c9ff",
+        "method": "unchanged original private JS policy text test executed under V8 mocked require('fs','path','assert')",
+        "reference_result": "PASS",
+        "mutant_result": "PASS",
+        "mutant_detected": false,
+        "reason": "Original static policy-string assertion still finds projectIdMax+1 elsewhere in source; the test does not distinguish the changed next-candidate computation.",
+        "behavioral_oracle_catches_mutation": true,
+        "not_native_node_execution": true,
+        "independent_review": false
+      }
+    },
+    {
+      "task_id": "APP-05",
+      "method": "DIRECT_PINNED_PRIVATE_BUILDER_AND_ERROR_SERVICE_READONLY_JS_V8_MOCK",
+      "builder_git_blob": "6b799f6b2c5b5ae21d4ee911683ea47203de7e6a",
+      "service_git_blob": "7aa6f1a899aaa72f2f359b048402ed7d6927c28c",
+      "source_invoked": "candidateErrorServiceSource() and ErrorService.fromCode",
+      "behavior_vectors": 5,
+      "fields_compared": [
+        "code",
+        "message",
+        "details",
+        "http"
+      ],
+      "reference_reads": {
+        "open": 1,
+        "table": 1
+      },
+      "candidate_reads": {
+        "open": 1,
+        "table": 1
+      },
+      "mutant_reads": {
+        "open": 7,
+        "table": 7
+      },
+      "candidate_output_parity": true,
+      "expected_cache_mutation_detected": true,
+      "original_consumer_test_executed": false,
+      "heldout": false
+    },
+    {
+      "task_id": "APP-06",
+      "method": "DIRECT_PINNED_PRIVATE_CONTEXT_RESOLVER_READONLY_JS_V8_REPOSITORY_MOCK",
+      "source_git_blob": "bd18ab81be52894becd09855a2ae5db31a9c692d",
+      "test_git_blob": "6c69478e0b03b435fbc4a26a0175023c5c288658",
+      "source_invoked": "createProductionEdgeContextResolver().resolve()",
+      "cases": [
+        "valid_authority_snapshot",
+        "wrong_subscriber",
+        "wrong_workspace",
+        "missing_person"
+      ],
+      "reference": {
+        "valid_resolved": true,
+        "wrong_subscriber_error": "AUTHORITY_SNAPSHOT_CONTEXT_MISMATCH",
+        "wrong_workspace_error": "AUTHORITY_SNAPSHOT_CONTEXT_MISMATCH",
+        "missing_person_error": "AUTH_INVALID",
+        "snapshot_repository_reads_each_scenario": 1
+      },
+      "one_line_mutant": {
+        "wrong_subscriber_rejected": false,
+        "wrong_workspace_rejected": false,
+        "missing_person_error": "AUTH_INVALID",
+        "snapshot_repository_reads_each_scenario": 1
+      },
+      "expected_fail_closed_mutation_detected": true,
+      "original_consumer_test_executed": true,
+      "original_full_postgres_runtime_executed": false,
+      "heldout": false,
+      "note": "One initial checking harness run was corrected: total 4 repository calls over 4 independent scenarios, one call in each; product source remained unchanged.",
+      "original_consumer_run": {
+        "scope": "Original unchanged pinned private Node consumer JS test with exact pinned production resolver source in temporary private filesystem outside public checkout",
+        "node_version": "v22.16.0",
+        "test": "tests/prd03-production-edge-context-resolver.test.js",
+        "source_blob_verified": "bd18ab81be52894becd09855a2ae5db31a9c692d",
+        "test_blob_verified": "6c69478e0b03b435fbc4a26a0175023c5c288658",
+        "reference_exit_code": 0,
+        "reference_result": "PASS",
+        "mutant_exit_code": 1,
+        "mutant_expected_error": "AssertionError [ERR_ASSERTION]: Missing expected rejection.",
+        "mutant_original_test_line": 57,
+        "mutant_assertion_recovered": true,
+        "no_external_db_network": true,
+        "not_real_postgres": true
+      }
+    },
+    {
+      "task_id": "PY-01",
+      "method": "BOUND_PYTHON_SOURCE_METHOD_EXCERPT_WITH_PROVIDER_REQUEST_STUBS_NO_FULL_CONSUMER",
+      "source_git_blob": "262b2fb0d3ce62f35c3acb47adeac6b42f7ea036",
+      "test_git_blob": "8a737ebd879d1ee3757f12adf00c473c434d29e6",
+      "source_method": "SemanticPaymentPlanNormalizer.normalize",
+      "source_excerpt": {
+        "length_bytes_ascii": 2900,
+        "weak_fnv1a32": "ba77f4a0",
+        "python_version": "3.13.5",
+        "method_executed_with_original_function_body": true,
+        "isolated_private_temp_deleted": true
+      },
+      "checks": {
+        "total": 5,
+        "reference_pass": 5,
+        "expected_mutant_discrimination": 1,
+        "mutant_different_in_only_case": "provider_specific_failure",
+        "unchanged_negative_controls": 4,
+        "provider_specific_ref": "PROVIDER_ERROR",
+        "provider_specific_mutant": "NORMALIZED",
+        "raw_evidence_retained": true
+      },
+      "original_consumer_test_executed": false,
+      "full_jsonschema_path_executed": false,
+      "pinned_original_test_function_count": 20,
+      "stubbed_dependencies": [
+        "StructuredAIRequest",
+        "_prompt",
+        "PaymentNormalizationResult shape",
+        "AIProviderError class",
+        "PAYMENT_NORMALIZATION_RESPONSE_SCHEMA"
+      ],
+      "independent_reviewer": false,
+      "heldout": false
+    },
+    {
+      "task_id": "PY-02",
+      "method": "PINNED_UNCHANGED_PRIVATE_PYTHON_CONSUMER_ALL_FUNCTIONS_EXECUTED_ISOLATED_STDLIB",
+      "source_git_blob": "60e9c102da12b2950e32b784b46646e4d341897b",
+      "test_git_blob": "ff2a5512ab62bc57620857cec3e27152d586a683",
+      "source_git_blobs_verified_by_local_git_hash_object": true,
+      "original_consumer_test_executed": true,
+      "original_consumer_run": {
+        "script": "tests/unit/test_erei_semantic_harvest_cache.py",
+        "runner": "python -I -S -B via stdlib runpy+unittest FunctionTestCase and isolated tmp_path",
+        "tests_defined": 4,
+        "reference": {
+          "tests": 4,
+          "passed": 4,
+          "failed": 0,
+          "errors": 0,
+          "exit": 0
+        },
+        "mutant": {
+          "tests": 4,
+          "passed": 3,
+          "failed": 1,
+          "errors": 0,
+          "exit": 1,
+          "failed_name": "test_attempt_ledger_does_not_poison_reusable_result_cache"
+        },
+        "single_exact_mutation": "Inject self.put(entry) before attempt-ledger SQL cursor",
+        "no_network_or_provider": true,
+        "only_local_sqlite_memory_and_temp": true,
+        "original_test_file_unchanged": true
+      },
+      "independent_reviewer": false,
+      "hidden_acceptance": false
+    },
+    {
+      "task_id": "PY-03",
+      "method": "PRIVATE_TEMP_PYTHON_3_13_ISOLATED_AST_AND_ORIGINAL_TEST_DIRECT_METHOD",
+      "source_git_blob": "6f165f875aa3aec8db8b2d2ff26eedfa904bd473",
+      "test_git_blob": "2a1353992f626bdf9d8b58db9a0d18f3c15be4c6",
+      "source_git_blobs_verified_by_local_git_hash_object": true,
+      "python_flags": [
+        "-I",
+        "-S",
+        "-B"
+      ],
+      "public_bounded_oracle": {
+        "tests": 3,
+        "reference_passed": 3,
+        "mutant_expected_failed": 1,
+        "mutant_offtarget_failed": 0
+      },
+      "unchanged_original_consumer_test": {
+        "name": "test_boundary_matching_is_exact_not_substring_based",
+        "baseline": "PASS",
+        "mutant": "FAIL_EXPECTED",
+        "executed": 1,
+        "total_defined": 3,
+        "full_import_chain_executed": false,
+        "import_shim": true
+      },
+      "expected_exact_not_substring_mutation_detected": true,
+      "heldout": false
+    },
+    {
+      "task_id": "PY-04",
+      "method": "PINNED_UNCHANGED_PRIVATE_PYTHON_CONSUMER_ALL_FUNCTIONS_EXECUTED_ISOLATED_STDLIB",
+      "source_git_blob": "2d0960ec3d909bfd24bbb7cfa3084b280f774c57",
+      "registry_git_blob": "17c82850ef60fd436b52aa18810cabfa6643dea6",
+      "test_git_blob": "5317a2b368150bd81031815dcc389db81d61334d",
+      "source_git_blobs_verified_by_local_git_hash_object": true,
+      "original_consumer_test_executed": true,
+      "original_consumer_run": {
+        "script": "tests/unit/test_project_update_presets.py",
+        "runtime": "Python 3.13.5 (Linux); python -I -S -B; runpy/unittest with isolated core namespace, unchanged six pinned test functions",
+        "python_version": "3.13.5",
+        "tests_defined": 6,
+        "reference": {
+          "tests": 6,
+          "passed": 6,
+          "failed": 0,
+          "errors": 0,
+          "skipped": 0,
+          "exit": 0
+        },
+        "initial_mutant_rejected": {
+          "after": "tuple(spec.token for spec in PROJECT_FIELD_REGISTRY.specs[:-1]),",
+          "tests": 6,
+          "passed": 4,
+          "failed": 2,
+          "expected_failures": [
+            "test_full_project_details_preset_tracks_registry_without_duplicate_allowlist",
+            "test_aqarmap_full_preset_has_fail_closed_unavailable_fields"
+          ],
+          "reason": "off-target additional consumer failure, must not count as calibrated"
+        },
+        "mutant": {
+          "after": "tuple(spec.token for spec in PROJECT_FIELD_REGISTRY.specs if spec.token != \"videos\"),",
+          "starter_sha256": "1a78015a1acc1ce4225b406c232c81de5aac9f05d46452aa7cc0e7e57b879ff0",
+          "tests": 6,
+          "passed": 5,
+          "failed": 1,
+          "errors": 0,
+          "skipped": 0,
+          "exit": 1,
+          "failed_name": "test_full_project_details_preset_tracks_registry_without_duplicate_allowlist"
+        },
+        "single_exact_mutation": true,
+        "original_test_file_unchanged": true,
+        "pinned_original_git_blobs": 3,
+        "private_temp_folders_cleaned_for_runs": true,
+        "no_network_provider_production_writes": true,
+        "full_legacy_application_initializers_executed": false
+      },
+      "independent_reviewer": false,
+      "hidden_acceptance": false,
+      "calibration_classification": "SELF_REPORTED_PUBLIC_SINGLE_TASK_CALIBRATION_ONLY"
+    },
+    {
+      "task_id": "PY-05",
+      "method": "PINNED_UNCHANGED_PRIVATE_PYTHON_CONSUMER_ALL_FUNCTIONS_EXECUTED_ISOLATED_STDLIB",
+      "source_git_blob": "145a541a9c6e43b06dbea6cd7efd795e1db65f20",
+      "test_git_blob": "a137cfe8107a7f400da9546681198e4595efe130",
+      "source_git_blobs_verified_by_local_git_hash_object": true,
+      "original_consumer_test_executed": true,
+      "original_consumer_run": {
+        "script": "tests/unit/test_launcher_unit_type_normalizer.py",
+        "runner": "python -I -S -B via stdlib runpy+unittest FunctionTestCase",
+        "tests_defined": 6,
+        "reference": {
+          "tests": 6,
+          "passed": 6,
+          "failed": 0,
+          "errors": 0,
+          "exit": 0
+        },
+        "mutant": {
+          "tests": 6,
+          "passed": 5,
+          "failed": 1,
+          "errors": 0,
+          "exit": 1,
+          "failed_name": "test_load_unit_type_mapping_uses_short_lived_connection_and_normalizes_keys"
+        },
+        "single_exact_mutation": "Replace connection finally conn.close() with pass",
+        "no_network_or_provider": true,
+        "only_fake_connection": true,
+        "original_test_file_unchanged": true
+      },
+      "independent_reviewer": false,
+      "hidden_acceptance": false
+    },
+    {
+      "task_id": "PY-06",
+      "method": "BOUND_PYTHON_SOURCE_METHOD_EXCERPT_WITH_SEMANTIC_NUMBER_HELPER_STUBS_NO_FULL_CONSUMER",
+      "source_git_blob": "262b2fb0d3ce62f35c3acb47adeac6b42f7ea036",
+      "test_git_blob": "c47d6aed4edc16a24149be9472c153f0cff1a8c6",
+      "source_method": "_validate_grounding",
+      "source_excerpt": {
+        "length_bytes_ascii": 1825,
+        "weak_fnv1a32": "9177ac80",
+        "python_version": "3.13.5",
+        "method_executed_with_original_function_body": true,
+        "isolated_private_temp_deleted": true
+      },
+      "checks": {
+        "total": 5,
+        "reference_pass": 5,
+        "expected_mutant_discrimination": 1,
+        "mutant_different_in_only_case": "derived_8years_to_96months",
+        "derived_ref": "UNGROUNDED_NUMERIC",
+        "derived_mutant": "PASS",
+        "unchanged_negative_controls": 4
+      },
+      "original_consumer_test_executed": false,
+      "full_payment_schema_validation_executed": false,
+      "pinned_original_test_function_count": 4,
+      "stubbed_dependencies": [
+        "_evidence_number_tokens",
+        "_iter_semantic_numbers",
+        "_number_token",
+        "_numeric_tokens",
+        "PaymentEvidence shape"
+      ],
+      "independent_reviewer": false,
+      "heldout": false
+    }
+  ],
+  "limits": [
+    "No actual V1/V2 model submissions or 48 paired model observations.",
+    "JS V8 source mocks are not Node original consumer tests or Google Apps Script runtime.",
+    "PY-03 original consumer coverage is 1 of 3 functions with a narrowly scoped import shim; original HTML parser was not exercised.",
+    "No genuine original consumer full test baseline/mutant success is claimed for all 12 packages.",
+    "Self-reported tool execution is not independent assessor signoff, budget authority or Stable readiness.",
+    "Never copy private repository files into a public Framework git tree or artifacts.",
+    "APP-06 full unchanged original Node consumer regression executed in isolated temporary source/test copy against fake repository; not a live PostgreSQL-backed integration test.",
+    "PY-02 and PY-05 full original consumer test functions were invoked via stdlib runpy/unittest with isolated temporary packages, not pytest plugins or complete production application stacks.",
+    "APP-01/APP-02/APP-03 original unchanged consumer JavaScript test text was executed with V8 shims (assert, fs, path, vm), not in an original native Node process; no independent or full original Node test certification is claimed.",
+    "APP-04 original unchanged static policy-text consumer test passed BOTH reference and the actual gap-reuse mutant under V8 shims. Thus it is NOT an adequate mutation-catching consumer test; the separate pinned-source behavior oracle catches the regression. This is a verified test coverage gap, not calibration success.",
+    "PY-04 original 6-function consumer suite now executed on pinned private source with isolated Python 3.13.5 stdlib harness. Initial seo-tail-drop mutant failed two tests (REJECTED), revised videos-omission mutant failed exactly the intended full-registry assertion; this is a self-observed public calibration, not independent acceptance, full legacy app initialization or held-out model evaluation.",
+    "PY-01 and PY-06 are isolated exact source METHOD-EXCERPT executions on Python 3.13.5 using bounded dependency stubs, NOT unchanged original consumer test suite runs, complete jsonschema/semantic engine, paid model calls, or independent approval. FNV-1a excerpt ID is weak and supplemental; true source identity is the pinned original Git blob."
+  ],
+  "source_structural_observations": [],
+  "historical_source_structural_observations": [
+    {
+      "task_id": "PY-04",
+      "method": "PINNED_PRIVATE_PYTHON_SOURCE_STRUCTURAL_INTERPRETATION_ONLY",
+      "source_git_blob": "2d0960ec3d909bfd24bbb7cfa3084b280f774c57",
+      "registry_git_blob": "17c82850ef60fd436b52aa18810cabfa6643dea6",
+      "test_git_blob": "5317a2b368150bd81031815dcc389db81d61334d",
+      "source_invoked": "NOT_EXECUTED_PYTHON_SOURCE",
+      "observation": {
+        "registry_tokens": 20,
+        "registry_tokens_unique": true,
+        "last_token": "seo",
+        "baseline_full_tokens": 20,
+        "mutant_full_tokens": 19,
+        "reference_equals_registry": true,
+        "mutant_equals_registry": false,
+        "mutation_exact_one_occurrence": true,
+        "original_consumer_assertion_present": true
+      },
+      "source_behavior_mutation_detected_via_structural_interpretation": true,
+      "original_consumer_test_executed": false,
+      "python_runtime_executed": false,
+      "heldout": false,
+      "independent_reviewer": false,
+      "notes": "Read-only regex extraction of exact pinned source ProjectFieldSpec identifiers and original full-preset expression; not an actual Python module/class invocation or original 6-function consumer suite. Do not treat as calibrated."
+    }
+  ]
+}
