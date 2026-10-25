@@ -5,6 +5,58 @@ derived from the existing `MASTER_PLAN.md §5` checklist; it does **not**
 install a new governance service or create a Stable release gate. No actual
 Internal pilot was executed or approved in preparing this document.
 
+## Owner-scoped admission decision — 2026-10-25 (REVIEW RECORD ONLY)
+
+**Status: OWNER_SCOPE_APPROVED / NOT_ADMITTED.** The repository owner explicitly instructed that bounded decisions, approval and authorization proceed. The scope was recorded in the existing [T14 issue #81](https://github.com/lijust/EREI-Engineering-Framework/issues/81#issuecomment-6391909606), not as a qualified independent security or architecture signoff. **This document update is on a separate review-only documentation branch; it does not modify the already-tested source, SHA, tree or fixtures of candidate PR #98.** No protected-main merge or real Internal pilot launch is authorized.
+
+| Admission field | Current verified/proposed value | Approval boundary |
+| --- | --- | --- |
+| **Frozen source candidate** | `31d4e518b9e71a9585df9097e7ca07a7e25af916` | Owner-selected, pending independent source disposition |
+| **Candidate Git tree** | `913c6a0daaa7a6efa7d6d2148aa0294812fab360` | Matched to GitHub PR merge checkout; SHA/tree changes require new evidence |
+| **Exact synthetic fixture SHA256** | `72de745e67512575615ded69a7276f6764ee3bbaecc4e60c3b788edc1b9ac4f8` | Owner-selected for review; not yet independently approved |
+| **Verified implementation** | PR #98 source-only composite of T10 deny, T14 rollback and T15 calibration | No consumer/pin or production deployment |
+| **Operator / owner** | `lijust` is repository owner and **proposed synthetic operator** | Authenticated independent operational acknowledgement not present |
+| **Security reviewer** | `UNASSIGNED` | Independent signed `ACCEPT / REJECT / FIX_REQUIRED` **required** |
+| **Architecture reviewer** | `UNASSIGNED` | Independent SHA-bound verdict **required** |
+| **Rollback custodian** | `UNASSIGNED` | Must confirm archive isolation, authority, retention and restoration |
+| **Proposed maximum timebox** | **15 minutes**, counted from a future expressly admitted start | **Owner-approved limit only; no pilot execution permitted yet** |
+| **Participants / data** | Zero external users; only ephemeral synthetic fixtures on hosted Windows | No EREI/SAE-DB real data, secrets, SQLite/Sheets or external consumers |
+| **Operations expressly denied** | Paid model calls; production writes; project pins; privileged tokens; GitHub settings; publish/merge; consumer workflows | No implied exception |
+| **Automatic stop** | Any checkout/hash/fixture mismatch, P1 blocker, denied activation bypass, data change, missing capture/artifact, failed rollback, timebox expiry | Fail closed, preserve independent artifacts, never silently promote |
+| **Technical evidence** | [T14 #40149707722](https://github.com/lijust/EREI-Engineering-Framework/actions/runs/40149707722) 4/4 per Python 3.11/3.12 with matching fixture digest; [Assurance #40149707727](https://github.com/lijust/EREI-Engineering-Framework/actions/runs/40149707727), [Evals #40149707726](https://github.com/lijust/EREI-Engineering-Framework/actions/runs/40149707726), [Bootstrap #40149707766](https://github.com/lijust/EREI-Engineering-Framework/actions/runs/40149707766) PASS | **Pre-admission source/fixture diagnostics, not formally admitted Internal** |
+| **Required pre-admission decisions** | Original P1 #84/#86/#88; T10 #91, T14 #94, T15 #95, combined #98; explicit independent security/architecture acceptance | **OPEN; no reviewer signature invented** |
+| **Exact-target Core / V1-V2 models** | 0/13 and 0/48 respectively | Separate **Stable** work; not itself narrow synthetic Internal gating |
+| **Formal admission decision** | **HOLD_NOT_ADMITTED** | Must change only after independent signoffs and explicit SHA-bound owner `ADMIT` |
+
+### Executable evidence already recorded without an admitted pilot
+
+The hosted synthetic T14 replay checked immutable V1 source, rejected pin-only rollback,
+preserved the V2 archive and pending `IMMEDIATE_REVIEW`, and separately restored V1
+baseline content in isolated temporary directories. Each Windows Python 3.11/3.12
+four-case fixture reported the **same** SHA256. Artifacts are retained for 14 days,
+not a permanent independent archive. The source-only evidence does **not** prove
+production or real consumer rollback, power-loss/data-corruption recovery, external
+archive custody, or independent authorization.
+
+### Authorized actions versus release authority
+
+**Allowed now:** examine original reviewer findings, create SHA-bound independent
+review requests, inspect and archive public synthetic receipts, maintain this
+review-only admission record, and repeat **read-only synthetic pre-admission
+diagnostics** when required on the frozen source, without credentials or private
+data. **Not allowed now:** mark independent reviews approved on the owner's behalf,
+resolve their review threads without qualified reviewer decision, invoke paid AI,
+deploy to any consumer, change framework pins or ledger history, merge into protected
+main, or relabel previous hosted diagnostics as the formally admitted Internal pilot.
+
+**Owner authorization alone is not the qualified independent acceptance required
+by §5.** A future admission must state separate human/authorized security and
+architecture decisions, operator/custodian acceptance and approved exact fixture,
+then `ADMIT` the **same** SHA/tree. If any version changes, re-evaluate relevant
+evidence before launch.
+
+---
+
 ## Smallest viable pilot
 
 - **Purpose:** demonstrate Task Learning V2 behavior and rollback on a
@@ -48,7 +100,7 @@ synthetic/no-production Internal proposal; independent scope-specific
 safety approval **is** required. A full 12-task benchmark does **not**
 gate this isolated read-only pilot.
 
-## Admission record — deliberately unapproved
+## Historical unapproved admission record — 2026-10-24 (superseded by conditional owner-scoped record above)
 
 | Required signoff | Value |
 |---|---|
