@@ -107,6 +107,70 @@ class PilotPreflightTests(unittest.TestCase):
             self.assertFalse(result[authority])
         self.assertEqual(result["observed_slots"], 0)
 
+    def test_all_48_synthetic_records_are_zero_real_model_runs(self):
+        from evals import benchmark_accounting as accounting
+        planned = accounting.schedule(self.plan)
+        synthetic = {
+            "plan_sha256": accounting.digest(self.plan),
+            "evidence_kind": "synthetic",
+            "runs": [{
+                "run_id": slot["run_id"],
+                "status": "completed",
+                "first_candidate_passed": True,
+                "independent_completion_passed": True,
+                "review_evidence": ["synthetic:not-independent"],
+                "attempts": [{
+                    "attempt_no": 1,
+                    "evidence_ref": "synthetic:fake-execution",
+                    "wall_seconds": 1,
+                    "model_usd": 0,
+                    "tools_usd": 0,
+                    "ci_usd": 0,
+                    "human_usd": 0,
+                }],
+            } for slot in planned],
+        }
+        result = preflight.preflight(self.plan, synthetic)
+        self.assertEqual(result["evidence_kind"], "synthetic")
+        self.assertEqual(result["synthetic_record_slots"], 48)
+        self.assertEqual(result["submitted_unverified_record_slots"], 0)
+        self.assertEqual(result["independently_verified_model_slots"], 0)
+        self.assertEqual(result["observed_slots"], 0)
+        self.assertEqual(result["missing_slots"], 48)
+        self.assertEqual(result["required_slots"], 48)
+        self.assertFalse(result["model_execution_authorized"])
+        self.assertFalse(result["independent_acceptance_verified"])
+        self.assertFalse(result["stable_ready"])
+
+        submitted = copy.deepcopy(synthetic)
+        submitted["evidence_kind"] = "observed_unverified"
+        report = preflight.preflight(self.plan, submitted)
+        self.assertEqual(report["evidence_kind"], "observed_unverified")
+        self.assertEqual(report["synthetic_record_slots"], 0)
+        self.assertEqual(report["submitted_unverified_record_slots"], 48)
+        self.assertEqual(report["independently_verified_model_slots"], 0)
+        self.assertEqual(report["observed_slots"], 0)
+        self.assertEqual(report["missing_slots"], 48)
+        self.assertFalse(report["independent_acceptance_verified"])
+
+    def test_unclassified_or_invalid_evidence_kind_rejected(self):
+        from evals import benchmark_accounting as accounting
+        records = {
+            "plan_sha256": accounting.digest(self.plan),
+            "evidence_kind": "synthetic",
+            "runs": [],
+        }
+        for change in ("missing", "invalid", "null"):
+            mutated = copy.deepcopy(records)
+            if change == "missing":
+                del mutated["evidence_kind"]
+            elif change == "invalid":
+                mutated["evidence_kind"] = "verified"
+            else:
+                mutated["evidence_kind"] = None
+            with self.subTest(change=change), self.assertRaises(ValueError):
+                preflight.preflight(self.plan, mutated)
+
     def test_wrong_assessment_evidence_and_wrong_plan_digest_rejected(self):
         p = copy.deepcopy(self.plan)
         record = {
