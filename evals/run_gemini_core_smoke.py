@@ -72,7 +72,7 @@ def frozen_blob(root: Path, relative_path: str) -> bytes:
     env = {k: v for k, v in os.environ.items() if not k.upper().startswith("GIT_")}
     try:
         blob = subprocess.check_output(
-            ["git", "-C", str(root.resolve()), "show",
+            ["git", "--no-replace-objects", "-C", str(root.resolve()), "show",
              f"{gemini.EXPECTED_TARGET_HEAD}:{relative_path}"],
             stdin=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
             timeout=10, env=env,
@@ -108,12 +108,12 @@ def source_identity(adapter_root: Path) -> dict:
                 if not k.upper().startswith("GIT_")}
     try:
         head = subprocess.check_output(
-            ["git", "-C", str(adapter_root), "rev-parse", "--verify", "HEAD"],
+            ["git", "--no-replace-objects", "-C", str(adapter_root), "rev-parse", "--verify", "HEAD"],
             text=True, stdin=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
             timeout=10, env=isolated,
         ).strip()
         dirty = subprocess.check_output(
-            ["git", "-C", str(adapter_root), "status", "--porcelain", "--untracked-files=all"],
+            ["git", "--no-replace-objects", "-C", str(adapter_root), "status", "--porcelain", "--untracked-files=all"],
             text=True, stdin=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
             timeout=10, env=isolated,
         ).strip()
