@@ -63,10 +63,17 @@ def verify_frozen_target(root: Path) -> None:
             stdin=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
             timeout=10, env=isolated, text=True,
         ).strip()
+        dirty = subprocess.check_output(
+            ["git", "-C", str(root), "status", "--porcelain", "--untracked-files=all"],
+            stdin=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+            timeout=10, env=isolated, text=True,
+        ).strip()
     except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired) as ex:
         raise GeminiAdapterError("frozen target identity unavailable") from ex
     if Path(top).resolve() != root or head != EXPECTED_TARGET_HEAD or tree != EXPECTED_TARGET_TREE:
         raise GeminiAdapterError("frozen #98 HEAD/tree mismatch; no API request")
+    if dirty:
+        raise GeminiAdapterError("frozen target worktree is dirty; no API request")
 
 
 def prepare_one(request: dict, root: Path) -> str:
@@ -90,9 +97,20 @@ def prepare_one(request: dict, root: Path) -> str:
 
 def parse_gemini_result(payload: bytes) -> dict:
     try:
-        envelope = json.loads(payload, parse_constant=lambda x: (_ for _ in ()).throw(
-            ValueError("non-finite response constant")
-        ))
+        def unique_object(pairs):
+            value = {}
+            for key, item in pairs:
+                if key in value:
+                    raise ValueError("duplicate provider response key")
+                value[key] = item
+            return value
+
+        def no_nonfinite(value):
+            raise ValueError("non-finite provider value")
+
+        envelope = json.loads(
+            payload, object_pairs_hook=unique_object, parse_constant=no_nonfinite
+        )
         candidates = envelope["candidates"]
         if not isinstance(candidates, list) or len(candidates) != 1:
             raise ValueError("expected one candidate")
