@@ -35,7 +35,12 @@ PUBLIC_CORE_ARTIFACTS = {
 
 
 class GeminiAdapterError(RuntimeError):
-    pass
+    """Only allow-listed metadata may be exported to local failure receipts."""
+    def __init__(self, message: str, *, safe_code: str = "ADAPTER_BLOCKED",
+                 http_status: int | None = None):
+        super().__init__(message)
+        self.safe_code = safe_code
+        self.http_status = http_status if type(http_status) is int and 400 <= http_status <= 599 else None
 
 
 class NoRedirect(urllib.request.HTTPRedirectHandler):
@@ -193,10 +198,17 @@ def generate_raw_once(prompt: str, *, key: str, timeout: float) -> bytes:
             content = response.read(MAX_RESPONSE_BYTES + 1)
     except urllib.error.HTTPError as ex:
         # Never print provider response body or API key (could contain request).
-        raise GeminiAdapterError(f"Gemini API request blocked: HTTP {ex.code}") from None
+        raise GeminiAdapterError(
+            "Gemini API HTTP failure (provider text redacted)",
+            safe_code="GEMINI_HTTP_ERROR",
+            http_status=int(ex.code),
+        ) from None
     except (OSError, urllib.error.URLError, ValueError) as ex:
         # urllib can embed a secret header VALUE in ValueError. Never quote it.
-        raise GeminiAdapterError("Gemini API transport/header error; no automatic retries") from None
+        raise GeminiAdapterError(
+            "Gemini API transport/header error; no automatic retries",
+            safe_code="GEMINI_TRANSPORT_ERROR",
+        ) from None
     if len(content) > MAX_RESPONSE_BYTES:
         raise GeminiAdapterError("Gemini response exceeds byte limit")
     return content
