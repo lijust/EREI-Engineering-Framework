@@ -158,7 +158,8 @@ class GeminiCore13AdapterTests(unittest.TestCase):
         # old byte-comparison alone would accept the destination path and bytes.
         fake[0] = ("workflows/learning-review/WORKFLOW.md", original[0][1])
         for wrong in (fake, list(reversed(original)), original[:-1], original + original[:1]):
-            with self.subTest(paths=[x[0] for x in wrong]), (
+            with (
+                self.subTest(paths=[x[0] for x in wrong]),
                 mock.patch.object(gemini.contract, "resolve_artifact", return_value=wrong),
                 mock.patch.object(gemini, "verify_artifact_bytes") as blob_verify,
                 mock.patch.object(gemini.contract, "build_direct_prompt") as build,
