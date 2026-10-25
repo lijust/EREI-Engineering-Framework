@@ -10,9 +10,9 @@ from unittest import mock
 from evals import run_gemini_core_smoke as smoke
 
 
-def good_raw():
+def good_raw(model="gemini-3.8-flash"):
     return json.dumps({
-        "modelVersion": "gemini-3.8-flash",
+        "modelVersion": model,
         "responseId": "synthetic-response-id",
         "usageMetadata": {"promptTokenCount": 88, "candidatesTokenCount": 33,
                           "totalTokenCount": 121},
@@ -83,6 +83,40 @@ class CoreOneCaseTests(unittest.TestCase):
             self.assertEqual(verdict["provider_response_sha256"], smoke.sha(raw))
             self.assertTrue((output / "adapter-normalized.json").is_file())
             self.assertNotIn("synthetic-fake", (output / "verdict.json").read_text())
+
+    def test_selected_36_real_core_case_retains_version_and_no_false_release(self):
+        with tempfile.TemporaryDirectory() as folder:
+            raw = good_raw("gemini-3.6-flash")
+            with mock.patch.object(smoke.gemini, "generate_raw_once", return_value=raw) as request:
+                verdict = smoke.record_one(
+                    prepared(), Path(folder), "mock-secret", 90,
+                    model="gemini-3.6-flash",
+                )
+            request.assert_called_once_with(
+                "public synthetic prompt only", key="mock-secret", timeout=90,
+                model="gemini-3.6-flash",
+            )
+            self.assertEqual(verdict["model_requested"], "gemini-3.6-flash")
+            self.assertEqual(verdict["provider_model_version"], "gemini-3.6-flash")
+            self.assertTrue(verdict["passed"])
+            self.assertFalse(verdict["independently_accepted"])
+            self.assertFalse(verdict["stable_ready"])
+            self.assertEqual(json.loads((Path(folder) / "verdict.json").read_text())
+                             ["model_requested"], "gemini-3.6-flash")
+
+    def test_wrong_provider_model_never_scores_as_valid_core(self):
+        with tempfile.TemporaryDirectory() as folder:
+            with mock.patch.object(smoke.gemini, "generate_raw_once",
+                                   return_value=good_raw("gemini-3.8-flash")):
+                verdict = smoke.record_one(
+                    prepared(), Path(folder), "mock-secret", 90,
+                    model="gemini-3.6-flash"
+                )
+            self.assertFalse(verdict["passed"])
+            self.assertEqual(verdict["status"], "MODEL_RESPONSE_INVALID_UNVERIFIED")
+            self.assertEqual(verdict["model_requested"], "gemini-3.6-flash")
+            self.assertEqual(verdict["provider_model_version"], "gemini-3.8-flash")
+            self.assertFalse((Path(folder) / "adapter-normalized.json").exists())
 
     def test_invalid_provider_output_persists_raw_and_not_false_pass(self):
         for kind in ("no_usage", "invalid_json", "duplicate_provider_keys"):
