@@ -113,7 +113,8 @@ class GeminiCore13AdapterTests(unittest.TestCase):
     def test_header_value_error_cannot_leak_key_or_trigger_network(self):
         for bad in ("AIza-secret-MUST-NOT-LOG\\n", "AIza-secret-MUST-NOT-LOG\\r"):
             raw_key = bad.replace("\\n", "\n").replace("\\r", "\r")
-            with self.subTest(bad=bad), (
+            with (
+                self.subTest(bad=bad),
                 mock.patch.object(gemini.urllib.request, "build_opener") as opener,
             ):
                 with self.assertRaises(gemini.GeminiAdapterError) as caught:
@@ -138,7 +139,8 @@ class GeminiCore13AdapterTests(unittest.TestCase):
                 gemini.generate_once("x", key="mock-only", timeout=timeout)
         with mock.patch("sys.stderr", new_callable=io.StringIO) as output:
             self.assertEqual(gemini.main(["--target-root", "."]), 2)
-            self.assertIn("explicit --live required", output.getvalue())
+            self.assertIn("GEMINI_ADAPTER_BLOCKED", output.getvalue())
+            self.assertNotIn("MUST-NOT-LOG", output.getvalue())
 
     def test_one_post_json_only_no_tools_and_safe_secret_redaction(self):
         class Response:
