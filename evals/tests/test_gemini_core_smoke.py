@@ -137,6 +137,46 @@ class CoreOneCaseTests(unittest.TestCase):
             ):
                 smoke.frozen_blob(root, "secrets/private.env")
 
+    def test_real_git_replace_ref_cannot_substitute_frozen_scorer_blob(self):
+        import subprocess
+        import os
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder).resolve()
+            env = {k: v for k, v in os.environ.items()
+                   if not k.upper().startswith("GIT_")}
+            def git(*args, input=None):
+                return subprocess.check_output(
+                    ["git", "-C", str(root), *args],
+                    input=input, stderr=subprocess.DEVNULL, env=env,
+                    timeout=15,
+                ).strip()
+            git("init", "-q")
+            git("config", "core.autocrlf", "false")
+            filename = root / "evals" / "runner.py"
+            filename.parent.mkdir(parents=True)
+            genuine = b"MARKER = 'ORIGINAL_FROZEN'\n"
+            malicious = b"MARKER = 'POISONED_REPLACEMENT'\n"
+            filename.write_bytes(genuine)
+            git("add", "evals/runner.py")
+            git("-c", "user.email=test@example.invalid", "-c",
+                "user.name=Core13-Test", "commit", "-qm", "source test")
+            commit = git("rev-parse", "HEAD").decode()
+            original_blob = git("rev-parse", "HEAD:evals/runner.py").decode()
+            replacement_blob = git("hash-object", "-w", "--stdin",
+                                   input=malicious).decode()
+            git("replace", original_blob, replacement_blob)
+            self.assertEqual(
+                git("show", f"{commit}:evals/runner.py"), malicious.strip()
+            )
+            with mock.patch.object(smoke.gemini, "EXPECTED_TARGET_HEAD", commit):
+                self.assertEqual(
+                    smoke.frozen_blob(root, "evals/runner.py"), genuine
+                )
+                self.assertEqual(
+                    smoke.frozen_runner(root).MARKER, "ORIGINAL_FROZEN"
+                )
+            # Fixture is isolated in temporary local test repo: no production refs.
+
     def test_scorer_executes_git_blob_without_loading_poisoned_pyc(self):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)
