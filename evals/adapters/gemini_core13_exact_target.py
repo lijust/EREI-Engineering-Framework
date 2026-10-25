@@ -133,7 +133,8 @@ def parse_gemini_result(payload: bytes) -> dict:
         raise GeminiAdapterError("invalid/incomplete model response; do not count as passed") from ex
 
 
-def generate_once(prompt: str, *, key: str, timeout: float) -> dict:
+def generate_raw_once(prompt: str, *, key: str, timeout: float) -> bytes:
+    """One HTTPS POST; return bounded raw provider envelope for local custody."""
     if not isinstance(key, str) or not key.strip():
         raise GeminiAdapterError("GEMINI_API_KEY missing from process environment")
     if not 5 <= timeout <= 120:
@@ -169,7 +170,12 @@ def generate_once(prompt: str, *, key: str, timeout: float) -> dict:
         raise GeminiAdapterError("Gemini API transport unavailable; no automatic retries") from None
     if len(content) > MAX_RESPONSE_BYTES:
         raise GeminiAdapterError("Gemini response exceeds byte limit")
-    return parse_gemini_result(content)
+    return content
+
+
+def generate_once(prompt: str, *, key: str, timeout: float) -> dict:
+    """Existing normalized adapter contract used by CLI and unit tests."""
+    return parse_gemini_result(generate_raw_once(prompt, key=key, timeout=timeout))
 
 
 def main(argv=None):
