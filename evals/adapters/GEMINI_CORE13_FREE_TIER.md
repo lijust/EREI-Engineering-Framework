@@ -58,6 +58,24 @@ Google's troubleshooting guide recommends waiting and applying bounded exponenti
 
 ---
 
+## 2026-10-25 — repeated 3.8 Flash 503: stop identical Core POSTs
+
+The owner received another `GEMINI_HTTP_ERROR HTTP_503` for `smoke-003`, following the same 503 for `smoke-002`. The metadata probe succeeded with GET 200, but this **does not** imply inference was available. Google Developers' public forum has independent October 2026 reports of precisely the same Free-tier `gemini-3.8-flash` GenerateContent 503 on minimal text requests, and Google staff attributes it to temporary capacity: https://discuss.ai.google.dev/t/repeated-503-unavailable-on-gemini-3-8-flash-free-tier-including-minimal-text-only-requests/189051 . **Do not keep repeating 3.8 Flash requests today**. Preserve `smoke-001`, `smoke-002`, `smoke-003` failed attempt directories.
+
+To verify model-serving connectivity on a **separate** and explicitly non-Core route, the same branch now includes `evals/probe_gemini_fallback_generate.py`. After exact-head GitHub CI succeeds and the operator checks the selected alternate model's *actual project* Free-tier eligibility in AI Studio, this bounded script can send at most **ONE** minimal public text request to either `gemini-3.6-flash` or `gemini-3.5-flash-lite` (models with standard Free-tier prices). It never sends Framework source/cases or hidden expectations, does not log the key/provider error body, and **always counts 0 Core and 0 V1/V2 comparisons**. No retries, no paid-tier assumption. It prints only fixed success/error codes, model metadata and bounded usage fields.
+
+```powershell
+cd "$env:userprofile\desktop\erei-core13-adapter"
+git fetch origin pull/101/head
+git checkout --detach <LATEST_PR101_EXACT_CI_GREEN_SHA>
+remove-item env:gemini_api_key -erroraction silentlycontinue
+python -m evals.probe_gemini_fallback_generate --model gemini-3.6-flash --live --confirm-free-tier
+```
+
+The placeholder SHA is replaced by the last verified PR101 head, **not** a command literal. If 3.6 is denied or busy, do not automatically invoke another model—review the returned safe status and quota first. A successful probe establishes *only* that this alternative model could return one minimal text response, not that 3.8 is fixed or the alternate is validated for the Core13 behavior contract. Switching actual Core runtime requires explicit fixed model/version and acceptance evidence labels. This diagnostic does not alter protected main or enable billing.
+
+---
+
 ## Exactly one genuine Core case: owner-operated LOCAL smoke
 
 **Never run on a GitHub hosted runner and NEVER paste a key in GitHub, ChatGPT or a command line.** The script `evals/run_gemini_core_smoke.py` prompts invisibly with Python `getpass` if `GEMINI_API_KEY` is unset. No key value is persisted. Malformed keys/HTTP header exceptions are **redacted before logging** (a prior Codex P1), including the case of a trailing newline. The owner must first verify in Google AI Studio that **the actual key** is part of **EREI Gemini (Free tier)**; an account screenshot by itself is not proof that every key belongs to that project.
