@@ -46,6 +46,18 @@ A *later* explicitly approved and controlled one-case smoke now writes `reason_c
 
 ---
 
+## Owner diagnostic update — 2026-10-25: HTTP 503 is service capacity, not an invalid key
+
+The owner achieved metadata GET `HTTP 200` (the model and `generateContent` are listed) and attempted the frozen TLR-001 smoke a second time, using the corrected adapter `b09e229`. The generation POST returned **`GEMINI_HTTP_ERROR HTTP_503`**. Google's API error documentation describes 503 as **temporary service overload or unavailability**, distinct from 429 quota or 401/403 authorization errors. **Do not assume this proves an invalid key or an exhausted 20 RPD quota.** No successful raw model envelope, usage receipt or scored Core case was created. The provider might still meter an attempted request.
+
+The immediately repeated launch with **the same evidence path** `smoke-002` produced `CORE_SMOKE_BLOCKED: GeminiAdapterError` **before any POST**, because the first attempt created that immutable output directory. This fail-closed no-overwrite behavior is intentional. Preserve both `smoke-001` and `smoke-002`; don't rename or delete them to conceal failed attempts.
+
+Google's troubleshooting guide recommends waiting and applying bounded exponential backoff with jitter to transient 503s. This project deliberately disables automatic retries and keeps one request per invocation. If the free-tier project/model capacity is still available and the source revision passed exact-head CI/review, a subsequent *single* manually authorized attempt must use **a new** `smoke-003` folder, not `smoke-002`. If 503 persists, pause calls and inspect service status or switch to an **explicitly separate diagnostic model** rather than silently changing Core's pinned evaluation target.
+
+**P1 source boundary discovered in Codex review:** Git replacement refs can substitute arbitrary scorer/Framework blobs even when HEAD and tree look correct. Current source Git subprocess reads now use `git --no-replace-objects` (including head/tree, artifact checks, frozen scorer/suites and adapter checkout identity), with mocked invariant tests plus a real temporary Git repo replacement regression. This must pass CI before another live attempt; independent reviewer decision remains separate.
+
+---
+
 ## Exactly one genuine Core case: owner-operated LOCAL smoke
 
 **Never run on a GitHub hosted runner and NEVER paste a key in GitHub, ChatGPT or a command line.** The script `evals/run_gemini_core_smoke.py` prompts invisibly with Python `getpass` if `GEMINI_API_KEY` is unset. No key value is persisted. Malformed keys/HTTP header exceptions are **redacted before logging** (a prior Codex P1), including the case of a trailing newline. The owner must first verify in Google AI Studio that **the actual key** is part of **EREI Gemini (Free tier)**; an account screenshot by itself is not proof that every key belongs to that project.
