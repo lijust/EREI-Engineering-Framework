@@ -70,11 +70,12 @@ class GeminiCore13AdapterTests(unittest.TestCase):
 
     def test_target_check_rejects_wrong_head_or_tree(self):
         values = [
-            gemini.EXPECTED_TARGET_HEAD, gemini.EXPECTED_TARGET_TREE, str(Path(".").resolve())
+            gemini.EXPECTED_TARGET_HEAD, gemini.EXPECTED_TARGET_TREE,
+            str(Path(".").resolve()), ""
         ]
         with mock.patch.object(gemini.subprocess, "check_output", side_effect=values) as cmd:
             gemini.verify_frozen_target(Path("."))
-            self.assertEqual(cmd.call_count, 3)
+            self.assertEqual(cmd.call_count, 4)
             self.assertNotIn("GIT_DIR", cmd.call_args.kwargs["env"])
         for pos in (0, 1):
             drift = list(values)
@@ -82,6 +83,11 @@ class GeminiCore13AdapterTests(unittest.TestCase):
             with mock.patch.object(gemini.subprocess, "check_output", side_effect=drift):
                 with self.assertRaisesRegex(gemini.GeminiAdapterError, "mismatch"):
                     gemini.verify_frozen_target(Path("."))
+        dirty = list(values)
+        dirty[-1] = " M skills/task-learning-capture/SKILL.md"
+        with mock.patch.object(gemini.subprocess, "check_output", side_effect=dirty):
+            with self.assertRaisesRegex(gemini.GeminiAdapterError, "dirty"):
+                gemini.verify_frozen_target(Path("."))
 
     def test_no_key_no_live_and_no_unbounded_timeout(self):
         with self.assertRaisesRegex(gemini.GeminiAdapterError, "missing"):
@@ -140,6 +146,15 @@ class GeminiCore13AdapterTests(unittest.TestCase):
         for candidate in samples:
             with self.subTest(candidate=candidate), self.assertRaises(gemini.GeminiAdapterError):
                 gemini.parse_gemini_result(json.dumps(candidate).encode())
+
+    def test_duplicate_provider_response_fields_rejected(self):
+        original = good_response().decode()
+        poisoned = original.replace(
+            '"finishReason": "STOP"',
+            '"finishReason": "SAFETY", "finishReason": "STOP"', 1
+        )
+        with self.assertRaisesRegex(gemini.GeminiAdapterError, "invalid/incomplete"):
+            gemini.parse_gemini_result(poisoned.encode())
 
     def test_http_429_fails_once_never_retries_or_prints_response_body(self):
         import urllib.error
