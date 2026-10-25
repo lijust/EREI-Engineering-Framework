@@ -17,6 +17,7 @@ import types
 import unittest
 from datetime import datetime, timezone
 from pathlib import Path
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
@@ -138,6 +139,14 @@ class RollbackDrill(unittest.TestCase):
         self.temporary = tempfile.TemporaryDirectory(prefix="erei-rollback-drill-")
         self.addCleanup(self.temporary.cleanup)
         self.root = Path(self.temporary.name)
+        # A generated projection/state uses the current clock unless injected.
+        # Freeze it ONLY in this ephemeral synthetic unit-test fixture so that
+        # the input bytes have a stable, reviewable SHA256 across all 4 cases.
+        fixed_clock = datetime(2026, 10, 1, 14, 0, tzinfo=timezone.utc)
+        for module in (v1, v2):
+            clock_patch = patch.object(module, "_utc_now", return_value=fixed_clock)
+            clock_patch.start()
+            self.addCleanup(clock_patch.stop)
         self.baseline = self.root / "baseline-v1"
         (self.baseline / ".erei").mkdir(parents=True)
         (self.baseline / ".erei/framework.json").write_text(json.dumps({
