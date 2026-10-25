@@ -105,6 +105,42 @@ class CoreOneCaseTests(unittest.TestCase):
                 self.assertEqual((Path(folder) / "provider-raw.json").read_bytes(), raw)
                 self.assertFalse((Path(folder) / "adapter-normalized.json").exists())
 
+    def test_frozen_case_and_runner_bytes_reject_hidden_changes(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            suite_name = "evals/cases/task-learning-review.eval.json"
+            for path in ("evals/runner.py", suite_name):
+                with self.subTest(path=path):
+                    real = root / path
+                    real.parent.mkdir(parents=True, exist_ok=True)
+                    real.write_bytes(b"malicious changed worktree bytes")
+                    with mock.patch.object(
+                        smoke.subprocess, "check_output", return_value=b"original immutable blob"
+                    ) as git:
+                        with self.assertRaisesRegex(
+                            smoke.gemini.GeminiAdapterError, "bytes differ"
+                        ):
+                            smoke.verify_exact_target_source_file(root, path)
+                        self.assertIn("show", git.call_args.args[0])
+            with self.assertRaisesRegex(
+                smoke.gemini.GeminiAdapterError, "unexpected target evaluation"
+            ):
+                smoke.verify_exact_target_source_file(root, "secrets/private.env")
+
+    def test_malicious_case_is_blocked_before_it_enters_a_prompt(self):
+        with (
+            mock.patch.object(smoke.gemini, "verify_frozen_target"),
+            mock.patch.object(smoke, "frozen_runner", return_value=mock.Mock()),
+            mock.patch.object(smoke, "verify_exact_target_source_file",
+                              side_effect=smoke.gemini.GeminiAdapterError("bytes differ")),
+            mock.patch.object(smoke.gemini, "prepare_one") as build,
+            mock.patch.object(smoke.gemini, "generate_raw_once") as api,
+        ):
+            with self.assertRaisesRegex(smoke.gemini.GeminiAdapterError, "bytes differ"):
+                smoke.prepare(Path("."), "TLR-001-SUCCESS-STILL-LEARNING-DATA", Path("."))
+            build.assert_not_called()
+            api.assert_not_called()
+
     def test_offline_preflight_uses_target_runner_and_single_case(self):
         fake = mock.Mock()
         fake.load_json.return_value = {
@@ -121,6 +157,7 @@ class CoreOneCaseTests(unittest.TestCase):
         with (
             mock.patch.object(smoke.gemini, "verify_frozen_target") as identity,
             mock.patch.object(smoke, "frozen_runner", return_value=fake),
+            mock.patch.object(smoke, "verify_exact_target_source_file"),
             mock.patch.object(smoke, "source_identity",
                               return_value={"adapter_source_revision": "a" * 40}),
             mock.patch.object(smoke.gemini, "prepare_one", return_value="prompt") as build,
