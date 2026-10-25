@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "kind": "OWNER_ADMITTED_SYNTHETIC_CI_ARCHIVE_INDEX_PUBLIC_ONLY",
+  "date": "2026-10-25",
+  "repository": "lijust/EREI-Engineering-Framework",
+  "source_pr": 98,
+  "source_sha": "31d4e518b9e71a9585df9097e7ca07a7e25af916",
+  "git_tree_sha": "913c6a0daaa7a6efa7d6d2148aa0294812fab360",
+  "synthetic_fixture_sha256": "72de745e67512575615ded69a7276f6764ee3bbaecc4e60c3b788edc1b9ac4f8",
+  "owner_scope_url": "https://github.com/lijust/EREI-Engineering-Framework/issues/81#issuecomment-6392059800",
+  "post_admission_outcome_url": "https://github.com/lijust/EREI-Engineering-Framework/issues/81#issuecomment-6392081972",
+  "workflow_run_id": 40149707722,
+  "observed": {
+    "windows-python-3.11": {
+      "run_attempt": 2,
+      "artifact_id": 12583091131,
+      "original_artifact_zip_sha256": "dbd0e0a0be39fe7e27c7db728fde02d8ebda3a2f74747f721e9197b3bd2f3271",
+      "pass_count": 4,
+      "failures": 0,
+      "errors": 0,
+      "exit_code": 0
+    },
+    "windows-python-3.12": {
+      "run_attempt": 3,
+      "artifact_id": 12582791665,
+      "original_artifact_zip_sha256": "4b32502bd1b59c850324e5b238f72c26255ecc60536cac560dad320e627c2eb2",
+      "pass_count": 4,
+      "failures": 0,
+      "errors": 0,
+      "exit_code": 0
+    }
+  },
+  "user_retention_bundle": {
+    "name": "EREI_T14_Synthetic_Internal_CI_Evidence_2026-10-25.zip",
+    "sha256": "97fd9f97e24b7d4a4bdfeef97f849b00ed4afc8b614bd1314767259016a6674a",
+    "contains": [
+      "both original downloaded artifact ZIPs",
+      "exact per-file SHA256 manifest",
+      "offline Python verifier",
+      "scope README"
+    ],
+    "repository_hosts_zip_bytes": false,
+    "storage": "user-delivered download; owner must retain externally"
+  },
+  "assertion_limits": {
+    "ci_synthetic_only": true,
+    "source_bound": true,
+    "independent_human_review": false,
+    "fixture_independently_approved": false,
+    "internal_release_qualified": false,
+    "stable_ready": false,
+    "real_data_writes": false,
+    "consumer_rollback_tested": false,
+    "paid_models_run": false,
+    "raw_artifact_github_retention_days": 14
+  },
+  "caveats": [
+    "This JSON is a public SHA256 index only and is not a cryptographic GitHub provenance signature",
+    "GitHub artifacts expire after retention unless separately retained",
+    "User-held ZIP copy is not uploaded to the repository and is not guaranteed durable until saved externally",
+    "Neither the owner exception nor AI reviews establish Stable authority",
+    "Run attempt two (3.11) and attempt three (3.12) are separate reruns, not a single same-attempt matrix"
+  ]
+}
