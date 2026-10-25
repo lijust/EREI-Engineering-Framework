@@ -74,6 +74,33 @@ def files(root):
     }
 
 
+def synthetic_input_digest(baseline: dict[str, bytes],
+                           trial: dict[str, bytes]) -> str:
+    """Digest exact synthetic INPUT file names and bytes before test mutations.
+
+    The trial ref is intentionally included, so each reviewed source SHA has
+    its own fixture identity. This hash is evidence, NOT admission authority.
+    """
+    manifest = {
+        "schema_version": 1,
+        "inputs": {
+            name: {
+                path: {
+                    "sha256": hashlib.sha256(blob).hexdigest(),
+                    "length_bytes": len(blob),
+                }
+                for path, blob in sorted(snapshot.items())
+            }
+            for name, snapshot in (
+                ("baseline-v1", baseline),
+                ("trial-v2", trial),
+            )
+        },
+    }
+    encoded = json.dumps(manifest, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
 def event(module, number, *, escape=False):
     stamp = f"20261001T09000{number}Z"
     args = module.parse_args([
@@ -105,6 +132,8 @@ def review_args(number):
 
 
 class RollbackDrill(unittest.TestCase):
+    fixture_digests: set[str] = set()
+
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory(prefix="erei-rollback-drill-")
         self.addCleanup(self.temporary.cleanup)
@@ -137,6 +166,10 @@ class RollbackDrill(unittest.TestCase):
         )
         self.pending_escape = event(v2, 4, escape=True)
         v2.capture(self.trial, self.pending_escape)
+        self.fixture_sha256 = synthetic_input_digest(
+            self.baseline_bytes, files(self.trial)
+        )
+        self.__class__.fixture_digests.add(self.fixture_sha256)
 
     def test_pin_only_rollback_rejects_v2_without_status_writes(self):
         pin = self.trial / ".erei/framework.json"
@@ -192,6 +225,17 @@ class RollbackDrill(unittest.TestCase):
                 require_exact_clean_checkout(invalid)
 
     def test_verified_v1_loader_rejects_modified_source(self):
+        self.assertRegex(self.fixture_sha256, r"^[a-f0-9]{64}$")
+        self.assertEqual(
+            self.fixture_sha256,
+            synthetic_input_digest(self.baseline_bytes, files(self.trial)),
+        )
+        self.assertNotEqual(
+            self.fixture_sha256,
+            synthetic_input_digest(self.baseline_bytes, {
+                **files(self.trial), ".erei/framework.json": b"tampered trial pin"
+            }),
+        )
         with self.assertRaisesRegex(ValueError, "frozen Stable source"):
             load_v1(b"raise RuntimeError('untrusted source must not execute')")
 
@@ -207,15 +251,21 @@ def main():
         v1 = load_v1(args.v1_tool.read_bytes())
     except (OSError, ValueError) as exc:
         parser.error(str(exc))
+    RollbackDrill.fixture_digests.clear()
     result = unittest.TextTestRunner(verbosity=2).run(
         unittest.defaultTestLoader.loadTestsFromTestCase(RollbackDrill)
     )
+    fixture_consistent = result.testsRun == 4 and len(RollbackDrill.fixture_digests) == 1
+    fixture_sha = next(iter(RollbackDrill.fixture_digests)) if fixture_consistent else None
     print(json.dumps({
         "evidence_kind": "LOCAL_SYNTHETIC_ROLLBACK_DRILL",
         "v1_commit": V1_COMMIT,
         "v1_tool_sha256": V1_TOOL_SHA256,
         "isolated_checkout_ref": TRIAL_REF,
         "checkout_identity_verified": True,
+        "synthetic_input_sha256": fixture_sha,
+        "fixture_consistent_across_cases": fixture_consistent,
+        "fixture_approved_by_independent_reviewer": False,
         "v2_source_sha256": {
             name: hashlib.sha256((ROOT / name).read_bytes()).hexdigest()
             for name in ("tools/task_learning.py", "tools/validation_contract.py",
@@ -224,11 +274,11 @@ def main():
         "tests_run": result.testsRun,
         "failures": len(result.failures),
         "errors": len(result.errors),
-        "passed": result.wasSuccessful(),
+        "passed": result.wasSuccessful() and fixture_consistent,
         "live_adoption": False,
         "internal_release_qualified": False,
     }, indent=2))
-    return 0 if result.wasSuccessful() else 1
+    return 0 if result.wasSuccessful() and fixture_consistent else 1
 
 
 if __name__ == "__main__":
