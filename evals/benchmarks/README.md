@@ -11,7 +11,7 @@ python -B -m unittest discover -s evals/tests -p 'test_pilot_preflight.py' -v
 
 يتحقق الفحص من تثبيت V2 SHA وmodel/revision وruntime/environment/tool permissions digests، وحد token/وقت لكل تشغيل، وميزانية كلية مع مرجع موافقة مالك المشروع، ومراجع مستقل، وhidden acceptance لكل مهمة، وبصمة تحليل مسبق. **لا يختلق أيًّا منها**. حتى لو ملأ شخص جميع الحقول بقيم شكلية في نسخة اختبارية فإنه يُبقي `model_execution_authorized=false` و`hidden_acceptance_verified=false` و`independent_acceptance_verified=false` و`stable_ready=false`؛ إكمال البيانات ليس دليل صلاحية أو سلطة. أي `--records` اختياري لا بد أن يطابق SHA الخطة ويظل مخرجه غير معتمد المصدر.
 
-**النتيجة الحالية الصحيحة:** `48/48` خانات **لم تُنفذ** (24 لكل ذراع)، ولا توجد ميزانية مدفوعة معتمدة أو runtime/hidden acceptance موقعة؛ لا يُعاد وصف المعايرات المحلية الـ12 بأنها تجارب V1/V2. حالات Core الـ13 مسار مستقل. لا يسمح هذا الفحص بإطلاق التجربة أو الاتصال بمصادر EREI أو SAE-DB الخاصة.
+**النتيجة الحالية الصحيحة:** `48/48` خانات **لم تُنفذ** (24 لكل ذراع)، ولا توجد ميزانية مدفوعة معتمدة أو runtime/hidden acceptance موقعة؛ لا يُعاد وصف المعايرات المحلية الـ12 بأنها تجارب V1/V2. حالات Core الـ13 مسار مستقل. **تصحيح Codex P2**: تحتفظ الأداة بـ`evidence_kind`، وتحسب `synthetic_record_slots` و`submitted_unverified_record_slots` منفصلتين؛ لا تعامل أيًّا منهما بوصفه تنفيذ نموذج مثبتًا. لذلك عند إدخال 48 سجلًا `synthetic` تكون `observed_slots=0` و`missing_slots=48`، وعند `observed_unverified` تظهر الادعاءات في حقل مستقل، ويظل `independently_verified_model_slots=0` حتى وجود سلسلة إثبات مصدقة خارج هذه الأداة. السجلات بلا تصنيف أو بتصنيف غير معروف مرفوضة. لا يسمح هذا الفحص بإطلاق التجربة أو الاتصال بمصادر EREI أو SAE-DB الخاصة.
 
 ---
 
