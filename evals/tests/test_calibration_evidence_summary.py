@@ -230,6 +230,40 @@ class CurrentOperatorEvidenceTests(unittest.TestCase):
                 self.catalog, self.index, b"changed catalog"
             )
 
+    def test_catalog_binding_is_eol_independent_but_content_locked(self):
+        # Preserve operator's original CRLF-byte digest without accepting
+        # a modified catalog on LF hosts or in Linux dev environments.
+        lf = self.catalog_bytes.replace(b"\r\n", b"\n")
+        self.assertNotIn(b"\r", lf)
+        crlf = lf.replace(b"\n", b"\r\n")
+        for candidate in (lf, crlf):
+            with self.subTest(eol="crlf" if candidate == crlf else "lf"):
+                result = summarizer.summarize_current_operator(
+                    self.catalog, self.index, candidate
+                )
+                self.assertEqual(
+                    result["complete_original_consumer_offline"], "6/12"
+                )
+        self.assertNotEqual(lf, crlf)
+        changed_catalog = lf.replace(b"APP-01", b"APP-99", 1)
+        self.assertNotEqual(changed_catalog, lf)
+        with self.assertRaisesRegex(ValueError, "Unbound"):
+            summarizer.summarize_current_operator(
+                self.catalog, self.index, changed_catalog
+            )
+        forged = copy.deepcopy(self.index)
+        forged["catalog_canonical_lf_sha256"] = "0" * 64
+        with self.assertRaisesRegex(ValueError, "Unbound"):
+            summarizer.summarize_current_operator(
+                self.catalog, forged, lf
+            )
+        forged = copy.deepcopy(self.index)
+        forged["catalog_sha256"] = self.index["catalog_canonical_lf_sha256"]
+        with self.assertRaisesRegex(ValueError, "Unbound"):
+            summarizer.summarize_current_operator(
+                self.catalog, forged, crlf
+            )
+
     def test_scope_tampering_and_duplicates_fail_closed(self):
         scenarios = [
             ("test_origin", "ORIGINAL_CONSUMER_TEST_FILE"),
