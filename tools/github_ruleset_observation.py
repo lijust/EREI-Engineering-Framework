@@ -37,7 +37,7 @@ class NoRedirect(urllib.request.HTTPRedirectHandler):
 
 def public_json(path: str) -> Any:
     """Public, anonymous, fixed-repository GET only. Never reads API tokens."""
-    if path not in ("/branches/main", "/rulesets",
+    if path not in ("/", "/branches/main", "/rulesets",
                     f"/rulesets/{EXPECTED_RULESET_ID}"):
         raise ObservationError("unexpected GitHub REST path")
     req = urllib.request.Request(
@@ -59,11 +59,31 @@ def public_json(path: str) -> Any:
     if len(payload) > MAX_BYTES:
         raise ObservationError("GitHub REST response exceeds safe bound")
     try:
-        return json.loads(payload, parse_constant=lambda x: (_ for _ in ()).throw(
-            ValueError("non-finite JSON constant")
-        ))
+        return strict_json(payload)
     except (ValueError, UnicodeError) as exc:
         raise ObservationError("invalid GitHub REST JSON") from exc
+
+
+def _unique_json_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    result: dict[str, Any] = {}
+    for name, value in pairs:
+        if name in result:
+            raise ObservationError("duplicate JSON key rejected: " + name)
+        result[name] = value
+    return result
+
+
+def _nonfinite_json(value: str) -> Any:
+    raise ObservationError("non-finite JSON constant: " + value)
+
+
+def strict_json(payload: bytes | str) -> Any:
+    """Reject ambiguous duplicate object keys at every nesting depth."""
+    return json.loads(
+        payload,
+        object_pairs_hook=_unique_json_object,
+        parse_constant=_nonfinite_json,
+    )
 
 
 def _object(value: Any, name: str) -> dict:
@@ -88,11 +108,14 @@ def _bound_sha(branch: dict) -> str:
 
 
 def assess_public_main_ruleset(
-    branch: Any, rulesets: Any, details: Any, *, mode: str
+    repository: Any, branch: Any, rulesets: Any, details: Any, *, mode: str
 ) -> dict[str, Any]:
-    """Validate exact main-only observable controls; fail closed on any drift."""
+    """Validate default-branch identity and main-only controls, no release pass."""
     if mode not in {"LIVE_PUBLIC_API", "OFFLINE_FIXTURE_UNTRUSTED"}:
         raise ObservationError("invalid observation mode")
+    repo = _object(repository, "repository metadata")
+    if repo.get("full_name") != REPOSITORY or repo.get("default_branch") != "main":
+        raise ObservationError("repository identity or default-branch drift")
     main_sha = _bound_sha(_object(branch, "main branch"))
     listed = _items(rulesets, "ruleset listing")
     matching = [
@@ -191,6 +214,7 @@ def assess_public_main_ruleset(
 
 def observe(fetch: Callable[[str], Any] = public_json) -> dict[str, Any]:
     return assess_public_main_ruleset(
+        fetch("/"),
         fetch("/branches/main"),
         fetch("/rulesets"),
         fetch(f"/rulesets/{EXPECTED_RULESET_ID}"),
@@ -208,12 +232,14 @@ def main(argv: list[str] | None = None) -> int:
         if args.live:
             observation = observe()
         else:
-            obj = json.loads(args.fixture.read_text(encoding="utf-8"))
+            if args.fixture.stat().st_size > MAX_BYTES:
+                raise ObservationError("offline fixture exceeds safe bound")
+            obj = strict_json(args.fixture.read_bytes())
             obj = _object(obj, "fixture")
-            if set(obj) != {"branch", "rulesets", "details"}:
-                raise ObservationError("fixture must contain exactly 3 API responses")
+            if set(obj) != {"repository", "branch", "rulesets", "details"}:
+                raise ObservationError("fixture must contain exactly 4 API responses")
             observation = assess_public_main_ruleset(
-                obj["branch"], obj["rulesets"], obj["details"],
+                obj["repository"], obj["branch"], obj["rulesets"], obj["details"],
                 mode="OFFLINE_FIXTURE_UNTRUSTED"
             )
     except (ObservationError, OSError, ValueError, UnicodeError) as exc:
