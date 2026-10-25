@@ -34,6 +34,12 @@ def validate_report(data: bytes, target_ref: str) -> None:
         raise ValueError("untrusted exact Git checkout identity")
     if report.get("live_adoption") is not False or report.get("internal_release_qualified") is not False:
         raise ValueError("synthetic drill claims live adoption or release")
+    digest = report.get("synthetic_input_sha256")
+    if (not isinstance(digest, str)
+            or not re.fullmatch(r"[a-f0-9]{64}", digest)
+            or report.get("fixture_consistent_across_cases") is not True
+            or report.get("fixture_approved_by_independent_reviewer") is not False):
+        raise ValueError("synthetic input digest missing or falsely approved")
     source_hashes = report.get("v2_source_sha256")
     expected_sources = ("tools/task_learning.py", "tools/validation_contract.py",
                         "tools/tests/drill_task_learning_rollback.py")
@@ -78,9 +84,11 @@ def capture(command: list[str], evidence_dir: Path, target_ref: str, timeout: in
     (folder / "drill-stderr.txt").write_bytes(stderr)
     (folder / "drill-exit-code.txt").write_bytes((str(code) + "\n").encode("ascii"))
     accepted, reason = False, "nonzero drill exit status: " + str(code)
+    synthetic_input_sha256 = None
     if code == 0:
         try:
             validate_report(stdout, target_ref)
+            synthetic_input_sha256 = json.loads(stdout.decode("utf-8"))["synthetic_input_sha256"]
             accepted, reason = True, "synthetic four-case source-bound PASS only"
         except ValueError as exc:
             reason = str(exc)
@@ -88,6 +96,8 @@ def capture(command: list[str], evidence_dir: Path, target_ref: str, timeout: in
         "schema_version": 1,
         "evidence_kind": "T14_SYNTHETIC_CI_CAPTURE",
         "target_ref": target_ref,
+        "synthetic_input_sha256": synthetic_input_sha256,
+        "synthetic_fixture_independently_approved": False,
         "subprocess_exit_code": code,
         "stdout_sha256": hashlib.sha256(stdout).hexdigest(),
         "stderr_sha256": hashlib.sha256(stderr).hexdigest(),
