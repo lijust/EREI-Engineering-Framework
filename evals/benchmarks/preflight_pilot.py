@@ -96,15 +96,28 @@ def preflight(plan: dict, records: dict | None = None) -> dict:
     schedule_count = len(schedule)
     if schedule_count != 48:
         raise ValueError("not exactly 48 assigned comparison slots")
-    already = sum(accounting["arms"][arm]["observed_runs"] for arm in ("V1", "V2"))
+    # Source records are caller-provided, not authenticated model telemetry.
+    # Neither "synthetic" nor "observed_unverified" proves a model executed.
+    # Keep their provenance/counts visible without claiming completed runs.
+    provenance = accounting["evidence_kind"]
+    supplied = sum(accounting["arms"][arm]["observed_runs"] for arm in ("V1", "V2"))
+    if provenance not in {"synthetic", "observed_unverified", "no_observations"}:
+        raise ValueError("unrecognized benchmark evidence kind")
+    synthetic_slots = supplied if provenance == "synthetic" else 0
+    unverified_claimed_slots = supplied if provenance == "observed_unverified" else 0
+    verified_model_slots = 0  # No independently authenticated runtime evidence.
     return {
         "schema_version": 1,
         "kind": "READ_ONLY_T15_PILOT_PREFLIGHT",
         "plan_sha256": accounting["plan_sha256"],
         "required_pairs": 24,
         "required_slots": schedule_count,
-        "observed_slots": already,
-        "missing_slots": schedule_count - already,
+        "evidence_kind": provenance,
+        "synthetic_record_slots": synthetic_slots,
+        "submitted_unverified_record_slots": unverified_claimed_slots,
+        "independently_verified_model_slots": verified_model_slots,
+        "observed_slots": verified_model_slots,
+        "missing_slots": schedule_count - verified_model_slots,
         "blocking_preparation_fields": sorted(blockers),
         "preparation_fields_complete": not blockers,
         "model_execution_authorized": False,
