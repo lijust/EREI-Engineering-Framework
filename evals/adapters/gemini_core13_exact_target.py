@@ -76,6 +76,31 @@ def verify_frozen_target(root: Path) -> None:
         raise GeminiAdapterError("frozen target worktree is dirty; no API request")
 
 
+def verify_artifact_bytes(root: Path, artifacts: list[tuple[str, str]]) -> None:
+    """Pin the exact bytes sent to model, not Git's possibly ignored worktree.
+
+    A tracked file marked assume-unchanged can be modified while git status
+    remains empty. Compare resolved UTF-8 payloads to immutable HEAD blobs.
+    """
+    env = {k: v for k, v in os.environ.items() if not k.upper().startswith("GIT_")}
+    for rel, text in artifacts:
+        if not isinstance(rel, str) or not isinstance(text, str):
+            raise GeminiAdapterError("resolved artifact must contain text and path")
+        if any(part in ("", ".", "..") for part in rel.split("/")) or ":" in rel or "\\" in rel:
+            raise GeminiAdapterError("unsafe artifact Git path")
+        try:
+            committed = subprocess.check_output(
+                ["git", "-C", str(root.resolve()), "show",
+                 f"{EXPECTED_TARGET_HEAD}:{rel}"],
+                stdin=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                timeout=10, env=env,
+            )
+        except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
+            raise GeminiAdapterError("frozen artifact blob unavailable") from None
+        if committed != text.encode("utf-8"):
+            raise GeminiAdapterError("artifact bytes differ from frozen Git tree; no API request")
+
+
 def prepare_one(request: dict, root: Path) -> str:
     request = contract.validate_request(request)
     if request["artifact"] not in PUBLIC_CORE_ARTIFACTS:
@@ -89,6 +114,7 @@ def prepare_one(request: dict, root: Path) -> str:
     if request["context"]:
         raise GeminiAdapterError("nonempty context not allowed in synthetic-only pilot")
     artifacts = contract.resolve_artifact(root, request["artifact"])
+    verify_artifact_bytes(root, artifacts)
     prompt = contract.build_direct_prompt(artifacts, case_input, {})
     if len(prompt.encode("utf-8")) > MAX_REQUEST_BYTES:
         raise GeminiAdapterError("bounded synthetic prompt exceeded")
@@ -137,6 +163,8 @@ def generate_raw_once(prompt: str, *, key: str, timeout: float) -> bytes:
     """One HTTPS POST; return bounded raw provider envelope for local custody."""
     if not isinstance(key, str) or not key.strip():
         raise GeminiAdapterError("GEMINI_API_KEY missing from process environment")
+    if key != key.strip() or any(c in key for c in "\r\n\x00") or not key.isascii():
+        raise GeminiAdapterError("API key contains invalid HTTP header characters")
     if not 5 <= timeout <= 120:
         raise GeminiAdapterError("timeout out of bounded 5–120 second range")
     body = {
@@ -166,8 +194,9 @@ def generate_raw_once(prompt: str, *, key: str, timeout: float) -> bytes:
     except urllib.error.HTTPError as ex:
         # Never print provider response body or API key (could contain request).
         raise GeminiAdapterError(f"Gemini API request blocked: HTTP {ex.code}") from None
-    except (OSError, urllib.error.URLError) as ex:
-        raise GeminiAdapterError("Gemini API transport unavailable; no automatic retries") from None
+    except (OSError, urllib.error.URLError, ValueError) as ex:
+        # urllib can embed a secret header VALUE in ValueError. Never quote it.
+        raise GeminiAdapterError("Gemini API transport/header error; no automatic retries") from None
     if len(content) > MAX_RESPONSE_BYTES:
         raise GeminiAdapterError("Gemini response exceeds byte limit")
     return content
@@ -198,10 +227,13 @@ def main(argv=None):
         prompt = prepare_one(request, args.target_root)
         key = os.environ.get("GEMINI_API_KEY", "")
         result = generate_once(prompt, key=key, timeout=args.timeout)
-    except (ValueError, json.JSONDecodeError, GeminiAdapterError,
-            contract.CopilotExactTargetError) as ex:
-        # Do not print provider response content or exception containing secrets.
-        print("GEMINI_ADAPTER_BLOCKED: " + str(ex)[:220], file=sys.stderr)
+    except (ValueError, json.JSONDecodeError):
+        # HTTP header exceptions can contain the entire supplied secret.
+        print("GEMINI_ADAPTER_BLOCKED: invalid JSON or HTTP header", file=sys.stderr)
+        return 2
+    except (GeminiAdapterError, contract.CopilotExactTargetError):
+        # Keep a fixed redacted status rather than echoing potentially private fields.
+        print("GEMINI_ADAPTER_BLOCKED: source, contract, quota or transport check", file=sys.stderr)
         return 2
     print(json.dumps(result, ensure_ascii=False, sort_keys=True))
     return 0
