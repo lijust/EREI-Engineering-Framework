@@ -54,22 +54,22 @@ def verify_frozen_target(root: Path) -> None:
     isolated = {k: v for k, v in os.environ.items() if not k.upper().startswith("GIT_")}
     try:
         head = subprocess.check_output(
-            ["git", "-C", str(root), "rev-parse", "--verify", "HEAD"],
+            ["git", "--no-replace-objects", "-C", str(root), "rev-parse", "--verify", "HEAD"],
             stdin=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
             timeout=10, env=isolated, text=True,
         ).strip()
         tree = subprocess.check_output(
-            ["git", "-C", str(root), "rev-parse", "HEAD^{tree}"],
+            ["git", "--no-replace-objects", "-C", str(root), "rev-parse", "HEAD^{tree}"],
             stdin=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
             timeout=10, env=isolated, text=True,
         ).strip()
         top = subprocess.check_output(
-            ["git", "-C", str(root), "rev-parse", "--show-toplevel"],
+            ["git", "--no-replace-objects", "-C", str(root), "rev-parse", "--show-toplevel"],
             stdin=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
             timeout=10, env=isolated, text=True,
         ).strip()
         dirty = subprocess.check_output(
-            ["git", "-C", str(root), "status", "--porcelain", "--untracked-files=all"],
+            ["git", "--no-replace-objects", "-C", str(root), "status", "--porcelain", "--untracked-files=all"],
             stdin=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
             timeout=10, env=isolated, text=True,
         ).strip()
@@ -95,7 +95,7 @@ def verify_artifact_bytes(root: Path, artifacts: list[tuple[str, str]]) -> None:
             raise GeminiAdapterError("unsafe artifact Git path")
         try:
             committed = subprocess.check_output(
-                ["git", "-C", str(root.resolve()), "show",
+                ["git", "--no-replace-objects", "-C", str(root.resolve()), "show",
                  f"{EXPECTED_TARGET_HEAD}:{rel}"],
                 stdin=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
                 timeout=10, env=env,
