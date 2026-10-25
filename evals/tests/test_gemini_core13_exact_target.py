@@ -246,6 +246,10 @@ class GeminiCore13AdapterTests(unittest.TestCase):
         self.assertEqual(body["generationConfig"]["thinkingConfig"], {"thinkingLevel": "low"})
         self.assertNotIn("temperature", body["generationConfig"])
         self.assertNotIn("tools", body)
+        self.assertEqual(
+            opener.request.data,
+            gemini.build_generation_body("public synthetic prompt", model=gemini.MODEL),
+        )
         self.assertNotIn("mock-secret-only", opener.request.data.decode())
         self.assertEqual(result["output"]["decision"], "omit_task")
         self.assertNotIn("trace", result)
