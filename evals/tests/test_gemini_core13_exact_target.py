@@ -207,9 +207,11 @@ class GeminiCore13AdapterTests(unittest.TestCase):
         fake = Mock()
         fake.open.side_effect = err
         with mock.patch.object(gemini.urllib.request, "build_opener", return_value=fake):
-            with self.assertRaisesRegex(gemini.GeminiAdapterError, "HTTP 429") as ex:
+            with self.assertRaises(gemini.GeminiAdapterError) as ex:
                 gemini.generate_once("public", key="private-key", timeout=90)
         fake.open.assert_called_once()
+        self.assertEqual(ex.exception.safe_code, "GEMINI_HTTP_ERROR")
+        self.assertEqual(ex.exception.http_status, 429)
         self.assertNotIn("private-key", str(ex.exception))
         self.assertNotIn("private response", str(ex.exception))
 
