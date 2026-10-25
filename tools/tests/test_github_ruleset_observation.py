@@ -17,6 +17,7 @@ def sample():
     }
     details = {
         **common,
+        "current_user_can_bypass": "never",
         "conditions": {"ref_name": {"exclude": [], "include": ["~DEFAULT_BRANCH"]}},
         "bypass_actors": [],
         "rules": [
@@ -155,6 +156,18 @@ class PublicRulesetObserverTests(unittest.TestCase):
                     data[target]["bypass_actors"] = [{"actor_type": "User", "actor_id": 1}]
                 with self.assertRaises(obs.ObservationError):
                     assess(data)
+
+    def test_actor_bypass_flag_and_missing_property_rejected(self):
+        for value in (None, "always", "exempt", True):
+            with self.subTest(value=value):
+                data = sample()
+                data["details"]["current_user_can_bypass"] = value
+                with self.assertRaisesRegex(obs.ObservationError, "may bypass"):
+                    assess(data)
+        data = sample()
+        data["details"].pop("current_user_can_bypass")
+        with self.assertRaisesRegex(obs.ObservationError, "may bypass"):
+            assess(data)
 
     def test_main_identity_must_be_40_char_commit_and_protected(self):
         variants = [
