@@ -1,5 +1,24 @@
 # T14 — proposed isolated Internal pilot admission (2026-10-24)
 
+## Latest owner exception outcome — 2026-10-25
+
+**Status: SYNTHETIC_INTERNAL_CI_PILOT_PASS_WITH_LIMITS; production/broader Internal Release NOT ADMITTED; Stable BLOCKED.** After user-approved **dual AI review channels + owner risk acceptance** (below), [explicit ADMIT_SYNTHETIC_CI_ONLY](https://github.com/lijust/EREI-Engineering-Framework/issues/81#issuecomment-6392059800) was issued **before** fresh GitHub-hosted CI reruns. [T14 outcome](https://github.com/lijust/EREI-Engineering-Framework/issues/81#issuecomment-6392081972) details post-decision **Python 3.11 attempt 2** and **Python 3.12 attempt 3**, both `4/4 PASS`, on frozen source SHA `31d4e518b9e71a9585df9097e7ca07a7e25af916` / tree `913c6a0daaa7a6efa7d6d2148aa0294812fab360`; same fixture SHA256 `72de745e67512575615ded69a7276f6764ee3bbaecc4e60c3b788edc1b9ac4f8`.
+
+| Execution receipt | Hosted evidence | Accepted synthetic scope |
+| --- | --- | --- |
+| 3.11 post-admission | [GitHub artifact #12583091131](https://github.com/lijust/EREI-Engineering-Framework/actions/runs/40149707722/artifacts/12583091131) | Exit 0, 4/4, no errors/failures, raw report/hash verified |
+| 3.12 post-admission | [GitHub artifact #12582791665](https://github.com/lijust/EREI-Engineering-Framework/actions/runs/40149707722/artifacts/12582791665) | Exit 0, 4/4, no errors/failures, raw report/hash verified |
+| Review channels | GitHub Codex + GPT-6 [scoped source review](https://github.com/lijust/EREI-Engineering-Framework/pull/98#issuecomment-6392043597) | AI-only, **not** independent-human or other-provider review |
+| Owner risk | [Decision record](https://github.com/lijust/EREI-Engineering-Framework/issues/81#issuecomment-6392059800) | 15-minute per job limit, only ephemeral synthetic data, zero external users, no privileges or production actions |
+
+The raw drill JSON deliberately retains `internal_release_qualified=false`, `live_adoption=false`, `fixture_approved_by_independent_reviewer=false`. **Do not rewrite or override** these source fields: the governance verdict above qualifies only **this user-approved synthetic CI rehearsal**, not a software/adoption release, human security signoff, real App restoration or a release of Stable. Original review threads are kept open. Artifacts have **14-day retention**; archival custody beyond expiry is **not proven**. Original App missing ledger provenance and Core runtime 0/13 and V1/V2 0/48 remain blocked.
+
+**This file is a documentation-only update on stacked PR #99.** It does **not** modify the frozen tested branch/source in PR #98. To stage any subsequent pilot, separately authorize its scope; do not reuse this verdict across different SHA/tree/data or retroactively promote previous CI.
+
+---
+
+### Historical 2026-10-24 hold record (not the latest narrow synthetic CI outcome)
+
 **Current decision: HOLD / NOT ADMITTED.** This is a narrow candidate scope
 derived from the existing `MASTER_PLAN.md §5` checklist; it does **not**
 install a new governance service or create a Stable release gate. No actual
