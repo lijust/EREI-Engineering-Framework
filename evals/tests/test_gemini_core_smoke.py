@@ -190,6 +190,41 @@ class CoreOneCaseTests(unittest.TestCase):
                 api.assert_not_called()
                 prep.assert_not_called()
 
+    def test_failed_remote_call_produces_redacted_http_diagnostic(self):
+        with tempfile.TemporaryDirectory() as temp:
+            source = Path(temp)
+            out = source / "evidence" / "attempt-002"
+            fake_prepared = prepared()
+            fake_prepared["root"] = source / "target"
+            (source / "target").mkdir()
+            with (
+                mock.patch.object(smoke, "prepare", return_value=fake_prepared),
+                mock.patch.object(
+                    smoke.gemini, "generate_raw_once",
+                    side_effect=smoke.gemini.GeminiAdapterError(
+                        "provider original response deliberately redacted",
+                        safe_code="GEMINI_HTTP_ERROR", http_status=403,
+                    ),
+                ) as api,
+                mock.patch.object(smoke.getpass, "getpass", return_value="secret-not-logged"),
+                mock.patch("sys.stderr", new_callable=io.StringIO) as stderr,
+            ):
+                result = smoke.main([
+                    "--target-root", str(fake_prepared["root"]),
+                    "--case-id", "TLR-001-SUCCESS-STILL-LEARNING-DATA",
+                    "--output-dir", str(out),
+                    "--timeout", "90", "--live", "--confirm-free-tier",
+                ])
+            self.assertEqual(result, 2)
+            api.assert_called_once()
+            journal = json.loads((out / "attempt-failed.json").read_text())
+            self.assertEqual(journal["reason_category"], "GEMINI_HTTP_ERROR")
+            self.assertEqual(journal["provider_http_status"], 403)
+            self.assertFalse(journal["stable_ready"])
+            self.assertIn("HTTP_403", stderr.getvalue())
+            self.assertNotIn("secret-not-logged", (out / "attempt-failed.json").read_text())
+            self.assertNotIn("provider original", stderr.getvalue())
+
     def test_cannot_write_evidence_into_either_checkout(self):
         with tempfile.TemporaryDirectory() as folder:
             cwd = Path(folder).resolve()
