@@ -171,9 +171,11 @@ def prepare(root: Path, case_id: str, adapter_root: Path) -> dict:
     }
 
 
-def record_one(prepared: dict, output: Path, key: str, timeout: float) -> dict:
+def record_one(prepared: dict, output: Path, key: str, timeout: float,
+               *, model: str = gemini.MODEL) -> dict:
     """Only network call in this function. Write raw before attempting scoring."""
-    raw = gemini.generate_raw_once(prepared["prompt"], key=key, timeout=timeout)
+    gemini.model_endpoint(model)  # reject unsupported model before generating
+    raw = gemini.generate_raw_once(prepared["prompt"], key=key, timeout=timeout, model=model)
     # Preserve exact provider payload before interpreting any model response.
     (output / "provider-raw.json").write_bytes(raw)
     verdict: dict = {
@@ -184,7 +186,7 @@ def record_one(prepared: dict, output: Path, key: str, timeout: float) -> dict:
         "source_head": gemini.EXPECTED_TARGET_HEAD,
         "source_tree": gemini.EXPECTED_TARGET_TREE,
         "adapter_source_revision": prepared["adapter_source"]["adapter_source_revision"],
-        "model_requested": gemini.MODEL,
+        "model_requested": model,
         "case_id": prepared["case"]["id"],
         "suite_id": prepared["suite"]["suite_id"],
         "provider_response_sha256": sha(raw),
@@ -209,6 +211,8 @@ def record_one(prepared: dict, output: Path, key: str, timeout: float) -> dict:
             raise ValueError("provider usage metadata missing")
         if not isinstance(verdict["provider_model_version"], str) or not verdict["provider_model_version"]:
             raise ValueError("provider model version missing")
+        if verdict["provider_model_version"] != model:
+            raise ValueError("provider model identity differs from selected runtime")
         normalized = gemini.parse_gemini_result(raw)
         (output / "adapter-normalized.json").write_bytes(json_bytes(normalized))
         scores = [
@@ -239,6 +243,8 @@ def _unique(pairs: list[tuple[str, object]]) -> dict:
 def main(argv=None) -> int:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--target-root", type=Path, required=True)
+    p.add_argument("--model", choices=gemini.CORE_MODELS, default=gemini.MODEL,
+                   help="pin exact runtime; select gemini-3.6-flash for the verified fallback")
     p.add_argument("--case-id", choices=sorted(
         item for ids in CASES.values() for item in ids), required=True)
     p.add_argument("--output-dir", type=Path, required=True)
@@ -252,6 +258,7 @@ def main(argv=None) -> int:
             raise gemini.GeminiAdapterError("explicit --live AND --confirm-free-tier required")
         if not 5 <= a.timeout <= 120:
             raise gemini.GeminiAdapterError("timeout must be 5..120 seconds")
+        gemini.model_endpoint(a.model)
         adapter_root = Path(__file__).resolve().parents[1]
         prepared = prepare(a.target_root, a.case_id, adapter_root)
         output = a.output_dir.expanduser().resolve()
@@ -268,11 +275,12 @@ def main(argv=None) -> int:
         output.mkdir(parents=True, exist_ok=False)
         (output / "blind-request.json").write_bytes(json_bytes(prepared["request"]))
         try:
-            result = record_one(prepared, output, key, a.timeout)
+            result = record_one(prepared, output, key, a.timeout, model=a.model)
         except gemini.GeminiAdapterError as exc:
             (output / "attempt-failed.json").write_bytes(json_bytes({
                 "schema_version": 1, "case_id": a.case_id,
                 "source_head": gemini.EXPECTED_TARGET_HEAD,
+                "model_requested": a.model,
                 "status": "MODEL_REQUEST_FAILED_NOT_SCORED",
                 "reason_category": exc.safe_code,
                 "provider_http_status": exc.http_status,
@@ -290,6 +298,7 @@ def main(argv=None) -> int:
         print(json.dumps({
             "case_id": a.case_id, "status": result["status"],
             "pass": result["passed"], "evidence_dir": str(output),
+            "model_requested": a.model,
             "model_version": result.get("provider_model_version"),
             "usage_metadata": result.get("usage_metadata"),
             "independently_accepted": False,
