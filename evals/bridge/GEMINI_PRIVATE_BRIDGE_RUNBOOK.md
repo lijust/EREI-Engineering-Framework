@@ -204,3 +204,27 @@ If a PAT is known to be leaked, revoke it through GitHub settings regardless
 of local rollback. Before enabling the scheduled task, ensure PR security
 review is complete. This bridge is strictly Core13/synthetic, not an RCE
 gateway for arbitrary projects.
+
+## Security review P1 remediation — cached Python modules and malformed HTTP
+
+PR106 Codex source review identified two genuine P1 vulnerabilities in the
+previous bridge implementation: a malicious or stale ignored
+`__pycache__/*.pyc` could be used despite checking verified `.py` bytes
+when the **local Gemini key was in scope**, and an upstream malformed HTTP
+status line could leak untrusted text via an uncaught traceback.
+
+Both were addressed in the subsequent PR106 head:
+- The Windows launcher and pinned Gemini child are started with Python
+  `-I -B -X pycache_prefix=<fresh unique path>` and a fixed trusted
+  `runpy.run_module` bootstrap. Isolated execution ignores external
+  Python module paths; alternate fresh cache prevents execution of ignored
+  `__pycache__`, while the Git-blob source validation remains mandatory.
+- GitHub REST's `http.client.HTTPException` path is translated into a
+  fixed `BridgeError` with suppressed upstream traceback and exactly
+  one request, never a provider/API key or response body.
+- Mock-only regressions cover both cases. All existing user receipts
+  and local owner credentials remain untouched.
+
+Do not enable automatic Gemini issue execution from an older checkout,
+even when its healthcheck succeeds. Security source review/CI and exact
+pinned commit matching remain necessary.
