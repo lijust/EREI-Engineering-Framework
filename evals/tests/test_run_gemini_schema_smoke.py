@@ -10,7 +10,7 @@ from pathlib import Path
 from unittest import mock
 
 from evals.experiments import run_gemini_schema_smoke as runner
-from evals.experiments import gemini_core13_schema_candidate as schema
+from evals.experiments import gemini_core13_schema_compact_v2 as schema
 from evals.adapters import gemini_core13_exact_target as gemini
 
 
