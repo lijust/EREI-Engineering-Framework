@@ -192,6 +192,70 @@ class GeminiSchemaLiveIsolationTests(unittest.TestCase):
             self.assertFalse((Path(root) / "adapter-normalized.json").exists())
             self.assertEqual((Path(root) / "provider-raw.json").read_bytes(), sample)
 
+    def test_http_400_attempt_retains_pre_post_request_provenance(self):
+        with tempfile.TemporaryDirectory() as root:
+            folder = Path(root)
+            params = prepared()
+            params["root"] = folder / "frozen-target"
+            evidence = folder / "schema-001"
+            problem = gemini.GeminiAdapterError(
+                "test provider body must not be surfaced",
+                safe_code="CANDIDATE_HTTP_ERROR", http_status=400,
+            )
+            with (
+                mock.patch.object(runner.smoke, "prepare", return_value=params),
+                mock.patch.object(runner, "record_candidate", side_effect=problem) as api,
+                mock.patch.dict(runner.os.environ, {"GEMINI_API_KEY": "mock-only-key"}),
+            ):
+                code = runner.main([
+                    "--target-root", str(params["root"]),
+                    "--case-id", "TLR-003-VERIFICATION-ESCAPE",
+                    "--output-dir", str(evidence),
+                    "--model", MODEL,
+                    "--live", "--confirm-free-tier",
+                    "--confirm-experimental-schema",
+                ])
+            self.assertEqual(code, 2)
+            api.assert_called_once()
+            manifest = json.loads(
+                (evidence / "candidate-provenance.json").read_text(encoding="utf-8")
+            )
+            fail = json.loads(
+                (evidence / "attempt-failed.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(manifest["request_body_sha256"], hashlib.sha256(
+                schema.build_candidate_body("PUBLIC SYNTHETIC PROMPT", model=MODEL)
+            ).hexdigest())
+            self.assertEqual(manifest["model_requested"], MODEL)
+            self.assertEqual(manifest["source_head"], gemini.EXPECTED_TARGET_HEAD)
+            self.assertEqual(manifest["source_tree"], gemini.EXPECTED_TARGET_TREE)
+            self.assertEqual(manifest["adapter_source_revision"], "a" * 40)
+            self.assertEqual(manifest["network_requests_authorized_max"], 1)
+            self.assertEqual(fail["status"],
+                             "EXPERIMENTAL_MODEL_REQUEST_FAILED_NOT_SCORED")
+            self.assertEqual(fail["provider_http_status"], 400)
+            self.assertFalse(manifest["stable_ready"])
+            self.assertNotIn("mock-only-key", json.dumps(manifest))
+            self.assertNotIn("mock-only-key", json.dumps(fail))
+            self.assertFalse((evidence / "verdict.json").exists())
+
+    def test_request_digest_drift_preserves_raw_but_never_scores(self):
+        with tempfile.TemporaryDirectory() as root:
+            folder = Path(root)
+            raw = raw_response()
+            with mock.patch.object(runner, "generate_candidate_raw_once",
+                                   return_value=(raw, b"unapproved request")):
+                with self.assertRaises(gemini.GeminiAdapterError) as caught:
+                    runner.record_candidate(
+                        prepared(), folder, key="mock-key",
+                        model=MODEL, timeout=60,
+                        expected_body_sha256="f" * 64,
+                    )
+            self.assertEqual(caught.exception.safe_code, "CANDIDATE_REQUEST_DRIFT")
+            self.assertEqual((folder / "provider-raw.json").read_bytes(), raw)
+            self.assertFalse((folder / "verdict.json").exists())
+            self.assertFalse((folder / "adapter-normalized.json").exists())
+
     def test_main_requires_three_explicit_flags_and_does_not_make_network_call(self):
         with mock.patch.object(runner, "generate_candidate_raw_once") as network:
             status = runner.main([
