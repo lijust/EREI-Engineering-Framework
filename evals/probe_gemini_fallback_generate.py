@@ -21,7 +21,8 @@ ALLOWED_DIAGNOSTIC_MODELS = ("gemini-3.6-flash", "gemini-3.5-flash-lite")
 MAX_RESPONSE_BYTES = 64_000
 
 
-def probe(*, model: str, key: str, opener: Any = None) -> dict:
+def probe(*, model: str, key: str, opener: Any = None,
+          core_config_diagnostic: bool = False) -> dict:
     """Make at most one request with constant public prompt and bounded output."""
     if model not in ALLOWED_DIAGNOSTIC_MODELS:
         return {"status": "UNAPPROVED_DIAGNOSTIC_MODEL", "counted_core_cases": 0}
@@ -29,10 +30,17 @@ def probe(*, model: str, key: str, opener: Any = None) -> dict:
             or not key.isascii() or any(c in key for c in "\r\n\x00")):
         return {"status": "KEY_FORMAT_INVALID", "counted_core_cases": 0}
     url = "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent"
+    # Compare exactly the Core config while keeping a TINY PUBLIC prompt.
+    # Diagnostic only: NOT a Core run, no Framework source or acceptance labels.
+    message = ('Respond ONLY with this JSON object: {"status":"READY"}'
+               if core_config_diagnostic else "Reply with exactly READY.")
+    config = ({"responseMimeType": "application/json", "maxOutputTokens": 4096,
+               "thinkingConfig": {"thinkingLevel": "low"}}
+              if core_config_diagnostic else {"maxOutputTokens": 64})
     raw_request = json.dumps({
-        "contents": [{"role": "user", "parts": [{"text": "Reply with exactly READY."}]}],
-        "generationConfig": {"maxOutputTokens": 64},
-    }, separators=(",", ":")).encode("utf-8")
+        "contents": [{"role": "user", "parts": [{"text": message}]}],
+        "generationConfig": config,
+    }, separators=(",", ":"), allow_nan=False).encode("utf-8")
     request = urllib.request.Request(
         url,
         headers={"x-goog-api-key": key, "Content-Type": "application/json"},
@@ -69,13 +77,25 @@ def probe(*, model: str, key: str, opener: Any = None) -> dict:
                 value = token_usage.get(name)
                 if type(value) is int and 0 <= value < 10_000_000:
                     safe_usage[name] = value
+        if core_config_diagnostic:
+            try:
+                parsed_text = json.loads(text)
+                returned_ready = (
+                    isinstance(parsed_text, dict) and
+                    parsed_text.get("status") == "READY"
+                )
+            except (ValueError, TypeError):
+                returned_ready = False
+        else:
+            returned_ready = text.strip() == "READY"
         return {
             "status": "MODEL_DIAGNOSTIC_RESPONSE_RECEIVED",
             "http_status": status_code,
+            "core_config_diagnostic": core_config_diagnostic,
             "requested_model": model,
             "provider_model_version": model_version if isinstance(model_version, str) else None,
             "finish_reason": candidate.get("finishReason") if isinstance(candidate.get("finishReason"), str) else None,
-            "returned_ready": text.strip() == "READY",
+            "returned_ready": returned_ready,
             "usage_metadata": safe_usage,
             "counted_core_cases": 0,
             "independent_acceptance": False,
@@ -95,6 +115,8 @@ def main(argv=None) -> int:
     p.add_argument("--model", required=True, choices=ALLOWED_DIAGNOSTIC_MODELS)
     p.add_argument("--live", action="store_true")
     p.add_argument("--confirm-free-tier", action="store_true")
+    p.add_argument("--core-config-diagnostic", action="store_true",
+                   help="tiny PUBLIC text under Core JSON/4096/low-thinking settings; NOT Core")
     args = p.parse_args(argv)
     if not args.live or not args.confirm_free_tier:
         print('{"status":"NOT_AUTHORIZED_NO_API_CALL","counted_core_cases":0}')
@@ -102,7 +124,8 @@ def main(argv=None) -> int:
     key = os.environ.get("GEMINI_API_KEY") or getpass.getpass(
         "Free-tier Gemini API key (hidden): "
     )
-    result = probe(model=args.model, key=key)
+    result = probe(model=args.model, key=key,
+                   core_config_diagnostic=args.core_config_diagnostic)
     print(json.dumps(result, sort_keys=True, ensure_ascii=True))
     return 0 if result["status"] == "MODEL_DIAGNOSTIC_RESPONSE_RECEIVED" else 2
 
