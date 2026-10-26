@@ -237,6 +237,42 @@ class Core13PrivateBridgeTests(unittest.TestCase):
             self.assertEqual(run.call_args.kwargs["env"]["GEMINI_API_KEY"],
                              "MOCK_GEMINI_KEY")
 
+    def test_pinned_adapter_blobs_block_subtle_worktree_tampering(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            for name in bridge.PINNED_EXECUTABLE_FILES:
+                target = root / name
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes(b"trusted-public-code")
+            def fake_git(argv, **kwargs):
+                if "status" in argv:
+                    return subprocess.CompletedProcess(argv, 0, stdout=b"", stderr=b"")
+                if "show" in argv:
+                    return subprocess.CompletedProcess(argv, 0, stdout=b"trusted-public-code",
+                                                       stderr=b"")
+                self.fail("unexpected git command")
+            with mock.patch.object(bridge.subprocess, "run", side_effect=fake_git) as git:
+                bridge.validate_adapter_bytes(root)
+            self.assertEqual(git.call_count, 1 + len(bridge.PINNED_EXECUTABLE_FILES))
+            tamper = root / bridge.PINNED_EXECUTABLE_FILES[0]
+            tamper.write_bytes(b"malicious-worktree-change-assume-unchanged")
+            with mock.patch.object(bridge.subprocess, "run", side_effect=fake_git):
+                with self.assertRaises(bridge.BridgeError):
+                    bridge.validate_adapter_bytes(root)
+
+    def test_github_redirect_is_rejected_before_forwarding_auth_token(self):
+        gh = bridge.GitHubClient("lijust/Private-Test-Control", "MOCK_SECRET_TOKEN")
+        handler = bridge.RejectRedirect()
+        req = bridge.urllib.request.Request(
+            "https://api.github.com/repos/lijust/Private-Test-Control",
+            headers={"Authorization": "Bearer MOCK_SECRET_TOKEN"},
+        )
+        with self.assertRaises(bridge.BridgeError):
+            handler.redirect_request(
+                req, None, 302, "Found", {},
+                "https://example.com/steal-this-token",
+            )
+
     def test_safe_verdict_never_exports_prompt_or_raw_response(self):
         with tempfile.TemporaryDirectory() as d:
             folder = Path(d)
