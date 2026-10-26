@@ -110,6 +110,12 @@ def inspect_case(folder: Path, *, case_id: str, expected_suite: dict,
             ), "OTHER_SCORER_FAILURE"))
     return {
         "case_id": case_id,
+        "original_receipt_status": previous_status,
+        "score_origin": (
+            "PARSER_COMPATIBILITY_REPLAY"
+            if previous_status == "MODEL_RESPONSE_INVALID_UNVERIFIED"
+            else "ORIGINAL_DIRECT_SCORING"
+        ),
         "scored_pass": observed_pass,
         "failure_categories": issues,
         "sha256_bound": True,
@@ -126,6 +132,8 @@ def audit(evidence_root: Path, target_root: Path, adapter_root: Path) -> dict:
         "observed_cases": 0,
         "passed": 0,
         "failed": 0,
+        "original_direct_pass": 0,
+        "parser_compatibility_replay_pass": 0,
         "cases": [],
         "model_calls": 0,
         "network_requests": 0,
@@ -155,6 +163,14 @@ def audit(evidence_root: Path, target_root: Path, adapter_root: Path) -> dict:
         summary["observed_cases"] = len(summary["cases"])
         summary["passed"] = sum(bool(x["scored_pass"]) for x in summary["cases"])
         summary["failed"] = summary["observed_cases"] - summary["passed"]
+        summary["original_direct_pass"] = sum(
+            x["scored_pass"] and x["score_origin"] == "ORIGINAL_DIRECT_SCORING"
+            for x in summary["cases"]
+        )
+        summary["parser_compatibility_replay_pass"] = sum(
+            x["scored_pass"] and x["score_origin"] == "PARSER_COMPATIBILITY_REPLAY"
+            for x in summary["cases"]
+        )
         summary["status"] = "OWNER_LOCAL_RESCORING_COMPLETE_UNVERIFIED"
     except Exception:
         # No partial scores when one case has an untrusted/missing receipt.
@@ -162,6 +178,8 @@ def audit(evidence_root: Path, target_root: Path, adapter_root: Path) -> dict:
         summary["observed_cases"] = 0
         summary["passed"] = 0
         summary["failed"] = 0
+        summary["original_direct_pass"] = 0
+        summary["parser_compatibility_replay_pass"] = 0
     return summary
 
 
