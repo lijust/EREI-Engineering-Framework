@@ -168,3 +168,39 @@ the pinned checkout/install SHA.
 **Pending before actual end-to-end readiness**: owner creates/configures the
 private queue, stores PAT/Gemini key locally and installs the scheduled task.
 No direct local Gemini requests have been made by the assistant.
+
+## Local GitHub HTTP_401 during installer healthcheck
+
+The safe healthcheck diagnostic
+`stage=PRIVATE_GITHUB_QUEUE, reason=GitHub API refused request HTTP_401`
+means GitHub refused the **locally stored bearer token**, before the pinned
+source SHA checks or any Gemini call. ChatGPT's separate GitHub App connection
+can see the private repository but that DOES NOT authenticate the local PAT.
+The installer skips already-existing encrypted files, so restarting it cannot
+replace a bad GitHub token.
+
+Create a genuine fine-grained GitHub PAT under the `lijust` owner,
+repository selection **only** `EREI-Gemini-Control`, with Issues **Read/Write**
+and Metadata **Read**, checking expiry and copying the complete secret.
+Do NOT supply ChatGPT, repository contents or Issues with the token value.
+
+From an already checked-out bridge branch:
+
+```powershell
+powershell.exe -noprofile -executionpolicy bypass -file ".\evals\bridge\windows\rotate-github-token.ps1"
+```
+
+The script asks locally for ONLY the replacement GitHub PAT, stores it with
+user-scoped DPAPI, runs the existing **read-only healthcheck** and automatically
+restores the old ciphertext if the replacement does not pass. It neither
+touches the Gemini key nor starts the background service/Windows task nor
+spends Gemini Free-tier quota. If the check passes, safe text includes
+`PRIVATE_GITHUB_TOKEN_ROTATED_AND_HEALTHCHECK_PASSED`; otherwise
+`PRIVATE_GITHUB_TOKEN_ROTATION_ROLLED_BACK` and an allowlisted HTTP/status
+category. Check Windows account identity/DPAPI context if decryption itself
+fails; do not copy encrypted credential files to a different account.
+
+If a PAT is known to be leaked, revoke it through GitHub settings regardless
+of local rollback. Before enabling the scheduled task, ensure PR security
+review is complete. This bridge is strictly Core13/synthetic, not an RCE
+gateway for arbitrary projects.
