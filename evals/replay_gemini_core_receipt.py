@@ -131,7 +131,8 @@ def replay(evidence_dir: Path, target_root: Path) -> dict:
             behavioral_pass_observed=passed,
         )
     except (OSError, ValueError, TypeError, KeyError, AttributeError,
-            ReplayBlocked, smoke.gemini.GeminiAdapterError):
+            ReplayBlocked, diagnosis.ReceiptDiagnosticError,
+            smoke.gemini.GeminiAdapterError):
         return result("REPLAY_BLOCKED_UNVERIFIED")
     except Exception:
         # The frozen scorer may throw. Never echo arbitrary response contents
