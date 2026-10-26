@@ -181,6 +181,57 @@ class GeminiSchemaLiveIsolationTests(unittest.TestCase):
                                  caught.exception.safe_code)
                 opener.open.assert_called_once()
 
+    def test_truncated_http400_body_always_redacted_and_does_not_escape(self):
+        import http.client
+        import traceback
+
+        class BrokenBody:
+            def read(self, n):
+                raise http.client.IncompleteRead(b"CANARY_RAW_PROVIDER_BODY")
+
+        opener = mock.Mock()
+        opener.open.side_effect = urllib.error.HTTPError(
+            "https://generativelanguage.googleapis.com",
+            400,
+            "CANARY_PROVIDER_REASON",
+            {},
+            BrokenBody(),
+        )
+        with mock.patch.object(runner.urllib.request, "build_opener",
+                               return_value=opener):
+            with self.assertRaises(gemini.GeminiAdapterError) as caught:
+                runner.generate_candidate_raw_once(
+                    "PUBLIC", key="mock-only-key", model=MODEL, timeout=90,
+                )
+        err = caught.exception
+        self.assertEqual(err.safe_code, "CANDIDATE_HTTP_ERROR")
+        self.assertEqual(err.http_status, 400)
+        self.assertNotIn("CANARY_PROVIDER", str(err))
+        self.assertNotIn("CANARY_PROVIDER", "".join(traceback.format_exception(err)))
+        opener.open.assert_called_once()
+
+    def test_truncated_success_http_body_is_generic_transport_failure(self):
+        import http.client
+
+        class BrokenResponse:
+            def __enter__(self):
+                return self
+            def __exit__(self, *_):
+                return False
+            def read(self, n):
+                raise http.client.IncompleteRead(b"CANARY_RAW_PROVIDER_BODY")
+        opener = mock.Mock()
+        opener.open.return_value = BrokenResponse()
+        with mock.patch.object(runner.urllib.request, "build_opener",
+                               return_value=opener):
+            with self.assertRaises(gemini.GeminiAdapterError) as caught:
+                runner.generate_candidate_raw_once(
+                    "PUBLIC", key="mock-only-key", model=MODEL, timeout=90,
+                )
+        self.assertEqual(caught.exception.safe_code, "CANDIDATE_TRANSPORT_ERROR")
+        self.assertNotIn("CANARY", str(caught.exception))
+        opener.open.assert_called_once()
+
     def test_genuine_raw_saved_and_frozen_scorer_result_labeled_experiment_only(self):
         with tempfile.TemporaryDirectory() as root:
             folder = Path(root)
