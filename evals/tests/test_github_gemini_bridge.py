@@ -1,0 +1,271 @@
+"""Mock-only safety regressions: bridge never runs arbitrary GitHub issue text."""
+from __future__ import annotations
+
+import json
+import os
+import sqlite3
+import subprocess
+import tempfile
+import unittest
+import urllib.error
+from pathlib import Path
+from unittest import mock
+
+from evals.bridge import github_gemini_worker as bridge
+
+
+def issue(n=1, case="TLR-003-VERIFICATION-ESCAPE", *, owner="lijust",
+          private_label=True, body=None):
+    payload = {
+        "version": 1,
+        "kind": "core13_smoke",
+        "case_id": case,
+        "model": bridge.MODEL,
+        "experiment": "compact_v2",
+        "max_calls": 1,
+    }
+    return {
+        "number": n,
+        "user": {"login": owner},
+        "state": "open",
+        "title": bridge.ISSUE_PREFIX + case,
+        "labels": ([{"name": bridge.QUEUE_LABEL}] if private_label else []),
+        "body": json.dumps(payload) if body is None else body,
+    }
+
+
+def config(root: Path, *, enabled=True, daily_limit=3):
+    return {
+        "version": 1,
+        "queue_repo": "lijust/Private-Test-Control",
+        "queue_owner": "lijust",
+        "adapter_root": str(root / "adapter"),
+        "target_root": str(root / "target"),
+        "evidence_root": str(root / "evidence"),
+        "state_root": str(root / "state"),
+        "daily_limit": daily_limit,
+        "poll_seconds": 60,
+        "enabled": enabled,
+    }
+
+
+class FakeGitHub:
+    def __init__(self, issues):
+        self.issues = list(issues)
+        self.private_checks = 0
+        self.comments = []
+        self.closed = []
+
+    def private_queue_check(self):
+        self.private_checks += 1
+
+    def open_jobs(self):
+        return self.issues
+
+    def comment(self, issue, text):
+        self.comments.append((issue, text))
+
+    def close(self, issue):
+        self.closed.append(issue)
+
+
+class Core13PrivateBridgeTests(unittest.TestCase):
+    def test_strict_allowed_issue_json(self):
+        self.assertEqual(bridge.parse_job(issue(), "lijust"),
+                         {"number": 1, "case_id": "TLR-003-VERIFICATION-ESCAPE"})
+        bad = [
+            issue(owner="other"),
+            issue(private_label=False),
+            {**issue(), "title": "unexpected title"},
+            {**issue(), "state": "closed"},
+            {**issue(), "pull_request": {"url": "https://github.com"}},
+            issue(body=json.dumps({
+                "version": 1, "kind": "core13_smoke",
+                "case_id": ["TLR-003-VERIFICATION-ESCAPE"],
+                "model": bridge.MODEL,
+                "experiment": "compact_v2", "max_calls": 1,
+            })),
+            issue(body=json.dumps({
+                "version": 1, "kind": "core13_smoke",
+                "case_id": "TLR-003-VERIFICATION-ESCAPE",
+                "model": bridge.MODEL,
+                "experiment": "compact_v2", "max_calls": 1,
+                "command": "powershell -enc unsafe",
+            })),
+            issue(body=json.dumps({
+                "version": 1, "kind": "core13_smoke",
+                "case_id": "TLR-003-VERIFICATION-ESCAPE",
+                "model": "gemini-latest",
+                "experiment": "compact_v2", "max_calls": 1,
+            })),
+            issue(body=json.dumps({
+                "version": 1, "kind": "core13_smoke",
+                "case_id": "TLR-003-VERIFICATION-ESCAPE",
+                "model": bridge.MODEL,
+                "experiment": "compact_v2", "max_calls": 2,
+            })),
+            issue(body='{"version":1,"version":1}'),
+            issue(body='not JSON'),
+        ]
+        for item in bad:
+            with self.subTest(item=item.get("body")):
+                self.assertIsNone(bridge.parse_job(item, "lijust"))
+
+    def test_private_repo_and_owner_config_fail_closed(self):
+        with tempfile.TemporaryDirectory() as d:
+            cfg = config(Path(d))
+            self.assertEqual(bridge.validate_config(cfg), cfg)
+            for replacement in ("public/queue", "thirdparty/queue"):
+                invalid = {**cfg, "queue_repo": replacement}
+                with self.assertRaises(bridge.BridgeError):
+                    bridge.validate_config(invalid)
+            for label, value in (
+                ("enabled", "true"),
+                ("daily_limit", 0),
+                ("daily_limit", 50),
+                ("poll_seconds", 2),
+                ("adapter_root", "relative/adapter"),
+            ):
+                invalid = {**cfg, label: value}
+                with self.assertRaises(bridge.BridgeError):
+                    bridge.validate_config(invalid)
+        gh = bridge.GitHubClient("lijust/Private-Test-Control", "mock-gh-token")
+        with mock.patch.object(gh, "request", return_value={
+            "private": False,
+            "full_name": "lijust/Private-Test-Control",
+            "has_issues": True,
+        }):
+            with self.assertRaises(bridge.BridgeError):
+                gh.private_queue_check()
+
+    def test_exactly_once_claim_even_when_worker_is_restarted(self):
+        with tempfile.TemporaryDirectory() as root:
+            db = bridge.connect_db(Path(root) / "jobs.sqlite")
+            self.assertTrue(bridge.claim(db, 18, "TLR-003-VERIFICATION-ESCAPE", 1))
+            self.assertFalse(bridge.claim(db, 18, "TLR-003-VERIFICATION-ESCAPE", 1))
+            self.assertFalse(bridge.claim(db, 19, "CCA-006-MUTABLE-PIN-BLOCKED", 1))
+            self.assertEqual(db.execute("SELECT COUNT(*) FROM jobs").fetchone()[0], 1)
+            db.close()
+
+    def test_issue_comment_and_close_both_idempotent_without_gemini_retry(self):
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            cfg = config(root, daily_limit=3)
+            gh = FakeGitHub([issue(n=31)])
+            db = bridge.connect_db(root / "jobs.sqlite")
+            calls = []
+            def fake_execute(cfg, n, case):
+                calls.append((n, case))
+                return json.dumps({
+                    "result": "EXPERIMENTAL_MODEL_RESPONSE_SCORED_FAIL_UNVERIFIED",
+                    "pass": False, "stable_ready": False,
+                })
+            first = bridge.one_poll(cfg, gh, db, execute=fake_execute)
+            second = bridge.one_poll(cfg, gh, db, execute=fake_execute)
+            self.assertEqual(first["accepted"], 1)
+            self.assertEqual(first["executed"], 1)
+            self.assertEqual(second["executed"], 0)
+            self.assertEqual(calls, [(31, "TLR-003-VERIFICATION-ESCAPE")])
+            self.assertEqual(len(gh.comments), 1)
+            self.assertEqual(gh.closed, [31])
+            self.assertIn("Raw provider evidence and credentials remain local",
+                          gh.comments[0][1])
+            self.assertNotIn("api_key", gh.comments[0][1])
+            db.close()
+
+    def test_disabled_bridge_only_checks_private_repo(self):
+        with tempfile.TemporaryDirectory() as d:
+            cfg = config(Path(d), enabled=False)
+            gh = FakeGitHub([issue()])
+            db = bridge.connect_db(Path(d) / "jobs.sqlite")
+            with mock.patch.object(bridge, "execute_local") as model:
+                result = bridge.one_poll(cfg, gh, db)
+            self.assertEqual(result["executed"], 0)
+            self.assertEqual(gh.private_checks, 1)
+            self.assertEqual(gh.comments, [])
+            model.assert_not_called()
+
+    def test_crash_after_claim_does_not_repeat_provider_call(self):
+        with tempfile.TemporaryDirectory() as d:
+            cfg = config(Path(d))
+            gh = FakeGitHub([issue(n=81)])
+            db = bridge.connect_db(Path(d) / "jobs.sqlite")
+            def crash(*_):
+                raise RuntimeError("do-not-print-this-provider-output")
+            first = bridge.one_poll(cfg, gh, db, execute=crash)
+            self.assertEqual(first["accepted"], 1)
+            self.assertIn("LOCAL_BRIDGE_BLOCKED", gh.comments[0][1])
+            second = bridge.one_poll(cfg, gh, db, execute=crash)
+            self.assertEqual(second["executed"], 0)
+            self.assertEqual(len(gh.comments), 1)
+
+    def test_exact_local_subprocess_never_includes_github_token_or_shell(self):
+        with tempfile.TemporaryDirectory() as d:
+            cfg = config(Path(d))
+            adapter = Path(cfg["adapter_root"])
+            target = Path(cfg["target_root"])
+            adapter.mkdir()
+            target.mkdir()
+            with (
+                mock.patch.object(bridge, "exact_git_head") as head,
+                mock.patch.object(bridge, "validate_adapter_bytes") as files,
+                mock.patch.object(bridge.subprocess, "run",
+                                  return_value=subprocess.CompletedProcess(
+                                      args=[], returncode=1, stdout="", stderr=""
+                                  )) as run,
+                mock.patch.object(bridge, "safe_result",
+                                  return_value='{"result":"synthetic-fail"}'),
+                mock.patch.dict(os.environ, {
+                    "EREI_BRIDGE_GITHUB_TOKEN": "SENSITIVE_GITHUB_TOKEN",
+                    "GEMINI_API_KEY": "MOCK_GEMINI_KEY",
+                }),
+            ):
+                output = bridge.execute_local(cfg, 57, "TLR-003-VERIFICATION-ESCAPE")
+            self.assertEqual(json.loads(output)["result"], "synthetic-fail")
+            head.assert_any_call(adapter.resolve(), bridge.ADAPTER_SHA)
+            head.assert_any_call(target.resolve(), bridge.TARGET_SHA)
+            files.assert_called_once_with(adapter.resolve())
+            command = run.call_args.args[0]
+            self.assertEqual(command[1:3], ["-m", "evals.experiments.run_gemini_schema_smoke"])
+            self.assertIn("--confirm-experimental-schema", command)
+            self.assertEqual(run.call_args.kwargs["stdin"], subprocess.DEVNULL)
+            self.assertNotIn("shell", run.call_args.kwargs)
+            self.assertNotIn("SENSITIVE_GITHUB_TOKEN", command)
+            self.assertNotIn("EREI_BRIDGE_GITHUB_TOKEN", run.call_args.kwargs["env"])
+            self.assertEqual(run.call_args.kwargs["env"]["GEMINI_API_KEY"],
+                             "MOCK_GEMINI_KEY")
+
+    def test_safe_verdict_never_exports_prompt_or_raw_response(self):
+        with tempfile.TemporaryDirectory() as d:
+            folder = Path(d)
+            (folder / "verdict.json").write_text(json.dumps({
+                "status": "EXPERIMENTAL_MODEL_RESPONSE_SCORED_FAIL_UNVERIFIED",
+                "experiment": "core13_native_response_json_schema_compact_v2",
+                "passed": False,
+                "usage_metadata": {"totalTokenCount": 4384},
+                "raw_prompt": "PRIVATE_SENTINEL",
+                "api_key": "PRIVATE_SENTINEL",
+            }), encoding="utf-8")
+            out = bridge.safe_result(folder)
+            self.assertEqual(json.loads(out)["total_tokens"], 4384)
+            self.assertNotIn("PRIVATE_SENTINEL", out)
+            self.assertFalse(json.loads(out)["independently_accepted"])
+
+    def test_gh_authorization_failure_never_echoes_exception_headers(self):
+        gh = bridge.GitHubClient("lijust/Private-Test-Control", "MOCK_SECRET_TOKEN")
+        opener = mock.Mock()
+        opener.open.side_effect = urllib.error.HTTPError(
+            "https://api.github.com", 401,
+            "MOCK_SECRET_TOKEN private details", {}, None
+        )
+        with mock.patch.object(bridge.urllib.request, "build_opener",
+                               return_value=opener):
+            with self.assertRaises(bridge.BridgeError) as caught:
+                gh.request("GET", "/repos/lijust/Private-Test-Control")
+        self.assertNotIn("MOCK_SECRET_TOKEN", str(caught.exception))
+        self.assertNotIn("MOCK_SECRET_TOKEN", repr(caught.exception))
+        opener.open.assert_called_once()
+
+
+if __name__ == "__main__":
+    unittest.main()
