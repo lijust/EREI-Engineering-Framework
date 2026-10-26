@@ -47,9 +47,33 @@ def generate_candidate_raw_once(prompt: str, *, key: str, model: str, timeout: f
         ) as response:
             raw = response.read(gemini.MAX_RESPONSE_BYTES + 1)
     except urllib.error.HTTPError as exc:
+        # Keep the provider body SECRET (it can reflect prompt or credentials).
+        # Classify only a few literal, allow-listed provider diagnostics.
+        # No logging of arbitrary provider message, raw JSON or other fields.
+        classification = "CANDIDATE_HTTP_ERROR"
+        if exc.code == 400:
+            try:
+                error_body = exc.read(8193)
+                if len(error_body) <= 8192:
+                    envelope = json.loads(error_body)
+                    error = envelope.get("error", {}) if isinstance(envelope, dict) else {}
+                    message = error.get("message", "") if isinstance(error, dict) else ""
+                    message = message.lower() if isinstance(message, str) else ""
+                    if any(token in message for token in (
+                        "too many states", "schema is too complex",
+                        "too many possible states", "constraint with too many",
+                        "schema complexity",
+                    )):
+                        classification = "CANDIDATE_HTTP_400_SCHEMA_COMPLEXITY"
+                    elif ("unknown name" in message or "unknown field" in message) and (
+                        "responsejsonschema" in message or "additionalproperties" in message
+                    ):
+                        classification = "CANDIDATE_HTTP_400_SCHEMA_FIELD_UNSUPPORTED"
+            except (OSError, ValueError, TypeError, AttributeError):
+                pass
         raise gemini.GeminiAdapterError(
-            "provider returned HTTP error; body redacted",
-            safe_code="CANDIDATE_HTTP_ERROR", http_status=int(exc.code)
+            "provider HTTP failure; full diagnostic/body redacted",
+            safe_code=classification, http_status=int(exc.code),
         ) from None
     except (OSError, urllib.error.URLError, ValueError, gemini.GeminiAdapterError):
         raise gemini.GeminiAdapterError(
