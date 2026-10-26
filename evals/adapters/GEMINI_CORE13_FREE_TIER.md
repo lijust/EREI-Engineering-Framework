@@ -121,6 +121,25 @@ The command returns `prompt_utf8_bytes`, `request_body_utf8_bytes`, SHA256s, exa
 
 ---
 
+## 26 October 2026 — offline request shape confirmed; one DIFFERENTIAL (not retry) option
+
+The owner ran the **exact** `--inspect-request` for frozen `TLR-001` on `gemini-3.6-flash` with adapter commit `4e342af8ad0bc504c702b187cf4596c8daf4b882`, target head `31d4e518b9e71a9585df9097e7ca07a7e25af916`, tree `913c6a0daaa7a6efa7d6d2148aa0294812fab360`. **No API request occurred.** Actual Core prompt is **18,832 UTF-8 bytes**; canonical REST body **19,532 bytes** (including JSON encoding and request settings), prompt digest `b2da2935cc4509e0384bd3b74d9bd9d151397c18e485f254ea6aca75e6356c8f`, body digest `2e4b4c5d2d758104658cf60a3be3eb007b26a5ae2e6daca0ce857af707b68ae5`. Core settings: **JSON MIME**, 4,096 max output tokens, **thinking low**. Past successful six-input-token `READY` connectivity control instead used **plain text**, 64 max output tokens, default thinking. The offline digest proves **which bytes were about to be sent**, not the cause of 503 and not any actual Core completion.
+
+**One controlled alternative to repeated full Core HTTP 503 calls:** The existing one-shot `evals/probe_gemini_fallback_generate.py` now optionally accepts `--core-config-diagnostic`, which sends **a single tiny constant public JSON prompt** while using the exact Core generation settings. It contrasts **short prompt / full Core settings** to the previous **short prompt / basic settings** and the failed **long prompt / full Core settings**. This can narrow the contributing factor (subject to transient provider capacity), but cannot prove causation or count as a Core test. No Framework artifacts, hidden expectations, project data or API key are included in the prompt. It does not retry, does not activate paid billing, and prints only a safe status and usage data. Use only after confirming a remaining eligible free-tier call and latest exact-head CI on this branch:
+
+```powershell
+cd "$env:userprofile\desktop\erei-core13-adapter"
+git fetch origin pull/101/head
+git checkout --detach <LATEST_EXACT_GREEN_PR101_SHA>
+git status --short
+remove-item env:gemini_api_key -erroraction silentlycontinue
+python -m evals.probe_gemini_fallback_generate --model gemini-3.6-flash --core-config-diagnostic --live --confirm-free-tier
+```
+
+The command is **one generation call**, **NOT** the Core13 smoke runner, so `counted_core_cases=0` and `stable_ready=false` regardless of returned text. **If it yields HTTP200**, the API accepts the Core-style settings for a small input at that time; size/content or transient availability remains a hypothesis for the failed full prompt. **If HTTP503**, capacity or the settings combination remains plausible; pause further attempts. If HTTP400, inspect compatibility of settings before live Core use. Do **not** retry repeatedly or infer that the 3.6 model cannot handle 19 KB based only on two incomparable attempts.
+
+---
+
 ## Exactly one genuine Core case: owner-operated LOCAL smoke
 
 **Never run on a GitHub hosted runner and NEVER paste a key in GitHub, ChatGPT or a command line.** The script `evals/run_gemini_core_smoke.py` prompts invisibly with Python `getpass` if `GEMINI_API_KEY` is unset. No key value is persisted. Malformed keys/HTTP header exceptions are **redacted before logging** (a prior Codex P1), including the case of a trailing newline. The owner must first verify in Google AI Studio that **the actual key** is part of **EREI Gemini (Free tier)**; an account screenshot by itself is not proof that every key belongs to that project.
