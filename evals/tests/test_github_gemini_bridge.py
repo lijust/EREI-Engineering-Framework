@@ -161,6 +161,29 @@ class Core13PrivateBridgeTests(unittest.TestCase):
         )
         opener.open.assert_called_once()
 
+    def test_open_jobs_paginates_past_one_hundred_skipped_entries(self):
+        gh = bridge.GitHubClient("lijust/Private-Test-Control", "dummy-token")
+        old_invalid = [
+            {**issue(n=n), "title": "not-a-valid-job"}
+            for n in range(1, 101)
+        ]
+        responses = [old_invalid, [issue(n=101)]]
+        with mock.patch.object(gh, "request", side_effect=responses) as api:
+            jobs = list(gh.open_jobs())
+        self.assertEqual(len(jobs), 101)
+        self.assertEqual(jobs[-1]["number"], 101)
+        self.assertEqual(api.call_count, 2)
+        self.assertIn("page=1", api.call_args_list[0].args[1])
+        self.assertIn("page=2", api.call_args_list[1].args[1])
+
+    def test_open_jobs_bounded_scan_is_explicit_when_limit_reached(self):
+        gh = bridge.GitHubClient("lijust/Private-Test-Control", "dummy-token")
+        full_page = [{**issue(n=n), "title": "not-a-valid-job"} for n in range(1, 101)]
+        with mock.patch.object(gh, "request", return_value=full_page) as api:
+            with self.assertRaisesRegex(bridge.BridgeError, "scan limit"):
+                list(gh.open_jobs())
+        self.assertEqual(api.call_count, 20)
+
     def test_private_repo_and_owner_config_fail_closed(self):
         with tempfile.TemporaryDirectory() as d:
             cfg = config(Path(d))
