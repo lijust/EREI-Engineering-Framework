@@ -111,6 +111,18 @@ class Core13PrivateBridgeTests(unittest.TestCase):
             with self.subTest(item=item.get("body")):
                 self.assertIsNone(bridge.parse_job(item, "lijust"))
 
+    def test_pat_rotation_requires_worker_restart_before_old_pat_revocation(self):
+        script = (Path(__file__).resolve().parents[1]
+                  / "bridge" / "windows" / "rotate-github-token.ps1")
+        content = script.read_text(encoding="utf-8")
+        self.assertIn(
+            "EXISTING_WORKER_RESTART_REQUIRED_BEFORE_OLD_PAT_REVOCATION",
+            content,
+        )
+        self.assertIn("PRIVATE_GITHUB_TOKEN_ROTATED_AND_HEALTHCHECK_PASSED",
+                      content)
+        self.assertIn("PRIVATE_GITHUB_TOKEN_ROTATION_ROLLED_BACK", content)
+
     def test_actual_windows_powershell_51_native_bootstrap_quoting(self):
         if os.name != "nt":
             self.skipTest("Windows powershell.exe argument passing only")
