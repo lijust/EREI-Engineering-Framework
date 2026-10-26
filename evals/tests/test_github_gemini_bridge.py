@@ -111,6 +111,37 @@ class Core13PrivateBridgeTests(unittest.TestCase):
             with self.subTest(item=item.get("body")):
                 self.assertIsNone(bridge.parse_job(item, "lijust"))
 
+    def test_actual_windows_powershell_51_native_bootstrap_quoting(self):
+        if os.name != "nt":
+            self.skipTest("Windows powershell.exe argument passing only")
+        launcher = (Path(__file__).resolve().parents[1]
+                    / "bridge" / "windows" / "start-gemini-bridge.ps1")
+        line = next(
+            line.strip() for line in launcher.read_text(encoding="utf-8").splitlines()
+            if line.strip().startswith("$boot = ")
+        )
+        source = Path(__file__).resolve().parents[2]
+        def ps_quote(value):
+            return "'" + str(value).replace("'", "''") + "'"
+        missing_config = source / "never-create-bridge-config.json"
+        command = (
+            line + "\n"
+            + "& python -I -B -c $boot " + ps_quote(source)
+            + " --config " + ps_quote(missing_config)
+            + " --healthcheck\nexit $LASTEXITCODE"
+        )
+        result = subprocess.run(
+            ["powershell.exe", "-NoProfile", "-NonInteractive", "-Command", command],
+            capture_output=True, text=True, timeout=45, check=False,
+        )
+        # The worker must actually execute and return its stable config error,
+        # not crash with a NameError or leak a Python native quoting traceback.
+        self.assertEqual(result.returncode, 2, result.stderr[-300:])
+        line = result.stderr.strip()
+        self.assertNotIn("NameError", line)
+        self.assertNotIn("Traceback", line)
+        self.assertEqual(json.loads(line)["stage"], "CONFIG")
+
     def test_bad_http_framing_is_redacted_without_traceback_or_retry(self):
         import http.client
         import traceback
