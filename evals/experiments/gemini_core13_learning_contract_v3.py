@@ -43,6 +43,12 @@ GENERAL_SELF_CHECK = (
     "--- END GENERAL QUALITY CHECK ---\n"
 )
 
+# Re-export the exact unchanged compact V2 schema. The separately copied
+# one-call V3 runner requires candidate.response_json_schema() both during
+# immutable request preflight and when it records source provenance.
+# This alias does not relax JSON validation or touch the frozen scorer.
+response_json_schema = v2.response_json_schema
+
 # These checks inspect ONLY static coaching text, not the private scorer.
 FORBIDDEN_HINTS = (
     "TLR-003", "TLR-004", "TLR-007", "CCA-006", "reference_actions",
