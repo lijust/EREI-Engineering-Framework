@@ -15,13 +15,13 @@ from evals.bridge import github_gemini_worker as bridge
 
 
 def issue(n=1, case="TLR-003-VERIFICATION-ESCAPE", *, owner="lijust",
-          private_label=True, body=None):
+          private_label=True, body=None, experiment=bridge.EXPERIMENT):
     payload = {
         "version": 1,
         "kind": "core13_smoke",
         "case_id": case,
         "model": bridge.MODEL,
-        "experiment": "compact_v2",
+        "experiment": experiment,
         "max_calls": 1,
     }
     return {
@@ -72,7 +72,8 @@ class FakeGitHub:
 class Core13PrivateBridgeTests(unittest.TestCase):
     def test_strict_allowed_issue_json(self):
         self.assertEqual(bridge.parse_job(issue(), "lijust"),
-                         {"number": 1, "case_id": "TLR-003-VERIFICATION-ESCAPE"})
+                         {"number": 1, "case_id": "TLR-003-VERIFICATION-ESCAPE",
+                          "experiment": bridge.EXPERIMENT})
         bad = [
             issue(owner="other"),
             issue(private_label=False),
@@ -110,6 +111,128 @@ class Core13PrivateBridgeTests(unittest.TestCase):
         for item in bad:
             with self.subTest(item=item.get("body")):
                 self.assertIsNone(bridge.parse_job(item, "lijust"))
+
+    def test_v3_case_is_allowlisted_but_local_opt_in_required(self):
+        job = bridge.parse_job(issue(experiment=bridge.V3_EXPERIMENT), "lijust")
+        self.assertEqual(job["experiment"], bridge.V3_EXPERIMENT)
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            cfg = config(root)
+            gh = FakeGitHub([issue(n=102, experiment=bridge.V3_EXPERIMENT)])
+            db = bridge.connect_db(root / "jobs.sqlite")
+            with mock.patch.object(bridge, "execute_local") as model:
+                result = bridge.one_poll(cfg, gh, db)
+            self.assertEqual(result["accepted"], 0)
+            self.assertEqual(result["executed"], 0)
+            self.assertEqual(result["skipped"], 1)
+            self.assertEqual(db.execute("SELECT COUNT(*) FROM jobs").fetchone()[0], 0)
+            model.assert_not_called()
+            db.close()
+
+    def test_v3_opt_in_preserves_v2_budget_and_executes_exactly_once(self):
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            cfg = {**config(root, daily_limit=1),
+                   "adapter_v3_root": str(root / "adapter_v3")}
+            self.assertEqual(bridge.validate_config(cfg), cfg)
+            cases = [
+                issue(n=99, experiment=bridge.V3_EXPERIMENT),
+                issue(n=100, experiment=bridge.EXPERIMENT),
+            ]
+            gh = FakeGitHub(cases)
+            db = bridge.connect_db(root / "jobs.sqlite")
+            executed = []
+            def fake_execute(_cfg, n, case_id, experiment):
+                executed.append((n, case_id, experiment))
+                return json.dumps({"result": "MOCKED", "pass": False})
+            r1 = bridge.one_poll(cfg, gh, db, execute=fake_execute)
+            r2 = bridge.one_poll(cfg, gh, db, execute=fake_execute)
+            self.assertEqual((r1["accepted"], r1["executed"]), (1, 1))
+            self.assertEqual(r2["executed"], 0)
+            self.assertEqual(executed, [
+                (99, "TLR-003-VERIFICATION-ESCAPE", bridge.V3_EXPERIMENT)
+            ])
+            self.assertEqual(db.execute("SELECT COUNT(*) FROM jobs").fetchone()[0], 1)
+            self.assertEqual(len(gh.comments), 1)
+            db.close()
+
+    def test_v3_fixed_module_sha_and_secret_isolation(self):
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            cfg = {**config(root), "adapter_v3_root": str(root / "adapter_v3")}
+            v3_root = Path(cfg["adapter_v3_root"])
+            target = Path(cfg["target_root"])
+            v3_root.mkdir()
+            target.mkdir()
+            with (
+                mock.patch.object(bridge, "exact_git_head") as head,
+                mock.patch.object(bridge, "validate_adapter_bytes") as pins,
+                mock.patch.object(bridge.subprocess, "run",
+                                  return_value=subprocess.CompletedProcess(
+                                      args=[], returncode=1, stdout="", stderr=""
+                                  )) as subprocess_call,
+                mock.patch.object(bridge, "safe_result",
+                                  return_value='{"result":"NOT_SCORED"}') as safe,
+                mock.patch.dict(os.environ, {
+                    "EREI_BRIDGE_GITHUB_TOKEN": "SECRET_GH_TOKEN_V3",
+                    "GEMINI_API_KEY": "DUMMY_FREE_TIER_KEY",
+                }),
+            ):
+                bridge.execute_local(
+                    cfg, 101, "CCA-006-MUTABLE-PIN-BLOCKED", bridge.V3_EXPERIMENT,
+                )
+            head.assert_any_call(v3_root.resolve(), bridge.V3_ADAPTER_SHA)
+            head.assert_any_call(target.resolve(), bridge.TARGET_SHA)
+            pins.assert_called_once_with(
+                v3_root.resolve(), expected_sha=bridge.V3_ADAPTER_SHA,
+                pinned_files=bridge.V3_PINNED_EXECUTABLE_FILES,
+            )
+            argv = subprocess_call.call_args.args[0]
+            self.assertIn(
+                "evals.experiments.run_gemini_learning_v3_smoke", argv[6])
+            self.assertNotIn("SECRET_GH_TOKEN_V3", str(argv))
+            self.assertNotIn("EREI_BRIDGE_GITHUB_TOKEN",
+                             subprocess_call.call_args.kwargs["env"])
+            self.assertEqual(subprocess_call.call_args.kwargs["env"]["GEMINI_API_KEY"],
+                             "DUMMY_FREE_TIER_KEY")
+            self.assertNotIn("shell", subprocess_call.call_args.kwargs)
+            safe.assert_called_once_with(
+                Path(cfg["evidence_root"]) / "github-issue-0000101",
+                bridge.V3_EXPERIMENT,
+            )
+
+    def test_v3_result_only_accepts_matching_experiment(self):
+        with tempfile.TemporaryDirectory() as d:
+            folder = Path(d)
+            (folder / "verdict.json").write_text(json.dumps({
+                "status": "EXPERIMENTAL_MODEL_RESPONSE_SCORED_PASS_UNVERIFIED",
+                "experiment": bridge.V3_RESULT_EXPERIMENT, "passed": True,
+                "usage_metadata": {"totalTokenCount": 3560},
+            }))
+            v3_result = json.loads(bridge.safe_result(folder, bridge.V3_EXPERIMENT))
+            v2_result = json.loads(bridge.safe_result(folder, bridge.EXPERIMENT))
+            self.assertTrue(v3_result["pass"])
+            self.assertEqual(v3_result["experiment"], bridge.V3_EXPERIMENT)
+            self.assertEqual(v3_result["total_tokens"], 3560)
+            self.assertEqual(v2_result["result"], "NOT_SCORED")
+            self.assertFalse(v3_result["independently_accepted"])
+            self.assertFalse(v3_result["stable_ready"])
+
+    def test_v3_config_rejects_overlap_and_unauthorized_experiment(self):
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            cfg = {**config(root), "adapter_v3_root": str(root / "v3")}
+            self.assertEqual(bridge.validate_config(cfg), cfg)
+            for forbidden in (
+                str(root / "adapter"), str(root / "target"),
+                str(root / "evidence"), str(root / "state"),
+            ):
+                with self.subTest(forbidden=forbidden):
+                    invalid = {**cfg, "adapter_v3_root": forbidden}
+                    with self.assertRaises(bridge.BridgeError):
+                        bridge.validate_config(invalid)
+            self.assertIsNone(bridge.parse_job(
+                issue(experiment="arbitrary-shell-script"), "lijust"))
 
     def test_pat_rotation_requires_worker_restart_before_old_pat_revocation(self):
         script = (Path(__file__).resolve().parents[1]
@@ -239,8 +362,8 @@ class Core13PrivateBridgeTests(unittest.TestCase):
             gh = FakeGitHub([issue(n=31)])
             db = bridge.connect_db(root / "jobs.sqlite")
             calls = []
-            def fake_execute(cfg, n, case):
-                calls.append((n, case))
+            def fake_execute(cfg, n, case, experiment):
+                calls.append((n, case, experiment))
                 return json.dumps({
                     "result": "EXPERIMENTAL_MODEL_RESPONSE_SCORED_FAIL_UNVERIFIED",
                     "pass": False, "stable_ready": False,
@@ -250,7 +373,7 @@ class Core13PrivateBridgeTests(unittest.TestCase):
             self.assertEqual(first["accepted"], 1)
             self.assertEqual(first["executed"], 1)
             self.assertEqual(second["executed"], 0)
-            self.assertEqual(calls, [(31, "TLR-003-VERIFICATION-ESCAPE")])
+            self.assertEqual(calls, [(31, "TLR-003-VERIFICATION-ESCAPE", bridge.EXPERIMENT)])
             self.assertEqual(len(gh.comments), 1)
             self.assertEqual(gh.closed, [31])
             self.assertIn("Raw provider evidence and credentials remain local",
@@ -311,7 +434,10 @@ class Core13PrivateBridgeTests(unittest.TestCase):
             self.assertEqual(json.loads(output)["result"], "synthetic-fail")
             head.assert_any_call(adapter.resolve(), bridge.ADAPTER_SHA)
             head.assert_any_call(target.resolve(), bridge.TARGET_SHA)
-            files.assert_called_once_with(adapter.resolve())
+            files.assert_called_once_with(
+                adapter.resolve(), expected_sha=bridge.ADAPTER_SHA,
+                pinned_files=bridge.PINNED_EXECUTABLE_FILES,
+            )
             command = run.call_args.args[0]
             self.assertEqual(command[1:3], ["-I", "-B"])
             self.assertEqual(command[3], "-X")
