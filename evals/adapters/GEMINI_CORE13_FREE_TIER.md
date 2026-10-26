@@ -140,6 +140,27 @@ The command is **one generation call**, **NOT** the Core13 smoke runner, so `cou
 
 ---
 
+## 26 October 2026 — Core-config small probe succeeds; next route prioritizes genuine Core, not more setup loops
+
+Owner's **single** `gemini-3.6-flash --core-config-diagnostic` returned HTTP **200**, STOP, `returned_ready=true`, **13 prompt tokens / 5 response tokens / 18 total tokens**, with the **same JSON, 4096 max output, low thinking config** as frozen Core. This establishes those *settings can work for a small synthetic request* on 3.6; it does **not** prove that the larger Core source, response content, or provider capacity caused previous 503s. Owner's exact offline Core payload was 18,832 prompt bytes / 19,532 HTTP body bytes. No Core case was scored (0/13).
+
+**Practical runtime alternative:** Google's official docs list stable `gemini-3.5-flash-lite` with **1,048,576 input token** context, structured output and low thinking support, and pricing shows free standard input/output tokens subject to that project's Free-tier quota. It is a **different (lighter) model** from 3.6, so results must be labeled and evaluated separately. Current source restricts `--model` to exact pinned stable IDs, now including `gemini-3.5-flash-lite`. Crucially the Core case inputs, three frozen Framework documents, full 18.8KB prompt, JSON config, frozen scorer, and SHA/tree target are **unchanged**. The model is not silently substituted; both requested/returned model versions are saved and must match.
+
+After exact-head CI and one independent code-review round, the owner may perform a **single** first *actual Core behavioral attempt* on `gemini-3.5-flash-lite` if Google AI Studio confirms remaining Free-tier capacity for the key's project. Preserve `smoke-001` through `smoke-004`; a fresh `smoke-005` is required. Never retry automatically or count a 503 as a behavioral failure. One example from clean detached adapter/target checkouts:
+
+```powershell
+cd "$env:userprofile\desktop\erei-core13-adapter"
+git fetch origin pull/101/head
+git checkout --detach <EXACT_LATEST_CI_GREEN_PR101_SHA>
+git status --short
+remove-item env:gemini_api_key -erroraction silentlycontinue
+python -m evals.run_gemini_core_smoke --model gemini-3.5-flash-lite --target-root "$env:userprofile\desktop\erei-core13-target" --case-id TLR-001-SUCCESS-STILL-LEARNING-DATA --output-dir "$env:userprofile\desktop\erei-core13-evidence\smoke-005" --timeout 90 --live --confirm-free-tier
+```
+
+This call (if performed) can yield a true raw provider response and a **local scored-but-unverified** Core case, **not** `1/13 independently accepted` or a V1/V2 benchmark. No GitHub secret, new key, billing enablement, private Saudi/Egypt property data, workflow activation, original Framework target change or main merge is required. If this *different* model fails before producing a provider response, stop and choose a genuinely separate execution service rather than recycling model requests. Official sources: https://ai.google.dev/gemini-api/docs/models/gemini-3.5-flash-lite , https://ai.google.dev/gemini-api/docs/pricing .
+
+---
+
 ## Exactly one genuine Core case: owner-operated LOCAL smoke
 
 **Never run on a GitHub hosted runner and NEVER paste a key in GitHub, ChatGPT or a command line.** The script `evals/run_gemini_core_smoke.py` prompts invisibly with Python `getpass` if `GEMINI_API_KEY` is unset. No key value is persisted. Malformed keys/HTTP header exceptions are **redacted before logging** (a prior Codex P1), including the case of a trailing newline. The owner must first verify in Google AI Studio that **the actual key** is part of **EREI Gemini (Free tier)**; an account screenshot by itself is not proof that every key belongs to that project.
