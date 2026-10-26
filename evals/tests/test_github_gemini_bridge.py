@@ -184,6 +184,7 @@ class Core13PrivateBridgeTests(unittest.TestCase):
             self.assertEqual(gh.private_checks, 1)
             self.assertEqual(gh.comments, [])
             model.assert_not_called()
+            db.close()
 
     def test_crash_after_claim_does_not_repeat_provider_call(self):
         with tempfile.TemporaryDirectory() as d:
@@ -198,6 +199,7 @@ class Core13PrivateBridgeTests(unittest.TestCase):
             second = bridge.one_poll(cfg, gh, db, execute=crash)
             self.assertEqual(second["executed"], 0)
             self.assertEqual(len(gh.comments), 1)
+            db.close()
 
     def test_exact_local_subprocess_never_includes_github_token_or_shell(self):
         with tempfile.TemporaryDirectory() as d:
