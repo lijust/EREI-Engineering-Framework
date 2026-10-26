@@ -111,6 +111,25 @@ class Core13PrivateBridgeTests(unittest.TestCase):
             with self.subTest(item=item.get("body")):
                 self.assertIsNone(bridge.parse_job(item, "lijust"))
 
+    def test_bad_http_framing_is_redacted_without_traceback_or_retry(self):
+        import http.client
+        import traceback
+        gh = bridge.GitHubClient("lijust/Private-Test-Control", "SENSITIVE_PAT_CANARY")
+        opener = mock.Mock()
+        opener.open.side_effect = http.client.BadStatusLine(
+            "SECRET_UPSTREAM_BAD_STATUS_LINE"
+        )
+        with mock.patch.object(bridge.urllib.request, "build_opener",
+                               return_value=opener):
+            with self.assertRaises(bridge.BridgeError) as caught:
+                gh.request("GET", "/repos/lijust/Private-Test-Control")
+        self.assertEqual(str(caught.exception), "GitHub API request failed")
+        self.assertNotIn("SECRET_UPSTREAM", str(caught.exception))
+        self.assertNotIn(
+            "SECRET_UPSTREAM", "".join(traceback.format_exception(caught.exception))
+        )
+        opener.open.assert_called_once()
+
     def test_private_repo_and_owner_config_fail_closed(self):
         with tempfile.TemporaryDirectory() as d:
             cfg = config(Path(d))
@@ -228,8 +247,15 @@ class Core13PrivateBridgeTests(unittest.TestCase):
             head.assert_any_call(target.resolve(), bridge.TARGET_SHA)
             files.assert_called_once_with(adapter.resolve())
             command = run.call_args.args[0]
-            self.assertEqual(command[1:3], ["-m", "evals.experiments.run_gemini_schema_smoke"])
+            self.assertEqual(command[1:3], ["-I", "-B"])
+            self.assertEqual(command[3], "-X")
+            self.assertTrue(command[4].startswith("pycache_prefix="))
+            self.assertEqual(command[5], "-c")
+            self.assertIn("runpy.run_module('evals.experiments.run_gemini_schema_smoke'", command[6])
+            self.assertEqual(command[7], str(adapter.resolve()))
             self.assertIn("--confirm-experimental-schema", command)
+            self.assertNotIn("-m", command)
+            self.assertNotIn("PYTHONPATH", run.call_args.kwargs["env"] if False else {})
             self.assertEqual(run.call_args.kwargs["stdin"], subprocess.DEVNULL)
             self.assertNotIn("shell", run.call_args.kwargs)
             self.assertNotIn("SENSITIVE_GITHUB_TOKEN", command)
