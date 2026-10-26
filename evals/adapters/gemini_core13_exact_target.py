@@ -23,7 +23,7 @@ except ImportError:
     import copilot_cli_exact_target as contract
 
 MODEL = "gemini-3.8-flash"  # legacy default, never used for approved 3.6 Core
-CORE_MODELS = ("gemini-3.8-flash", "gemini-3.6-flash")
+CORE_MODELS = ("gemini-3.8-flash", "gemini-3.6-flash", "gemini-3.5-flash-lite")
 API_BASE = "https://generativelanguage.googleapis.com/v1beta/models/"
 API_URL = API_BASE + MODEL + ":generateContent"
 
