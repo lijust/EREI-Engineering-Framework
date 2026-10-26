@@ -104,6 +104,41 @@ class CoreOneCaseTests(unittest.TestCase):
             self.assertEqual(json.loads((Path(folder) / "verdict.json").read_text())
                              ["model_requested"], "gemini-3.6-flash")
 
+    def test_35_flash_lite_is_exactly_labeled_unverified_model_response(self):
+        with tempfile.TemporaryDirectory() as folder:
+            raw = good_raw("gemini-3.5-flash-lite")
+            with mock.patch.object(smoke.gemini, "generate_raw_once",
+                                   return_value=raw) as api:
+                verdict = smoke.record_one(
+                    prepared(), Path(folder), "mock-no-key", 60,
+                    model="gemini-3.5-flash-lite",
+                )
+            api.assert_called_once_with(
+                "public synthetic prompt only", key="mock-no-key",
+                timeout=60, model="gemini-3.5-flash-lite",
+            )
+            self.assertTrue(verdict["passed"])
+            self.assertEqual(verdict["model_requested"], "gemini-3.5-flash-lite")
+            self.assertEqual(verdict["provider_model_version"], "gemini-3.5-flash-lite")
+            self.assertFalse(verdict["independently_accepted"])
+            self.assertFalse(verdict["stable_ready"])
+            self.assertEqual(verdict["evidence_kind"], "observed_unverified")
+            self.assertEqual((Path(folder) / "provider-raw.json").read_bytes(), raw)
+
+    def test_35_lite_cannot_be_scored_with_36_provider_response(self):
+        with tempfile.TemporaryDirectory() as folder:
+            with mock.patch.object(smoke.gemini, "generate_raw_once",
+                                   return_value=good_raw("gemini-3.6-flash")):
+                verdict = smoke.record_one(
+                    prepared(), Path(folder), "mock-no-key", 60,
+                    model="gemini-3.5-flash-lite"
+                )
+            self.assertFalse(verdict["passed"])
+            self.assertEqual(verdict["status"], "MODEL_RESPONSE_INVALID_UNVERIFIED")
+            self.assertFalse((Path(folder) / "adapter-normalized.json").exists())
+            self.assertEqual(verdict["model_requested"], "gemini-3.5-flash-lite")
+            self.assertEqual(verdict["provider_model_version"], "gemini-3.6-flash")
+
     def test_wrong_provider_model_never_scores_as_valid_core(self):
         with tempfile.TemporaryDirectory() as folder:
             with mock.patch.object(smoke.gemini, "generate_raw_once",
