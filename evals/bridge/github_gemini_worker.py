@@ -270,14 +270,30 @@ class GitHubClient:
         if data.get("has_issues") is not True:
             raise BridgeError("queue GitHub issues must be enabled")
 
-    def open_jobs(self) -> list:
+    def open_jobs(self):
+        """Exhaust the bounded, oldest-first queue; do not starve later jobs.
+
+        One REST page is not the whole queue: invalid/claimed issues remain
+        open and cannot permanently hide a valid issue at position 31+.
+        Bound scans to protect GitHub API budget; fail explicitly instead of
+        silently claiming that all issues were checked.
+        """
         label = urllib.parse.quote(QUEUE_LABEL)
-        path = (f"/repos/{self.repo}/issues?state=open&labels={label}"
-                "&sort=created&direction=asc&per_page=30")
-        issues = self.request("GET", path)
-        if not isinstance(issues, list):
-            raise BridgeError("GitHub queue list format invalid")
-        return issues
+        per_page = 100
+        max_pages = 20
+        for page in range(1, max_pages + 1):
+            path = (f"/repos/{self.repo}/issues?state=open&labels={label}"
+                    f"&sort=created&direction=asc&per_page={per_page}&page={page}")
+            issues = self.request("GET", path)
+            if not isinstance(issues, list) or len(issues) > per_page:
+                raise BridgeError("GitHub queue list format invalid")
+            for issue in issues:
+                yield issue
+            if len(issues) < per_page:
+                return
+        # Rare pathological queue (>2,000 owner-created open labeled Issues):
+        # never silently hide valid jobs outside the scan window.
+        raise BridgeError("GitHub queue scan limit reached")
 
     def comment(self, issue: int, text: str) -> None:
         self.request("POST", f"/repos/{self.repo}/issues/{issue}/comments", {"body": text})
