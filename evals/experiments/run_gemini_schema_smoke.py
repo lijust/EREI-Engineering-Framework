@@ -163,15 +163,55 @@ def main(argv=None) -> int:
         )
         if not key:
             raise gemini.GeminiAdapterError("no local API key")
-        # Source/provenance and directory guards complete before allocating.
+        # Persist an immutable, secret-free request/source manifest BEFORE
+        # the only POST. Even HTTP 400/timeout must have schema provenance.
+        candidate_body = candidate.build_candidate_body(
+            prepared["prompt"], model=a.model
+        )
+        captured_at = datetime.now(timezone.utc).replace(
+            microsecond=0
+        ).isoformat()
+        provenance = {
+            "schema_version": 1,
+            "kind": "CORE13_EXPERIMENT_REQUEST_PROVENANCE",
+            "evidence_kind": "observed_experimental_unverified",
+            "experiment": "core13_native_response_json_schema_v1",
+            "source_head": gemini.EXPECTED_TARGET_HEAD,
+            "source_tree": gemini.EXPECTED_TARGET_TREE,
+            "adapter_source_revision": prepared["adapter_source"]["adapter_source_revision"],
+            "case_id": a.case_id,
+            "suite_id": prepared["suite"]["suite_id"],
+            "model_requested": a.model,
+            "captured_at_utc": captured_at,
+            "request_body_sha256": smoke.sha(candidate_body),
+            "response_schema_sha256": smoke.sha(
+                smoke.canonical_bytes(candidate.response_json_schema())
+            ),
+            "blind_request_sha256": smoke.sha(
+                smoke.canonical_bytes(prepared["request"])
+            ),
+            "prompt_sha256": smoke.sha(prepared["prompt"].encode("utf-8")),
+            "network_requests_authorized_max": 1,
+            "independently_accepted": False,
+            "stable_ready": False,
+        }
         output.mkdir(parents=True, exist_ok=False)
         (output / "blind-request.json").write_bytes(
             smoke.json_bytes(prepared["request"])
+        )
+        (output / "candidate-provenance.json").write_bytes(
+            smoke.json_bytes(provenance)
         )
         try:
             verdict = record_candidate(
                 prepared, output, key=key, model=a.model, timeout=a.timeout
             )
+            if (verdict.get("request_body_sha256")
+                    != provenance["request_body_sha256"]):
+                raise gemini.GeminiAdapterError(
+                    "experiment request digest unexpectedly drifted",
+                    safe_code="CANDIDATE_REQUEST_DRIFT",
+                )
         except gemini.GeminiAdapterError as exc:
             (output / "attempt-failed.json").write_bytes(smoke.json_bytes({
                 "evidence_kind": "observed_experimental_unverified",
