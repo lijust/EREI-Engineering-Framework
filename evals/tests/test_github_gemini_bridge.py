@@ -197,7 +197,7 @@ class Core13PrivateBridgeTests(unittest.TestCase):
                              "DUMMY_FREE_TIER_KEY")
             self.assertNotIn("shell", subprocess_call.call_args.kwargs)
             safe.assert_called_once_with(
-                Path(cfg["evidence_root"]) / "github-issue-0000101",
+                Path(cfg["evidence_root"]).resolve() / "github-issue-0000101",
                 bridge.V3_EXPERIMENT,
             )
 
