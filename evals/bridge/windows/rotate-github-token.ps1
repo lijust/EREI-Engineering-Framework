@@ -46,6 +46,10 @@ try {
     }
     $checked = $true
     Write-Host "PRIVATE_GITHUB_TOKEN_ROTATED_AND_HEALTHCHECK_PASSED"
+    # The persistent broker read its PAT only when first launched. The new
+    # healthcheck is a separate process; it cannot update a running broker.
+    # Explicitly require a worker restart before revoking the prior PAT.
+    Write-Host "EXISTING_WORKER_RESTART_REQUIRED_BEFORE_OLD_PAT_REVOCATION"
     Write-Host "NO_GEMINI_CALLS_NO_SCHEDULED_TASK_CHANGES"
 } finally {
     if ($updated -and -not $checked) {
