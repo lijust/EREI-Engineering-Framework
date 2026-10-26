@@ -19,7 +19,7 @@ from pathlib import Path
 
 from evals.adapters import gemini_core13_exact_target as gemini
 from evals import run_gemini_core_smoke as smoke
-from evals.experiments import gemini_core13_schema_candidate as candidate
+from evals.experiments import gemini_core13_schema_compact_v2 as candidate
 
 
 def generate_candidate_raw_once(prompt: str, *, key: str, model: str, timeout: float) -> tuple[bytes, bytes]:
@@ -78,7 +78,7 @@ def record_candidate(prepared: dict, output: Path, *, key: str, model: str,
     verdict = {
         "schema_version": 1,
         "evidence_kind": "observed_experimental_unverified",
-        "experiment": "core13_native_response_json_schema_v1",
+        "experiment": candidate.EXPERIMENT,
         "experimental_schema": True,
         "independently_accepted": False,
         "stable_ready": False,
@@ -181,7 +181,7 @@ def main(argv=None) -> int:
             "schema_version": 1,
             "kind": "CORE13_EXPERIMENT_REQUEST_PROVENANCE",
             "evidence_kind": "observed_experimental_unverified",
-            "experiment": "core13_native_response_json_schema_v1",
+            "experiment": candidate.EXPERIMENT,
             "source_head": gemini.EXPECTED_TARGET_HEAD,
             "source_tree": gemini.EXPECTED_TARGET_TREE,
             "adapter_source_revision": prepared["adapter_source"]["adapter_source_revision"],
@@ -219,7 +219,7 @@ def main(argv=None) -> int:
                 "status": "EXPERIMENTAL_MODEL_REQUEST_FAILED_NOT_SCORED",
                 "case_id": a.case_id,
                 "model_requested": a.model,
-                "experiment": "core13_native_response_json_schema_v1",
+                "experiment": candidate.EXPERIMENT,
                 "reason_category": exc.safe_code,
                 "provider_http_status": exc.http_status,
                 "stable_ready": False,
@@ -236,7 +236,7 @@ def main(argv=None) -> int:
             "model_requested": a.model,
             "provider_model_version": verdict.get("provider_model_version"),
             "usage_metadata": verdict.get("usage_metadata"),
-            "experiment": "core13_native_response_json_schema_v1",
+            "experiment": candidate.EXPERIMENT,
             "evidence_dir": str(output),
             "independently_accepted": False,
             "stable_ready": False,
