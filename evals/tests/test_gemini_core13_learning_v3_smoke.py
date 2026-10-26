@@ -34,6 +34,56 @@ class V3RunnerSafetyTests(unittest.TestCase):
         self.assertEqual(new_source, expected)
         self.assertIs(v3_runner.candidate, v3)
 
+    def test_v3_has_exact_v2_schema_interface_needed_by_live_preflight(self):
+        self.assertIs(v3.response_json_schema, v3.v2.response_json_schema)
+        self.assertEqual(v3.response_json_schema(), v3.v2.response_json_schema())
+
+    def test_authorized_preflight_and_evidence_path_no_provider_call(self):
+        import os
+        with tempfile.TemporaryDirectory() as temp:
+            target = Path(temp) / "target"
+            target.mkdir()
+            output = Path(temp) / "V3_EVIDENCE_MOCK_ONLY"
+            prepared = {
+                "root": target.resolve(),
+                "prompt": "PUBLIC_SYNTHETIC_NO_PROVIDER",
+                "case": {"id": "TLR-003-VERIFICATION-ESCAPE"},
+                "suite": {"suite_id": "public-suite"},
+                "request": {"kind": "synthetic", "prompt": "public"},
+                "adapter_source": {"adapter_source_revision": "mock-source-sha"},
+            }
+            fake_verdict = {
+                "status": "EXPERIMENTAL_MODEL_RESPONSE_SCORED_PASS_UNVERIFIED",
+                "passed": True, "provider_model_version": "gemini-3.5-flash-lite",
+                "usage_metadata": {"totalTokenCount": 1},
+            }
+            with (
+                mock.patch.object(v3_runner.smoke, "prepare",
+                                  return_value=prepared),
+                mock.patch.object(v3_runner, "record_candidate",
+                                  return_value=fake_verdict) as mocked_scoring,
+                mock.patch.object(v3_runner.urllib.request, "build_opener") as network,
+                mock.patch.dict(os.environ, {"GEMINI_API_KEY": "MOCK_ONLY"}, clear=False),
+            ):
+                result = v3_runner.main([
+                    "--target-root", str(target),
+                    "--case-id", "TLR-003-VERIFICATION-ESCAPE",
+                    "--model", "gemini-3.5-flash-lite",
+                    "--output-dir", str(output),
+                    "--live", "--confirm-free-tier",
+                    "--confirm-experimental-schema",
+                ])
+            self.assertEqual(result, 0)
+            self.assertEqual(mocked_scoring.call_count, 1)
+            network.assert_not_called()
+            self.assertTrue((output / "candidate-provenance.json").exists())
+            provenance = json.loads(
+                (output / "candidate-provenance.json").read_text(encoding="utf-8"))
+            self.assertEqual(provenance["experiment"], v3.EXPERIMENT)
+            self.assertFalse(provenance["independently_accepted"])
+            self.assertFalse(provenance["stable_ready"])
+            self.assertEqual(provenance["network_requests_authorized_max"], 1)
+
     def test_no_network_when_owner_has_not_authorized_live_run(self):
         with tempfile.TemporaryDirectory() as temp:
             with (
