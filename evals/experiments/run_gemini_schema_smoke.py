@@ -63,12 +63,18 @@ def generate_candidate_raw_once(prompt: str, *, key: str, model: str, timeout: f
 
 
 def record_candidate(prepared: dict, output: Path, *, key: str, model: str,
-                     timeout: float) -> dict:
+                     timeout: float, expected_body_sha256: str | None = None) -> dict:
     """Persist raw bytes BEFORE strict parsing/scoring; distinct experiment."""
     raw, body = generate_candidate_raw_once(
         prepared["prompt"], key=key, model=model, timeout=timeout
     )
     (output / "provider-raw.json").write_bytes(raw)
+    if (expected_body_sha256 is not None
+            and smoke.sha(body) != expected_body_sha256):
+        raise gemini.GeminiAdapterError(
+            "candidate request body differs from retained preflight manifest",
+            safe_code="CANDIDATE_REQUEST_DRIFT",
+        )
     verdict = {
         "schema_version": 1,
         "evidence_kind": "observed_experimental_unverified",
@@ -204,14 +210,9 @@ def main(argv=None) -> int:
         )
         try:
             verdict = record_candidate(
-                prepared, output, key=key, model=a.model, timeout=a.timeout
+                prepared, output, key=key, model=a.model, timeout=a.timeout,
+                expected_body_sha256=provenance["request_body_sha256"],
             )
-            if (verdict.get("request_body_sha256")
-                    != provenance["request_body_sha256"]):
-                raise gemini.GeminiAdapterError(
-                    "experiment request digest unexpectedly drifted",
-                    safe_code="CANDIDATE_REQUEST_DRIFT",
-                )
         except gemini.GeminiAdapterError as exc:
             (output / "attempt-failed.json").write_bytes(smoke.json_bytes({
                 "evidence_kind": "observed_experimental_unverified",
