@@ -64,3 +64,38 @@ No original receipt, baseline source or key is changed. This preview prints only
 ### Security and reproducibility
 
 Never commit local `smoke-005` to `smoke-017` receipts, raw provider text, Gemini keys or private scorer expectations. Keep Free-tier key only in the owner's temporary PowerShell environment; no automatic retry or batch calls. All existing main PR/#98/Stable gates remain unchanged.
+
+
+## Execution-ready one-case A/B launcher (separate from original baseline)
+
+After exact PR102 source tests, Windows Assurance, and Codex review, an **owner-only**
+`evals/experiments/run_gemini_schema_smoke.py` launcher is available in this
+separate candidate branch. It is **never started by CI**. It requires three
+explicit flags, a clean adapter checkout, exact clean frozen PR98 checkout,
+and a **new** output folder not under either Git checkout.
+
+For a single **first exploratory** paired case (`TLR-003`, original FAIL on missing
+`op`) after checking your project's Free-tier quota:
+
+```powershell
+cd "$env:userprofile\desktop\erei-core13-schema-experiment"
+git status --short
+python -m unittest evals.tests.test_gemini_core13_schema_candidate evals.tests.test_run_gemini_schema_smoke -v
+python -m evals.experiments.gemini_core13_schema_candidate --target-root "$env:userprofile\desktop\erei-core13-target" --case-id TLR-003-VERIFICATION-ESCAPE --model gemini-3.5-flash-lite
+python -m evals.experiments.run_gemini_schema_smoke --model gemini-3.5-flash-lite --target-root "$env:userprofile\desktop\erei-core13-target" --case-id TLR-003-VERIFICATION-ESCAPE --output-dir "$env:userprofile\desktop\erei-core13-evidence\schema-001" --timeout 90 --live --confirm-free-tier --confirm-experimental-schema
+```
+
+The new evidence folder is deliberately `schema-001`, **not** `smoke-007`;
+original baseline is never modified. The one POST changes only
+`generationConfig.responseJsonSchema`; the strict original parser and frozen
+Git-blob scorer are used afterwards. A `400 INVALID_ARGUMENT` or provider
+timeout is recorded as an **experiment request failure, not a Core behavioral
+FAIL**; the launcher performs **zero automatic retries**. The launcher prints
+only safe status/model/usage fields; model text and opaque signatures remain on
+owner's local drive. Keys must remain only in that PowerShell session's
+`GEMINI_API_KEY` process environment; do not send to GitHub or chat.
+
+One observed exploratory paired PASS would show compatibility for one example,
+**not** establish statistical uplift or independently accepted Stable readiness.
+Semantic failure cases (`TLR-007`, `CCA-006`) require separate semantic
+interventions and must never be pre-answered in this experiment schema.
