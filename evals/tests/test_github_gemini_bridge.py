@@ -273,6 +273,97 @@ class Core13PrivateBridgeTests(unittest.TestCase):
                 "https://example.com/steal-this-token",
             )
 
+    def test_windows_crlf_checkout_accepted_but_other_changes_rejected(self):
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            for rel in bridge.PINNED_EXECUTABLE_FILES:
+                target = root / rel
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes(b"first\r\nsecond\r\n")
+            def fake_git(args, **kwargs):
+                if "status" in args:
+                    return subprocess.CompletedProcess(args, 0, stdout=b"", stderr=b"")
+                if "show" in args:
+                    return subprocess.CompletedProcess(
+                        args, 0, stdout=b"first\nsecond\n", stderr=b"",
+                    )
+                self.fail("unexpected git argument")
+            with mock.patch.object(bridge.subprocess, "run", side_effect=fake_git):
+                bridge.validate_adapter_bytes(root)
+            (root / bridge.PINNED_EXECUTABLE_FILES[0]).write_bytes(
+                b"first\r\nchanged\r\n"
+            )
+            with mock.patch.object(bridge.subprocess, "run", side_effect=fake_git):
+                with self.assertRaises(bridge.BridgeError):
+                    bridge.validate_adapter_bytes(root)
+
+    def test_healthcheck_reports_fixed_failure_stage_without_exposing_secrets(self):
+        import contextlib
+        import io
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            file = root / "config.json"
+            file.write_text(json.dumps(config(root)), encoding="utf-8")
+            for stage, gh_error, expected_code in [
+                ("queue", bridge.BridgeError("GitHub API refused request HTTP_403"),
+                 "GitHub API refused request HTTP_403"),
+                ("queue", bridge.BridgeError("MOCK_GITHUB_SECRET_UNEXPECTED"),
+                 "OTHER"),
+            ]:
+                with self.subTest(stage=stage, error=expected_code):
+                    fake_gh = mock.Mock()
+                    fake_gh.private_queue_check.side_effect = gh_error
+                    stderr = io.StringIO()
+                    with (
+                        mock.patch.object(bridge, "GitHubClient", return_value=fake_gh),
+                        mock.patch.object(bridge, "exact_git_head") as head,
+                        mock.patch.dict(os.environ, {
+                            "EREI_BRIDGE_GITHUB_TOKEN": "DO_NOT_PRINT_GH_KEY",
+                            "GEMINI_API_KEY": "DO_NOT_PRINT_GEMINI_KEY",
+                        }),
+                        contextlib.redirect_stderr(stderr),
+                    ):
+                        status = bridge.main([
+                            "--config", str(file), "--healthcheck",
+                        ])
+                    self.assertEqual(status, 2)
+                    output = json.loads(stderr.getvalue())
+                    self.assertEqual(output["stage"], "PRIVATE_GITHUB_QUEUE")
+                    self.assertEqual(output["reason"], expected_code)
+                    self.assertEqual(output["model_calls"], 0)
+                    self.assertNotIn("DO_NOT_PRINT_", stderr.getvalue())
+                    self.assertNotIn("MOCK_GITHUB_SECRET", stderr.getvalue())
+                    head.assert_not_called()
+
+    def test_local_source_sha_failure_is_disclosed_only_as_fixed_category(self):
+        import contextlib
+        import io
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            config_file = root / "config.json"
+            config_file.write_text(json.dumps(config(root)), encoding="utf-8")
+            stderr = io.StringIO()
+            fake_gh = mock.Mock()
+            with (
+                mock.patch.object(bridge, "GitHubClient", return_value=fake_gh),
+                mock.patch.object(bridge, "exact_git_head", side_effect=(
+                    bridge.BridgeError("source checkout SHA differs from pinned reviewed code")
+                )),
+                mock.patch.dict(os.environ, {
+                    "EREI_BRIDGE_GITHUB_TOKEN": "DO_NOT_PRINT_GH_KEY"
+                }),
+                contextlib.redirect_stderr(stderr),
+            ):
+                code = bridge.main(["--config", str(config_file), "--healthcheck"])
+            self.assertEqual(code, 2)
+            record = json.loads(stderr.getvalue())
+            self.assertEqual(record["stage"], "PINNED_ADAPTER_SHA")
+            self.assertEqual(
+                record["reason"], "source checkout SHA differs from pinned reviewed code"
+            )
+            self.assertNotIn("DO_NOT_PRINT_", stderr.getvalue())
+            fake_gh.private_queue_check.assert_called_once()
+
     def test_safe_verdict_never_exports_prompt_or_raw_response(self):
         with tempfile.TemporaryDirectory() as d:
             folder = Path(d)
