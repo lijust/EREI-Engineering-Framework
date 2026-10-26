@@ -92,6 +92,29 @@ class ReceiptDiagnosisTests(unittest.TestCase):
                 self.assertNotIn("wrong-private-contract", public)
                 self.assertEqual(result["network_requests"], 0)
 
+    def test_signed_text_part_advances_to_strict_json_without_inferred_pass(self):
+        with tempfile.TemporaryDirectory() as folder:
+            d = Path(folder)
+            provider = json.loads(raw_response())
+            provider["candidates"][0]["content"]["parts"][0][
+                "thoughtSignature"] = "opaque-synthetic-signature"
+            write_receipt(d, json.dumps(provider).encode("utf-8"))
+            result = diag.diagnose(d)
+            self.assertEqual(result["classification"],
+                             "MODEL_SHAPE_VALID_BUT_PRIOR_SCORING_EXCEPTION")
+            self.assertTrue(result["raw_sha256_verified"])
+            self.assertFalse(result["behavioral_pass_inferred"])
+            self.assertEqual(result["model_calls"], 0)
+        for malformed in ("", 99):
+            with self.subTest(value=malformed), tempfile.TemporaryDirectory() as folder:
+                d = Path(folder)
+                provider = json.loads(raw_response())
+                provider["candidates"][0]["content"]["parts"][0][
+                    "thoughtSignature"] = malformed
+                write_receipt(d, json.dumps(provider).encode("utf-8"))
+                self.assertEqual(diag.diagnose(d)["classification"],
+                                 "PART_TYPE_OR_SHAPE_INVALID")
+
     def test_bad_finish_and_malformed_parts_do_not_claim_behavioral_fail(self):
         with tempfile.TemporaryDirectory() as folder:
             d = Path(folder)
