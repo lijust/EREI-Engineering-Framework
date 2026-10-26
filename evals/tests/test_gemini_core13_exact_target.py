@@ -293,6 +293,37 @@ class GeminiCore13AdapterTests(unittest.TestCase):
         self.assertEqual(result["output"]["decision"], "omit_task")
         self.assertNotIn("trace", result)
 
+    def test_gemini_text_thought_signature_is_metadata_not_extra_output(self):
+        payload = json.loads(good_response())
+        part = payload["candidates"][0]["content"]["parts"][0]
+        part["thoughtSignature"] = "opaque-synthetic-signature"
+        raw = json.dumps(payload).encode("utf-8")
+        normalized = gemini.parse_gemini_result(raw)
+        self.assertEqual(normalized["output"]["contract"], "erei-action-simulation-v1")
+        self.assertEqual(normalized["output"]["decision"], "omit_task")
+        self.assertNotIn("thoughtSignature", normalized)
+
+        # Never make a provider signature an excuse to accept unexpected
+        # output, hidden thoughts, tool calls, empty signatures or bad JSON.
+        for wrong in (
+            {"thoughtSignature": ""},
+            {"thoughtSignature": 123},
+            {"thoughtSignature": "sig", "thought": True},
+            {"thoughtSignature": "sig", "functionCall": {"name": "tool"}},
+            {"thoughtSignature": "sig", "unreviewed": "metadata"},
+        ):
+            with self.subTest(fields=wrong):
+                sample = json.loads(good_response())
+                sample["candidates"][0]["content"]["parts"][0].update(wrong)
+                with self.assertRaises(gemini.GeminiAdapterError):
+                    gemini.parse_gemini_result(json.dumps(sample).encode("utf-8"))
+
+        sample = json.loads(good_response())
+        sample["candidates"][0]["content"]["parts"][0]["text"] = "not-json"
+        sample["candidates"][0]["content"]["parts"][0]["thoughtSignature"] = "sig"
+        with self.assertRaises(gemini.GeminiAdapterError):
+            gemini.parse_gemini_result(json.dumps(sample).encode("utf-8"))
+
     def test_bad_model_response_never_counts(self):
         baseline = json.loads(good_response())
         samples = [
