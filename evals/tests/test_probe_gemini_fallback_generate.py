@@ -44,6 +44,64 @@ class FallbackProbeTests(unittest.TestCase):
             self.assertEqual(report["counted_core_cases"], 0)
             self.assertFalse(report["stable_ready"])
 
+    def test_tiny_public_prompt_under_exact_core_config_one_call_not_core(self):
+        for model in target.ALLOWED_DIAGNOSTIC_MODELS:
+            with self.subTest(model=model):
+                response = {
+                    "modelVersion": model,
+                    "usageMetadata": {
+                        "promptTokenCount": 18, "candidatesTokenCount": 9,
+                        "totalTokenCount": 48,
+                    },
+                    "candidates": [{
+                        "finishReason": "STOP",
+                        "content": {"parts": [{"text": '{"status":"READY"}'}]},
+                    }],
+                }
+                client = mock.Mock()
+                client.open.return_value = Answer(json.dumps(response).encode())
+                result = target.probe(
+                    model=model, key="dummy-not-real", opener=client,
+                    core_config_diagnostic=True,
+                )
+                client.open.assert_called_once()
+                req = client.open.call_args.args[0]
+                body = json.loads(req.data)
+                self.assertEqual(req.get_method(), "POST")
+                self.assertEqual(body["generationConfig"], {
+                    "responseMimeType": "application/json",
+                    "maxOutputTokens": 4096,
+                    "thinkingConfig": {"thinkingLevel": "low"},
+                })
+                self.assertNotIn("tools", body)
+                self.assertEqual(
+                    body["contents"][0]["parts"][0]["text"],
+                    'Respond ONLY with this JSON object: {"status":"READY"}',
+                )
+                self.assertNotIn("skills/", json.dumps(body))
+                self.assertTrue(result["core_config_diagnostic"])
+                self.assertTrue(result["returned_ready"])
+                self.assertEqual(result["counted_core_cases"], 0)
+                self.assertFalse(result["stable_ready"])
+                self.assertEqual(result["usage_metadata"]["totalTokenCount"], 48)
+
+    def test_core_config_503_is_diagnostic_only_with_no_retry_or_secret(self):
+        client = mock.Mock()
+        client.open.side_effect = urllib.error.HTTPError(
+            target.ALLOWED_DIAGNOSTIC_MODELS[0], 503,
+            "key secret-must-never-print", {},
+            io.BytesIO(b'{"message":"private secret"}'),
+        )
+        result = target.probe(
+            model="gemini-3.6-flash", key="secret-must-never-print",
+            opener=client, core_config_diagnostic=True,
+        )
+        client.open.assert_called_once()
+        self.assertEqual(result["http_status"], 503)
+        self.assertEqual(result["counted_core_cases"], 0)
+        self.assertNotIn("secret", json.dumps(result))
+        self.assertNotIn("private", json.dumps(result))
+
     def test_503_429_403_never_echo_provider_or_secret(self):
         for code in (503, 429, 403):
             opener = mock.Mock()
