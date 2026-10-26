@@ -114,7 +114,15 @@ def diagnose(directory: Path) -> dict:
     if not isinstance(parts, list) or len(parts) != 1:
         return _result("PART_COUNT_INVALID", **identity)
     part = parts[0]
-    if not isinstance(part, dict) or set(part) != {"text"}:
+    if not isinstance(part, dict):
+        return _result("PART_TYPE_OR_SHAPE_INVALID", **identity)
+    keys = set(part)
+    if keys not in ({"text"}, {"text", "thoughtSignature"}):
+        return _result("PART_TYPE_OR_SHAPE_INVALID", **identity)
+    if "thoughtSignature" in part and (
+        not isinstance(part["thoughtSignature"], str)
+        or not part["thoughtSignature"]
+    ):
         return _result("PART_TYPE_OR_SHAPE_INVALID", **identity)
     text = part.get("text")
     if not isinstance(text, str):
