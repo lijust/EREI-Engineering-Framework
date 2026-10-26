@@ -161,6 +161,24 @@ This call (if performed) can yield a true raw provider response and a **local sc
 
 ---
 
+## 26 October 2026 — FIRST full-size Gemini 3.5 Flash-Lite response captured, but STRICT parser rejected it
+
+Owner executed **exact frozen TLR-001**, unmodified 18,832-byte public Framework prompt, `gemini-3.5-flash-lite`, clean adapter revision `95ab65b64aced88f9be09297e5908eb032fc5c36`, and local immutable `smoke-005`. Unlike Gemini 3.6 full-size POSTs returning HTTP503, **Gemini 3.5 Flash-Lite returned a real provider envelope**, with matching provider model ID and `usageMetadata`: **4,243 prompt tokens, 118 candidate tokens, 4,361 total tokens**. The exact scorer did **not** accept a model output: `status=MODEL_RESPONSE_INVALID_UNVERIFIED`, `pass=false`, `independently_accepted=false`. This means **the output failed the strict provider/typed simulation contract before behavior scoring**; it is NOT evidence that the Framework's TLR-001 behavioral decision was wrong or right. Accepted Core remains **0/13**. The original `provider-raw.json` is locally preserved and **must not be pasted into chat or GitHub**, nor erased/retried.
+
+**Immediate non-API next step:** the source now contains `evals/diagnose_gemini_core_receipt.py`, a **read-only local fixed-category** diagnostic of `smoke-005`. It checks the original receipt SHA256, requested/provider model, candidate count, `finishReason`, part layout, strict JSON, simulation contract and risk metadata. It prints **only safe classification, byte length and integrity flags**, not prompt, token/key or model-generated text. It never changes the original verdict, scores, raw bytes or Framework. Use after checkout of **exact-head CI-green** PR101 revision:
+
+```powershell
+cd "$env:userprofile\desktop\erei-core13-adapter"
+git fetch origin pull/101/head
+git checkout --detach <LATEST_EXACT_CI_GREEN_PR101_SHA>
+git status --short
+python -m evals.diagnose_gemini_core_receipt --evidence-dir "$env:userprofile\desktop\erei-core13-evidence\smoke-005"
+```
+
+Share just the printed classification line, not any file. This read of existing evidence incurs **zero Gemini requests or tokens**. Based on actual classification, decide whether format/schema post-processing is possible **without weakening the frozen scorer or inventing a PASS**. Any future live request is a separate owner decision with new immutable directory, not automatic. Distinguish observed full-sized successful provider response from *accepted Core behavior* and from Stable readiness.
+
+---
+
 ## Exactly one genuine Core case: owner-operated LOCAL smoke
 
 **Never run on a GitHub hosted runner and NEVER paste a key in GitHub, ChatGPT or a command line.** The script `evals/run_gemini_core_smoke.py` prompts invisibly with Python `getpass` if `GEMINI_API_KEY` is unset. No key value is persisted. Malformed keys/HTTP header exceptions are **redacted before logging** (a prior Codex P1), including the case of a trailing newline. The owner must first verify in Google AI Studio that **the actual key** is part of **EREI Gemini (Free tier)**; an account screenshot by itself is not proof that every key belongs to that project.
