@@ -165,7 +165,11 @@ def validate_adapter_bytes(root: Path) -> None:
                 stdin=subprocess.DEVNULL, capture_output=True, check=True,
                 timeout=10, env=env,
             ).stdout
-            if path.read_bytes() != committed:
+            on_disk = path.read_bytes()
+            # Git's Windows autocrlf checkout can convert LF in the stored
+            # immutable blob to CRLF without changing Python program logic.
+            # Allow only this exact, reversible line-ending normalization.
+            if on_disk != committed and on_disk.replace(b"\r\n", b"\n") != committed:
                 raise BridgeError("adapter source bytes differ from reviewed SHA")
         except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
             raise BridgeError("adapter source Git blob unavailable") from None
@@ -239,9 +243,14 @@ class GitHubClient:
         try:
             with urllib.request.build_opener(RejectRedirect()).open(req, timeout=20) as rsp:
                 body = rsp.read(2_000_001)
-        except (urllib.error.HTTPError, urllib.error.URLError, OSError, ValueError, BridgeError):
-            # Never render original HTTP exceptions: GitHub authorization and
-            # upstream messages can include private tokens or request bodies.
+        except urllib.error.HTTPError as exc:
+            # Only fixed HTTP status codes. Never include provider reason,
+            # response headers, URL query, or body (which may echo secrets).
+            status = exc.code if exc.code in (401, 403, 404, 429) else 0
+            raise BridgeError(
+                "GitHub API refused request HTTP_" + str(status)
+            ) from None
+        except (urllib.error.URLError, OSError, ValueError, BridgeError):
             raise BridgeError("GitHub API request failed") from None
         if len(body) > 2_000_000:
             raise BridgeError("GitHub response too large")
@@ -447,15 +456,21 @@ def main(argv=None) -> int:
     parser.add_argument("--healthcheck", action="store_true",
                         help="read-only repo/privacy/source checks, no model call")
     args = parser.parse_args(argv)
+    stage = "CONFIG"
     try:
         config = validate_config(strict_json(args.config.read_bytes()))
+        stage = "LOCAL_GITHUB_CREDENTIAL"
         token = os.environ.get("EREI_BRIDGE_GITHUB_TOKEN", "")
         if not os.environ.get("GEMINI_API_KEY") and not args.healthcheck:
             raise BridgeError("Gemini key unavailable on local machine")
         gh = GitHubClient(config["queue_repo"], token)
+        stage = "PRIVATE_GITHUB_QUEUE"
         gh.private_queue_check()
+        stage = "PINNED_ADAPTER_SHA"
         exact_git_head(Path(config["adapter_root"]), ADAPTER_SHA)
+        stage = "PINNED_ADAPTER_BYTES"
         validate_adapter_bytes(Path(config["adapter_root"]))
+        stage = "FROZEN_TARGET_SHA"
         exact_git_head(Path(config["target_root"]), TARGET_SHA)
         if args.healthcheck:
             print(json.dumps({
@@ -475,8 +490,53 @@ def main(argv=None) -> int:
                 # Generic operational issues never print tokens or raw data.
                 print("EREI_BRIDGE_POLL_BLOCKED", file=sys.stderr)
             time.sleep(config["poll_seconds"])
-    except (BridgeError, OSError, ValueError, sqlite3.Error):
-        print("EREI_BRIDGE_CONFIGURATION_OR_CONNECTION_BLOCKED", file=sys.stderr)
+    except (BridgeError, OSError, ValueError, sqlite3.Error) as exc:
+        # Emit only static stage and allowlisted cause. No API key, provider
+        # text, payload, local paths or raw GitHub response is ever printed.
+        diagnostic = {
+            "status": "EREI_BRIDGE_CONFIGURATION_OR_CONNECTION_BLOCKED",
+            "stage": stage if stage in (
+                "CONFIG", "LOCAL_GITHUB_CREDENTIAL", "PRIVATE_GITHUB_QUEUE",
+                "PINNED_ADAPTER_SHA", "PINNED_ADAPTER_BYTES",
+                "FROZEN_TARGET_SHA",
+            ) else "OTHER",
+            "reason": (
+                str(exc)
+                if isinstance(exc, BridgeError) and str(exc) in (
+                    "invalid bridge config keys",
+                    "invalid bridge config version/status",
+                    "queue repository must be an approved owner's private repository",
+                    "daily limit must be between 1 and 10",
+                    "poll seconds must be between 30 and 3600",
+                    "invalid absolute local path",
+                    "bridge evidence/state cannot equal code checkout",
+                    "state/evidence cannot live under code checkout",
+                    "invalid local GitHub token",
+                    "GitHub API refused request HTTP_0",
+                    "GitHub API refused request HTTP_401",
+                    "GitHub API refused request HTTP_403",
+                    "GitHub API refused request HTTP_404",
+                    "GitHub API refused request HTTP_429",
+                    "GitHub API request failed",
+                    "GitHub response too large",
+                    "GitHub response format invalid",
+                    "queue repository must be PRIVATE; refuse all requests",
+                    "queue repository identity mismatch",
+                    "queue GitHub issues must be enabled",
+                    "missing or symlinked local source worktree",
+                    "source checkout identity unavailable",
+                    "source checkout SHA differs from pinned reviewed code",
+                    "adapter worktree verification failed",
+                    "adapter worktree must be clean",
+                    "adapter module missing or linked",
+                    "adapter source bytes differ from reviewed SHA",
+                    "adapter source Git blob unavailable",
+                    "Gemini key unavailable on local machine",
+                ) else "OTHER"
+            ),
+            "model_calls": 0 if args.healthcheck else None,
+        }
+        print(json.dumps(diagnostic, sort_keys=True), file=sys.stderr)
         return 2
 
 
