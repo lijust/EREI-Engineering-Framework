@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import getpass
+import http.client
 import json
 import os
 import sys
@@ -19,7 +20,7 @@ from pathlib import Path
 
 from evals.adapters import gemini_core13_exact_target as gemini
 from evals import run_gemini_core_smoke as smoke
-from evals.experiments import gemini_core13_schema_candidate as candidate
+from evals.experiments import gemini_core13_schema_compact_v2 as candidate
 
 
 def generate_candidate_raw_once(prompt: str, *, key: str, model: str, timeout: float) -> tuple[bytes, bytes]:
@@ -47,11 +48,39 @@ def generate_candidate_raw_once(prompt: str, *, key: str, model: str, timeout: f
         ) as response:
             raw = response.read(gemini.MAX_RESPONSE_BYTES + 1)
     except urllib.error.HTTPError as exc:
+        # Keep the provider body SECRET (it can reflect prompt or credentials).
+        # Classify only a few literal, allow-listed provider diagnostics.
+        # No logging of arbitrary provider message, raw JSON or other fields.
+        classification = "CANDIDATE_HTTP_ERROR"
+        if exc.code == 400:
+            try:
+                error_body = exc.read(8193)
+                if len(error_body) <= 8192:
+                    envelope = json.loads(error_body)
+                    error = envelope.get("error", {}) if isinstance(envelope, dict) else {}
+                    message = error.get("message", "") if isinstance(error, dict) else ""
+                    message = message.lower() if isinstance(message, str) else ""
+                    if any(token in message for token in (
+                        "too many states", "schema is too complex",
+                        "too many possible states", "constraint with too many",
+                        "schema complexity",
+                    )):
+                        classification = "CANDIDATE_HTTP_400_SCHEMA_COMPLEXITY"
+                    elif ("unknown name" in message or "unknown field" in message) and (
+                        "responsejsonschema" in message or "additionalproperties" in message
+                    ):
+                        classification = "CANDIDATE_HTTP_400_SCHEMA_FIELD_UNSUPPORTED"
+            except Exception:
+                # Diagnostic-only parsing is optional. Protocol truncation
+                # (http.client.IncompleteRead), mocked/malformed body readers,
+                # and *any* normal read exception must never escape with
+                # provider-controlled HTTPError context into a traceback.
+                pass
         raise gemini.GeminiAdapterError(
-            "provider returned HTTP error; body redacted",
-            safe_code="CANDIDATE_HTTP_ERROR", http_status=int(exc.code)
+            "provider HTTP failure; full diagnostic/body redacted",
+            safe_code=classification, http_status=int(exc.code),
         ) from None
-    except (OSError, urllib.error.URLError, ValueError, gemini.GeminiAdapterError):
+    except (OSError, urllib.error.URLError, ValueError, http.client.HTTPException, gemini.GeminiAdapterError):
         raise gemini.GeminiAdapterError(
             "candidate transport rejected; no retry", safe_code="CANDIDATE_TRANSPORT_ERROR"
         ) from None
@@ -78,7 +107,7 @@ def record_candidate(prepared: dict, output: Path, *, key: str, model: str,
     verdict = {
         "schema_version": 1,
         "evidence_kind": "observed_experimental_unverified",
-        "experiment": "core13_native_response_json_schema_v1",
+        "experiment": candidate.EXPERIMENT,
         "experimental_schema": True,
         "independently_accepted": False,
         "stable_ready": False,
@@ -181,7 +210,7 @@ def main(argv=None) -> int:
             "schema_version": 1,
             "kind": "CORE13_EXPERIMENT_REQUEST_PROVENANCE",
             "evidence_kind": "observed_experimental_unverified",
-            "experiment": "core13_native_response_json_schema_v1",
+            "experiment": candidate.EXPERIMENT,
             "source_head": gemini.EXPECTED_TARGET_HEAD,
             "source_tree": gemini.EXPECTED_TARGET_TREE,
             "adapter_source_revision": prepared["adapter_source"]["adapter_source_revision"],
@@ -219,7 +248,7 @@ def main(argv=None) -> int:
                 "status": "EXPERIMENTAL_MODEL_REQUEST_FAILED_NOT_SCORED",
                 "case_id": a.case_id,
                 "model_requested": a.model,
-                "experiment": "core13_native_response_json_schema_v1",
+                "experiment": candidate.EXPERIMENT,
                 "reason_category": exc.safe_code,
                 "provider_http_status": exc.http_status,
                 "stable_ready": False,
@@ -236,7 +265,7 @@ def main(argv=None) -> int:
             "model_requested": a.model,
             "provider_model_version": verdict.get("provider_model_version"),
             "usage_metadata": verdict.get("usage_metadata"),
-            "experiment": "core13_native_response_json_schema_v1",
+            "experiment": candidate.EXPERIMENT,
             "evidence_dir": str(output),
             "independently_accepted": False,
             "stable_ready": False,
