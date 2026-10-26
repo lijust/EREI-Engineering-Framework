@@ -101,8 +101,46 @@ class GeminiCore13AdapterTests(unittest.TestCase):
         self.assertNotIn("test-key", req.data.decode("utf-8"))
         self.assertNotIn("tools", json.loads(req.data))
 
+    def test_35_flash_lite_is_stable_full_core_runtime_not_unpinned_alias(self):
+        stable = "gemini-3.5-flash-lite"
+        self.assertEqual(
+            gemini.model_endpoint(stable),
+            "https://generativelanguage.googleapis.com/v1beta/models/"
+            "gemini-3.5-flash-lite:generateContent"
+        )
+        class Response:
+            def __enter__(self):
+                return self
+            def __exit__(self, *_):
+                return False
+            def read(self, bound):
+                return good_response()
+        opener = mock.Mock()
+        opener.open.return_value = Response()
+        with mock.patch.object(gemini.urllib.request, "build_opener",
+                               return_value=opener):
+            returned = gemini.generate_raw_once(
+                "frozen synthetic public Core only", key="mock-only",
+                timeout=60, model=stable
+            )
+        self.assertEqual(returned, good_response())
+        opener.open.assert_called_once()
+        req = opener.open.call_args.args[0]
+        self.assertEqual(req.full_url, gemini.model_endpoint(stable))
+        self.assertEqual(
+            req.data,
+            gemini.build_generation_body(
+                "frozen synthetic public Core only", model=stable
+            )
+        )
+        cfg = json.loads(req.data)["generationConfig"]
+        self.assertEqual(cfg["responseMimeType"], "application/json")
+        self.assertEqual(cfg["maxOutputTokens"], 4096)
+        self.assertEqual(cfg["thinkingConfig"], {"thinkingLevel": "low"})
+        self.assertNotIn("tools", json.loads(req.data))
+
     def test_model_alias_or_unapproved_model_rejected_before_any_api_call(self):
-        for model in ("gemini-latest", "gemini-3.5-flash-lite", "gemini-3.6-flash-preview", ""):
+        for model in ("gemini-latest", "gemini-3.5-flash", "gemini-3.6-flash-preview", ""):
             with self.subTest(model=model):
                 with mock.patch.object(gemini.urllib.request, "build_opener") as client:
                     with self.assertRaisesRegex(gemini.GeminiAdapterError, "unapproved"):
