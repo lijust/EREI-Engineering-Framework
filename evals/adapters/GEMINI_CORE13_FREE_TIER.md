@@ -217,3 +217,26 @@ If the one call returns, output is retained *locally* under `erei-core13-evidenc
 An actual response **may** fail scoring; this is still an authentic observed attempt, not a pass. A passing local response is an **unverified first model receipt** requiring later independent evidence review, not `Stable` or automatically admitted Core 13. There is no durable signed remote artifact authority in the smoke. **Do not send the API key or private raw response in chat.** Share only the sanitized command summary (case_id, pass, model_version, usage_metadata and status) to plan the next bounded cases.
 
 **Current gate until the owner invokes this command:** `ADAPTER_OFFLINE_VALIDATION_ONLY`; `CORE_ACTUAL_MODEL_EVIDENCE=0/13`. No Copilot workflow reactivation, no new billing account and no EREI/SAE-DB private data needed.
+
+
+---
+
+## 2026-10-26 — Actual smoke-005 root cause and NO-API offline replay
+
+Owner's preserved Gemini 3.5 Flash-Lite response passed the raw SHA256 and provider model checks. Exact local field-shape inspection found **one text part with two keys**: `text` and `thoughtSignature`; no function call, inline data, or unknown fields. The old parser rejected the normal Gemini metadata field by requiring `set(part)=={"text"}`. Official Google GenerateContent `Part` schema makes `thoughtSignature` an optional opaque signature, not visible reasoning or an alternative response payload.
+
+PR101 now accepts **only** `{"text"}` or `{"text","thoughtSignature"}`, requiring nonempty string signature when present. It still rejects tool calls, thought parts, any extra fields, malformed signatures, non-JSON/invalid `erei-action-simulation-v1` responses and scorer failures. `evals/diagnose_gemini_core_receipt.py` uses the same part-shape condition. No existing receipt is changed.
+
+After confirming the **exact new PR101 commit passes both CI workflows**, on the owner's existing clean Windows checkouts:
+
+```powershell
+cd "$env:userprofile\desktop\erei-core13-adapter"
+git fetch origin pull/101/head
+git checkout --detach <EXACT_CI_GREEN_PR101_SHA>
+git status --short
+python -m unittest evals.tests.test_gemini_core13_exact_target evals.tests.test_diagnose_gemini_core_receipt evals.tests.test_replay_gemini_core_receipt -v
+python -m evals.diagnose_gemini_core_receipt --evidence-dir "$env:userprofile\desktop\erei-core13-evidence\smoke-005"
+python -m evals.replay_gemini_core_receipt --evidence-dir "$env:userprofile\desktop\erei-core13-evidence\smoke-005" --target-root "$env:userprofile\desktop\erei-core13-target"
+```
+
+The replay reads `provider-raw.json`, `verdict.json`, and `blind-request.json`, checks their original hashes and frozen `source_head/tree`/model/request/case/prompt identity, then uses the unchanged PR98 suite/scorer **loaded from immutable Git blobs**, not worktree or PYCs. It prints only safe boolean counts/status and NEVER prints model text, thought signature, private scorer criteria or API credentials. It performs **zero GET/POST, zero model requests, zero evidence writes**. A scored behavioral PASS/FAIL from this replay is **observed and unverified**, not an independently accepted Core13 case. Full Core acceptance remains 0/13 until a separate review decision; Stable remains blocked.
