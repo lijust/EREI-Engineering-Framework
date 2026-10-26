@@ -228,3 +228,29 @@ Both were addressed in the subsequent PR106 head:
 Do not enable automatic Gemini issue execution from an older checkout,
 even when its healthcheck succeeds. Security source review/CI and exact
 pinned commit matching remain necessary.
+
+## Codex PR106 final review — bounded queue and local PAT rollover
+
+The latest Codex review completed and identified two P2 operational defects:
+a stopped/stale broker retaining its old PAT after a new-process healthcheck,
+and queue starvation caused by only reading the oldest 30 labeled Issues.
+
+- The worker now scans up to 20 pages of 100 GitHub Issues each, oldest
+  first, then reports a controlled queue-depth error rather than silently
+  pretending that no newer jobs exist. Invalid/previously-claimed Issues
+  can no longer block valid Issue #31 onward under normal queue loads.
+- `rotate-github-token.ps1` explicitly prints
+  `EXISTING_WORKER_RESTART_REQUIRED_BEFORE_OLD_PAT_REVOCATION`
+  after a successful PAT change: the running worker's bearer token is cached
+  in its memory. Complete any in-flight job and restart only the dedicated
+  **EREI - Gemini Private Bridge** scheduled task from Task Scheduler (or
+  PowerShell `Stop-ScheduledTask` followed by `Start-ScheduledTask`) before
+  revoking the previous PAT. Re-check the private queue for a subsequent
+  authorized request; the read-only healthcheck alone does not prove that
+  the old worker has loaded the new token.
+- Existing owner credentials, claim journal, evidence, and daily budget must
+  not be reset by this upgrade.
+
+A code review completes *with findings* and is not approval until those
+findings are separately fixed and verified. Do not represent PR106's
+existing E2E synthetic TLR-002 PASS as Stable admission.
