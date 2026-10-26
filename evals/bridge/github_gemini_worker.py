@@ -131,6 +131,46 @@ def exact_git_head(root: Path, expected: str) -> None:
         raise BridgeError("source checkout SHA differs from pinned reviewed code")
 
 
+# Every Python file that can construct/send the Gemini request or score it is
+# pinned to immutable Git bytes, not just Git's potentially fooled status.
+PINNED_EXECUTABLE_FILES = (
+    "evals/experiments/run_gemini_schema_smoke.py",
+    "evals/experiments/gemini_core13_schema_compact_v2.py",
+    "evals/adapters/gemini_core13_exact_target.py",
+    "evals/adapters/copilot_cli_exact_target.py",
+    "evals/run_gemini_core_smoke.py",
+)
+
+
+def validate_adapter_bytes(root: Path) -> None:
+    env = {k: v for k, v in os.environ.items() if not k.upper().startswith("GIT_")}
+    try:
+        dirty = subprocess.run(
+            ["git", "-C", str(root), "status", "--porcelain", "--untracked-files=all"],
+            stdin=subprocess.DEVNULL, capture_output=True, check=True,
+            timeout=10, env=env,
+        ).stdout
+    except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
+        raise BridgeError("adapter worktree verification failed") from None
+    if dirty:
+        raise BridgeError("adapter worktree must be clean")
+    for rel in PINNED_EXECUTABLE_FILES:
+        path = root / rel
+        if path.is_symlink() or not path.is_file():
+            raise BridgeError("adapter module missing or linked")
+        try:
+            committed = subprocess.run(
+                ["git", "--no-replace-objects", "-C", str(root),
+                 "show", ADAPTER_SHA + ":" + rel],
+                stdin=subprocess.DEVNULL, capture_output=True, check=True,
+                timeout=10, env=env,
+            ).stdout
+            if path.read_bytes() != committed:
+                raise BridgeError("adapter source bytes differ from reviewed SHA")
+        except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
+            raise BridgeError("adapter source Git blob unavailable") from None
+
+
 def parse_job(issue: dict, owner: str) -> dict | None:
     """Strictly no commands, URLs, custom models, freeform prompts, or scripts."""
     if not isinstance(issue, dict) or "pull_request" in issue:
@@ -321,6 +361,7 @@ def execute_local(config: dict, issue: int, case_id: str) -> str:
     adapter = Path(config["adapter_root"]).resolve()
     target = Path(config["target_root"]).resolve()
     exact_git_head(adapter, ADAPTER_SHA)
+    validate_adapter_bytes(adapter)
     exact_git_head(target, TARGET_SHA)
     folder = Path(config["evidence_root"]).resolve() / f"github-issue-{issue:07d}"
     if folder.exists():
@@ -414,6 +455,7 @@ def main(argv=None) -> int:
         gh = GitHubClient(config["queue_repo"], token)
         gh.private_queue_check()
         exact_git_head(Path(config["adapter_root"]), ADAPTER_SHA)
+        validate_adapter_bytes(Path(config["adapter_root"]))
         exact_git_head(Path(config["target_root"]), TARGET_SHA)
         if args.healthcheck:
             print(json.dumps({
