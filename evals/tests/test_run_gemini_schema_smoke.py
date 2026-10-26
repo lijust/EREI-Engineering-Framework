@@ -143,6 +143,44 @@ class GeminiSchemaLiveIsolationTests(unittest.TestCase):
         self.assertNotIn("PRIVATE_KEY_SHOULD_NOT_ESCAPE", str(caught.exception))
         opener.open.assert_called_once()
 
+    def test_schema_400_error_classification_is_fixed_and_never_echoes_body(self):
+        import io
+        samples = [
+            ("Schema produces a constraint with too many states PRIVATE_KEY_SHOULD_NOT_ESCAPE",
+             "CANDIDATE_HTTP_400_SCHEMA_COMPLEXITY"),
+            ("Unknown name 'responseJsonSchema' at generationConfig; PRIVATE_KEY_SHOULD_NOT_ESCAPE",
+             "CANDIDATE_HTTP_400_SCHEMA_FIELD_UNSUPPORTED"),
+            ("PRIVATE_KEY_SHOULD_NOT_ESCAPE unrecognized error",
+             "CANDIDATE_HTTP_ERROR"),
+        ]
+        for message, expected in samples:
+            with self.subTest(expected=expected):
+                envelope = json.dumps({
+                    "error": {
+                        "code": 400,
+                        "status": "INVALID_ARGUMENT",
+                        "message": message,
+                    }
+                }).encode("utf-8")
+                opener = mock.Mock()
+                opener.open.side_effect = urllib.error.HTTPError(
+                    "https://generativelanguage.googleapis.com", 400,
+                    "Bad Request", {}, io.BytesIO(envelope),
+                )
+                with mock.patch.object(runner.urllib.request, "build_opener",
+                                       return_value=opener):
+                    with self.assertRaises(gemini.GeminiAdapterError) as caught:
+                        runner.generate_candidate_raw_once(
+                            "PUBLIC", key="mock-key", model=MODEL, timeout=90,
+                        )
+                self.assertEqual(caught.exception.safe_code, expected)
+                self.assertEqual(caught.exception.http_status, 400)
+                self.assertNotIn("PRIVATE_KEY_SHOULD_NOT_ESCAPE",
+                                 str(caught.exception))
+                self.assertNotIn("PRIVATE_KEY_SHOULD_NOT_ESCAPE",
+                                 caught.exception.safe_code)
+                opener.open.assert_called_once()
+
     def test_genuine_raw_saved_and_frozen_scorer_result_labeled_experiment_only(self):
         with tempfile.TemporaryDirectory() as root:
             folder = Path(root)
