@@ -155,7 +155,7 @@ def parse_job(issue: dict, owner: str) -> dict | None:
         return None
     if (type(job["version"]) is not int or job["version"] != BRIDGE_VERSION
             or job["kind"] != "core13_smoke"
-            or job["case_id"] not in CASES
+            or not isinstance(job["case_id"], str) or job["case_id"] not in CASES
             or job["model"] != MODEL
             or job["experiment"] != EXPERIMENT
             or type(job["max_calls"]) is not int or job["max_calls"] != 1
@@ -165,6 +165,11 @@ def parse_job(issue: dict, owner: str) -> dict | None:
     if type(number) is not int or number <= 0:
         return None
     return {"number": number, "case_id": job["case_id"]}
+
+
+class RejectRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        raise BridgeError("GitHub API redirect denied")
 
 
 class GitHubClient:
@@ -192,9 +197,9 @@ class GitHubClient:
             },
         )
         try:
-            with urllib.request.build_opener().open(req, timeout=20) as rsp:
+            with urllib.request.build_opener(RejectRedirect()).open(req, timeout=20) as rsp:
                 body = rsp.read(2_000_001)
-        except (urllib.error.HTTPError, urllib.error.URLError, OSError, ValueError):
+        except (urllib.error.HTTPError, urllib.error.URLError, OSError, ValueError, BridgeError):
             # Never render original HTTP exceptions: GitHub authorization and
             # upstream messages can include private tokens or request bodies.
             raise BridgeError("GitHub API request failed") from None
