@@ -36,7 +36,12 @@ try {
     $env:GEMINI_API_KEY = read-user-dpapi-secret $geminiPath
     Push-Location $root
     try {
-        $argsList = @("-m", "evals.bridge.github_gemini_worker", "--config", $config)
+        # Never execute untrusted __pycache__ bytecode alongside live tokens.
+        # Isolated interpreter ignores PYTHON* environment and user site;
+        # a fresh alternate pycache prefix prevents reading stale .pyc files.
+        $freshCache = Join-Path $env:TEMP ("erei-bridge-pycache-" + [Guid]::NewGuid().ToString("N"))
+        $boot = 'import runpy,sys;sys.path.insert(0,sys.argv.pop(1));runpy.run_module("evals.bridge.github_gemini_worker",run_name="__main__")'
+        $argsList = @("-I", "-B", "-X", ("pycache_prefix=" + $freshCache), "-c", $boot, $root, "--config", $config)
         if ($once) { $argsList += "--once" }
         if ($healthcheck) { $argsList += "--healthcheck" }
         & python @argsList
