@@ -10,12 +10,14 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import http.client
 import json
 import os
 import re
 import sqlite3
 import subprocess
 import sys
+import tempfile
 import time
 import urllib.error
 import urllib.parse
@@ -250,7 +252,7 @@ class GitHubClient:
             raise BridgeError(
                 "GitHub API refused request HTTP_" + str(status)
             ) from None
-        except (urllib.error.URLError, OSError, ValueError, BridgeError):
+        except (urllib.error.URLError, OSError, ValueError, http.client.HTTPException, BridgeError):
             raise BridgeError("GitHub API request failed") from None
         if len(body) > 2_000_000:
             raise BridgeError("GitHub response too large")
@@ -378,21 +380,33 @@ def execute_local(config: dict, issue: int, case_id: str) -> str:
         raise BridgeError("immutable issue receipt already exists")
     env = dict(os.environ)
     env.pop("EREI_BRIDGE_GITHUB_TOKEN", None)
-    # Gemini token remains in local child process only; never in argv.
-    cmd = [
-        sys.executable, "-m", "evals.experiments.run_gemini_schema_smoke",
-        "--model", MODEL, "--target-root", str(target),
-        "--case-id", case_id, "--output-dir", str(folder),
-        "--timeout", "90", "--live", "--confirm-free-tier",
-        "--confirm-experimental-schema",
-    ]
-    try:
-        proc = subprocess.run(
-            cmd, cwd=str(adapter), env=env, capture_output=True,
-            text=True, stdin=subprocess.DEVNULL, timeout=150, check=False,
-        )
-    except (subprocess.TimeoutExpired, OSError):
-        return json.dumps({"result": "NOT_SCORED", "reason": "LOCAL_PROCESS_ERROR"})
+    # -I ignores Python env/site-user/cwd, -B disables pyc writes, and -X
+    # pycache_prefix=<new private tempdir> prevents reading unverified
+    # checkout __pycache__ bytecode. -c bootstraps reviewed module only.
+    # API key is never in argv and no arbitrary GitHub issue field is passed
+    # into Python code (only allowlisted case and fixed model).
+    bootstrap = (
+        "import runpy,sys;"
+        "sys.path.insert(0,sys.argv.pop(1));"
+        "runpy.run_module('evals.experiments.run_gemini_schema_smoke',"
+        "run_name='__main__')"
+    )
+    with tempfile.TemporaryDirectory(prefix="erei-core13-verified-pycache-") as cache:
+        cmd = [
+            sys.executable, "-I", "-B", "-X", "pycache_prefix=" + cache,
+            "-c", bootstrap, str(adapter),
+            "--model", MODEL, "--target-root", str(target),
+            "--case-id", case_id, "--output-dir", str(folder),
+            "--timeout", "90", "--live", "--confirm-free-tier",
+            "--confirm-experimental-schema",
+        ]
+        try:
+            proc = subprocess.run(
+                cmd, cwd=str(adapter), env=env, capture_output=True,
+                text=True, stdin=subprocess.DEVNULL, timeout=150, check=False,
+            )
+        except (subprocess.TimeoutExpired, OSError):
+            return json.dumps({"result": "NOT_SCORED", "reason": "LOCAL_PROCESS_ERROR"})
     # Never forward child stdout/stderr (may include model/provider text).
     status = safe_result(folder)
     if proc.returncode not in (0, 1, 2):
