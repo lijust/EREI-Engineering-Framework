@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import getpass
+import http.client
 import json
 import os
 import sys
@@ -69,13 +70,17 @@ def generate_candidate_raw_once(prompt: str, *, key: str, model: str, timeout: f
                         "responsejsonschema" in message or "additionalproperties" in message
                     ):
                         classification = "CANDIDATE_HTTP_400_SCHEMA_FIELD_UNSUPPORTED"
-            except (OSError, ValueError, TypeError, AttributeError):
+            except Exception:
+                # Diagnostic-only parsing is optional. Protocol truncation
+                # (http.client.IncompleteRead), mocked/malformed body readers,
+                # and *any* normal read exception must never escape with
+                # provider-controlled HTTPError context into a traceback.
                 pass
         raise gemini.GeminiAdapterError(
             "provider HTTP failure; full diagnostic/body redacted",
             safe_code=classification, http_status=int(exc.code),
         ) from None
-    except (OSError, urllib.error.URLError, ValueError, gemini.GeminiAdapterError):
+    except (OSError, urllib.error.URLError, ValueError, http.client.HTTPException, gemini.GeminiAdapterError):
         raise gemini.GeminiAdapterError(
             "candidate transport rejected; no retry", safe_code="CANDIDATE_TRANSPORT_ERROR"
         ) from None
