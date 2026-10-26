@@ -28,10 +28,13 @@ QUEUE_LABEL = "erei-gemini-run"
 ISSUE_PREFIX = "EREI-GEMINI "
 MODEL = "gemini-3.5-flash-lite"
 EXPERIMENT = "compact_v2"
+V3_EXPERIMENT = "learning_v3"
+V3_RESULT_EXPERIMENT = "core13_learning_contract_self_check_v3"
 BRIDGE_VERSION = 1
 # This is the exact separately Codex-reviewed and CI-verified PR105 revision.
 # Upgrades require a reviewed code/config change, not a GitHub issue field.
 ADAPTER_SHA = "ecfc2818598e4631166bd3dec2774cb8178d0e10"
+V3_ADAPTER_SHA = "bfe43153a137db15e93d8f6e81d145e4bf9ab024"
 TARGET_SHA = "31d4e518b9e71a9585df9097e7ca07a7e25af916"
 CASES = frozenset({
     "TLR-001-SUCCESS-STILL-LEARNING-DATA",
@@ -81,11 +84,16 @@ def strict_json(value: str | bytes):
 
 
 def validate_config(raw: dict) -> dict:
-    if not isinstance(raw, dict) or set(raw) != {
+    common_keys = {
         "version", "queue_repo", "queue_owner", "adapter_root",
         "target_root", "evidence_root", "state_root",
         "daily_limit", "poll_seconds", "enabled",
-    }:
+    }
+    # Old V2 configuration stays fully compatible. Adding the exact local V3
+    # worktree path is an owner-local opt-in, NEVER a remote Issue field.
+    if not isinstance(raw, dict) or set(raw) not in (
+        common_keys, common_keys | {"adapter_v3_root"},
+    ):
         raise BridgeError("invalid bridge config keys")
     if raw["version"] != 1 or type(raw["enabled"]) is not bool:
         raise BridgeError("invalid bridge config version/status")
@@ -99,16 +107,20 @@ def validate_config(raw: dict) -> dict:
         raise BridgeError("daily limit must be between 1 and 10")
     if type(raw["poll_seconds"]) is not int or not 30 <= raw["poll_seconds"] <= 3600:
         raise BridgeError("poll seconds must be between 30 and 3600")
-    for key in ("adapter_root", "target_root", "evidence_root", "state_root"):
+    for key in ("adapter_root", "target_root", "evidence_root", "state_root",
+                *(("adapter_v3_root",) if "adapter_v3_root" in raw else ())):
         if not isinstance(raw[key], str) or not Path(raw[key]).is_absolute():
             raise BridgeError("invalid absolute local path")
     paths = [Path(raw[k]).expanduser().resolve() for k in (
         "adapter_root", "target_root", "evidence_root", "state_root",
     )]
     adapter, target, evidence, state = paths
-    if adapter == target or evidence in (adapter, target) or state in (adapter, target):
+    source_roots = [adapter, target]
+    if "adapter_v3_root" in raw:
+        source_roots.append(Path(raw["adapter_v3_root"]).expanduser().resolve())
+    if len(set(source_roots)) != len(source_roots):
         raise BridgeError("bridge evidence/state cannot equal code checkout")
-    if any(root in candidate.parents for root in (adapter, target)
+    if any(candidate in source_roots or any(root in candidate.parents for root in source_roots)
            for candidate in (evidence, state)):
         raise BridgeError("state/evidence cannot live under code checkout")
     if evidence == state or evidence in state.parents or state in evidence.parents:
@@ -144,7 +156,16 @@ PINNED_EXECUTABLE_FILES = (
 )
 
 
-def validate_adapter_bytes(root: Path) -> None:
+V3_PINNED_EXECUTABLE_FILES = (
+    "evals/experiments/run_gemini_learning_v3_smoke.py",
+    "evals/experiments/gemini_core13_learning_contract_v3.py",
+    *PINNED_EXECUTABLE_FILES,
+)
+
+
+def validate_adapter_bytes(root: Path, *,
+                           expected_sha: str = ADAPTER_SHA,
+                           pinned_files: tuple[str, ...] = PINNED_EXECUTABLE_FILES) -> None:
     env = {k: v for k, v in os.environ.items() if not k.upper().startswith("GIT_")}
     try:
         dirty = subprocess.run(
@@ -156,14 +177,14 @@ def validate_adapter_bytes(root: Path) -> None:
         raise BridgeError("adapter worktree verification failed") from None
     if dirty:
         raise BridgeError("adapter worktree must be clean")
-    for rel in PINNED_EXECUTABLE_FILES:
+    for rel in pinned_files:
         path = root / rel
         if path.is_symlink() or not path.is_file():
             raise BridgeError("adapter module missing or linked")
         try:
             committed = subprocess.run(
                 ["git", "--no-replace-objects", "-C", str(root),
-                 "show", ADAPTER_SHA + ":" + rel],
+                 "show", expected_sha + ":" + rel],
                 stdin=subprocess.DEVNULL, capture_output=True, check=True,
                 timeout=10, env=env,
             ).stdout
@@ -203,14 +224,15 @@ def parse_job(issue: dict, owner: str) -> dict | None:
             or job["kind"] != "core13_smoke"
             or not isinstance(job["case_id"], str) or job["case_id"] not in CASES
             or job["model"] != MODEL
-            or job["experiment"] != EXPERIMENT
+            or job["experiment"] not in (EXPERIMENT, V3_EXPERIMENT)
             or type(job["max_calls"]) is not int or job["max_calls"] != 1
             or title != ISSUE_PREFIX + job["case_id"]):
         return None
     number = issue.get("number")
     if type(number) is not int or number <= 0:
         return None
-    return {"number": number, "case_id": job["case_id"]}
+    return {"number": number, "case_id": job["case_id"],
+            "experiment": job["experiment"]}
 
 
 class RejectRedirect(urllib.request.HTTPRedirectHandler):
@@ -342,7 +364,7 @@ def claim(db: sqlite3.Connection, issue: int, case_id: str, limit: int) -> bool:
         raise
 
 
-def safe_result(folder: Path) -> str:
+def safe_result(folder: Path, experiment: str = EXPERIMENT) -> str:
     """Only finite enumerated results; raw provider response never leaves disk."""
     fail = folder / "attempt-failed.json"
     verdict = folder / "verdict.json"
@@ -367,12 +389,16 @@ def safe_result(folder: Path) -> str:
         try:
             v = strict_json(verdict.read_bytes())
             status = v.get("status")
-            if status in VERDICTS and v.get("experiment") == (
-                    "core13_native_response_json_schema_compact_v2"):
+            expected = (
+                "core13_native_response_json_schema_compact_v2"
+                if experiment == EXPERIMENT else V3_RESULT_EXPERIMENT
+            )
+            if status in VERDICTS and v.get("experiment") == expected:
                 used = v.get("usage_metadata")
                 tokens = used.get("totalTokenCount") if isinstance(used, dict) else None
                 return json.dumps({
                     "result": status,
+                    "experiment": experiment,
                     "pass": v.get("passed") is True,
                     "total_tokens": tokens if type(tokens) is int and 0 <= tokens <= 1_000_000 else None,
                     "independently_accepted": False,
@@ -383,12 +409,22 @@ def safe_result(folder: Path) -> str:
     return json.dumps(result, sort_keys=True)
 
 
-def execute_local(config: dict, issue: int, case_id: str) -> str:
-    """Exactly ONE reviewed command, fixed args; subprocess without shell."""
-    adapter = Path(config["adapter_root"]).resolve()
+def execute_local(config: dict, issue: int, case_id: str,
+                  experiment: str = EXPERIMENT) -> str:
+    """Exactly ONE allowed command per locally pinned experiment; no shell."""
+    if experiment == EXPERIMENT:
+        adapter = Path(config["adapter_root"]).resolve()
+        expected_sha, pinned = ADAPTER_SHA, PINNED_EXECUTABLE_FILES
+        module = "evals.experiments.run_gemini_schema_smoke"
+    elif experiment == V3_EXPERIMENT and "adapter_v3_root" in config:
+        adapter = Path(config["adapter_v3_root"]).resolve()
+        expected_sha, pinned = V3_ADAPTER_SHA, V3_PINNED_EXECUTABLE_FILES
+        module = "evals.experiments.run_gemini_learning_v3_smoke"
+    else:
+        raise BridgeError("unapproved or locally disabled experiment")
     target = Path(config["target_root"]).resolve()
-    exact_git_head(adapter, ADAPTER_SHA)
-    validate_adapter_bytes(adapter)
+    exact_git_head(adapter, expected_sha)
+    validate_adapter_bytes(adapter, expected_sha=expected_sha, pinned_files=pinned)
     exact_git_head(target, TARGET_SHA)
     folder = Path(config["evidence_root"]).resolve() / f"github-issue-{issue:07d}"
     if folder.exists():
@@ -404,7 +440,7 @@ def execute_local(config: dict, issue: int, case_id: str) -> str:
     bootstrap = (
         "import runpy,sys;"
         "sys.path.insert(0,sys.argv.pop(1));"
-        "runpy.run_module('evals.experiments.run_gemini_schema_smoke',"
+        "runpy.run_module('" + module + "',"
         "run_name='__main__')"
     )
     with tempfile.TemporaryDirectory(prefix="erei-core13-verified-pycache-") as cache:
@@ -424,7 +460,7 @@ def execute_local(config: dict, issue: int, case_id: str) -> str:
         except (subprocess.TimeoutExpired, OSError):
             return json.dumps({"result": "NOT_SCORED", "reason": "LOCAL_PROCESS_ERROR"})
     # Never forward child stdout/stderr (may include model/provider text).
-    status = safe_result(folder)
+    status = safe_result(folder, experiment)
     if proc.returncode not in (0, 1, 2):
         return json.dumps({"result": "NOT_SCORED", "reason": "UNEXPECTED_EXIT"})
     return status
@@ -457,7 +493,8 @@ def one_poll(config: dict, gh: GitHubClient, db: sqlite3.Connection, *,
     for issue in gh.open_jobs():
         totals["queued"] += 1
         job = parse_job(issue, config["queue_owner"])
-        if not job:
+        if not job or (job["experiment"] == V3_EXPERIMENT
+                       and "adapter_v3_root" not in config):
             totals["skipped"] += 1
             continue
         n = job["number"]
@@ -465,7 +502,7 @@ def one_poll(config: dict, gh: GitHubClient, db: sqlite3.Connection, *,
             continue
         totals["accepted"] += 1
         try:
-            outcome = execute(config, n, job["case_id"])
+            outcome = execute(config, n, job["case_id"], job["experiment"])
         except Exception:
             outcome = json.dumps({
                 "result": "NOT_SCORED", "reason": "LOCAL_BRIDGE_BLOCKED"
@@ -502,11 +539,21 @@ def main(argv=None) -> int:
         validate_adapter_bytes(Path(config["adapter_root"]))
         stage = "FROZEN_TARGET_SHA"
         exact_git_head(Path(config["target_root"]), TARGET_SHA)
+        if "adapter_v3_root" in config:
+            v3_root = Path(config["adapter_v3_root"])
+            stage = "PINNED_V3_SHA"
+            exact_git_head(v3_root, V3_ADAPTER_SHA)
+            stage = "PINNED_V3_BYTES"
+            validate_adapter_bytes(
+                v3_root, expected_sha=V3_ADAPTER_SHA,
+                pinned_files=V3_PINNED_EXECUTABLE_FILES,
+            )
         if args.healthcheck:
             print(json.dumps({
                 "status": "PRIVATE_QUEUE_AND_PINNED_SOURCE_VERIFIED",
                 "enabled": config["enabled"], "model_calls": 0,
                 "queue_private": True,
+                "v3_enabled": "adapter_v3_root" in config,
             }))
             return 0
         db = connect_db(Path(config["state_root"]) / "requests.sqlite3")
@@ -528,7 +575,7 @@ def main(argv=None) -> int:
             "stage": stage if stage in (
                 "CONFIG", "LOCAL_GITHUB_CREDENTIAL", "PRIVATE_GITHUB_QUEUE",
                 "PINNED_ADAPTER_SHA", "PINNED_ADAPTER_BYTES",
-                "FROZEN_TARGET_SHA",
+                "FROZEN_TARGET_SHA", "PINNED_V3_SHA", "PINNED_V3_BYTES",
             ) else "OTHER",
             "reason": (
                 str(exc)
@@ -562,6 +609,7 @@ def main(argv=None) -> int:
                     "adapter source bytes differ from reviewed SHA",
                     "adapter source Git blob unavailable",
                     "Gemini key unavailable on local machine",
+                    "unapproved or locally disabled experiment",
                 ) else "OTHER"
             ),
             "model_calls": 0 if args.healthcheck else None,
