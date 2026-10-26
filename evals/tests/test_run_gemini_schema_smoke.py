@@ -189,6 +189,11 @@ class GeminiSchemaLiveIsolationTests(unittest.TestCase):
             def read(self, n):
                 raise http.client.IncompleteRead(b"CANARY_RAW_PROVIDER_BODY")
 
+            def close(self):
+                # HTTPError/file finalizers call close() on the mock.
+                # Missing this produced ignored AttributeError on Python 3.12.
+                return None
+
         opener = mock.Mock()
         opener.open.side_effect = urllib.error.HTTPError(
             "https://generativelanguage.googleapis.com",
