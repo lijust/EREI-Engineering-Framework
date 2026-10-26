@@ -172,9 +172,22 @@ def parse_gemini_result(payload: bytes) -> dict:
         if candidate.get("finishReason") != "STOP":
             raise ValueError("candidate not normally finished")
         parts = candidate["content"]["parts"]
-        if not isinstance(parts, list) or len(parts) != 1 or set(parts[0]) != {"text"}:
+        if not isinstance(parts, list) or len(parts) != 1 or not isinstance(parts[0], dict):
             raise ValueError("expected exactly one plain-text JSON part")
-        text = parts[0]["text"]
+        part = parts[0]
+        # Gemini GenerateContent may attach an opaque thoughtSignature to
+        # the final text part. It is provider metadata, not model JSON or
+        # reasoning text. Still reject tools, hidden thought parts, extras,
+        # and any malformed signature.
+        keys = set(part)
+        if keys not in ({"text"}, {"text", "thoughtSignature"}):
+            raise ValueError("unexpected Gemini part keys")
+        if "thoughtSignature" in part and (
+            not isinstance(part["thoughtSignature"], str)
+            or not part["thoughtSignature"]
+        ):
+            raise ValueError("invalid Gemini thoughtSignature metadata")
+        text = part["text"]
         if not isinstance(text, str) or len(text.encode("utf-8")) > MAX_RESPONSE_BYTES:
             raise ValueError("oversize or invalid text")
         # Reuse the exact existing typed output parser, rather than weakening
