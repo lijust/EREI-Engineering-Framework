@@ -81,7 +81,16 @@ def build_candidate_body(prompt: str, *, model: str) -> bytes:
     """Only append fixed generic coaching to V4 prompt. V4 schema unchanged."""
     if not isinstance(prompt, str) or not prompt.strip():
         raise gemini.GeminiAdapterError("empty input prompt")
-    return v4.build_candidate_body(prompt + coaching_text(), model=model)
+    body = json.loads(v4.build_candidate_body(prompt, model=model))
+    # V4 already appends V3 guidance. Extend the FINAL serialized prompt so
+    # the V5 request remains a strict prefix-preserving append from V4.
+    body["contents"][0]["parts"][0]["text"] += coaching_text()
+    raw = json.dumps(
+        body, ensure_ascii=False, separators=(",", ":"), allow_nan=False
+    ).encode("utf-8")
+    if len(raw) > gemini.MAX_REQUEST_BYTES:
+        raise gemini.GeminiAdapterError("V5 request exceeds byte bound")
+    return raw
 
 
 def inspect_offline(target_root: Path, adapter_root: Path, *,
