@@ -1,6 +1,31 @@
 {
   "urls": [
-    "https://kite.sa/en/projects/riyadh/97401",
-    "https://kite.sa/en/projects/riyadh/97407"
-  ]
+    "https://kite.sa/en/projects/riyadh/97337",
+    "https://kite.sa/en/projects/riyadh/12",
+    "https://kite.sa/en/projects/riyadh/2",
+    "https://kite.sa/en/projects/riyadh/97328",
+    "https://kite.sa/en/projects/jeddah/24019",
+    "https://kite.sa/en/projects/riyadh/47",
+    "https://kite.sa/en/projects/riyadh/38572",
+    "https://kite.sa/en/projects/jeddah/98220",
+    "https://kite.sa/en/projects/eastern-province/1554",
+    "https://kite.sa/en/projects/riyadh/97318",
+    "https://kite.sa/en/projects/riyadh/97323",
+    "https://kite.sa/en/projects/jeddah/84022",
+    "https://kite.sa/en/projects/riyadh/43369",
+    "https://kite.sa/en/projects/jeddah/1687",
+    "https://kite.sa/en/projects/riyadh/1677",
+    "https://kite.sa/en/projects/eastern-province/1379",
+    "https://kite.sa/en/projects/eastern-province/72948",
+    "https://kite.sa/en/projects/riyadh/40753",
+    "https://kite.sa/en/projects/eastern-province/1624",
+    "https://kite.sa/en/projects/riyadh/97360",
+    "https://kite.sa/en/projects/riyadh/1365",
+    "https://kite.sa/en/projects/eastern-province/1731",
+    "https://kite.sa/en/projects/eastern-province/84039",
+    "https://kite.sa/en/projects/riyadh/10",
+    "https://kite.sa/en/projects/riyadh/73002",
+    "https://kite.sa/en/projects/jeddah/107940"
+  ],
+  "scope": "public URLs only, private canonical mapping occurs outside this public repo"
 }
