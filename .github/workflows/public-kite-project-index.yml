@@ -1,0 +1,29 @@
+name: Public Kite project index pagination
+on:
+  push:
+    branches:
+      - experiment/public-scrapling-v05-smoke-20261027
+    paths:
+      - '.github/workflows/public-kite-project-index.yml'
+      - 'experimental/public_kite_project_index.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  public-index-pages:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install 'scrapling[fetchers]==0.5'
+      - run: python experimental/public_kite_project_index.py
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kite-public-project-index-checkpoint
+          path: ${{ runner.temp }}/public-kite-project-index.json
+          if-no-files-found: warn
+          retention-days: 2
