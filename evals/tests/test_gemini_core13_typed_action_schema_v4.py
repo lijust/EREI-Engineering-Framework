@@ -91,6 +91,72 @@ class Core13TypedActionV4Tests(unittest.TestCase):
             self.assertLess(len(candidate), gemini.MAX_REQUEST_BYTES)
             network.assert_not_called()
 
+    def test_v4_one_call_runner_is_exact_v3_transport_and_scorer_copy(self):
+        import inspect
+        from evals.experiments import run_gemini_learning_v3_smoke as old
+        from evals.experiments import run_gemini_typed_action_v4_smoke as new
+        previous = inspect.getsource(old)
+        proposed = inspect.getsource(new)
+        expected = (previous
+            .replace(
+                "One owner-authorized local Gemini Learning V3 experiment call, never CI.",
+                "One owner-authorized local Gemini typed-action V4 experiment call, never CI.")
+            .replace(
+                "but Gemini request appends general coaching over compact responseJsonSchema.",
+                "but Gemini response schema adds conditional action arguments over V3.")
+            .replace(
+                "from evals.experiments import gemini_core13_learning_contract_v3 as candidate",
+                "from evals.experiments import gemini_core13_typed_action_schema_v4 as candidate"))
+        self.assertEqual(proposed, expected)
+        self.assertIs(new.candidate, v4)
+
+    def test_v4_authorized_preflight_is_offline_with_mock_provider(self):
+        import os
+        import tempfile
+        from pathlib import Path
+        from evals.experiments import run_gemini_typed_action_v4_smoke as runner
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            target = root / "target"
+            target.mkdir()
+            output = root / "evidence"
+            prepared = {
+                "root": target.resolve(),
+                "prompt": "PUBLIC_MOCK_ONLY",
+                "case": {"id": "TLR-003-VERIFICATION-ESCAPE"},
+                "suite": {"suite_id": "synthetic"},
+                "request": {"synthetic": True},
+                "adapter_source": {"adapter_source_revision": "fake"},
+            }
+            mock_result = {
+                "status": "EXPERIMENTAL_MODEL_RESPONSE_SCORED_FAIL_UNVERIFIED",
+                "passed": False,
+                "provider_model_version": "gemini-3.5-flash-lite",
+                "usage_metadata": {"totalTokenCount": 1},
+            }
+            with (
+                mock.patch.object(runner.smoke, "prepare", return_value=prepared),
+                mock.patch.object(runner, "record_candidate",
+                                  return_value=mock_result) as fake_scoring,
+                mock.patch.object(runner.urllib.request, "build_opener") as network,
+                mock.patch.dict(os.environ, {"GEMINI_API_KEY": "TEST_FAKE_KEY"}),
+                mock.patch.object(runner, "print"),
+            ):
+                rc = runner.main([
+                    "--target-root", str(target), "--output-dir", str(output),
+                    "--case-id", "TLR-003-VERIFICATION-ESCAPE",
+                    "--model", "gemini-3.5-flash-lite",
+                    "--live", "--confirm-free-tier", "--confirm-experimental-schema",
+                ])
+            self.assertEqual(rc, 1)
+            fake_scoring.assert_called_once()
+            network.assert_not_called()
+            provenance = json.loads(
+                (output / "candidate-provenance.json").read_text(encoding="utf-8"))
+            self.assertEqual(provenance["experiment"], v4.EXPERIMENT)
+            self.assertFalse(provenance["stable_ready"])
+            self.assertFalse(provenance["independently_accepted"])
+
     def test_unknown_model_rejected_with_zero_network(self):
         with mock.patch.object(gemini.urllib.request, "build_opener") as network:
             with self.assertRaises(gemini.GeminiAdapterError):
