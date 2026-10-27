@@ -191,6 +191,12 @@ def _authorize(decision: str, actions: list[dict], context: Any) -> None:
     if not all(k in context for k in ("manifest", "registry", "loaded_framework_ref",
                                       "adoption_document")):
         raise ProposalDenied("ACTIVATION_EVIDENCE_MISSING")
+    # A replayable, caller-attested clock must be explicit. Defaulting to the
+    # process clock would make adoption/expiry decisions non-reproducible.
+    current = context.get("now")
+    if (type(current) is not datetime or current.tzinfo is None or
+            current.utcoffset() is None):
+        raise ProposalDenied("ACTIVATION_CLOCK_UNVERIFIED")
     try:
         resolution = resolve_activation(
             context["manifest"], context["registry"], capability,
