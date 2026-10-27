@@ -47,27 +47,40 @@ def classify(expectation, response, case_input, *,
         actions = response["output"]["actions"]
         initial = case_input["initial_state"]
         claimed = response["output"]["state"]
-        if not isinstance(claimed, dict):
-            raise ValueError("invalid model state")
+        # Validate actions FIRST. A malformed claimed state must not be
+        # misreported as an invalid/forbidden action.
         calculated = replay_fn(initial, actions)
-        fields = sorted({
-            field if field in ALLOWED_STATE_FIELDS else "UNKNOWN_STATE_FIELD"
-            for field in set(calculated) | set(claimed)
-            if field not in calculated or field not in claimed or
-            _identity(calculated[field]) != _identity(claimed[field])
-        })
+        state_shape_valid = isinstance(claimed, dict)
+        report["claimed_state_shape_valid"] = state_shape_valid
+        if state_shape_valid:
+            fields = sorted({
+                field if field in ALLOWED_STATE_FIELDS else "UNKNOWN_STATE_FIELD"
+                for field in set(calculated) | set(claimed)
+                if field not in calculated or field not in claimed or
+                _identity(calculated[field]) != _identity(claimed[field])
+            })
+        else:
+            fields = []
         report["different_state_fields"] = fields
-        report["replayed_state_equals_model_claim"] = not fields
+        report["replayed_state_equals_model_claim"] = (
+            state_shape_valid and not fields
+        )
         # Counterfactual constructed in-memory, NEVER persisted or fed to model.
         alternative = copy.deepcopy(response)
         alternative["output"]["state"] = calculated
         cf_pass, _ = score_fn(expectation, alternative, case_input)
         report["counterfactual_replay_pass"] = bool(cf_pass)
-        report["failure_class"] = (
-            "STATE_ONLY_COUNTERFACTUAL" if cf_pass else
-            "POLICY_OR_ACTION_FAILURE" if not fields else
-            "STATE_AND_POLICY_OR_ACTION_FAILURE"
-        )
+        if not state_shape_valid:
+            report["failure_class"] = (
+                "MALFORMED_STATE_ONLY_COUNTERFACTUAL" if cf_pass else
+                "MALFORMED_STATE_AND_POLICY_OR_ACTION_FAILURE"
+            )
+        else:
+            report["failure_class"] = (
+                "STATE_ONLY_COUNTERFACTUAL" if cf_pass else
+                "POLICY_OR_ACTION_FAILURE" if not fields else
+                "STATE_AND_POLICY_OR_ACTION_FAILURE"
+            )
     except (ValueError, KeyError, TypeError, IndexError, OverflowError):
         report["failure_class"] = "INVALID_OR_FORBIDDEN_ACTION"
     return report
