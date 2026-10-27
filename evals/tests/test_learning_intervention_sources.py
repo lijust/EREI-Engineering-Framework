@@ -264,5 +264,37 @@ class InterventionLedgerBindingTests(unittest.TestCase):
         )
 
 
+    def test_timestamp_normalization_overflow_denied_at_selector(self):
+        first = self.add(0)
+        d = self.data([first])
+        for field, stamp in (
+            ("from_inclusive", "0001-01-01T00:00:00+01:00"),
+            ("to_exclusive", "9999-12-31T23:59:59-01:00"),
+        ):
+            with self.subTest(field=field):
+                result = source.assess_intervention_against_ledger(
+                    self.root, d, self.selector(**{field: stamp})
+                )
+                self.check_denied(result, "SELECTION_WINDOW_INVALID")
+
+    def test_timestamp_normalization_overflow_denied_for_ledger_event(self):
+        event = self.add(0)
+        d = self.data([event])
+        normal = source.capability_activation._time
+
+        def injected_ledger_boundary(value, label):
+            if label == "task.recorded_at":
+                raise OverflowError("utc normalization")
+            return normal(value, label)
+
+        with mock.patch.object(source.capability_activation, "_time",
+                               side_effect=injected_ledger_boundary):
+            result = source.assess_intervention_against_ledger(
+                self.root, d, self.selector()
+            )
+        self.check_denied(result, "LEDGER_EVIDENCE_INVALID")
+
+
+
 if __name__ == "__main__":
     unittest.main()
