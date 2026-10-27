@@ -107,8 +107,8 @@ def validate_config(raw: dict) -> dict:
             or not isinstance(owner, str) or repo.split("/")[0] != owner
             or owner != "lijust"):
         raise BridgeError("queue repository must be an approved owner's private repository")
-    if type(raw["daily_limit"]) is not int or not 1 <= raw["daily_limit"] <= 10:
-        raise BridgeError("daily limit must be between 1 and 10")
+    if type(raw["daily_limit"]) is not int or not 1 <= raw["daily_limit"] <= 500:
+        raise BridgeError("daily limit must be between 1 and 500")
     if type(raw["poll_seconds"]) is not int or not 30 <= raw["poll_seconds"] <= 3600:
         raise BridgeError("poll seconds must be between 30 and 3600")
     for key in ("adapter_root", "target_root", "evidence_root", "state_root",
@@ -352,6 +352,11 @@ def connect_db(path: Path) -> sqlite3.Connection:
           comment_sent INTEGER NOT NULL DEFAULT 0,
           closed INTEGER NOT NULL DEFAULT 0
         )""")
+    db.execute("""
+        CREATE TABLE IF NOT EXISTS provider_stop (
+          day TEXT PRIMARY KEY,
+          http_status INTEGER NOT NULL
+        )""")
     return db
 
 
@@ -501,13 +506,21 @@ def publish_unposted(db: sqlite3.Connection, gh: GitHubClient) -> None:
             db.execute("UPDATE jobs SET closed=1 WHERE issue=?", (issue,))
 
 
+def provider_stopped_for_today(db: sqlite3.Connection) -> bool:
+    """Persisted 429 breaker survives task restarts and enforces stop-on-429."""
+    return db.execute(
+        "SELECT 1 FROM provider_stop WHERE day=?", (utc_day(),)
+    ).fetchone() is not None
+
+
 def one_poll(config: dict, gh: GitHubClient, db: sqlite3.Connection, *,
              execute=execute_local) -> dict:
     gh.private_queue_check()  # Fail closed if queue becomes public.
     publish_unposted(db, gh)
     totals = {"queued": 0, "accepted": 0, "executed": 0, "skipped": 0}
-    if not config["enabled"]:
+    if not config["enabled"] or provider_stopped_for_today(db):
         return totals
+    last_model_start = None
     for issue in gh.open_jobs():
         totals["queued"] += 1
         job = parse_job(issue, config["queue_owner"])
@@ -520,6 +533,14 @@ def one_poll(config: dict, gh: GitHubClient, db: sqlite3.Connection, *,
         if not claim(db, n, job["case_id"], config["daily_limit"]):
             continue
         totals["accepted"] += 1
+        # 15 RPM shown in owner AI Studio. Cap dedicated worker at <=12 RPM
+        # within this poll (5 sec between model starts), with no retry.
+        # Mocked execution in offline unit tests must never sleep.
+        if execute is execute_local:
+            now = time.monotonic()
+            if last_model_start is not None and now - last_model_start < 5.0:
+                time.sleep(5.0 - (now - last_model_start))
+            last_model_start = time.monotonic()
         try:
             outcome = execute(config, n, job["case_id"], job["experiment"])
         except Exception:
@@ -530,7 +551,21 @@ def one_poll(config: dict, gh: GitHubClient, db: sqlite3.Connection, *,
         db.execute("UPDATE jobs SET state='FINISHED', outcome=? WHERE issue=?",
                    (outcome, n))
         totals["executed"] += 1
+        # Google/provider 429: stop EVERY remaining job and all future polls
+        # until the next UTC date; do not consume quota with cascading 429s.
+        # A genuine provider failure is never a behavioral score.
+        try:
+            http_429 = strict_json(outcome).get("http_status") == 429
+        except (TypeError, ValueError, AttributeError):
+            http_429 = False
+        if http_429:
+            db.execute(
+                "INSERT OR IGNORE INTO provider_stop(day,http_status) VALUES(?,429)",
+                (utc_day(),)
+            )
         publish_unposted(db, gh)
+        if http_429:
+            break
     return totals
 
 
@@ -613,7 +648,7 @@ def main(argv=None) -> int:
                     "invalid bridge config keys",
                     "invalid bridge config version/status",
                     "queue repository must be an approved owner's private repository",
-                    "daily limit must be between 1 and 10",
+                    "daily limit must be between 1 and 500",
                     "poll seconds must be between 30 and 3600",
                     "invalid absolute local path",
                     "bridge evidence/state cannot equal code checkout",
