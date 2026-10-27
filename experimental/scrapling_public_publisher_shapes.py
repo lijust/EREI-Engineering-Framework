@@ -1,0 +1,87 @@
+#!/usr/bin/env python3
+"""Public first-party project-card discovery using Scrapling; no private data.
+
+The source URLs are publicly available publisher website project pages.
+Fetch/parse only when robots.txt explicitly allows each path.
+"""
+from __future__ import annotations
+from datetime import datetime, timezone
+import json, os, re, time, hashlib
+from pathlib import Path
+from urllib.parse import urlsplit
+from urllib.robotparser import RobotFileParser
+from scrapling.fetchers import Fetcher, StealthySession
+
+UA="Open-source-Scrapling-Public-Demo/0.1"
+HOST="almajdiah.com"
+URLS=[
+  "https://almajdiah.com/projects/153",
+  "https://almajdiah.com/projects/119",
+  "https://almajdiah.com/projects/156",
+  "https://almajdiah.com/projects/161",
+  "https://almajdiah.com/projects/195",
+  "https://almajdiah.com/projects/2",
+]
+output=Path(os.environ["RUNNER_TEMP"])/"public-original-publisher-source-shapes.json"
+results=[]
+def save():
+    output.write_text(json.dumps({
+        "schema":"PUBLIC_ORIGINAL_PUBLISHER_HTML_AND_XHR_SHAPES",
+        "source":"public publisher data only, NO canonical IDs or user files",
+        "raw_json_values_saved":False,"urls":results},ensure_ascii=False,indent=2),encoding="utf-8")
+
+robots_url=f"https://{HOST}/robots.txt"
+resp=Fetcher.get(robots_url,retries=1,timeout=25,follow_redirects="safe",
+                 headers={"User-Agent":UA})
+assert resp.status==200, f"robots not available {resp.status}"
+rp=RobotFileParser()
+rp.parse(resp.body.decode("utf8","replace").splitlines())
+with StealthySession(record_requests=True,max_recorded_requests=500) as session:
+    for url in URLS:
+        item={"url":url,"observed_at_utc":datetime.now(timezone.utc).isoformat()}
+        if not rp.can_fetch(UA,url):
+            item["state"]="ROBOTS_DISALLOW"
+            results.append(item);save();continue
+        time.sleep(max(3,rp.crawl_delay(UA) or rp.crawl_delay("*") or 0))
+        try:
+            session.network.clear()
+            page=session.fetch(url,network_idle=True)
+            item["status"]=int(page.status)
+            if page.status==429:
+                item["state"]="HTTP_429_STOP";results.append(item);save();break
+            item["html_bytes"]=len(page.body)
+            item["html_sha256"]=hashlib.sha256(page.body).hexdigest()
+            try:
+                visible=str(page.get_all_text(ignore_tags=("script","style")))
+            except (ValueError,TypeError,AttributeError):
+                visible=page.body.decode("utf8","replace")
+                visible=re.sub(r"<[^>]+>","\n",visible)
+            compact=" ".join(visible.split())
+            item["text_chars"]=len(compact)
+            item["visible_excerpt"]=compact[:5500]
+            item["network_responses"]=len(session.network.search(limit=None,include_static=False))
+            item["xhr_shapes"]=[]
+            for net in session.network.search(limit=None,include_static=False):
+                if net.status==429: item["state"]="XHR_HTTP_429_STOP";break
+                if net.status!=200 or not net.body:continue
+                parsed=urlsplit(str(net.url))
+                if parsed.scheme!="https" or (parsed.hostname or "").removeprefix("www.") not in (HOST,"api."+HOST): continue
+                try: data=json.loads(net.body)
+                except (ValueError,TypeError,UnicodeError):continue
+                arrays=[]
+                if isinstance(data,dict):
+                    for k,v in data.items():
+                        if isinstance(v,list): arrays.append({"field":str(k),"count":len(v),"first_item_fields":list(v[0])[:20] if v and isinstance(v[0],dict) else []})
+                if isinstance(data,list):arrays.append({"field":"$","count":len(data),"first_item_fields":list(data[0])[:20] if data and isinstance(data[0],dict) else []})
+                if arrays:item["xhr_shapes"].append({"path":parsed.path,"arrays":arrays[:8]})
+            if item.get("state")=="XHR_HTTP_429_STOP":results.append(item);save();break
+            item["state"]="CAPTURED_NO_UNIT_COUNT_ASSUMED"
+        except Exception as e:
+            item["state"]="SOURCE_ERROR"
+            item["error_type"]=type(e).__name__
+        results.append(item)
+        save()
+        print(json.dumps({k:v for k,v in item.items() if k not in ("visible_excerpt",)},ensure_ascii=False))
+save()
+print(json.dumps({"summary_count":len(results),
+                  "screens":results[:1],"saved":str(output)},ensure_ascii=False))
