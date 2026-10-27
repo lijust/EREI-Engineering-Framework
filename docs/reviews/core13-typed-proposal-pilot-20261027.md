@@ -29,7 +29,7 @@ The model-facing proposal carries **only**:
 The optional `claimed_state` is *untrusted diagnostic input*, NEVER the
 authoritative state. The caller owns `initial_state` and **independently
 established** `trusted_context`. The model cannot set workflow domain,
-activation evidence, project SHA, adoption approval or facts. The pilot
+activation evidence, project SHA, adoption approval or facts. Candidate activation also requires a caller-attested timezone-aware UTC-comparable clock to make expiry deterministic. The pilot
 checks the explicit decision→operation allowlist and typed fields before
 authorizing. It permits only three classes of pure changes:
 
