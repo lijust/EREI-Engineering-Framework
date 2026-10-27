@@ -81,7 +81,7 @@ with StealthySession(record_requests=True,max_recorded_requests=500) as session:
                 if net.status==429: item["state"]="XHR_HTTP_429_STOP";break
                 if net.status!=200 or not net.body:continue
                 parsed=urlsplit(str(net.url))
-                if parsed.scheme!="https" or (parsed.hostname or "").removeprefix("www.") not in (HOST,"api."+HOST): continue
+                if parsed.scheme!="https" or not ((parsed.hostname or "").removeprefix("www.")==HOST or (parsed.hostname or "").endswith("."+HOST)): continue
                 try: data=json.loads(net.body)
                 except (ValueError,TypeError,UnicodeError):continue
                 arrays=[]
@@ -89,7 +89,7 @@ with StealthySession(record_requests=True,max_recorded_requests=500) as session:
                     for k,v in data.items():
                         if isinstance(v,list): arrays.append({"field":str(k),"count":len(v),"first_item_fields":list(v[0])[:20] if v and isinstance(v[0],dict) else []})
                 if isinstance(data,list):arrays.append({"field":"$","count":len(data),"first_item_fields":list(data[0])[:20] if data and isinstance(data[0],dict) else []})
-                if arrays:item["xhr_shapes"].append({"path":parsed.path,"arrays":arrays[:8]})
+                if arrays or isinstance(data,dict):item["xhr_shapes"].append({"host":parsed.hostname,"path":parsed.path,"top_level_keys":sorted(str(k) for k in data)[:40] if isinstance(data,dict) else [],"arrays":arrays[:8]})
             if item.get("state")=="XHR_HTTP_429_STOP":results.append(item);save();break
             item["state"]="CAPTURED_NO_UNIT_COUNT_ASSUMED"
         except Exception as e:
