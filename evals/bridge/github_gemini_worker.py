@@ -30,11 +30,14 @@ MODEL = "gemini-3.5-flash-lite"
 EXPERIMENT = "compact_v2"
 V3_EXPERIMENT = "learning_v3"
 V3_RESULT_EXPERIMENT = "core13_learning_contract_self_check_v3"
+V4_EXPERIMENT = "action_v4"
+V4_RESULT_EXPERIMENT = "core13_learning_action_union_schema_v4"
 BRIDGE_VERSION = 1
 # This is the exact separately Codex-reviewed and CI-verified PR105 revision.
 # Upgrades require a reviewed code/config change, not a GitHub issue field.
 ADAPTER_SHA = "ecfc2818598e4631166bd3dec2774cb8178d0e10"
 V3_ADAPTER_SHA = "bfe43153a137db15e93d8f6e81d145e4bf9ab024"
+V4_ADAPTER_SHA = "7bbb44f14ce695ce660270b79a3bf25b4ce193ef"
 TARGET_SHA = "31d4e518b9e71a9585df9097e7ca07a7e25af916"
 CASES = frozenset({
     "TLR-001-SUCCESS-STILL-LEARNING-DATA",
@@ -93,6 +96,7 @@ def validate_config(raw: dict) -> dict:
     # worktree path is an owner-local opt-in, NEVER a remote Issue field.
     if not isinstance(raw, dict) or set(raw) not in (
         common_keys, common_keys | {"adapter_v3_root"},
+        common_keys | {"adapter_v3_root", "adapter_v4_root"},
     ):
         raise BridgeError("invalid bridge config keys")
     if raw["version"] != 1 or type(raw["enabled"]) is not bool:
@@ -108,7 +112,8 @@ def validate_config(raw: dict) -> dict:
     if type(raw["poll_seconds"]) is not int or not 30 <= raw["poll_seconds"] <= 3600:
         raise BridgeError("poll seconds must be between 30 and 3600")
     for key in ("adapter_root", "target_root", "evidence_root", "state_root",
-                *(("adapter_v3_root",) if "adapter_v3_root" in raw else ())):
+                *(("adapter_v3_root",) if "adapter_v3_root" in raw else ()),
+                *(("adapter_v4_root",) if "adapter_v4_root" in raw else ())):
         if not isinstance(raw[key], str) or not Path(raw[key]).is_absolute():
             raise BridgeError("invalid absolute local path")
     paths = [Path(raw[k]).expanduser().resolve() for k in (
@@ -118,6 +123,8 @@ def validate_config(raw: dict) -> dict:
     source_roots = [adapter, target]
     if "adapter_v3_root" in raw:
         source_roots.append(Path(raw["adapter_v3_root"]).expanduser().resolve())
+    if "adapter_v4_root" in raw:
+        source_roots.append(Path(raw["adapter_v4_root"]).expanduser().resolve())
     if len(set(source_roots)) != len(source_roots):
         raise BridgeError("bridge evidence/state cannot equal code checkout")
     if any(candidate in source_roots or any(root in candidate.parents for root in source_roots)
@@ -160,6 +167,12 @@ V3_PINNED_EXECUTABLE_FILES = (
     "evals/experiments/run_gemini_learning_v3_smoke.py",
     "evals/experiments/gemini_core13_learning_contract_v3.py",
     *PINNED_EXECUTABLE_FILES,
+)
+
+V4_PINNED_EXECUTABLE_FILES = (
+    "evals/experiments/run_gemini_learning_v4_smoke.py",
+    "evals/experiments/gemini_core13_learning_action_schema_v4.py",
+    *V3_PINNED_EXECUTABLE_FILES,
 )
 
 
@@ -224,7 +237,7 @@ def parse_job(issue: dict, owner: str) -> dict | None:
             or job["kind"] != "core13_smoke"
             or not isinstance(job["case_id"], str) or job["case_id"] not in CASES
             or job["model"] != MODEL
-            or job["experiment"] not in (EXPERIMENT, V3_EXPERIMENT)
+            or job["experiment"] not in (EXPERIMENT, V3_EXPERIMENT, V4_EXPERIMENT)
             or type(job["max_calls"]) is not int or job["max_calls"] != 1
             or title != ISSUE_PREFIX + job["case_id"]):
         return None
@@ -389,10 +402,11 @@ def safe_result(folder: Path, experiment: str = EXPERIMENT) -> str:
         try:
             v = strict_json(verdict.read_bytes())
             status = v.get("status")
-            expected = (
-                "core13_native_response_json_schema_compact_v2"
-                if experiment == EXPERIMENT else V3_RESULT_EXPERIMENT
-            )
+            expected = {
+                EXPERIMENT: "core13_native_response_json_schema_compact_v2",
+                V3_EXPERIMENT: V3_RESULT_EXPERIMENT,
+                V4_EXPERIMENT: V4_RESULT_EXPERIMENT,
+            }.get(experiment)
             if status in VERDICTS and v.get("experiment") == expected:
                 used = v.get("usage_metadata")
                 tokens = used.get("totalTokenCount") if isinstance(used, dict) else None
@@ -420,6 +434,10 @@ def execute_local(config: dict, issue: int, case_id: str,
         adapter = Path(config["adapter_v3_root"]).resolve()
         expected_sha, pinned = V3_ADAPTER_SHA, V3_PINNED_EXECUTABLE_FILES
         module = "evals.experiments.run_gemini_learning_v3_smoke"
+    elif experiment == V4_EXPERIMENT and "adapter_v4_root" in config:
+        adapter = Path(config["adapter_v4_root"]).resolve()
+        expected_sha, pinned = V4_ADAPTER_SHA, V4_PINNED_EXECUTABLE_FILES
+        module = "evals.experiments.run_gemini_learning_v4_smoke"
     else:
         raise BridgeError("unapproved or locally disabled experiment")
     target = Path(config["target_root"]).resolve()
@@ -493,8 +511,9 @@ def one_poll(config: dict, gh: GitHubClient, db: sqlite3.Connection, *,
     for issue in gh.open_jobs():
         totals["queued"] += 1
         job = parse_job(issue, config["queue_owner"])
-        if not job or (job["experiment"] == V3_EXPERIMENT
-                       and "adapter_v3_root" not in config):
+        if (not job or
+                (job["experiment"] == V3_EXPERIMENT and "adapter_v3_root" not in config)
+                or (job["experiment"] == V4_EXPERIMENT and "adapter_v4_root" not in config)):
             totals["skipped"] += 1
             continue
         n = job["number"]
@@ -548,12 +567,22 @@ def main(argv=None) -> int:
                 v3_root, expected_sha=V3_ADAPTER_SHA,
                 pinned_files=V3_PINNED_EXECUTABLE_FILES,
             )
+        if "adapter_v4_root" in config:
+            v4_root = Path(config["adapter_v4_root"])
+            stage = "PINNED_V4_SHA"
+            exact_git_head(v4_root, V4_ADAPTER_SHA)
+            stage = "PINNED_V4_BYTES"
+            validate_adapter_bytes(
+                v4_root, expected_sha=V4_ADAPTER_SHA,
+                pinned_files=V4_PINNED_EXECUTABLE_FILES,
+            )
         if args.healthcheck:
             print(json.dumps({
                 "status": "PRIVATE_QUEUE_AND_PINNED_SOURCE_VERIFIED",
                 "enabled": config["enabled"], "model_calls": 0,
                 "queue_private": True,
                 "v3_enabled": "adapter_v3_root" in config,
+                "v4_enabled": "adapter_v4_root" in config,
             }))
             return 0
         db = connect_db(Path(config["state_root"]) / "requests.sqlite3")
@@ -576,6 +605,7 @@ def main(argv=None) -> int:
                 "CONFIG", "LOCAL_GITHUB_CREDENTIAL", "PRIVATE_GITHUB_QUEUE",
                 "PINNED_ADAPTER_SHA", "PINNED_ADAPTER_BYTES",
                 "FROZEN_TARGET_SHA", "PINNED_V3_SHA", "PINNED_V3_BYTES",
+                "PINNED_V4_SHA", "PINNED_V4_BYTES",
             ) else "OTHER",
             "reason": (
                 str(exc)
