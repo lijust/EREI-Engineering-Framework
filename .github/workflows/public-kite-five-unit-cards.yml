@@ -1,0 +1,30 @@
+name: Public Kite five coded physical-unit snapshots
+on:
+  push:
+    branches:
+      - experiment/public-scrapling-v05-smoke-20261027
+    paths:
+      - '.github/workflows/public-kite-five-unit-cards.yml'
+      - 'experimental/public_kite_five_coded_cards.py'
+      - 'experimental/public_kite_five_coded_urls.json'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  published-original-building-door-codes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install 'scrapling[fetchers]==0.5'
+      - run: python experimental/public_kite_five_coded_cards.py
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kite-five-original-building-door-physical-cards
+          path: ${{ runner.temp }}/kite-five-original-coded-unit-cards.json
+          if-no-files-found: warn
+          retention-days: 2
