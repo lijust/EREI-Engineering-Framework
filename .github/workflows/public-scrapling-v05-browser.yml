@@ -1,0 +1,36 @@
+name: Public Scrapling v0.5 dynamic browser probe (isolated experiment)
+on:
+  push:
+    branches:
+      - experiment/public-scrapling-v05-smoke-20261027
+    paths:
+      - '.github/workflows/public-scrapling-v05-browser.yml'
+      - 'experimental/scrapling_public_browser_probe.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  browser-shape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install Scrapling browser support
+        run: |
+          python -m pip install 'scrapling[fetchers]==0.5'
+          scrapling install
+      - name: Run one public robots-gated source page (metadata only)
+        run: python experimental/scrapling_public_browser_probe.py
+      - name: Save shape-only JSON
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: public-scrapling-xhr-schema-only
+          path: ${{ runner.temp }}/public-scrapling-dynamic-shape.json
+          if-no-files-found: warn
+          retention-days: 1
