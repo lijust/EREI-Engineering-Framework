@@ -223,6 +223,21 @@ class LearningProposalPilotTests(unittest.TestCase):
                                            "reason": "expired_or_mismatched"}]),
             initial, context), "BLOCK_REASON_NOT_ESTABLISHED")
 
+    def test_capability_clock_must_be_explicit_timezone_aware(self):
+        initial = {"capability_status": "DORMANT", "executions": []}
+        action = {"op": "execute_capability", "capability": "learning_pattern_analysis",
+                  "version": "v1", "mode": "candidate"}
+        for clock in (None, datetime(2026, 11, 1)):
+            context = activation_context(adopted=True)
+            if clock is None:
+                del context["now"]
+            else:
+                context["now"] = clock
+            with self.subTest(clock=clock):
+                self.assert_denied(pilot.evaluate_proposal(
+                    proposal("allow_capability", [action]), initial, context),
+                    "ACTIVATION_CLOCK_UNVERIFIED")
+
     def test_authority_missing_and_unrecognized_status_are_fail_closed(self):
         initial = {"capability_status": "DORMANT", "executions": []}
         action = {"op": "execute_capability", "capability": "learning_pattern_analysis",
