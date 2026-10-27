@@ -36,3 +36,21 @@ Implement an **offline, fail-closed counterfactual replay assessor** against imm
 Re-score only in a local analytic process using the immutable frozen suite and own evidence. Never use original frozen expectations or counterfactual results in model prompts. Do not perform API calls or merge to Stable from this analysis. Validate before/after classification using synthetic fixtures and independent holdouts later.
 
 **Acceptance gate:** Exact frozen source verification, zero raw-evidence mutation, zero provider calls, no false PASS for forbidden/wrong-policy action, redacted outputs, comparison across the same 13 frozen cases, and no independent adoption claim.
+
+## Offline implementation in PR #115
+
+- `evals/analysis/core13_counterfactual_state.py`: pure in-memory classifier using original scorer and reducer; never changes original verdicts.
+- `evals/analysis/core13_local_counterfactual_cli.py`: owner-local, read-only analysis. Pins exact PR98 SHA/tree, verifies a clean frozen checkout, reads only local receipts, compares recorded raw verdict against rescoring through exact immutable Git runner, and fails closed if identity differs.
+- `evals/tests/test_core13_counterfactual_state.py` and `evals/tests/test_core13_local_counterfactual_cli.py`: synthetic regressions for state-only hypothetical recovery, wrong policy, forbidden sensitive operation, original-pass preservation, and receipt mismatch.
+
+Run only after PR115 checks/review complete, using an exact reviewed worktree and current owner-local `config.json`:
+
+```powershell
+$cfg = Get-Content "$env:LOCALAPPDATA\EREI\GeminiBridge\config.json" -Raw | ConvertFrom-Json
+python -m evals.analysis.core13_local_counterfactual_cli `
+  --evidence-root "$($cfg.evidence_root)" `
+  --frozen-target-root "$($cfg.target_root)" `
+  --issues "5-32"
+```
+
+The script returns a `raw_model_pass` field and separate `replay_counterfactual_pass` field; **NEVER aggregate them as equivalent model successes**. Initial run must reveal whether `STATE_ONLY_COUNTERFACTUAL` is present and which wrong-action/forbidden classifications remain.
