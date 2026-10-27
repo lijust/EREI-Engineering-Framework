@@ -5,6 +5,7 @@ Neither the frozen scorer, model receipt nor evidence is rewritten.
 """
 from __future__ import annotations
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -12,6 +13,7 @@ import subprocess
 from pathlib import Path
 
 from evals.analysis.core13_counterfactual_state import classify
+from evals.adapters import gemini_core13_exact_target as gemini
 
 SHA = "31d4e518b9e71a9585df9097e7ca07a7e25af916"
 TREE = "913c6a0daaa7a6efa7d6d2148aa0294812fab360"
@@ -106,9 +108,28 @@ def case_audit(folder, case_lookup, scorer, replay):
     normalized = strict_json(folder/"adapter-normalized.json")
     request = strict_json(folder/"blind-request.json")
     fixture = case_lookup[case_id]
-    # Strict JSON textual identity keeps booleans distinct from integers.
+    # Canonical structural identity distinguishes bool from int.
     signature = lambda x: json.dumps(x, sort_keys=True, separators=(",",":"),
                                      ensure_ascii=False,allow_nan=False)
+    # Bind the evaluation to original provider bytes, not only a boolean
+    # verdict or a separately editable adapter-normalized JSON file.
+    raw_path = folder / "provider-raw.json"
+    if (raw_path.is_symlink() or not raw_path.is_file() or
+            raw_path.stat().st_size > gemini.MAX_RESPONSE_BYTES):
+        raise ValueError("unavailable original provider evidence")
+    raw = raw_path.read_bytes()
+    if hashlib.sha256(raw).hexdigest() != verdict.get("provider_response_sha256"):
+        raise ValueError("provider receipt digest mismatch")
+    try:
+        original_normalized = gemini.parse_gemini_result(raw)
+        if signature(original_normalized) != signature(normalized):
+            raise ValueError("normalized result differs from provider response")
+    except Exception:
+        # Avoid exporting provider parsing errors or raw model text.
+        raise ValueError("original provider response cannot be verified") from None
+    if (hashlib.sha256(signature(request).encode("utf-8")).hexdigest()
+            != verdict.get("blind_request_sha256")):
+        raise ValueError("blind request digest mismatch")
     if signature(request["input"]) != signature(fixture["input"]):
         raise ValueError("frozen input mismatch")
     expectations = fixture["expectations"]
