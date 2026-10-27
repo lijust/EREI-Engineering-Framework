@@ -8,7 +8,7 @@ import time
 from urllib.robotparser import RobotFileParser
 from scrapling.fetchers import Fetcher
 
-HOSTS = ["madain.sa","wakan.sa","almajdiah.com","al-saedan.com.sa","nhc.sa"]
+HOSTS = ["etmaam.almajdiah.com"]
 UA = "Open-source-Scrapling-Public-Demo/0.1"
 out = []
 for host in HOSTS:
