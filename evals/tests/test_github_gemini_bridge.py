@@ -112,6 +112,133 @@ class Core13PrivateBridgeTests(unittest.TestCase):
             with self.subTest(item=item.get("body")):
                 self.assertIsNone(bridge.parse_job(item, "lijust"))
 
+    def test_v4_case_rejected_when_local_worktree_is_not_opted_in(self):
+        job = bridge.parse_job(issue(experiment=bridge.V4_EXPERIMENT), "lijust")
+        self.assertEqual(job["experiment"], bridge.V4_EXPERIMENT)
+        with tempfile.TemporaryDirectory() as d:
+            cfg = {**config(Path(d)), "adapter_v3_root": str(Path(d) / "v3")}
+            gh = FakeGitHub([issue(n=210, experiment=bridge.V4_EXPERIMENT)])
+            db = bridge.connect_db(Path(d) / "state" / "requests.sqlite3")
+            with mock.patch.object(bridge, "execute_local") as run:
+                totals = bridge.one_poll(cfg, gh, db)
+            self.assertEqual(totals["accepted"], 0)
+            self.assertEqual(totals["skipped"], 1)
+            self.assertEqual(db.execute("SELECT COUNT(*) FROM jobs").fetchone()[0], 0)
+            run.assert_not_called()
+            db.close()
+
+    def test_v4_uses_identical_shared_utc_budget_for_v2_and_v3(self):
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            cfg = {**config(root, daily_limit=1),
+                   "adapter_v3_root": str(root / "v3"),
+                   "adapter_v4_root": str(root / "v4")}
+            self.assertEqual(bridge.validate_config(cfg), cfg)
+            gh = FakeGitHub([
+                issue(n=211, experiment=bridge.V4_EXPERIMENT),
+                issue(n=212, experiment=bridge.V3_EXPERIMENT),
+                issue(n=213, experiment=bridge.EXPERIMENT),
+            ])
+            db = bridge.connect_db(root / "state" / "requests.sqlite3")
+            calls = []
+            def fake_execute(_cfg, n, case, experiment):
+                calls.append((n, experiment))
+                return json.dumps({"result": "MOCK_ONLY"})
+            first = bridge.one_poll(cfg, gh, db, execute=fake_execute)
+            again = bridge.one_poll(cfg, gh, db, execute=fake_execute)
+            self.assertEqual(first["accepted"], 1)
+            self.assertEqual(first["executed"], 1)
+            self.assertEqual(again["executed"], 0)
+            self.assertEqual(calls, [(211, bridge.V4_EXPERIMENT)])
+            self.assertEqual(db.execute("SELECT COUNT(*) FROM jobs").fetchone()[0], 1)
+            db.close()
+
+    def test_v4_source_pins_and_experiment_specific_safe_receipt(self):
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            cfg = {**config(root), "adapter_v3_root": str(root / "v3"),
+                   "adapter_v4_root": str(root / "v4")}
+            v4_root = Path(cfg["adapter_v4_root"])
+            target = Path(cfg["target_root"])
+            v4_root.mkdir()
+            target.mkdir()
+            with (
+                mock.patch.object(bridge, "exact_git_head") as head,
+                mock.patch.object(bridge, "validate_adapter_bytes") as blobs,
+                mock.patch.object(bridge.subprocess, "run",
+                    return_value=subprocess.CompletedProcess(
+                        args=[], returncode=1, stdout="", stderr="")
+                ) as launch,
+                mock.patch.object(bridge, "safe_result",
+                    return_value='{"result":"NOT_SCORED"}') as safe,
+                mock.patch.dict(os.environ, {
+                    "EREI_BRIDGE_GITHUB_TOKEN": "CANARY_PRIVATE_TOKEN",
+                    "GEMINI_API_KEY": "MOCK_ONLY_GEMINI",
+                }),
+            ):
+                bridge.execute_local(
+                    cfg, 214, "TLR-003-VERIFICATION-ESCAPE",
+                    bridge.V4_EXPERIMENT,
+                )
+            head.assert_any_call(v4_root.resolve(), bridge.V4_ADAPTER_SHA)
+            head.assert_any_call(target.resolve(), bridge.TARGET_SHA)
+            blobs.assert_called_once_with(
+                v4_root.resolve(), expected_sha=bridge.V4_ADAPTER_SHA,
+                pinned_files=bridge.V4_PINNED_EXECUTABLE_FILES,
+            )
+            command = launch.call_args.args[0]
+            self.assertIn("evals.experiments.run_gemini_learning_v4_smoke",
+                          command[6])
+            self.assertNotIn("CANARY_PRIVATE_TOKEN", str(command))
+            self.assertNotIn("EREI_BRIDGE_GITHUB_TOKEN",
+                             launch.call_args.kwargs["env"])
+            self.assertEqual(launch.call_args.kwargs["env"]["GEMINI_API_KEY"],
+                             "MOCK_ONLY_GEMINI")
+            safe.assert_called_once_with(
+                Path(cfg["evidence_root"]).resolve() / "github-issue-0000214",
+                bridge.V4_EXPERIMENT,
+            )
+
+    def test_v4_verdict_is_not_reported_as_v3_or_v2(self):
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            (root / "verdict.json").write_text(json.dumps({
+                "status": "EXPERIMENTAL_MODEL_RESPONSE_SCORED_FAIL_UNVERIFIED",
+                "experiment": bridge.V4_RESULT_EXPERIMENT,
+                "passed": False, "usage_metadata": {"totalTokenCount": 42},
+            }))
+            v4 = json.loads(bridge.safe_result(root, bridge.V4_EXPERIMENT))
+            self.assertEqual(v4["experiment"], bridge.V4_EXPERIMENT)
+            self.assertFalse(v4["pass"])
+            self.assertFalse(v4["independently_accepted"])
+            self.assertFalse(v4["stable_ready"])
+            self.assertEqual(json.loads(
+                bridge.safe_result(root, bridge.V3_EXPERIMENT))["result"],
+                "NOT_SCORED")
+            self.assertEqual(json.loads(
+                bridge.safe_result(root, bridge.EXPERIMENT))["result"],
+                "NOT_SCORED")
+
+    def test_v4_config_must_have_v3_and_disjoint_paths(self):
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            cfg = config(root)
+            with self.assertRaises(bridge.BridgeError):
+                bridge.validate_config({
+                    **cfg, "adapter_v4_root": str(root / "v4"),
+                })
+            cfg = {**cfg, "adapter_v3_root": str(root / "v3"),
+                   "adapter_v4_root": str(root / "v4")}
+            self.assertEqual(bridge.validate_config(cfg), cfg)
+            for value in ("adapter", "target", "v3", "state", "evidence"):
+                with self.subTest(value=value):
+                    with self.assertRaises(bridge.BridgeError):
+                        bridge.validate_config({
+                            **cfg, "adapter_v4_root": str(root / value),
+                        })
+            self.assertIsNone(bridge.parse_job(
+                issue(experiment="arbitrary_v5_command"), "lijust"))
+
     def test_v3_case_is_allowlisted_but_local_opt_in_required(self):
         job = bridge.parse_job(issue(experiment=bridge.V3_EXPERIMENT), "lijust")
         self.assertEqual(job["experiment"], bridge.V3_EXPERIMENT)
