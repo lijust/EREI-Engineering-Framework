@@ -70,6 +70,118 @@ class FakeGitHub:
 
 
 class Core13PrivateBridgeTests(unittest.TestCase):
+    def test_v5_requires_explicit_local_sha_pinned_opt_in(self):
+        self.assertEqual(
+            bridge.parse_job(issue(n=701, experiment=bridge.V5_EXPERIMENT), "lijust")["experiment"],
+            bridge.V5_EXPERIMENT,
+        )
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            cfg = {**config(root), "adapter_v3_root": str(root / "v3"),
+                   "adapter_v4_root": str(root / "v4")}
+            gh = FakeGitHub([issue(n=701, experiment=bridge.V5_EXPERIMENT)])
+            db = bridge.connect_db(root / "state" / "requests.sqlite3")
+            with mock.patch.object(bridge, "execute_local") as runner:
+                stats = bridge.one_poll(cfg, gh, db)
+            self.assertEqual(stats["accepted"], 0)
+            self.assertEqual(stats["skipped"], 1)
+            self.assertEqual(db.execute("SELECT COUNT(*) FROM jobs").fetchone()[0], 0)
+            runner.assert_not_called()
+            db.close()
+
+    def test_v5_shares_quota_with_v2_v3_v4_and_never_retries(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d)
+            cfg={**config(root, daily_limit=1),
+                 "adapter_v3_root":str(root / "v3"),
+                 "adapter_v4_root":str(root / "v4"),
+                 "adapter_v5_root":str(root / "v5")}
+            self.assertEqual(bridge.validate_config(cfg), cfg)
+            gh=FakeGitHub([
+                issue(n=702, experiment=bridge.V5_EXPERIMENT),
+                issue(n=703, experiment=bridge.V4_EXPERIMENT),
+            ])
+            db=bridge.connect_db(root / "state" / "requests.sqlite3")
+            calls=[]
+            def fake_exec(_cfg,n,case,experiment):
+                calls.append((n,experiment))
+                return json.dumps({"result":"MOCK_EXECUTION","pass":False})
+            first=bridge.one_poll(cfg,gh,db,execute=fake_exec)
+            replay=bridge.one_poll(cfg,gh,db,execute=fake_exec)
+            self.assertEqual(first["executed"],1)
+            self.assertEqual(replay["executed"],0)
+            self.assertEqual(calls,[(702,bridge.V5_EXPERIMENT)])
+            db.close()
+
+    def test_v5_local_exact_pins_and_command_without_token(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d)
+            cfg={**config(root), "adapter_v3_root":str(root / "v3"),
+                 "adapter_v4_root":str(root / "v4"),
+                 "adapter_v5_root":str(root / "v5")}
+            v5=Path(cfg["adapter_v5_root"]); v5.mkdir()
+            Path(cfg["target_root"]).mkdir()
+            with (
+                mock.patch.object(bridge,"exact_git_head") as exact,
+                mock.patch.object(bridge,"validate_adapter_bytes") as pin,
+                mock.patch.object(bridge.subprocess,"run",return_value=subprocess.CompletedProcess(
+                    args=[],returncode=1,stdout="",stderr="")) as launched,
+                mock.patch.object(bridge,"safe_result",
+                    return_value='{"result":"NOT_SCORED"}') as read,
+                mock.patch.dict(os.environ,{
+                    "EREI_BRIDGE_GITHUB_TOKEN":"PRIVATE_GH_CANARY",
+                    "GEMINI_API_KEY":"SYNTHETIC_DUMMY",
+                }),
+            ):
+                bridge.execute_local(cfg,704,"TLR-007-REVIEW-NOT-SELF-MODIFICATION",
+                                     bridge.V5_EXPERIMENT)
+            exact.assert_any_call(v5.resolve(),bridge.V5_ADAPTER_SHA)
+            pin.assert_called_once_with(
+                v5.resolve(),expected_sha=bridge.V5_ADAPTER_SHA,
+                pinned_files=bridge.V5_PINNED_EXECUTABLE_FILES,
+            )
+            argv=launched.call_args.args[0]
+            self.assertIn("run_gemini_learning_v5_smoke",argv[6])
+            self.assertNotIn("PRIVATE_GH_CANARY",str(argv))
+            self.assertNotIn("EREI_BRIDGE_GITHUB_TOKEN",launched.call_args.kwargs["env"])
+            read.assert_called_once_with(
+                Path(cfg["evidence_root"]).resolve() / "github-issue-0000704",
+                bridge.V5_EXPERIMENT,
+            )
+
+    def test_v5_receipt_cannot_masquerade_as_v4_or_v3(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d)
+            (root/"verdict.json").write_text(json.dumps({
+                "status":"EXPERIMENTAL_MODEL_RESPONSE_SCORED_FAIL_UNVERIFIED",
+                "experiment":bridge.V5_RESULT_EXPERIMENT,
+                "passed":False,
+                "usage_metadata":{"totalTokenCount":2812},
+            }),encoding="utf-8")
+            result=json.loads(bridge.safe_result(root,bridge.V5_EXPERIMENT))
+            self.assertEqual(result["experiment"],bridge.V5_EXPERIMENT)
+            self.assertEqual(result["total_tokens"],2812)
+            self.assertFalse(result["pass"])
+            self.assertFalse(result["stable_ready"])
+            self.assertFalse(result["independently_accepted"])
+            self.assertEqual(json.loads(bridge.safe_result(root,bridge.V4_EXPERIMENT))["result"],"NOT_SCORED")
+            self.assertEqual(json.loads(bridge.safe_result(root,bridge.V3_EXPERIMENT))["result"],"NOT_SCORED")
+
+    def test_v5_path_must_be_disjoint_and_require_existing_v4_config(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d)
+            base=config(root)
+            with self.assertRaises(bridge.BridgeError):
+                bridge.validate_config({**base,"adapter_v5_root":str(root/"v5")})
+            cfg={**base,"adapter_v3_root":str(root/"v3"),
+                 "adapter_v4_root":str(root/"v4"),
+                 "adapter_v5_root":str(root/"v5")}
+            self.assertEqual(bridge.validate_config(cfg),cfg)
+            for name in ("adapter","target","v3","v4","evidence","state"):
+                with self.subTest(name=name):
+                    with self.assertRaises(bridge.BridgeError):
+                        bridge.validate_config({**cfg,"adapter_v5_root":str(root/name)})
+
     def test_verified_external_rpd_ceiling_can_be_configured_up_to_500(self):
         with tempfile.TemporaryDirectory() as d:
             root = Path(d)
