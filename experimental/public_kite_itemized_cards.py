@@ -38,7 +38,7 @@ def parse_page(content,url):
   price_nodes=a.xpath(".//span[contains(text(),'SAR')]/text()")
   asking=price_nodes[-1] if price_nodes else None
   asking_number=None
-  if asking and re.search(r"\\d",asking):
+  if asking and re.search(r"\d",asking):
    v=re.sub(r"[^0-9.]","",asking)
    try:asking_number=float(v)
    except ValueError:pass
@@ -48,9 +48,9 @@ def parse_page(content,url):
   if code and (len(code)<1 or len(code)>95):code=None
   sale=("للبيع" in title or "for sale" in title.lower())
   rent=("للإيجار" in title or "للايجار" in title or "for rent" in title.lower())
-  bb=re.search(r"(\\d+)\\s+Beds?",specs,re.I)
-  bt=re.search(r"(\\d+)\\s+Baths?",specs,re.I)
-  area=re.search(r"([\\d,.]+)\\s+sqm",specs,re.I)
+  bb=re.search(r"(\d+)\s+Beds?",specs,re.I)
+  bt=re.search(r"(\d+)\s+Baths?",specs,re.I)
+  area=re.search(r"([\d,.]+)\s+sqm",specs,re.I)
   records.append({"publisher_listing_id":href.split("/")[-1],"listing_url":"https://kite.sa"+href,
        "publisher_project_url":url,"publisher_project_title":project,"published_title":title,
        "source_unit_code":code,"spec_text":specs,"beds":int(bb.group(1)) if bb else None,
