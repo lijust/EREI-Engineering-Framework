@@ -70,6 +70,79 @@ class FakeGitHub:
 
 
 class Core13PrivateBridgeTests(unittest.TestCase):
+    def test_verified_external_rpd_ceiling_can_be_configured_up_to_500(self):
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            for permitted in (1, 5, 10, 450, 500):
+                self.assertEqual(
+                    bridge.validate_config(config(root, daily_limit=permitted))["daily_limit"],
+                    permitted,
+                )
+            for rejected in (0, -1, 501, 1000, 5.5, True):
+                with self.subTest(value=rejected):
+                    with self.assertRaises(bridge.BridgeError):
+                        bridge.validate_config(config(root, daily_limit=rejected))
+
+    def test_http429_stops_remaining_queue_and_future_polls_without_retry(self):
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            cfg = {**config(root, daily_limit=450),
+                   "adapter_v3_root": str(root / "v3"),
+                   "adapter_v4_root": str(root / "v4")}
+            gh = FakeGitHub([
+                issue(n=601, experiment=bridge.V4_EXPERIMENT),
+                issue(n=602, experiment=bridge.V4_EXPERIMENT),
+            ])
+            dbpath = root / "state" / "requests.sqlite3"
+            db = bridge.connect_db(dbpath)
+            calls = []
+            def provider_quota_response(_cfg, n, case, experiment):
+                calls.append(n)
+                return json.dumps({"result":"NOT_SCORED",
+                                   "reason":"CANDIDATE_HTTP_ERROR",
+                                   "http_status":429})
+            with mock.patch.object(bridge, "utc_day", return_value="2026-10-27"):
+                first = bridge.one_poll(cfg, gh, db, execute=provider_quota_response)
+                self.assertEqual(first["executed"], 1)
+                self.assertEqual(calls, [601])
+                self.assertTrue(bridge.provider_stopped_for_today(db))
+                self.assertEqual(db.execute("SELECT COUNT(*) FROM jobs").fetchone()[0], 1)
+                second = bridge.one_poll(cfg, gh, db, execute=provider_quota_response)
+                self.assertEqual(second["executed"], 0)
+                self.assertEqual(calls, [601])
+                db.close()
+                db = bridge.connect_db(dbpath)
+                third = bridge.one_poll(cfg, gh, db, execute=provider_quota_response)
+                self.assertEqual(third["executed"], 0)
+                self.assertEqual(calls, [601])
+                with mock.patch.object(bridge, "utc_day", return_value="2026-10-28"):
+                    self.assertFalse(bridge.provider_stopped_for_today(db))
+                    # External quota becomes available: the next valid Issue,
+                    # not the consumed issue, can be claimed once.
+                    calls_after = []
+                    def successful_response(_cfg, n, case, experiment):
+                        calls_after.append(n)
+                        return '{"result":"MOCK_SUCCESS"}'
+                    fourth = bridge.one_poll(cfg, gh, db, execute=successful_response)
+                    self.assertEqual(fourth["executed"], 1)
+                    self.assertEqual(calls_after, [602])
+            db.close()
+
+    def test_quota_stop_marker_never_triggers_on_scored_behavior_fail(self):
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            cfg = config(root, daily_limit=500)
+            gh = FakeGitHub([issue(n=620), issue(n=621)])
+            db = bridge.connect_db(root / "state" / "requests.sqlite3")
+            fake = lambda *_: json.dumps({
+                "result": "EXPERIMENTAL_MODEL_RESPONSE_SCORED_FAIL_UNVERIFIED",
+                "pass": False,
+            })
+            totals = bridge.one_poll(cfg, gh, db, execute=fake)
+            self.assertEqual(totals["executed"], 2)
+            self.assertFalse(bridge.provider_stopped_for_today(db))
+            db.close()
+
     def test_strict_allowed_issue_json(self):
         self.assertEqual(bridge.parse_job(issue(), "lijust"),
                          {"number": 1, "case_id": "TLR-003-VERIFICATION-ESCAPE",
