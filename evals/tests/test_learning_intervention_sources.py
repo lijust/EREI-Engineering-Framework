@@ -103,7 +103,7 @@ class InterventionLedgerBindingTests(unittest.TestCase):
     def test_exact_cohort_and_quality_accounting_are_local_only(self):
         good = self.add(0, verification_escape=True, verification_failures=1,
                         outcome_class="failed", terminal_state="FAILED",
-                        failure_stage="verification")
+                        failure_stage="runtime")
         success = self.add(1)
         data = self.data([good, success], exposure=True, recurrence=False)
         original = copy.deepcopy(data)
