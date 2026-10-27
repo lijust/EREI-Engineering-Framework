@@ -254,10 +254,16 @@ def _materialize(initial: dict, actions: list[dict]) -> dict:
                 raise ProposalDenied("STATE_FIELD_MISSING")
             state["feedback"].append({key: value for key, value in action.items() if key != "op"})
         elif op == "nominate_candidate":
-            if ("promotion_queue" not in state or "feedback" not in state or
-                    action["fingerprint"] not in {
-                        item.get("fingerprint") for item in state["feedback"] if type(item) is dict
-                    }):
+            if "promotion_queue" not in state or "feedback" not in state:
+                raise ProposalDenied("PROMOTION_EVIDENCE_MISSING")
+            # Historical feedback is not necessarily valid just because its
+            # outer state field was a list. Never hash untrusted nested data.
+            entries = state["feedback"]
+            if any(type(item) is not dict or
+                   type(item.get("fingerprint")) is not str or
+                   not item["fingerprint"] for item in entries):
+                raise ProposalDenied("MALFORMED_EXISTING_FEEDBACK")
+            if not any(item["fingerprint"] == action["fingerprint"] for item in entries):
                 raise ProposalDenied("PROMOTION_EVIDENCE_MISSING")
             state["promotion_queue"].append(action["fingerprint"])
         elif op == "execute_capability":
