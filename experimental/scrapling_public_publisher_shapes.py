@@ -37,7 +37,7 @@ assert resp.status==200, f"robots not available {resp.status}"
 rp=RobotFileParser()
 rp.parse(resp.body.decode("utf8","replace").splitlines())
 with StealthySession(record_requests=True,max_recorded_requests=500) as session:
-    for url in URLS[:2]:
+    for url in URLS[:1]:
         item={"url":url,"observed_at_utc":datetime.now(timezone.utc).isoformat()}
         if not rp.can_fetch(UA,url):
             item["state"]="ROBOTS_DISALLOW"
@@ -76,6 +76,14 @@ with StealthySession(record_requests=True,max_recorded_requests=500) as session:
                 "has_unit_number_token": b"unit_number" in page.body.lower(),
                 "has_units_token": b"units" in page.body.lower(),
             }
+            def structure(obj, depth=0):
+                if depth>4:return {"kind":"MAX_DEPTH"}
+                if isinstance(obj,list):
+                    return {"kind":"list","count":len(obj),"first":structure(obj[0],depth+1) if obj else None}
+                if isinstance(obj,dict):
+                    return {"kind":"object","fields":{str(k):structure(v,depth+1) for k,v in list(obj.items())[:50]}}
+                return {"kind":type(obj).__name__}
+            item["project_response_schema"]=[]
             item["xhr_shapes"]=[]
             for net in session.network.search(limit=None,include_static=False):
                 if net.status==429: item["state"]="XHR_HTTP_429_STOP";break
@@ -89,6 +97,7 @@ with StealthySession(record_requests=True,max_recorded_requests=500) as session:
                     for k,v in data.items():
                         if isinstance(v,list): arrays.append({"field":str(k),"count":len(v),"first_item_fields":list(v[0])[:20] if v and isinstance(v[0],dict) else []})
                 if isinstance(data,list):arrays.append({"field":"$","count":len(data),"first_item_fields":list(data[0])[:20] if data and isinstance(data[0],dict) else []})
+                if parsed.path.startswith("/api/client/v1/projects/") and isinstance(data,dict):item["project_response_schema"].append({"path":parsed.path,"units":structure(data.get("units")),"project_field_names":sorted(data.get("project",{}).keys()) if isinstance(data.get("project"),dict) else []})
                 if arrays or isinstance(data,dict):item["xhr_shapes"].append({"host":parsed.hostname,"path":parsed.path,"top_level_keys":sorted(str(k) for k in data)[:40] if isinstance(data,dict) else [],"arrays":arrays[:8]})
             if item.get("state")=="XHR_HTTP_429_STOP":results.append(item);save();break
             item["state"]="CAPTURED_NO_UNIT_COUNT_ASSUMED"
