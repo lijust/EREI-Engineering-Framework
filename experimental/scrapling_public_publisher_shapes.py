@@ -15,12 +15,10 @@ from scrapling.fetchers import Fetcher, StealthySession
 UA="Open-source-Scrapling-Public-Demo/0.1"
 HOST="almajdiah.com"
 URLS=[
-  "https://almajdiah.com/projects/153",
-  "https://almajdiah.com/projects/119",
-  "https://almajdiah.com/projects/156",
-  "https://almajdiah.com/projects/161",
-  "https://almajdiah.com/projects/195",
-  "https://almajdiah.com/projects/2",
+  "https://almajdiah.com/projects/197",
+  "https://almajdiah.com/projects/183",
+  "https://almajdiah.com/projects/172",
+  "https://almajdiah.com/projects/207",
 ]
 output=Path(os.environ["RUNNER_TEMP"])/"public-original-publisher-source-shapes.json"
 results=[]
@@ -37,7 +35,7 @@ assert resp.status==200, f"robots not available {resp.status}"
 rp=RobotFileParser()
 rp.parse(resp.body.decode("utf8","replace").splitlines())
 with StealthySession(record_requests=True,max_recorded_requests=500) as session:
-    for url in URLS[:1]:
+    for url in URLS[:4]:
         item={"url":url,"observed_at_utc":datetime.now(timezone.utc).isoformat()}
         if not rp.can_fetch(UA,url):
             item["state"]="ROBOTS_DISALLOW"
@@ -97,7 +95,12 @@ with StealthySession(record_requests=True,max_recorded_requests=500) as session:
                     for k,v in data.items():
                         if isinstance(v,list): arrays.append({"field":str(k),"count":len(v),"first_item_fields":list(v[0])[:20] if v and isinstance(v[0],dict) else []})
                 if isinstance(data,list):arrays.append({"field":"$","count":len(data),"first_item_fields":list(data[0])[:20] if data and isinstance(data[0],dict) else []})
-                if parsed.path.startswith("/api/client/v1/projects/") and isinstance(data,dict):item["project_response_schema"].append({"path":parsed.path,"units":structure(data.get("units")),"project_field_names":sorted(data.get("project",{}).keys()) if isinstance(data.get("project"),dict) else []})
+                if parsed.path.startswith("/api/client/v1/projects/") and isinstance(data,dict):
+                    project_info=data.get("project") if isinstance(data.get("project"),dict) else {}
+                    published_fields=("id","code","view_units","available_units","sold_units","units_count","view_landing_page_units","is_sales_on_map","status","status_text")
+                    item["project_response_schema"].append({"path":parsed.path,"units":structure(data.get("units")),
+                      "public_project_scalar_fields":{key:project_info.get(key) for key in published_fields},
+                      "project_field_names":sorted(project_info.keys())})
                 if arrays or isinstance(data,dict):item["xhr_shapes"].append({"host":parsed.hostname,"path":parsed.path,"top_level_keys":sorted(str(k) for k in data)[:40] if isinstance(data,dict) else [],"arrays":arrays[:8]})
             if item.get("state")=="XHR_HTTP_429_STOP":results.append(item);save();break
             item["state"]="CAPTURED_NO_UNIT_COUNT_ASSUMED"
