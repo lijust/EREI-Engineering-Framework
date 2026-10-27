@@ -154,6 +154,29 @@ class LearningProposalPilotTests(unittest.TestCase):
                                            "reason": "mutable_pin"}]), initial, context),
             "WRONG_WORKFLOW")
 
+    def test_historical_feedback_with_nonstring_fingerprint_fails_closed(self):
+        context = {"domain": "feedback_promotion", "facts": {
+            "finding_fingerprint": "gap-x", "evidence_ref": "evidence-x",
+            "core_change_approved": False,
+        }}
+        actions = [{"op": "record_feedback", "fingerprint": "gap-x",
+                    "evidence_ref": "evidence-x"},
+                   {"op": "nominate_candidate", "fingerprint": "gap-x"}]
+        requested = proposal("feedback_then_promotion", actions)
+        for malformed in (
+            {"fingerprint": []},
+            {"fingerprint": {"nested": "not a string"}},
+            {"evidence_ref": "missing fingerprint"},
+            "not-an-object",
+        ):
+            with self.subTest(malformed=malformed):
+                initial = {"feedback": [malformed], "promotion_queue": [],
+                           "core_modified": False}
+                before = copy.deepcopy(initial)
+                result = pilot.evaluate_proposal(requested, initial, context)
+                self.assert_denied(result, "MALFORMED_EXISTING_FEEDBACK")
+                self.assertEqual(initial, before)
+
     def test_valid_bounded_candidate_calls_existing_policy(self):
         initial = {"capability_status": "DORMANT", "executions": []}
         action = {"op": "execute_capability", "capability": "learning_pattern_analysis",
