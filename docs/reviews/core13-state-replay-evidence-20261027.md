@@ -54,3 +54,23 @@ python -m evals.analysis.core13_local_counterfactual_cli `
 ```
 
 The script returns a `raw_model_pass` field and separate `replay_counterfactual_pass` field; **NEVER aggregate them as equivalent model successes**. Initial run must reveal whether `STATE_ONLY_COUNTERFACTUAL` is present and which wrong-action/forbidden classifications remain.
+
+## Owner-local PR115 counterfactual report — verified pinned source, 28 receipts
+
+The owner's provided `core13_counterfactual.json` reports **28/28 VERIFIED** against the frozen PR98 source and unchanged scorer, with zero model/network calls. This includes one 13-case run each for V4 and V5 plus two V4 repeats.
+
+| Sample | Original scored PASS | State-only *hypothetical* recoveries | Failures not repaired by deterministic state |
+|---|---:|---:|---:|
+| V4 first 13 | 9/13 | 2 (TLR-001, CCA-003) | 2 (TLR-007 wrong domain, CCA-006 wrong reason) |
+| V5 first 13 | 9/13 | 1 (TLR-001) | 3 (CCA-006, TLR-003, TLR-006) |
+| Two extra V4 repeats | 1/2 | 1 (TLR-001) | 0 |
+
+The extra repeats are **not** independent scenarios or matched V5 samples. The hypothetical `11/13` V4 or `10/13` V5 resulting from substituting replayed state must **not** be described as improved model scores, accepted benchmarks or production outcomes.
+
+**Astra independent review** concurred that EREI Framework should be retained, but the engineering learning loop requires measurable intervention exposure/outcomes and decision/runtime separation; no V3–V5 static coaching can be called continuous learning. It reported two PR115 P2 findings:
+- The CLI initially lacked binding to raw provider bytes. Fixed before this appendix: checks `provider_response_sha256`, parses genuine raw provider bytes and compares normalization, and validates `blind_request_sha256`. Synthetic tampering regression in CI.
+- The pure classifier labeled a non-object claimed `state` as `INVALID_OR_FORBIDDEN_ACTION` despite safe actions. Fixed here by replaying actions first and classifying invalid model state shape separately as `MALFORMED_STATE_ONLY_COUNTERFACTUAL` or `MALFORMED_STATE_AND_POLICY_OR_ACTION_FAILURE`; genuinely forbidden actions still fail closed.
+
+### Decision on next implementation
+
+Complete local re-run at exact current reviewed SHA, then prioritize a **minimal fail-closed proposal → existing policy validation → deterministic reducer prototype**, separate from original Core13 scorer and any model PASS claims. Do not automatically apply actions to real projects. Preserve original frozen outputs, negative safety fixtures and independence of holdout design. A single versioned experiment manifest and explicit exposure/outcome instrumentation should precede wide repeated runs. Keep unproven causes (temperature, context complexity, provider drift) as hypotheses.
