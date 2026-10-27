@@ -13,7 +13,7 @@ from pathlib import Path
 from scrapling.fetchers import Fetcher
 
 HOST="etmaam.almajdiah.com"
-PUBLISHER_PROJECTS={"197":"158","207":"163","172":"140"}
+PUBLISHER_PROJECTS={"175":"143","184":"117"}
 ROOT=f"https://{HOST}/api/client/v1/projects/"
 UA="Open-source-Scrapling-Public-Demo/0.1"
 OUT=Path(os.environ["RUNNER_TEMP"])/"public-almajdiah-three-projects-cards.json"
@@ -51,6 +51,10 @@ try:
             if not isinstance(project,dict) or str(project.get("id"))!=pid or str(project.get("code"))!=code:
                 raise ValueError("Publisher_project_mismatch_"+pid)
             group=data.get("units")
+            if group is None:
+                print("PROJECT_NO_UNIT_LIST "+json.dumps({"project_id":pid,"publisher_code":code,"units":None}))
+                url=None
+                break
             if not isinstance(group,dict) or not isinstance(group.get("data"),list):
                 raise ValueError("No firstparty itemized units for project "+pid)
             rows=group["data"]
