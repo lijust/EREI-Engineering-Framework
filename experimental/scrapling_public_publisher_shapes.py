@@ -37,7 +37,7 @@ assert resp.status==200, f"robots not available {resp.status}"
 rp=RobotFileParser()
 rp.parse(resp.body.decode("utf8","replace").splitlines())
 with StealthySession(record_requests=True,max_recorded_requests=500) as session:
-    for url in URLS:
+    for url in URLS[:2]:
         item={"url":url,"observed_at_utc":datetime.now(timezone.utc).isoformat()}
         if not rp.can_fetch(UA,url):
             item["state"]="ROBOTS_DISALLOW"
@@ -60,6 +60,22 @@ with StealthySession(record_requests=True,max_recorded_requests=500) as session:
             item["text_chars"]=len(compact)
             item["visible_excerpt"]=compact[:5500]
             item["network_responses"]=len(session.network.search(limit=None,include_static=False))
+            item["network_inventory"]=[]
+            for capture in session.network.search(limit=None,include_static=False)[:60]:
+                capture_url=urlsplit(str(capture.url))
+                item["network_inventory"].append({
+                    "host":capture_url.hostname, "path":capture_url.path,
+                    "status":int(capture.status),
+                    "resource":str(capture.meta.get("resource_type")),
+                    "bytes":len(capture.body),
+                })
+            item["html_clues"]={
+                "has_next_data": b"__NEXT_DATA__" in page.body,
+                "has_inertia": b"inertia" in page.body.lower(),
+                "has_livewire": b"livewire" in page.body.lower(),
+                "has_unit_number_token": b"unit_number" in page.body.lower(),
+                "has_units_token": b"units" in page.body.lower(),
+            }
             item["xhr_shapes"]=[]
             for net in session.network.search(limit=None,include_static=False):
                 if net.status==429: item["state"]="XHR_HTTP_429_STOP";break
