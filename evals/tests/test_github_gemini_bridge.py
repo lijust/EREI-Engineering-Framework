@@ -530,7 +530,7 @@ class Core13PrivateBridgeTests(unittest.TestCase):
             for label, value in (
                 ("enabled", "true"),
                 ("daily_limit", 0),
-                ("daily_limit", 50),
+                ("daily_limit", 501),
                 ("poll_seconds", 2),
                 ("adapter_root", "relative/adapter"),
             ):
