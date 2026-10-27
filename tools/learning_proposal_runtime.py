@@ -87,7 +87,10 @@ def _proposal(value: Any) -> tuple[str, list[dict]]:
         raise ProposalDenied("PROPOSAL_CONTRACT_INVALID")
     if set(value) - {"contract", "decision", "actions", "claimed_state"}:
         raise ProposalDenied("PROPOSAL_CONTRACT_INVALID")
-    if value["contract"] != CONTRACT or value["decision"] not in DECISION_OPERATIONS:
+    if (type(value["contract"]) is not str or
+            type(value["decision"]) is not str or
+            value["contract"] != CONTRACT or
+            value["decision"] not in DECISION_OPERATIONS):
         raise ProposalDenied("PROPOSAL_CONTRACT_INVALID")
     actions = value["actions"]
     if type(actions) is not list or len(actions) > 16:
@@ -121,9 +124,11 @@ def _signals(value: Any) -> None:
 
 
 def _authorize(decision: str, actions: list[dict], context: Any) -> None:
-    if type(context) is not dict or context.get("domain") not in {
-        "task_capture", "learning_review", "feedback_promotion", "capability_activation"
-    }:
+    if (type(context) is not dict or
+            type(context.get("domain")) is not str or
+            context["domain"] not in {
+                "task_capture", "learning_review", "feedback_promotion", "capability_activation"
+            }):
         raise ProposalDenied("UNTRUSTED_POLICY_CONTEXT")
     domain = context["domain"]
     if domain == "task_capture":
@@ -159,7 +164,7 @@ def _authorize(decision: str, actions: list[dict], context: Any) -> None:
         # Caller must supply a reviewed determination from its task-learning
         # mechanism. This pilot does not compute/attest that determination.
         reviewed = context.get("authorized_review_status")
-        if reviewed not in STATUS_VALUES or actions[0]["status"] != reviewed:
+        if type(reviewed) is not str or reviewed not in STATUS_VALUES or actions[0]["status"] != reviewed:
             raise ProposalDenied("REVIEW_AUTHORITY_NOT_ESTABLISHED")
         return
 
@@ -281,10 +286,13 @@ def evaluate_proposal(proposal: Any, initial_state: Any, trusted_context: Any) -
         decision, actions = _proposal(proposal)
         _authorize(decision, actions, trusted_context)
         materialized = _materialize(before, actions)
-        claim = (proposal["claimed_state"] if "claimed_state" in proposal else None)
-        claim_matches = (
-            _same(claim, materialized) if "claimed_state" in proposal else None
-        )
+        claim_matches = None
+        if "claimed_state" in proposal:
+            try:
+                claim_matches = _same(proposal["claimed_state"], materialized)
+            except (ValueError, TypeError, OverflowError):
+                # Claimed state is untrusted telemetry, never authority.
+                claim_matches = False
         return {**base, "status": "AUTHORIZED_IN_MEMORY_PREVIEW",
                 "decision": decision, "materialized_state": materialized,
                 "model_claimed_state_matches_reducer": claim_matches,
