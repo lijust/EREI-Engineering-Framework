@@ -1,0 +1,32 @@
+name: Public Scrapling Almajdiah 6 project unit cards
+on:
+  push:
+    branches:
+      - experiment/public-scrapling-v05-smoke-20261027
+    paths:
+      - '.github/workflows/public-scrapling-almajdiah-six-projects.yml'
+      - 'experimental/scrapling_almajdiah_six_project_units.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  six-publisher-unit-snapshots:
+    runs-on: ubuntu-latest
+    timeout-minutes: 22
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install Scrapling fetcher
+        run: python -m pip install 'scrapling[fetchers]==0.5'
+      - name: Scrape six existing public publisher projects, unit cards only
+        run: python experimental/scrapling_almajdiah_six_project_units.py
+      - name: Save checkpoint, including partial extraction and 429 halt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: public-almajdiah-six-original-project-unit-cards
+          path: ${{ runner.temp }}/public-almajdiah-six-projects-cards.json
+          if-no-files-found: warn
+          retention-days: 1
