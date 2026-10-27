@@ -110,3 +110,30 @@ separate read-only runtime verifier with exposure/outcome measurements.
 
 Do not connect this demo to GitHub Issue routing, Google Sheets writers,
 project mutation tools or real execution tasks during this experiment.
+
+## Separate read-only reference verification stage
+
+`evals.analysis.core13_pilot_reference_verifier.verify_preview()` is a
+**separate module** that compares a successfully authorized preview against a
+caller-supplied independent reducer. For trustworthy audits, supply the
+immutable PR98 simulation reducer from
+`evals.analysis.core13_local_counterfactual_cli.load_frozen()` after pin
+verification. This module never executes actions, edits prompts, reports
+Stable readiness or turns a hypothetical replay into a model PASS.
+
+Test-only example:
+
+```python
+from evals import runner
+from evals.analysis.core13_pilot_reference_verifier import verify_preview
+check = verify_preview(proposal, initial_state, preview,
+                       independent_reducer=runner.simulate_actions)
+assert check["status"] == "REFERENCE_STATE_PARITY_PASS"
+assert check["real_execution_verified"] is False
+```
+
+**Scope:** independent reducer parity of *state transition mechanics* only.
+It is not an independent policy/authorization reviewer, model evaluator,
+end-to-end execution verifier, or transfer-learning proof. A production
+verifier must use authenticated original evidence, independently enforced
+permission checks, actual effects and an attested identity.
