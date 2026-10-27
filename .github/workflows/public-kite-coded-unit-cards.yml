@@ -1,0 +1,30 @@
+name: Public Kite coded unit cards
+on:
+  push:
+    branches:
+      - experiment/public-scrapling-v05-smoke-20261027
+    paths:
+      - '.github/workflows/public-kite-coded-unit-cards.yml'
+      - 'experimental/public_kite_itemized_cards.py'
+      - 'experimental/public_kite_selected_project_urls.json'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  coded-source-cards:
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install 'scrapling[fetchers]==0.5'
+      - run: python experimental/public_kite_itemized_cards.py
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kite-public-individual-offer-cards
+          path: ${{ runner.temp }}/kite-project-individual-offer-cards.json
+          if-no-files-found: warn
+          retention-days: 2
