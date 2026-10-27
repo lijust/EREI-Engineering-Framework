@@ -58,7 +58,7 @@ def _validate_selection(selection: Any, cohort: dict) -> tuple[Any, Any]:
             selection["from_inclusive"], "from_inclusive"
         )
         end = capability_activation._time(selection["to_exclusive"], "to_exclusive")
-    except (capability_activation.ActivationError, TypeError, ValueError):
+    except (capability_activation.ActivationError, TypeError, ValueError, OverflowError):
         raise ValueError("SELECTION_WINDOW_INVALID") from None
     if begin >= end:
         raise ValueError("SELECTION_WINDOW_INVALID")
@@ -227,6 +227,6 @@ def assess_intervention_against_ledger(
             "stable_ready": False,
         }
     except (task_learning.LearningError, capability_activation.ActivationError,
-            OSError, ValueError, KeyError, TypeError, AttributeError,
+            OSError, ValueError, OverflowError, KeyError, TypeError, AttributeError,
             UnicodeError):
         return _deny("LEDGER_EVIDENCE_INVALID")
