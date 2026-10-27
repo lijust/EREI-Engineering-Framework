@@ -1,0 +1,29 @@
+name: Public Kite unit HTML parser diagnostics
+on:
+  push:
+    branches:
+      - experiment/public-scrapling-v05-smoke-20261027
+    paths:
+      - '.github/workflows/public-kite-dom-probe.yml'
+      - 'experimental/public_kite_dom_probe.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  public-dom:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install 'scrapling[fetchers]==0.5'
+      - run: python experimental/public_kite_dom_probe.py
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: public-kite-dom-diagnostics
+          path: ${{ runner.temp }}/kite-public-dom-diagnostics.json
+          if-no-files-found: warn
+          retention-days: 2
