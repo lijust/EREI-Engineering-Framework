@@ -250,6 +250,32 @@ class LearningProposalPilotTests(unittest.TestCase):
             {"contract": pilot.CONTRACT, "decision": "modify_core",
              "actions": []}, base, policy), "PROPOSAL_CONTRACT_INVALID")
 
+    def test_untrusted_malformed_values_fail_closed_without_python_exception(self):
+        base = {"task_events": []}
+        trusted = {"domain": "task_capture",
+                   "facts": {"engineering_execution": False}}
+        for invalid in (
+            {"contract": pilot.CONTRACT, "decision": {"not": "string"},
+             "actions": []},
+            {"contract": pilot.CONTRACT, "decision": "omit_task",
+             "actions": {}},
+        ):
+            with self.subTest(proposal=invalid):
+                result = pilot.evaluate_proposal(invalid, base, trusted)
+                self.assertEqual(result["status"], "DENIED")
+                self.assertFalse(result["executed"])
+        malformed_domain = {"domain": ["task_capture"],
+                            "facts": {"engineering_execution": False}}
+        self.assert_denied(pilot.evaluate_proposal(
+            proposal("omit_task", []), base, malformed_domain),
+            "UNTRUSTED_POLICY_CONTEXT")
+        bad_claim = {"contract": pilot.CONTRACT, "decision": "omit_task",
+                     "actions": [], "claimed_state": float("nan")}
+        result = pilot.evaluate_proposal(bad_claim, base, trusted)
+        self.assertEqual(result["status"], "AUTHORIZED_IN_MEMORY_PREVIEW")
+        self.assertFalse(result["model_claimed_state_matches_reducer"])
+        self.assertEqual(result["materialized_state"], base)
+
     def test_missing_materialization_field_denies_without_mutating_input(self):
         base = {"task_events": []}
         copy_before = copy.deepcopy(base)
