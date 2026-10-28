@@ -45,6 +45,12 @@ provided SHA-256 digest and denies traversal, symlinked trust roots, empty or
 oversized files. Session re-checks activation documents, loaded SHA and
 Framework cleanliness before and after the read, and at finalization.
 
+The session refuses an occurrence already terminal before the knowledge read,
+and rechecks it immediately before and after the read. Its `trace_ref` must
+also equal the exact loaded Framework checkout SHA. These guards prevent a
+post-hoc read from being attached to an already completed task or a different
+Framework revision. They do not provide independent time-of-use attestation.
+
 Finalization requires an already captured, unique Task Learning occurrence
 with exact matching Framework revision/project repository. It then calls the
 existing PR #119 complete-cohort gate and PR #120 per-task trace join.
