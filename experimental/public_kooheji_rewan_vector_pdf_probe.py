@@ -57,4 +57,13 @@ except Exception as e:
 finally:
  save()
  print("REWAN_VECTOR_RESULT "+json.dumps({"status":doc["status"],"pdf_pages":doc.get("pdf_pages"),"pdf_bytes":doc.get("pdf_bytes"),"candidate_pages":[{k:v for k,v in p.items() if k!="numbers"} for p in doc["pages"] if p.get("number_token_count",0)>=45],"error":doc["errors"],"confirmed_new_physical_units":0,"master_writes":0},separators=(",",":")))
+if doc["status"]=="COMPLETE_VECTOR_INVENTORY_PROBE":
+ for p in doc["pages"]:
+  if p.get("page_zero_based")==26 and "numbers" in p:
+   raw=p["numbers"]
+   nset={int(x["code"]) for x in raw}
+   missing=[n for n in range(1,1301) if n not in nset]
+   print("REWAN_P26_NUMBER_VALIDATION "+json.dumps({"min":min(nset),"max":max(nset),"unique":len(nset),"missing_1_to_1300":missing,"duplicate_tokens":len(raw)-len(nset),"page_width":p["page_size"][0],"page_height":p["page_size"][1],"x_range":[min(x["x"] for x in raw),max(x["x2"] for x in raw)],"y_range":[min(x["y"] for x in raw),max(x["y2"] for x in raw)]},separators=(",",":")))
+   for i in range(0,len(raw),65):
+    print("REWAN_P26_VECTOR_ROWS "+json.dumps(raw[i:i+65],separators=(",",":")))
 if doc["status"]!="COMPLETE_VECTOR_INVENTORY_PROBE":sys.exit(2)
