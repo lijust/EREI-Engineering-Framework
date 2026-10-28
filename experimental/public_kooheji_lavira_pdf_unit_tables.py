@@ -45,6 +45,8 @@ try:
    book["pages_with_unit_label"].append(page_idx+1)
    # record exact original publisher text lines around physical table
    lines=[v.strip() for v in t.splitlines() if v.strip()]
+   for batch_start in range(0,len(lines),35):
+    print("ORIGINAL_PDF_NUMBERED_UNIT_PAGE_LINES "+json.dumps({"source":name,"page":page_idx+1,"start":batch_start,"lines":lines[batch_start:batch_start+35]},ensure_ascii=False,separators=(",",":")),flush=True)
    # All labels explicitly present on the publisher drawing, never generated from a declared 264-unit total.
    block="61" if name=="bareh" else "47"
    source_matches={}
