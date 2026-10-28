@@ -12,7 +12,7 @@ from tools import task_learning
 from evals.tests.test_learning_intervention_sources import args, T0
 from tools import capability_activation as activation
 from tools import learning_project_runtime_bridge as bridge
-from evals.tests.test_learning_trace_reference_producer import KnowledgeReadProducerTests
+from evals.tests import test_learning_trace_reference_producer as _reference_fixtures
 
 SHA = "a" * 40
 NOW = datetime(2026, 10, 28, 8, 0, tzinfo=timezone.utc)
@@ -21,7 +21,7 @@ CAPABILITY = "learning_pattern_analysis"
 
 class ActivatedProjectKnowledgeTests(unittest.TestCase):
     def setUp(self):
-        self.fixture = KnowledgeReadProducerTests("test_no_read_means_no_marker_even_when_event_exists")
+        self.fixture = _reference_fixtures.KnowledgeReadProducerTests("test_no_read_means_no_marker_even_when_event_exists")
         self.fixture.setUp()
         self.addCleanup(self.fixture.f.tmp.cleanup)
         self.root = self.fixture.f.root
