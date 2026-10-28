@@ -33,7 +33,7 @@ try:
   t=page.get_text("text")
   if "رقم الوحدة" not in t:continue
   lines=[s.strip() for s in t.splitlines() if s.strip()]
-  tokens=re.findall(r"(?<!\\d)\\d{1,2}[-]\\d{1,2}(?!\\d)",t)
+  tokens=re.findall(r"(?<!\d)\d{1,2}[-]\d{1,2}(?!\d)",t)
   tokens=[a for a in tokens if re.fullmatch(r"[0-9]{1,2}-[0-9]{1,2}",a)]
   item={"page_number":i+1,"first80lines":lines[:80],"numbered_tokens":sorted(set(tokens)),"raw_tokens_count":len(tokens)}
   state["pages"].append(item)
