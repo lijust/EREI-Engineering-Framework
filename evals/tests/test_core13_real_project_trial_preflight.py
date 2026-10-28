@@ -54,6 +54,11 @@ class SourceOnlyPreflightTests(unittest.TestCase):
     def _save_manifest(self):
         self.manifest.write_text(json.dumps(self.manifest_data), encoding="utf-8")
 
+    def commit_fixture(self):
+        self.git("add", "-A")
+        self.git("commit", "-q", "-m", "Synthetic test revision")
+        self.ref = self.git("rev-parse", "HEAD")
+
     def assess(self, sha=None):
         return checker.inspect_trial_admission(
             self.root, self.ref if sha is None else sha, CURRENT, now=UTC,
@@ -97,6 +102,7 @@ class SourceOnlyPreflightTests(unittest.TestCase):
         self._write_valid_adoption()
         self.knowledge.mkdir()
         (self.knowledge / "approved.txt").write_text("synthetic knowledge", encoding="utf-8")
+        self.commit_fixture()
         result = self.assess()
         self.assertEqual(result["blockers"], ["INDEPENDENT_TRIAL_AUTHORIZATION_NOT_ESTABLISHED"])
         self.assertFalse(result["admission_authorized"])
@@ -111,6 +117,7 @@ class SourceOnlyPreflightTests(unittest.TestCase):
         val = json.loads(self.adoption.read_text())
         val["adoptions"][0]["expires_at"] = "2026-10-28T06:30:00Z"
         self.adoption.write_text(json.dumps(val), encoding="utf-8")
+        self.commit_fixture()
         output = self.assess()
         self.assertIn("NO_ACTIVE_MATCHING_CANDIDATE_ADOPTION", output["blockers"])
 
@@ -123,6 +130,7 @@ class SourceOnlyPreflightTests(unittest.TestCase):
                 self.manifest.symlink_to(outside)
             except (OSError, NotImplementedError):
                 self.skipTest("symlinks unavailable")
+            self.commit_fixture()
             result = self.assess()
             self.assertIn("PROJECT_MANIFEST_UNAVAILABLE", result["blockers"])
             self.assertIsNone(result["manifest_sha256"])
@@ -136,8 +144,20 @@ class SourceOnlyPreflightTests(unittest.TestCase):
                 self.knowledge.symlink_to(other, target_is_directory=True)
             except (OSError, NotImplementedError):
                 self.skipTest("symlinks unavailable")
+            self.commit_fixture()
             result = self.assess()
             self.assertIn("PROJECT_KNOWLEDGE_ARTIFACT_NOT_PRESENT", result["blockers"])
+
+    def test_dirty_source_tree_denied_even_with_correct_git_head(self):
+        self._write_valid_adoption()
+        response = self.assess()
+        self.assertEqual(response["blockers"], ["PROJECT_CHECKOUT_DIRTY"])
+        self.assertFalse(response.get("project_commit_verified", False))
+        self.adoption.unlink()
+        self.manifest_data["framework"]["ref"] = CURRENT
+        self._save_manifest()
+        response2 = self.assess()
+        self.assertEqual(response2["blockers"], ["PROJECT_CHECKOUT_DIRTY"])
 
     def test_cli_readonly_returns_blocked_with_exact_commit(self):
         cli = subprocess.run([
