@@ -39,14 +39,14 @@ try:
    tables=root.xpath("//table")
    page["table_count"]=len(tables)
    page["table_samples"]=[{"classes":t.get("class"),"rows":len(t.xpath(".//tr")),"text":" ".join(t.itertext()).strip()[:350]} for t in tables[:4]]
-   for txt in root.xpath("//*[self::div or self::tr or self::li or self::article][normalize-space(text())='101']")[:7]:
+   for txt in root.xpath("//*[normalize-space(text())='101' or normalize-space(text())='102' or normalize-space(text())='113']")[:12]:
     parent=txt.getparent()
     page["candidate_elements"].append({"tag":txt.tag,"attrs":{k:v[:150] for k,v in txt.attrib.items()},"text":" ".join(txt.itertext()).strip()[:280],
      "parent":parent.tag if parent is not None else None,"parent_class":parent.get("class") if parent is not None else None,
      "parent_html":LX.tostring(parent,encoding="unicode")[:1100] if parent is not None else ""})
    for attr in ["data-unit-id","data-apartment-id","data-name"]:
     page["meta_items"].append({attr:len(root.xpath("//*[@"+attr+"]"))})
-   page["dom_sample"]=[doc[max(0,m.start()-350):m.start()+550] for m in list(re.finditer("الوحدة الدور العمارة",doc))[:2]]
+   page["dom_sample"]=[{"needle":needle,"snippets":[doc[max(0,m.start()-330):m.start()+760] for m in list(re.finditer(re.escape(needle),doc))[:4]]} for needle in ("مباعة","الوحدة","AressCompound132","101","unit_number","unit_id")]
   data["pages"].append(page);save()
  data["status"]="COMPLETED_PUBLIC_SOURCE_PROBE"
 except Exception as ex:
