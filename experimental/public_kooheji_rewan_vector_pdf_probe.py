@@ -38,6 +38,27 @@ try:
  pdf=fitz.open(stream=bytes(b),filetype="pdf")
  doc["pdf_bytes"]=len(b);doc["pdf_pages"]=len(pdf)
  try:
+  p26=pdf[26]
+  drawings=p26.get_drawings()
+  sample_colors={}
+  known={"C1":[135.2,663.2],"C2":[135.2,680.8],"D1":[135.2,718.4],"D2":[135.2,735.0],"E1":[135.2,765.6],"E2":[135.2,782.0],"A1":[227.2,662.0],"A2":[227.2,680.0],"A3":[227.2,697.0],"B1":[227.2,719.0],"B2":[227.2,735.0],"B3":[227.2,753.0],"FACILITIES":[227.2,780.0]}
+  pp=p26.get_pixmap(matrix=fitz.Matrix(2,2),alpha=False)
+  def sample(x,y):
+   sx,sy=int(x*2),int(y*2)
+   if sx<0 or sy<0 or sx>=pp.width or sy>=pp.height:return None
+   i=(sy*pp.width+sx)*pp.n
+   return "#"+bytes(pp.samples[i:i+3]).hex()
+  for typ,(x,y) in known.items():
+   sample_colors[typ]=sample(x,y)
+  words=[w for w in p26.get_text("words") if re.fullmatch(r"[0-9]{1,4}",str(w[4]).strip()) and 1<=int(w[4])<=1270 and float(w[1])<800]
+  report={"drawings":len(drawings),"fill_drawings":sum(1 for z in drawings if z.get("fill")),"reference_colors":sample_colors,"sample_words":[]}
+  for w in words[:35]+words[-35:]:
+   cx,cy=(w[0]+w[2])/2,(w[1]+w[3])/2
+   f=[z for z in drawings if z.get("fill") and z.get("rect") and z["rect"].contains(fitz.Point(cx,cy))]
+   report["sample_words"].append({"unit":w[4],"xy":[round(cx,1),round(cy,1)],"pixel":[sample(cx-3,cy),sample(cx+3,cy),sample(cx,cy+4)],"candidate_fills":[[list(round(k,3) for k in z["fill"]),str(z.get("rect"))[:110]] for z in f[-3:]]})
+  print("REWAN_SITEPLAN_MODEL_DIAGNOSTIC "+json.dumps(report,separators=(",",":")))
+ except Exception as diag_error:print("REWAN_MODEL_DIAGNOSTIC_ERROR "+str(diag_error)[:250])
+ try:
   page=pdf[26]
   pix=page.get_pixmap(matrix=fitz.Matrix(1.25,1.25),alpha=False)
   packed=pix.tobytes("jpeg",jpg_quality=58)
