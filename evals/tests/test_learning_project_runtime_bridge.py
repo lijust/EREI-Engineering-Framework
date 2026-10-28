@@ -4,10 +4,12 @@ from __future__ import annotations
 import json
 import tempfile
 import unittest
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from unittest import mock
 
+from tools import task_learning
+from evals.tests.test_learning_intervention_sources import args, T0
 from tools import capability_activation as activation
 from tools import learning_project_runtime_bridge as bridge
 from evals.tests.test_learning_trace_reference_producer import KnowledgeReadProducerTests
@@ -57,6 +59,12 @@ class ActivatedProjectKnowledgeTests(unittest.TestCase):
         self.manifest_path.write_text(json.dumps(self.manifest), encoding="utf-8")
         self.registry_path.write_text(json.dumps(self.registry), encoding="utf-8")
 
+    def prepared(self, minute: int, **changes):
+        return task_learning.build_event(args(**changes), now=T0 + timedelta(minutes=minute))
+
+    def capture(self, event):
+        task_learning.capture(self.root, event)
+
     def session(self, event):
         return bridge.ProjectKnowledgeReadSession(
             self.root, event["occurrence_id"], "synthetic-intervention",
@@ -80,9 +88,10 @@ class ActivatedProjectKnowledgeTests(unittest.TestCase):
         }), encoding="utf-8")
 
     def test_stable_project_read_join_requires_actual_captured_event(self):
-        event = self.fixture.f.add(0, outcome_class="failed", terminal_state="FAILED")
+        event = self.prepared(0, outcome_class="failed", terminal_state="FAILED")
         session = self.session(event)
         data = session.read("sample.txt", self.fixture.sha)
+        self.capture(event)
         self.assertEqual(data, self.fixture.payload)
         intervention = self.fixture.f.data([event])
         result = session.finalize_after_capture(
@@ -99,21 +108,20 @@ class ActivatedProjectKnowledgeTests(unittest.TestCase):
         self.assertEqual(result["causation"], "NOT_ESTABLISHED")
 
     def test_missing_terminal_event_denies_no_false_exposure(self):
-        # Existing ledger is intact; this observation uses a new occurrence
-        # that has never been captured as a terminal task.
-        event = self.fixture.f.add(0)
-        never_captured = dict(
-            event, occurrence_id="EOCC-20261028T070000Z-1234ABCD"
-        )
-        session = self.session(never_captured)
+        # Another eligible occurrence is present; this observation targets
+        # a distinct new occurrence that has not finished.
+        event = self.prepared(0)
+        other = self.prepared(1)
+        self.capture(other)
+        session = self.session(event)
         session.read("sample.txt", self.fixture.sha)
         with self.assertRaisesRegex(bridge.ProjectReadDenied, "TERMINAL_TASK_NOT_RECORDED"):
             session.finalize_after_capture(
-                self.fixture.f.data([event]), self.fixture.f.selector(), SHA
+                self.fixture.f.data([other]), self.fixture.f.selector(), SHA
             )
 
     def test_candidate_without_adoption_and_expired_adoption_deny(self):
-        event = self.fixture.f.add(0)
+        event = self.prepared(0)
         self.registry["development_line"]["capabilities"][CAPABILITY]["status"] = "candidate"
         self.save()
         with self.assertRaisesRegex(bridge.ProjectReadDenied, "CAPABILITY_NOT_ACTIVE"):
@@ -123,10 +131,11 @@ class ActivatedProjectKnowledgeTests(unittest.TestCase):
             self.session(event)
 
     def test_candidate_with_bounded_adoption_can_record_local_read(self):
-        event = self.fixture.f.add(0)
+        event = self.prepared(0)
         self.adopt()
         session = self.session(event)
         session.read("sample.txt", self.fixture.sha)
+        self.capture(event)
         r = session.finalize_after_capture(
             self.fixture.f.data([event]), self.fixture.f.selector(), SHA,
         )
@@ -134,7 +143,7 @@ class ActivatedProjectKnowledgeTests(unittest.TestCase):
         self.assertFalse(r["learning_exposure_independently_verified"])
 
     def test_branch_pin_wrong_loaded_sha_and_dirty_checkout_denied(self):
-        event = self.fixture.f.add(0)
+        event = self.prepared(0)
         self.manifest["framework"]["ref_type"] = "branch"
         self.manifest["framework"]["ref"] = "main"
         self.save()
@@ -157,20 +166,20 @@ class ActivatedProjectKnowledgeTests(unittest.TestCase):
                 self.session(event)
 
     def test_mutated_registry_after_read_denies_reuse_receipt(self):
-        event = self.fixture.f.add(0)
+        event = self.prepared(0)
         session = self.session(event)
         session.read("sample.txt", self.fixture.sha)
+        self.capture(event)
         self.registry["development_line"]["capabilities"][CAPABILITY]["status"] = "candidate"
         self.save()
         with self.assertRaises(bridge.ProjectReadDenied):
-            session.finalize_after_capture(
-                self.fixture.f.data([event]), self.fixture.f.selector(), SHA,
-            )
+            session.finalize_after_capture(None, self.fixture.f.selector(), SHA)
 
     def test_task_framework_mismatch_denied_after_read(self):
-        event = self.fixture.f.add(0, framework_ref="f" * 40)
+        event = self.prepared(0, framework_ref="f" * 40)
         session = self.session(event)
         session.read("sample.txt", self.fixture.sha)
+        self.capture(event)
         with self.assertRaisesRegex(
             bridge.ProjectReadDenied, "TASK_FRAMEWORK_REVISION_MISMATCH"
         ):
@@ -179,10 +188,12 @@ class ActivatedProjectKnowledgeTests(unittest.TestCase):
             )
 
     def test_denominator_omission_of_failed_task_still_denied(self):
-        first = self.fixture.f.add(0)
-        self.fixture.f.add(1, outcome_class="failed", terminal_state="FAILED")
+        first = self.prepared(0)
+        second = self.prepared(1, outcome_class="failed", terminal_state="FAILED")
         session = self.session(first)
         session.read("sample.txt", self.fixture.sha)
+        self.capture(first)
+        self.capture(second)
         with self.assertRaisesRegex(
             bridge.ProjectReadDenied, "PROJECT_TRACE_RECONCILIATION_DENIED"
         ):
@@ -191,7 +202,7 @@ class ActivatedProjectKnowledgeTests(unittest.TestCase):
             )
 
     def test_no_read_no_session_and_invalid_clock_denied(self):
-        event = self.fixture.f.add(0)
+        event = self.prepared(0)
         session = self.session(event)
         with self.assertRaisesRegex(bridge.ProjectReadDenied, "NO_PROJECT_READ"):
             session.finalize_after_capture(
@@ -207,6 +218,24 @@ class ActivatedProjectKnowledgeTests(unittest.TestCase):
                 self.root, event["occurrence_id"], "synthetic-intervention",
                 SHA, capability="unregistered_capability", now=NOW,
             )
+
+    def test_posthoc_read_cannot_be_attached_to_completed_task(self):
+        event = self.prepared(0)
+        self.capture(event)
+        with self.assertRaisesRegex(
+            bridge.ProjectReadDenied, "TASK_ALREADY_TERMINAL_BEFORE_READ"
+        ):
+            self.session(event)
+
+    def test_completed_after_session_open_but_before_read_is_denied(self):
+        event = self.prepared(0)
+        session = self.session(event)
+        self.capture(event)
+        with self.assertRaisesRegex(
+            bridge.ProjectReadDenied, "TASK_ALREADY_TERMINAL_BEFORE_READ"
+        ):
+            session.read("sample.txt", self.fixture.sha)
+
 
 
 if __name__ == "__main__":
