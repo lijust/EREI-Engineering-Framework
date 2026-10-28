@@ -1,0 +1,325 @@
+"""Synthetic local project integration tests; no remote provider or real project."""
+from __future__ import annotations
+
+import json
+import tempfile
+import unittest
+from datetime import datetime, timezone, timedelta
+from pathlib import Path
+from unittest import mock
+
+from tools import task_learning
+from evals.tests.test_learning_intervention_sources import args, T0
+from tools import capability_activation as activation
+from tools import learning_project_runtime_bridge as bridge
+from evals.tests import test_learning_trace_reference_producer as _reference_fixtures
+
+SHA = "a" * 40
+NOW = datetime(2026, 10, 28, 8, 0, tzinfo=timezone.utc)
+CAPABILITY = "learning_pattern_analysis"
+
+
+class ActivatedProjectKnowledgeTests(unittest.TestCase):
+    def setUp(self):
+        self.fixture = _reference_fixtures.KnowledgeReadProducerTests("test_no_read_means_no_marker_even_when_event_exists")
+        self.fixture.setUp()
+        self.addCleanup(self.fixture.f.tmp.cleanup)
+        self.root = self.fixture.f.root
+        self.manifest_path = self.root / activation.MANIFEST_PATH
+        self.registry_path = self.root / "CAPABILITIES.json"
+        self.adoption_path = self.root / activation.ADOPTION_PATH
+        self.manifest = {
+            "schema_version": 1,
+            "framework": {
+                "repository": "lijust/EREI-Engineering-Framework",
+                "baseline": "v1", "ref_type": "commit", "ref": SHA,
+            },
+            "project": {}, "overlays": [], "runtime_adapters": [],
+        }
+        self.registry = {
+            "schema_version": 1,
+            "development_line": {
+                "capabilities": {
+                    CAPABILITY: {"status": "stable", "version": "v1"},
+                },
+            },
+        }
+        self.save()
+
+        self.registry_patch = mock.patch.object(activation, "REGISTRY_PATH", self.registry_path)
+        self.clean_patch = mock.patch.object(activation, "assert_clean_framework_checkout")
+        self.loaded_patch = mock.patch.object(
+            activation, "detect_loaded_framework_ref", return_value=SHA
+        )
+        self.clock_patch = mock.patch.object(
+            bridge, "_runtime_utc_now", return_value=NOW
+        )
+        for patch in (self.registry_patch, self.clean_patch,
+                      self.loaded_patch, self.clock_patch):
+            patch.start()
+            self.addCleanup(patch.stop)
+
+    def save(self):
+        self.manifest_path.write_text(json.dumps(self.manifest), encoding="utf-8")
+        self.registry_path.write_text(json.dumps(self.registry), encoding="utf-8")
+
+    def prepared(self, minute: int, **changes):
+        return task_learning.build_event(args(**changes), now=T0 + timedelta(minutes=minute))
+
+    def capture(self, event):
+        task_learning.capture(self.root, event)
+
+    def session(self, event):
+        return bridge.ProjectKnowledgeReadSession(
+            self.root, event["occurrence_id"], "synthetic-intervention",
+            SHA, capability=CAPABILITY, now=NOW,
+        )
+
+    def adopt(self, *, expires_at="2026-11-01T08:00:00Z"):
+        self.registry["development_line"]["capabilities"][CAPABILITY]["status"] = "candidate"
+        self.save()
+        self.adoption_path.write_text(json.dumps({
+            "schema_version": 1, "framework_ref": SHA,
+            "adoptions": [{
+                "adoption_id": "CAD-20261028T070000Z-ABCD1234",
+                "capability": CAPABILITY, "version": "v1",
+                "approved_at": "2026-10-28T07:00:00Z",
+                "expires_at": expires_at,
+                "approved_by_role": "project_owner", "risk": "L2",
+                "purpose": "Synthetic bounded adoption for the isolated bridge fixture",
+                "evidence": ["synthetic:approval"],
+            }],
+        }), encoding="utf-8")
+
+    def test_stable_project_read_join_requires_actual_captured_event(self):
+        event = self.prepared(0, outcome_class="failed", terminal_state="FAILED")
+        session = self.session(event)
+        data = session.read("sample.txt", self.fixture.sha)
+        self.capture(event)
+        self.assertEqual(data, self.fixture.payload)
+        intervention = self.fixture.f.data([event])
+        result = session.finalize_after_capture(
+            intervention, self.fixture.f.selector(), SHA
+        )
+        self.assertEqual(result["status"], "PROJECT_LOCAL_ACTIVE_KNOWLEDGE_READ_RECONCILED")
+        self.assertEqual(result["source_activation"]["status"], "ACTIVE_STABLE")
+        self.assertEqual(result["source_activation"]["framework_sha"], SHA)
+        self.assertEqual(result["bundle"]["traces"][0]["steps"][0]["op"], "learning_reuse")
+        self.assertFalse(result["consumer_use_verified"])
+        self.assertFalse(result["trace_runtime_independently_attested"])
+        self.assertFalse(result["learning_exposure_independently_verified"])
+        self.assertEqual(result["effectiveness"], "NOT_ESTABLISHED")
+        self.assertEqual(result["causation"], "NOT_ESTABLISHED")
+
+    def test_missing_terminal_event_denies_no_false_exposure(self):
+        # Another eligible occurrence is present; this observation targets
+        # a distinct new occurrence that has not finished.
+        event = self.prepared(0)
+        other = self.prepared(1)
+        self.capture(other)
+        session = self.session(event)
+        session.read("sample.txt", self.fixture.sha)
+        with self.assertRaisesRegex(bridge.ProjectReadDenied, "TERMINAL_TASK_NOT_RECORDED"):
+            session.finalize_after_capture(
+                self.fixture.f.data([other]), self.fixture.f.selector(), SHA
+            )
+
+    def test_candidate_without_adoption_and_expired_adoption_deny(self):
+        event = self.prepared(0)
+        self.registry["development_line"]["capabilities"][CAPABILITY]["status"] = "candidate"
+        self.save()
+        with self.assertRaisesRegex(bridge.ProjectReadDenied, "CAPABILITY_NOT_ACTIVE"):
+            self.session(event)
+        self.adopt(expires_at="2026-10-28T07:30:00Z")
+        with self.assertRaisesRegex(bridge.ProjectReadDenied, "CAPABILITY_NOT_ACTIVE"):
+            self.session(event)
+
+    def test_candidate_with_bounded_adoption_can_record_local_read(self):
+        event = self.prepared(0)
+        self.adopt()
+        session = self.session(event)
+        session.read("sample.txt", self.fixture.sha)
+        self.capture(event)
+        r = session.finalize_after_capture(
+            self.fixture.f.data([event]), self.fixture.f.selector(), SHA,
+        )
+        self.assertEqual(r["source_activation"]["status"], "ACTIVE_CANDIDATE")
+        self.assertFalse(r["learning_exposure_independently_verified"])
+
+    def test_branch_pin_wrong_loaded_sha_and_dirty_checkout_denied(self):
+        event = self.prepared(0)
+        self.manifest["framework"]["ref_type"] = "branch"
+        self.manifest["framework"]["ref"] = "main"
+        self.save()
+        with self.assertRaisesRegex(bridge.ProjectReadDenied, "CAPABILITY_NOT_ACTIVE"):
+            self.session(event)
+        self.manifest["framework"]["ref_type"] = "commit"
+        self.manifest["framework"]["ref"] = "f" * 40
+        self.save()
+        with self.assertRaisesRegex(bridge.ProjectReadDenied, "CAPABILITY_NOT_ACTIVE"):
+            self.session(event)
+        self.manifest["framework"]["ref"] = SHA
+        self.save()
+        with mock.patch.object(
+            activation, "assert_clean_framework_checkout",
+            side_effect=activation.ActivationError("dirty"),
+        ):
+            with self.assertRaisesRegex(
+                bridge.ProjectReadDenied, "ACTIVATION_SOURCE_UNVERIFIED"
+            ):
+                self.session(event)
+
+    def test_mutated_registry_after_read_denies_reuse_receipt(self):
+        event = self.prepared(0)
+        session = self.session(event)
+        session.read("sample.txt", self.fixture.sha)
+        self.capture(event)
+        self.registry["development_line"]["capabilities"][CAPABILITY]["status"] = "candidate"
+        self.save()
+        with self.assertRaises(bridge.ProjectReadDenied):
+            session.finalize_after_capture(self.fixture.f.data([event]), self.fixture.f.selector(), SHA)
+
+    def test_task_framework_mismatch_denied_after_read(self):
+        event = self.prepared(0, framework_ref="f" * 40)
+        session = self.session(event)
+        session.read("sample.txt", self.fixture.sha)
+        self.capture(event)
+        with self.assertRaisesRegex(
+            bridge.ProjectReadDenied, "TASK_FRAMEWORK_REVISION_MISMATCH"
+        ):
+            session.finalize_after_capture(self.fixture.f.data([event]), self.fixture.f.selector(), SHA)
+
+    def test_implementation_ref_not_loaded_cannot_start_or_claim_read(self):
+        event = self.prepared(0)
+        with self.assertRaisesRegex(
+            bridge.ProjectReadDenied, "IMPLEMENTATION_FRAMEWORK_REVISION_MISMATCH"
+        ):
+            bridge.ProjectKnowledgeReadSession(
+                self.root, event["occurrence_id"], "synthetic-intervention",
+                "f" * 40, capability=CAPABILITY, now=NOW
+            )
+        # No evidence, terminal capture or additional read occurred.
+        self.assertFalse((self.root / ".erei" / "learning" / "events").exists())
+
+    def test_trace_commit_must_equal_exact_loaded_framework_sha(self):
+        event = self.prepared(0)
+        session = self.session(event)
+        session.read("sample.txt", self.fixture.sha)
+        self.capture(event)
+        with self.assertRaisesRegex(
+            bridge.ProjectReadDenied, "TRACE_FRAMEWORK_REVISION_MISMATCH"
+        ):
+            session.finalize_after_capture(
+                self.fixture.f.data([event]), self.fixture.f.selector(), "f" * 40
+            )
+
+    def test_denominator_omission_of_failed_task_still_denied(self):
+        first = self.prepared(0)
+        second = self.prepared(1, outcome_class="failed", terminal_state="FAILED")
+        session = self.session(first)
+        session.read("sample.txt", self.fixture.sha)
+        self.capture(first)
+        self.capture(second)
+        with self.assertRaisesRegex(
+            bridge.ProjectReadDenied, "PROJECT_TRACE_RECONCILIATION_DENIED"
+        ):
+            session.finalize_after_capture(
+                self.fixture.f.data([first]), self.fixture.f.selector(), SHA,
+            )
+
+    def test_no_read_no_session_and_invalid_clock_denied(self):
+        event = self.prepared(0)
+        session = self.session(event)
+        with self.assertRaisesRegex(bridge.ProjectReadDenied, "NO_PROJECT_READ"):
+            session.finalize_after_capture(None, self.fixture.f.selector(), SHA)
+        with self.assertRaisesRegex(bridge.ProjectReadDenied, "SESSION_POLICY_INPUT_INVALID"):
+            bridge.ProjectKnowledgeReadSession(
+                self.root, event["occurrence_id"], "synthetic-intervention",
+                SHA, capability=CAPABILITY, now=datetime(2026, 10, 28),
+            )
+        with self.assertRaisesRegex(bridge.ProjectReadDenied, "SESSION_POLICY_INPUT_INVALID"):
+            bridge.ProjectKnowledgeReadSession(
+                self.root, event["occurrence_id"], "synthetic-intervention",
+                SHA, capability="unregistered_capability", now=NOW,
+            )
+
+    def test_stale_caller_clock_is_rejected_before_project_read(self):
+        event = self.prepared(0)
+        with self.assertRaisesRegex(
+            bridge.ProjectReadDenied, "SESSION_CLOCK_OUT_OF_SYNC"
+        ):
+            bridge.ProjectKnowledgeReadSession(
+                self.root, event["occurrence_id"], "synthetic-intervention",
+                SHA, capability=CAPABILITY, now=NOW - timedelta(hours=2),
+            )
+        with self.assertRaisesRegex(
+            bridge.ProjectReadDenied, "SESSION_CLOCK_OUT_OF_SYNC"
+        ):
+            bridge.ProjectKnowledgeReadSession(
+                self.root, event["occurrence_id"], "synthetic-intervention",
+                SHA, capability=CAPABILITY, now=NOW + timedelta(hours=2),
+            )
+
+    def test_candidate_expiring_after_construction_denies_knowledge_read(self):
+        event = self.prepared(0)
+        self.adopt(expires_at="2026-10-28T08:30:00Z")
+        session = self.session(event)
+        with mock.patch.object(
+            bridge, "_runtime_utc_now",
+            return_value=NOW + timedelta(hours=1),
+        ):
+            with self.assertRaisesRegex(
+                bridge.ProjectReadDenied, "CAPABILITY_NOT_ACTIVE"
+            ):
+                session.read("sample.txt", self.fixture.sha)
+
+    def test_candidate_expiring_after_read_denies_finalization(self):
+        event = self.prepared(0)
+        self.adopt(expires_at="2026-10-28T08:30:00Z")
+        session = self.session(event)
+        session.read("sample.txt", self.fixture.sha)
+        self.capture(event)
+        with mock.patch.object(
+            bridge, "_runtime_utc_now",
+            return_value=NOW + timedelta(hours=1),
+        ):
+            with self.assertRaisesRegex(
+                bridge.ProjectReadDenied, "CAPABILITY_NOT_ACTIVE"
+            ):
+                session.finalize_after_capture(
+                    self.fixture.f.data([event]), self.fixture.f.selector(), SHA
+                )
+
+    def test_runtime_clock_rollback_denies_knowledge_read(self):
+        event = self.prepared(0)
+        session = self.session(event)
+        with mock.patch.object(
+            bridge, "_runtime_utc_now",
+            return_value=NOW - timedelta(minutes=2),
+        ):
+            with self.assertRaisesRegex(
+                bridge.ProjectReadDenied, "SESSION_CLOCK_ROLLBACK"
+            ):
+                session.read("sample.txt", self.fixture.sha)
+
+    def test_posthoc_read_cannot_be_attached_to_completed_task(self):
+        event = self.prepared(0)
+        self.capture(event)
+        with self.assertRaisesRegex(
+            bridge.ProjectReadDenied, "TASK_ALREADY_TERMINAL_BEFORE_READ"
+        ):
+            self.session(event)
+
+    def test_completed_after_session_open_but_before_read_is_denied(self):
+        event = self.prepared(0)
+        session = self.session(event)
+        self.capture(event)
+        with self.assertRaisesRegex(
+            bridge.ProjectReadDenied, "TASK_ALREADY_TERMINAL_BEFORE_READ"
+        ):
+            session.read("sample.txt", self.fixture.sha)
+
+
+
+if __name__ == "__main__":
+    unittest.main()

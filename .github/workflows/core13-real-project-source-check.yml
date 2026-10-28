@@ -1,0 +1,41 @@
+name: Core13 Trial Preflight Contract
+
+on:
+  pull_request:
+    paths:
+      - tools/core13_real_project_trial_preflight.py
+      - evals/tests/test_core13_real_project_trial_preflight.py
+      - .github/workflows/core13-real-project-source-check.yml
+
+permissions:
+  contents: read
+
+env:
+  PYTHONDONTWRITEBYTECODE: '1'
+
+jobs:
+  git-backed-offline-preflight:
+    # Both user projects are PRIVATE; Framework's GITHUB_TOKEN cannot read
+    # their repositories. No cross-repo secret is requested or used here.
+    # No private project source is read by this job. Never claim live trial.
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout Framework source under review
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+
+      - name: Test exact-Git-object preflight fail-closed contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m unittest evals.tests.test_core13_real_project_trial_preflight -v
+          echo "PREFLIGHT_CONTRACT_PASS=TRUE"
+          echo "PRIVATE_PROJECT_SOURCE_READ=NOT_PERFORMED"
+          echo "REAL_PROJECT_TRIAL=NOT_AUTHORIZED"

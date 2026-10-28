@@ -1,0 +1,257 @@
+"""Read-only real-project Core13 trial preflight: never activate a capability.
+
+Purpose: run on exact project Git objects. BLOCK is a truthful, auditable
+result, not a failed CI build. Never read customer payloads, call providers,
+alter a project pin, create adoption, or silently upgrade Stable.
+"""
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import re
+import subprocess
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any
+
+from tools import capability_activation as activation
+
+_SHA = re.compile(r"^[0-9a-f]{40}$")
+_ALLOWED_CAP = "learning_pattern_analysis"
+_MAX_CONFIG_BYTES = 256 * 1024
+
+
+def _safe_json(root: Path, path: Path) -> dict | None:
+    # Reject external symlinked trust roots, and malformed/oversized configs.
+    if path.is_symlink() or path.parent.is_symlink():
+        return None
+    try:
+        resolved = path.resolve(strict=True)
+        if not resolved.is_relative_to(root) or not resolved.is_file():
+            return None
+        if resolved.stat().st_size > _MAX_CONFIG_BYTES:
+            return None
+        raw = resolved.read_bytes()
+        if len(raw) > _MAX_CONFIG_BYTES:
+            return None
+        value = json.loads(raw)
+        if type(value) is dict:
+            return value
+    except (OSError, ValueError, UnicodeError, RecursionError, OverflowError):
+        pass
+    return None
+
+
+def _sha256_file(root: Path, path: Path) -> str | None:
+    try:
+        if (path.is_symlink() or path.parent.is_symlink() or
+                not path.is_file() or
+                not path.resolve(strict=True).is_relative_to(root) or
+                path.stat().st_size > _MAX_CONFIG_BYTES):
+            return None
+        return hashlib.sha256(path.read_bytes()).hexdigest()
+    except (OSError, ValueError):
+        return None
+
+
+def _git_head(root: Path) -> str | None:
+    try:
+        proc = subprocess.run(
+            ["git", "rev-parse", "--verify", "HEAD"],
+            cwd=root, capture_output=True, text=True, check=True,
+            timeout=5,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    value = proc.stdout.strip()
+    return value if _SHA.fullmatch(value) else None
+
+
+def _git_clean(root: Path) -> bool:
+    # Hash/HEAD alone cannot bind the working-tree source bytes. Refuse a
+    # modified, untracked or staged project checkout (including symlink swaps).
+    try:
+        proc = subprocess.run(
+            ["git", "status", "--porcelain=v1", "--untracked-files=all"],
+            cwd=root, capture_output=True, text=True, check=True, timeout=5,
+        )
+        return not proc.stdout.strip()
+    except (OSError, subprocess.SubprocessError):
+        return False
+
+
+def _git_tree_bytes(root: Path, relative: str, maximum: int) -> bytes | None:
+    """Read only a bounded blob from the exact local HEAD tree, not worktree."""
+    try:
+        obj = f"HEAD:{relative}"
+        size_result = subprocess.run(
+            ["git", "cat-file", "-s", obj], cwd=root, capture_output=True,
+            check=True, timeout=5,
+        )
+        size = int(size_result.stdout.strip())
+        if size < 0 or size > maximum:
+            return None
+        data = subprocess.run(
+            ["git", "show", obj], cwd=root, capture_output=True, check=True,
+            timeout=5,
+        ).stdout
+        return data if len(data) == size else None
+    except (OSError, ValueError, OverflowError, subprocess.SubprocessError):
+        return None
+
+
+def _git_bound_file(root: Path, path: Path, *, limit: int = _MAX_CONFIG_BYTES) -> bool:
+    """Reject ignored/untracked/symlink/modified files absent from HEAD tree."""
+    try:
+        rel = path.relative_to(root).as_posix()
+        if not path.is_file() or path.resolve(strict=True) != path:
+            return False
+        if path.stat().st_size > limit:
+            return False
+        committed = _git_tree_bytes(root, rel, limit)
+        if committed is None:
+            return False
+        live = path.read_bytes()
+        return len(live) <= limit and live == committed
+    except (OSError, ValueError):
+        return False
+
+
+def _git_bound_knowledge_present(root: Path) -> bool:
+    """Only HEAD-tracked knowledge files can meet the source preflight."""
+    try:
+        files = subprocess.run(
+            ["git", "ls-files", "-z", "--", ".erei/knowledge/"],
+            cwd=root, check=True, capture_output=True, timeout=5,
+        ).stdout
+        if len(files) > _MAX_CONFIG_BYTES:
+            return False
+        paths = [x.decode("utf-8") for x in files.split(b"\0") if x]
+        if len(paths) > 1024:
+            return False
+        return any(
+            relative.startswith(".erei/knowledge/") and
+            _git_bound_file(root, root / relative, limit=128 * 1024)
+            for relative in paths
+        )
+    except (OSError, UnicodeError, subprocess.SubprocessError):
+        return False
+
+
+def inspect_trial_admission(
+    project_root: Path | str, expected_project_sha: str,
+    candidate_framework_sha: str, *,
+    now: datetime,
+) -> dict:
+    """Read only exact source, report blockers, *never* approve activation."""
+    base = {
+        "kind": "CORE13_REAL_PROJECT_TRIAL_PREFLIGHT_V1",
+        "status": "BLOCKED", "admission_authorized": False,
+        "real_project_trial_executed": False,
+        "knowledge_consumption_verified": False,
+        "effectiveness": "NOT_ESTABLISHED",
+        "stable_ready": False,
+        "files_written": False,
+    }
+    if (not isinstance(project_root, (Path, str))
+            or type(expected_project_sha) is not str
+            or _SHA.fullmatch(expected_project_sha) is None
+            or type(candidate_framework_sha) is not str
+            or _SHA.fullmatch(candidate_framework_sha) is None
+            or type(now) is not datetime or now.tzinfo is None
+            or now.utcoffset() is None):
+        return {**base, "blockers": ["INPUT_INVALID"]}
+    try:
+        root = Path(project_root).resolve(strict=True)
+        if not root.is_dir():
+            return {**base, "blockers": ["PROJECT_DIRECTORY_INVALID"]}
+        actual_head = _git_head(root)
+        if actual_head != expected_project_sha:
+            return {**base, "blockers": ["PROJECT_COMMIT_NOT_AT_EXPECTED_SHA"]}
+        if not _git_clean(root):
+            return {**base, "blockers": ["PROJECT_CHECKOUT_DIRTY"]}
+        manifest_path = root / ".erei" / "framework.json"
+        adoption_path = root / ".erei" / "CANDIDATE_CAPABILITIES.json"
+        manifest = (
+            _safe_json(root, manifest_path)
+            if _git_bound_file(root, manifest_path) else None
+        )
+        blockers = []
+        pin = None
+        if manifest is None:
+            blockers.append("PROJECT_MANIFEST_UNAVAILABLE")
+        else:
+            try:
+                fw = activation._validate_manifest(manifest)
+                pin = fw["ref"]
+                if fw["ref_type"] != "commit" or not _SHA.fullmatch(pin):
+                    blockers.append("PROJECT_NOT_COMMIT_PINNED")
+                elif pin != candidate_framework_sha:
+                    blockers.append("PROJECT_PIN_DIFFERS_FROM_CANDIDATE")
+            except (activation.ActivationError, TypeError, ValueError, KeyError, AttributeError):
+                blockers.append("PROJECT_MANIFEST_INVALID")
+        adoption = (
+            _safe_json(root, adoption_path)
+            if _git_bound_file(root, adoption_path) else None
+        )
+        if adoption is None:
+            blockers.append("CANDIDATE_ADOPTION_NOT_PRESENT_OR_INVALID")
+        else:
+            try:
+                entries = activation._validate_adoptions(adoption)
+                if (adoption["framework_ref"] != candidate_framework_sha or
+                        not any(x["capability"] == _ALLOWED_CAP and
+                                x["_approved"] <= now.astimezone(timezone.utc) <
+                                x["_expires"] for x in entries)):
+                    blockers.append("NO_ACTIVE_MATCHING_CANDIDATE_ADOPTION")
+            except (activation.ActivationError, TypeError, ValueError, KeyError, AttributeError):
+                blockers.append("CANDIDATE_ADOPTION_NOT_PRESENT_OR_INVALID")
+        knowledge_root = root / ".erei" / "knowledge"
+        if (knowledge_root.is_symlink() or
+                not knowledge_root.is_dir() or
+                knowledge_root.resolve(strict=True) != knowledge_root or
+                not _git_bound_knowledge_present(root)):
+            blockers.append("PROJECT_KNOWLEDGE_ARTIFACT_NOT_PRESENT")
+        if not blockers:
+            # A project pin/adoption/knowledge file is not proof of deployed
+            # code, authentic owner approval, prospective task selection or
+            # runtime consumption. Never return a self-authorizing PASS.
+            blockers.append("INDEPENDENT_TRIAL_AUTHORIZATION_NOT_ESTABLISHED")
+        return {
+            **base, "project_commit_verified": True,
+            "project_ref": actual_head,
+            "manifest_sha256": (
+                _sha256_file(root, manifest_path)
+                if _git_bound_file(root, manifest_path) else None
+            ),
+            "adoption_sha256": (
+                _sha256_file(root, adoption_path)
+                if _git_bound_file(root, adoption_path) else None
+            ),
+            "declared_pin": pin,
+            "candidate_framework_sha": candidate_framework_sha,
+            "blockers": sorted(set(blockers)),
+        }
+    except (OSError, TypeError, ValueError, AttributeError, RecursionError) as exc:
+        return {**base, "blockers": ["SOURCE_INSPECTION_UNAVAILABLE"]}
+
+
+def main(argv: list[str] | None = None) -> int:
+    ap = argparse.ArgumentParser(description="Read-only Core13 project admission preflight")
+    ap.add_argument("--project-root", type=Path, required=True)
+    ap.add_argument("--project-sha", required=True)
+    ap.add_argument("--framework-sha", required=True)
+    opts = ap.parse_args(argv)
+    result = inspect_trial_admission(
+        opts.project_root, opts.project_sha, opts.framework_sha,
+        now=datetime.now(timezone.utc),
+    )
+    print(json.dumps(result, sort_keys=True, separators=(",", ":")))
+    # Expected BLOCKED is not a false test failure. Missing source verification
+    # or a trusted commit is a hard failure.
+    return 0 if result.get("project_commit_verified") is True else 2
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
