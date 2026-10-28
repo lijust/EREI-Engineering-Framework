@@ -43,9 +43,12 @@ def _safe_json(root: Path, path: Path) -> dict | None:
     return None
 
 
-def _sha256_file(path: Path) -> str | None:
+def _sha256_file(root: Path, path: Path) -> str | None:
     try:
-        if path.is_symlink() or not path.is_file() or path.stat().st_size > _MAX_CONFIG_BYTES:
+        if (path.is_symlink() or path.parent.is_symlink() or
+                not path.is_file() or
+                not path.resolve(strict=True).is_relative_to(root) or
+                path.stat().st_size > _MAX_CONFIG_BYTES):
             return None
         return hashlib.sha256(path.read_bytes()).hexdigest()
     except (OSError, ValueError):
@@ -80,7 +83,7 @@ def inspect_trial_admission(
         "stable_ready": False,
         "files_written": False,
     }
-    if (type(project_root) not in (Path, str)
+    if (not isinstance(project_root, (Path, str))
             or type(expected_project_sha) is not str
             or _SHA.fullmatch(expected_project_sha) is None
             or type(candidate_framework_sha) is not str
@@ -143,8 +146,8 @@ def inspect_trial_admission(
         return {
             **base, "project_commit_verified": True,
             "project_ref": actual_head,
-            "manifest_sha256": _sha256_file(manifest_path),
-            "adoption_sha256": _sha256_file(adoption_path),
+            "manifest_sha256": _sha256_file(root, manifest_path),
+            "adoption_sha256": _sha256_file(root, adoption_path),
             "declared_pin": pin,
             "candidate_framework_sha": candidate_framework_sha,
             "blockers": sorted(set(blockers)),
