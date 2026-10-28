@@ -4,6 +4,8 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -51,6 +53,23 @@ class KnowledgeReadProducerTests(unittest.TestCase):
             self.assertEqual(produced["traces"][0]["framework_ref"], "b" * 40)
         with self.assertRaises(producer.ObservationDenied):
             producer.produce_reference_fixture("main")
+
+    def test_standalone_module_cli_import_and_export(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            output = Path(tmp) / "learning-traces.json"
+            result = subprocess.run(
+                [
+                    sys.executable, "-m",
+                    "tools.learning_trace_reference_producer",
+                    "--reference-fixture", "--framework-sha", "c" * 40,
+                    "--output", str(output),
+                ],
+                check=False, capture_output=True, text=True, timeout=20,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertTrue(output.is_file())
+            payload = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(payload["traces"][0]["framework_ref"], "c" * 40)
 
     def test_recorded_actual_read_joins_to_only_that_task(self):
         a = self.f.add(0)
