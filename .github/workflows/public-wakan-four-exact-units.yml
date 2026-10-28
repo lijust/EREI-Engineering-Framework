@@ -1,0 +1,29 @@
+name: Public Wakan four firstparty real individual units
+on:
+  push:
+    branches:
+      - experiment/public-scrapling-v05-smoke-20261027
+    paths:
+      - '.github/workflows/public-wakan-four-exact-units.yml'
+      - 'experimental/public_wakan_four_exact_units.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-extract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install 'scrapling[fetchers]==0.5'
+      - run: python experimental/public_wakan_four_exact_units.py
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wakan-four-official-individual-units
+          path: ${{ runner.temp }}/wakan_four_real_unit_cards.json
+          if-no-files-found: warn
+          retention-days: 2
