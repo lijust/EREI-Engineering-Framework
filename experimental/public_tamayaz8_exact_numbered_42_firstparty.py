@@ -37,7 +37,7 @@ try:
    building,code,area,status=values[:4]
    if not re.fullmatch(r"[A-F]",building) or not re.fullmatch(r"[A-F]0[1-7]",code) or code[0]!=building:continue
    a=area.replace(",","").replace("م²","").strip()
-   if not re.fullmatch(r"\\d+(?:\\.\\d+)?",a):
+   if not re.fullmatch(r"[0-9]+(?:[.][0-9]+)?",a):
     data["errors"].append({"reason":"INVALID_AREA","row":values});continue
    if code in seen:raise RuntimeError("DUPLICATE_EXACT_CODE_"+code)
    seen.add(code);count+=1
