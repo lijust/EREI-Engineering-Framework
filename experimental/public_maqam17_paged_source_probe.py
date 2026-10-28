@@ -22,8 +22,15 @@ async def main():
                     fields.append(cells)
                 state["pages"].append({"page":n,"rows":fields})
                 out.write_text(json.dumps(state,ensure_ascii=False,indent=2))
+                if n==1:
+                    state["paging_diagnostic"]={"buttons":(await page.locator("button").all_inner_texts())[:50],
+                      "number_text_counts":{str(i):await page.get_by_text(str(i),exact=True).count() for i in range(2,8)},
+                      "pagination_markup":(await page.locator("table").first.evaluate("e=>e.parentElement.parentElement.outerHTML.slice(-8500)")) if await page.locator("table").count() else ""}
+                    out.write_text(json.dumps(state,ensure_ascii=False,indent=2))
                 if n==7:break
                 btn=page.get_by_role("button",name=str(n+1),exact=True)
+                if not await btn.count():
+                    btn=page.get_by_text(str(n+1),exact=True)
                 if not await btn.count():break
                 await btn.first.click(timeout=10000)
             await browser.close()
