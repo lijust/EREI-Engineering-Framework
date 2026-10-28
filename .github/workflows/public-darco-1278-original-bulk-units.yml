@@ -1,0 +1,26 @@
+name: Public Darco 1278 original individual unit API bulk snapshot
+on:
+  push:
+    branches: [experiment/public-scrapling-v05-smoke-20261027]
+    paths: [.github/workflows/public-darco-1278-original-bulk-units.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  real-firstparty-bulk-unit-source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install 'scrapling[fetchers]==0.5'
+      - run: python experimental/public_darco_1278_original_units_bulk.py
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: darco-official-1278-individual-unique-real-unit-cards
+          path: ${{ runner.temp }}/darco_official_1278_source_only_individual_unit_cards.json
+          if-no-files-found: warn
+          retention-days: 7
