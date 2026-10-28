@@ -4,7 +4,7 @@
 All candidate numbers are research-only until manual spatial/visual confirmation;
 does not create invented unit rows and does not include SAE private project IDs.
 """
-import json,os,re,sys,time
+import json,os,re,sys,time,base64
 from pathlib import Path
 from urllib.parse import urlparse
 from urllib.robotparser import RobotFileParser
@@ -37,6 +37,13 @@ try:
  if not b.startswith(b"%PDF"):raise RuntimeError("NOT_A_PDF")
  pdf=fitz.open(stream=bytes(b),filetype="pdf")
  doc["pdf_bytes"]=len(b);doc["pdf_pages"]=len(pdf)
+ try:
+  page=pdf[26]
+  pix=page.get_pixmap(matrix=fitz.Matrix(1.25,1.25),alpha=False)
+  packed=pix.tobytes("jpeg",jpg_quality=58)
+  print("REWAN_SITEPLAN_PAGE27_JPEG_BASE64 "+base64.b64encode(packed).decode("ascii"))
+ except Exception as image_exc:
+  print("REWAN_SITEPLAN_IMAGE_ERROR "+str(image_exc)[:250])
  for i,page in enumerate(pdf):
   words=page.get_text("words")
   codes=[]
