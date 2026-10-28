@@ -60,7 +60,12 @@ class KnowledgeReadObserver:
                 SHA256.fullmatch(expected_sha256) is None):
             raise ObservationDenied("KNOWLEDGE_LOCATION_INVALID")
         try:
-            base = (self.root / ".erei" / "knowledge").resolve(strict=True)
+            raw_base = self.root / ".erei" / "knowledge"
+            base = raw_base.resolve(strict=True)
+            # Resolving the nominated base must never silently move the trust
+            # boundary through a symlinked .erei or knowledge directory.
+            if base != raw_base or not base.is_relative_to(self.root):
+                raise ObservationDenied("KNOWLEDGE_LOCATION_INVALID")
             candidate = (base / relative_path).resolve(strict=True)
             if not candidate.is_relative_to(base) or not candidate.is_file():
                 raise ObservationDenied("KNOWLEDGE_LOCATION_INVALID")
