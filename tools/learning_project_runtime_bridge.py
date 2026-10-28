@@ -115,6 +115,9 @@ class ProjectKnowledgeReadSession:
         self.now = now
         self._last_runtime_clock = clock
         self.bound = _activation_snapshot(root, capability, clock)
+        if (type(implementation_ref) is not str or
+                implementation_ref != self.bound["framework_sha"]):
+            raise ProjectReadDenied("IMPLEMENTATION_FRAMEWORK_REVISION_MISMATCH")
         # An existing completed occurrence must never gain retrospective
         # "exposure" merely because knowledge was read after task completion.
         self._started_occurrence = occurrence_id
@@ -179,6 +182,8 @@ class ProjectKnowledgeReadSession:
         if type(trace_ref) is not str or trace_ref != self.bound["framework_sha"]:
             raise ProjectReadDenied("TRACE_FRAMEWORK_REVISION_MISMATCH")
         self._recheck()
+        if self.observer.implementation_ref != self.bound["framework_sha"]:
+            raise ProjectReadDenied("IMPLEMENTATION_FRAMEWORK_REVISION_MISMATCH")
         try:
             snapshot = task_learning.authoritative_snapshot(self.root)
             matching = [
