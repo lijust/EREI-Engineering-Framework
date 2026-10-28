@@ -1,0 +1,27 @@
+name: Public Darco official 1278 individual unit API discovery
+on:
+  push:
+    branches: [experiment/public-scrapling-v05-smoke-20261027]
+    paths: [.github/workflows/public-darco-official-units-api.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  original-publisher-unit-api:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install 'scrapling[fetchers]==0.5'
+      - run: scrapling install
+      - run: python experimental/public_darco_official_units_xhr_discovery.py
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: darco-official-public-units-xhr
+          path: ${{ runner.temp }}/darco_firstparty_units_api_xhr_shapes.json
+          retention-days: 3
+          if-no-files-found: warn
