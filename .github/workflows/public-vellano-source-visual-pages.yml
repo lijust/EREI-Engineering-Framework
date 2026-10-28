@@ -1,0 +1,29 @@
+name: Public Vellano firstparty siteplan visual page inventory
+on:
+  push:
+    branches:
+      - experiment/public-scrapling-v05-smoke-20261027
+    paths:
+      - '.github/workflows/public-vellano-source-visual-pages.yml'
+      - 'experimental/public_vellano_pdf_visual_index.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  original-38-page-brochure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install 'pymupdf>=1.24,<2' 'scrapling[fetchers]==0.5' 'pillow>=11,<13'
+      - run: python experimental/public_vellano_pdf_visual_index.py
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: public-Vellano-firstparty-PDF-page-visual-audit
+          path: ${{ runner.temp }}/vellano_visual_page_contact_status.json
+          if-no-files-found: warn
+          retention-days: 3
