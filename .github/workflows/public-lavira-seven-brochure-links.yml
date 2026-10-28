@@ -1,0 +1,29 @@
+name: Public Lavira firstparty seven brochure links
+on:
+  push:
+    branches:
+      - experiment/public-scrapling-v05-smoke-20261027
+    paths:
+      - '.github/workflows/public-lavira-seven-brochure-links.yml'
+      - 'experimental/public_lavira_official_brochure_links.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  official-publisher-brochure-links:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install 'scrapling[fetchers]==0.5'
+      - run: python experimental/public_lavira_official_brochure_links.py
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: public-lavira-firstparty-brochure-links
+          path: ${{ runner.temp }}/lavira_firstparty_document_hrefs.json
+          if-no-files-found: warn
+          retention-days: 3
