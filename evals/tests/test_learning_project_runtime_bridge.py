@@ -203,9 +203,7 @@ class ActivatedProjectKnowledgeTests(unittest.TestCase):
         event = self.prepared(0)
         session = self.session(event)
         with self.assertRaisesRegex(bridge.ProjectReadDenied, "NO_PROJECT_READ"):
-            session.finalize_after_capture(
-                self.fixture.f.data([event]), self.fixture.f.selector(), SHA,
-            )
+            session.finalize_after_capture(None, self.fixture.f.selector(), SHA)
         with self.assertRaisesRegex(bridge.ProjectReadDenied, "SESSION_POLICY_INPUT_INVALID"):
             bridge.ProjectKnowledgeReadSession(
                 self.root, event["occurrence_id"], "synthetic-intervention",
