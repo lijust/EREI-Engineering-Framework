@@ -1,0 +1,27 @@
+name: Public Saudi firstparty API XHR discovery eight projects
+on:
+  push:
+    branches: [experiment/public-scrapling-v05-smoke-20261027]
+    paths: [.github/workflows/public-sae8-firstparty-api-xhr.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  public-xhr-discovery:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install 'scrapling[fetchers]==0.5'
+      - run: scrapling install
+      - run: python experimental/public_sae8_api_xhr_discovery.py
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sae-eight-publishers-public-api-xhr-shapes
+          path: ${{ runner.temp }}/sae8_public_xhr_api_inventory_shapes.json
+          if-no-files-found: warn
+          retention-days: 3
