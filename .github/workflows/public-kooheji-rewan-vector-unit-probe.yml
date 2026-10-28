@@ -1,0 +1,29 @@
+name: Public Kooheji Rewan original site-plan vector unit research
+on:
+  push:
+    branches:
+      - experiment/public-scrapling-v05-smoke-20261027
+    paths:
+      - '.github/workflows/public-kooheji-rewan-vector-unit-probe.yml'
+      - 'experimental/public_kooheji_rewan_vector_pdf_probe.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  publisher-pdf-vector:
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install 'pymupdf>=1.24,<2' 'requests>=2.31,<3'
+      - run: python experimental/public_kooheji_rewan_vector_pdf_probe.py
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: public-kooheji-rewan-original-masterplan-numbered-plots-vector
+          path: ${{ runner.temp }}/rewan_masterplan_vector_unit_provenance.json
+          if-no-files-found: warn
+          retention-days: 5
