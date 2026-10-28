@@ -51,11 +51,15 @@ jobs:
 
       - name: Verify exact source blockers on both REAL project snapshots
         shell: bash
+        env:
+          CANDIDATE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
           set -euo pipefail
           cd framework
           python - <<'PY'
           import json
+          import os
+          import re
           from datetime import datetime, timezone
           from pathlib import Path
           from tools.core13_real_project_trial_preflight import inspect_trial_admission
@@ -66,10 +70,10 @@ jobs:
               ("EREI-3.2", Path("../erei-32"),
                "87d730ddc3547f863de2a6895e91f9b83e9c6e72"),
           ]
-          # Exact candidate ref is deliberately different from old Stable pins.
-          # Avoid depending on mutable HEAD or using checkout's merge commit as
-          # an independently authenticated runtime version.
-          candidate = "2cd08aaea50af8623687014efb2151adf6555395"
+          # Use the immutable PR head SHA, never the generated merge commit
+          # or a stale constant. This binds the check to the current revision.
+          candidate = os.environ["CANDIDATE_SHA"].strip()
+          assert re.fullmatch(r"[0-9a-f]{40}", candidate), "invalid candidate ref"
           for name, directory, commit in snapshots:
               result = inspect_trial_admission(
                   directory, commit, candidate, now=datetime.now(timezone.utc)
