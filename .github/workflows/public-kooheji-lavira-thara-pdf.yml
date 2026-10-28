@@ -1,0 +1,29 @@
+name: Public Kooheji Lavira Thara PDF original unit codes
+on:
+  push:
+    branches:
+      - experiment/public-scrapling-v05-smoke-20261027
+    paths:
+      - '.github/workflows/public-kooheji-lavira-thara-pdf.yml'
+      - 'experimental/public_kooheji_lavira_thara_pdf_probe.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  firstparty-pdf-unit-number-probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install 'scrapling[fetchers]==0.5' 'pymupdf>=1.24,<1.28'
+      - run: python experimental/public_kooheji_lavira_thara_pdf_probe.py
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: public-kooheji-lavira-thara-original-pdf-plot-numbers
+          path: ${{ runner.temp }}/kooheji_thara_original_unit_numbers.json
+          retention-days: 3
+          if-no-files-found: warn
