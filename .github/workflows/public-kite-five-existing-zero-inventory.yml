@@ -1,0 +1,30 @@
+name: Public Kite five existing zero-inventory project individual offer cards
+on:
+  push:
+    branches:
+      - experiment/public-scrapling-v05-smoke-20261027
+    paths:
+      - '.github/workflows/public-kite-five-existing-zero-inventory.yml'
+      - 'experimental/public_kite_five_next_existing.py'
+      - 'experimental/public_kite_five_next_existing_urls.json'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  five-individual-cards:
+    runs-on: ubuntu-latest
+    timeout-minutes: 11
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install 'scrapling[fetchers]==0.5' 'lxml>=5,<7'
+      - run: python experimental/public_kite_five_next_existing.py
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sae-kite-five-existing-verified-source-cards
+          path: ${{ runner.temp }}/kite-five-new-existing-project-itemized-cards.json
+          if-no-files-found: warn
+          retention-days: 5
