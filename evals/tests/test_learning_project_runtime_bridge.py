@@ -185,6 +185,18 @@ class ActivatedProjectKnowledgeTests(unittest.TestCase):
         ):
             session.finalize_after_capture(self.fixture.f.data([event]), self.fixture.f.selector(), SHA)
 
+    def test_trace_commit_must_equal_exact_loaded_framework_sha(self):
+        event = self.prepared(0)
+        session = self.session(event)
+        session.read("sample.txt", self.fixture.sha)
+        self.capture(event)
+        with self.assertRaisesRegex(
+            bridge.ProjectReadDenied, "TRACE_FRAMEWORK_REVISION_MISMATCH"
+        ):
+            session.finalize_after_capture(
+                self.fixture.f.data([event]), self.fixture.f.selector(), "f" * 40
+            )
+
     def test_denominator_omission_of_failed_task_still_denied(self):
         first = self.prepared(0)
         second = self.prepared(1, outcome_class="failed", terminal_state="FAILED")
