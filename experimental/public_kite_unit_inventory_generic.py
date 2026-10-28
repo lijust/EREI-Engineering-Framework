@@ -185,9 +185,16 @@ def main():
                         candidates_links.append({"url": url2,
                                                  "preview": clean_name(txt)[:240]})
                         found.add(url2)
+            all_browse_links = [
+                {"url": urljoin(BASE, href).split("#", 1)[0], "anchor": clean_name(txt)[:140]}
+                for href, txt in links(html)
+                if urlparse(urljoin(BASE, href)).hostname == "kite.sa"
+                and ("list" in href.lower() or "unit" in href.lower() or "page=" in href.lower())
+            ][:90]
             result["matched_project_pages"].append(
                 {"public_source_project_label": pid, "project_name": label,
-                 "url": url, "status": "FETCHED", "linked_listing_urls": len(candidates_links)})
+                 "url": url, "status": "FETCHED", "linked_listing_urls": len(candidates_links),
+                 "browse_listing_links": all_browse_links})
             atomic_save(args.output, result)
             for item in candidates_links:
                 if len(result["listing_cards"]) >= args.max_listings:
