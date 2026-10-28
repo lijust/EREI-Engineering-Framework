@@ -83,3 +83,42 @@ against a new exact immutable commit.
 
 **Decision: REAL_PROJECT_TRIAL_NOT_AUTHORIZED / NO_PROJECT_WRITES /
 NO_EFFECTIVENESS_CLAIM / STABLE_BLOCKED.**
+
+## Reproducible offline preflight contract and private GitHub access boundary
+
+The Framework implementation now includes the read-only command:
+
+```text
+python -m tools.core13_real_project_trial_preflight \
+  --project-root <already-authorized-clean-project-checkout> \
+  --project-sha <exact-project-Git-SHA> \
+  --framework-sha <exact-candidate-Framework-Git-SHA>
+```
+
+The command verifies `git rev-parse HEAD` **and a completely clean Git
+working tree**, checks the literal project pin, validates any candidate
+adoption shape/time against the existing Framework adoption schema, inspects
+the presence (not content) of project-local knowledge artifacts and returns
+explicit block reasons. It never grants authorization even when all source
+prerequisites match: owner approval, genuine runtime identity, a prospective
+task selection and consumer use remain outside this source preflight.
+
+Both `EREI-App-Google` and `EREI-3.2` are **private** repositories. The
+normal `GITHUB_TOKEN` of the public Framework repository is not authorized
+to clone them. An attempted GitHub Actions cross-repository checkout failed
+with `Repository not found` during run `40652665872`, **before any real
+project files were fetched or inspected inside that runner**. The job has
+been replaced with an offline Git-backed synthetic regression suite:
+`.github/workflows/core13-real-project-source-check.yml`. It does not
+attempt external private checkouts or request/bypass a private access token.
+This inability to clone is an access boundary, not evidence that the
+private project snapshot does not exist.
+
+The immutable-revision project facts in the preceding table were read using
+an authenticated GitHub connector with project access. They are **not** a
+successful independent GitHub Actions source-trial artifact. Do not conflate
+these two access models.
+
+**Latest decision:** PRIVATE_PROJECT_RUNTIME_TRIAL_NOT_ATTEMPTED /
+CROSS_REPO_ACTIONS_ACCESS_UNAVAILABLE / OFFLINE_CONTRACT_TESTABLE /
+STABLE_UNCHANGED.
