@@ -159,6 +159,32 @@ class SourceOnlyPreflightTests(unittest.TestCase):
         response2 = self.assess()
         self.assertEqual(response2["blockers"], ["PROJECT_CHECKOUT_DIRTY"])
 
+    def test_ignored_local_adoption_and_knowledge_do_not_count_as_git_source(self):
+        # Reproduces Codex P2: ignored worktree files are invisible to
+        # 'git status' and therefore MUST NOT satisfy source prerequisites.
+        self.manifest_data["framework"]["ref"] = CURRENT
+        self._save_manifest()
+        (self.root / ".gitignore").write_text(
+            ".erei/CANDIDATE_CAPABILITIES.json\n.erei/knowledge/\n",
+            encoding="utf-8",
+        )
+        self.commit_fixture()
+        self._write_valid_adoption()
+        self.knowledge.mkdir()
+        (self.knowledge / "ignored.txt").write_text(
+            "synthetic not in Git commit", encoding="utf-8",
+        )
+        self.assertEqual(
+            self.git("status", "--porcelain=v1", "--untracked-files=all"), ""
+        )
+        check = self.assess()
+        self.assertTrue(check["project_commit_verified"])
+        self.assertNotIn("PROJECT_PIN_DIFFERS_FROM_CANDIDATE", check["blockers"])
+        self.assertIn("CANDIDATE_ADOPTION_NOT_PRESENT_OR_INVALID", check["blockers"])
+        self.assertIn("PROJECT_KNOWLEDGE_ARTIFACT_NOT_PRESENT", check["blockers"])
+        self.assertIsNone(check["adoption_sha256"])
+        self.assertFalse(check["admission_authorized"])
+
     def test_cli_readonly_returns_blocked_with_exact_commit(self):
         cli = subprocess.run([
             sys.executable, "-m", "tools.core13_real_project_trial_preflight",
