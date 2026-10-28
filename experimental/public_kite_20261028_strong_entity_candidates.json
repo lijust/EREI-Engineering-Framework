@@ -1,0 +1,13 @@
+{
+  "urls": [
+    "https://kite.sa/en/projects/riyadh/1008",
+    "https://kite.sa/en/projects/eastern-province/988",
+    "https://kite.sa/en/projects/jeddah/98741",
+    "https://kite.sa/en/projects/jeddah/98343",
+    "https://kite.sa/en/projects/jeddah/98254",
+    "https://kite.sa/en/projects/riyadh/90891",
+    "https://kite.sa/en/projects/riyadh/1447",
+    "https://kite.sa/en/projects/jeddah/98950"
+  ],
+  "scope": "8 candidate SOURCE publisher Kite project detail URLs only. No PRIVATE canonical IDs, private matching performed on SAE-side. Confirm city/developer/phase before ingest. 4 source candidates target current zero-unit existing projects."
+}
