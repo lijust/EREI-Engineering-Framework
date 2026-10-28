@@ -1,0 +1,29 @@
+name: SAE public Tamayaz 8 exact 42 original units table
+on:
+  push:
+    branches:
+      - experiment/public-scrapling-v05-smoke-20261027
+    paths:
+      - '.github/workflows/public-tamayaz8-exact-42-source.yml'
+      - 'experimental/public_tamayaz8_exact_numbered_42_firstparty.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-publisher-42:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install 'scrapling[fetchers]==0.5' 'lxml>=5,<7'
+      - run: python experimental/public_tamayaz8_exact_numbered_42_firstparty.py
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sae-firstparty-tamayaz8-42-exact-individually-coded-unit-cards
+          path: ${{ runner.temp }}/tamayaz8_exact_original_source_units.json
+          if-no-files-found: warn
+          retention-days: 5
