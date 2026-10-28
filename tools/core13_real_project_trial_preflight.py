@@ -68,6 +68,19 @@ def _git_head(root: Path) -> str | None:
     return value if _SHA.fullmatch(value) else None
 
 
+def _git_clean(root: Path) -> bool:
+    # Hash/HEAD alone cannot bind the working-tree source bytes. Refuse a
+    # modified, untracked or staged project checkout (including symlink swaps).
+    try:
+        proc = subprocess.run(
+            ["git", "status", "--porcelain=v1", "--untracked-files=all"],
+            cwd=root, capture_output=True, text=True, check=True, timeout=5,
+        )
+        return not proc.stdout.strip()
+    except (OSError, subprocess.SubprocessError):
+        return False
+
+
 def inspect_trial_admission(
     project_root: Path | str, expected_project_sha: str,
     candidate_framework_sha: str, *,
@@ -98,6 +111,8 @@ def inspect_trial_admission(
         actual_head = _git_head(root)
         if actual_head != expected_project_sha:
             return {**base, "blockers": ["PROJECT_COMMIT_NOT_AT_EXPECTED_SHA"]}
+        if not _git_clean(root):
+            return {**base, "blockers": ["PROJECT_CHECKOUT_DIRTY"]}
         manifest_path = root / ".erei" / "framework.json"
         adoption_path = root / ".erei" / "CANDIDATE_CAPABILITIES.json"
         manifest = _safe_json(root, manifest_path)
