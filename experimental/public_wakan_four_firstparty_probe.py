@@ -20,8 +20,10 @@ def get(url):
  return r
 try:
  rob=get("https://"+HOST+"/robots.txt")
- if int(rob.status)!=200:raise RuntimeError("ROBOTS_UNAVAILABLE_"+str(rob.status))
- rp=RobotFileParser();rp.parse(rob.body.decode("utf-8","replace").splitlines())
+ if int(rob.status) not in (200,404,410):raise RuntimeError("ROBOTS_UNAVAILABLE_"+str(rob.status))
+ rp=RobotFileParser()
+ if int(rob.status)==200:rp.parse(rob.body.decode("utf-8","replace").splitlines())
+ else:rp.allow_all=True
  for key,url in URLS.items():
   if not rp.can_fetch(UA,url):raise RuntimeError("ROBOTS_DISALLOW_"+key)
   time.sleep(max(3.,float(rp.crawl_delay(UA) or rp.crawl_delay("*") or 0)))
