@@ -1,0 +1,27 @@
+name: Public Sakani eight high-volume original project XHR discovery
+on:
+  push:
+    branches: [experiment/public-scrapling-v05-smoke-20261027]
+    paths: [.github/workflows/public-sakani8-highvolume-xhr.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  original-publisher-api-discovery:
+    runs-on: ubuntu-latest
+    timeout-minutes: 28
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install 'scrapling[fetchers]==0.5'
+      - run: scrapling install
+      - run: python experimental/public_sakani_8_high_volume_project_original_xhr_discovery.py
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sakani-eight-existing-large-projects-firstparty-xhr-candidates
+          path: ${{ runner.temp }}/sakani8_source_only_original_xhr_api_shapes_20261028.json
+          retention-days: 5
+          if-no-files-found: warn
