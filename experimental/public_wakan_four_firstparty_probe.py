@@ -40,6 +40,8 @@ try:
    v["toggle_total"]=len(root.xpath("//a[contains(concat(' ',normalize-space(@class),' '),' toggle ')]"))
    v["toggle_parent_sample"]=[LH.tostring(el.getparent(),encoding="unicode")[:3100] for el in root.xpath("//a[contains(concat(' ',normalize-space(@class),' '),' toggle ')]")[:3]]
    v["building_headers"]=[{"tag":n.tag,"class":n.get("class"),"text":" ".join(n.itertext()).strip()[:200]} for n in root.xpath("//*[contains(text(),'مباني') or contains(text(),'Buildings')]")[:7]]
+
+   v["hierarchy"]=[{"toggle_text":" ".join(el.itertext()).strip()[:85],"ancestors":[{"tag":a.tag,"id":a.get("id"),"class":a.get("class"),"nearby_headings":[" ".join(z.itertext()).strip()[:50] for z in a.xpath(".//h2|.//h3")[:2]]} for a in list(el.iterancestors())[:7]]} for el in (root.xpath("//a[contains(concat(' ',normalize-space(@class),' '),' toggle ')]")[:2]+root.xpath("//a[contains(concat(' ',normalize-space(@class),' '),' toggle ')]")[18:20])]
   data["projects"].append(v);save()
  data["status"]="COMPLETE_PROBE"
 except Exception as e:
