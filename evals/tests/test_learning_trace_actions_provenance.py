@@ -174,6 +174,51 @@ class ActionsLearningTraceOriginTests(unittest.TestCase):
                 self.archive, self.bundle, self.identity, token="synthetic"
             )
 
+    def test_reject_bzip2_and_lzma_before_unbounded_decompression(self):
+        for method in (zipfile.ZIP_BZIP2, zipfile.ZIP_LZMA):
+            with self.subTest(method=method):
+                buf = io.BytesIO()
+                with zipfile.ZipFile(buf, "w", compression=method) as out:
+                    out.writestr(verifier.MEMBER, b"{}" + b"x" * 500000)
+                self.archive.write_bytes(buf.getvalue())
+                with mock.patch.object(verifier.actions, "_api_json") as api:
+                    with self.assertRaisesRegex(
+                        verifier.TraceOriginError, "TRACE_ARCHIVE_UNSAFE_MEMBER"
+                    ):
+                        verifier.verify_actions_trace_origin(
+                            self.archive, self.bundle, self.identity,
+                            token="synthetic",
+                        )
+                    api.assert_not_called()
+
+    def test_corrupt_deflate_and_recursive_json_fail_closed(self):
+        # The first compressed byte starts after the ZIP local-file header.
+        raw = bytearray(zip_bytes(b"{}"))
+        with zipfile.ZipFile(io.BytesIO(raw)) as z:
+            entry = z.infolist()[0]
+            start = entry.header_offset + 30 + len(entry.filename.encode("utf-8"))
+            start += len(entry.extra)
+        raw[start] = 0x07
+        self.archive.write_bytes(raw)
+        with mock.patch.object(verifier.actions, "_api_json") as api:
+            result = verifier.reconcile_actions_trace_evidence(
+                "/unused", self.bundle, {}, self.archive,
+                self.identity, token="synthetic",
+            )
+            self.assertEqual(result["status"], "DENIED")
+            self.assertEqual(result["reason_code"], "TRACE_ORIGIN_UNVERIFIED")
+            api.assert_not_called()
+        deeply_nested = b"[" * 1100 + b"0" + b"]" * 1100
+        self.archive.write_bytes(zip_bytes(deeply_nested))
+        with mock.patch.object(verifier.actions, "_api_json") as api:
+            result = verifier.reconcile_actions_trace_evidence(
+                "/unused", self.bundle, {}, self.archive,
+                self.identity, token="synthetic",
+            )
+            self.assertEqual(result["status"], "DENIED")
+            self.assertEqual(result["reason_code"], "TRACE_ORIGIN_UNVERIFIED")
+            api.assert_not_called()
+
     def test_no_implicit_real_producer_metadata_and_no_network_from_ci(self):
         # This test does not install/dispatch the named producer workflow.
         self.assertTrue(verifier.WORKFLOW_PATH.endswith("core13-learning-trace-export.yml"))
