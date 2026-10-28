@@ -51,7 +51,11 @@ class ActivatedProjectKnowledgeTests(unittest.TestCase):
         self.loaded_patch = mock.patch.object(
             activation, "detect_loaded_framework_ref", return_value=SHA
         )
-        for patch in (self.registry_patch, self.clean_patch, self.loaded_patch):
+        self.clock_patch = mock.patch.object(
+            bridge, "_runtime_utc_now", return_value=NOW
+        )
+        for patch in (self.registry_patch, self.clean_patch,
+                      self.loaded_patch, self.clock_patch):
             patch.start()
             self.addCleanup(patch.stop)
 
@@ -226,6 +230,65 @@ class ActivatedProjectKnowledgeTests(unittest.TestCase):
                 self.root, event["occurrence_id"], "synthetic-intervention",
                 SHA, capability="unregistered_capability", now=NOW,
             )
+
+    def test_stale_caller_clock_is_rejected_before_project_read(self):
+        event = self.prepared(0)
+        with self.assertRaisesRegex(
+            bridge.ProjectReadDenied, "SESSION_CLOCK_OUT_OF_SYNC"
+        ):
+            bridge.ProjectKnowledgeReadSession(
+                self.root, event["occurrence_id"], "synthetic-intervention",
+                SHA, capability=CAPABILITY, now=NOW - timedelta(hours=2),
+            )
+        with self.assertRaisesRegex(
+            bridge.ProjectReadDenied, "SESSION_CLOCK_OUT_OF_SYNC"
+        ):
+            bridge.ProjectKnowledgeReadSession(
+                self.root, event["occurrence_id"], "synthetic-intervention",
+                SHA, capability=CAPABILITY, now=NOW + timedelta(hours=2),
+            )
+
+    def test_candidate_expiring_after_construction_denies_knowledge_read(self):
+        event = self.prepared(0)
+        self.adopt(expires_at="2026-10-28T08:30:00Z")
+        session = self.session(event)
+        with mock.patch.object(
+            bridge, "_runtime_utc_now",
+            return_value=NOW + timedelta(hours=1),
+        ):
+            with self.assertRaisesRegex(
+                bridge.ProjectReadDenied, "CAPABILITY_NOT_ACTIVE"
+            ):
+                session.read("sample.txt", self.fixture.sha)
+
+    def test_candidate_expiring_after_read_denies_finalization(self):
+        event = self.prepared(0)
+        self.adopt(expires_at="2026-10-28T08:30:00Z")
+        session = self.session(event)
+        session.read("sample.txt", self.fixture.sha)
+        self.capture(event)
+        with mock.patch.object(
+            bridge, "_runtime_utc_now",
+            return_value=NOW + timedelta(hours=1),
+        ):
+            with self.assertRaisesRegex(
+                bridge.ProjectReadDenied, "CAPABILITY_NOT_ACTIVE"
+            ):
+                session.finalize_after_capture(
+                    self.fixture.f.data([event]), self.fixture.f.selector(), SHA
+                )
+
+    def test_runtime_clock_rollback_denies_knowledge_read(self):
+        event = self.prepared(0)
+        session = self.session(event)
+        with mock.patch.object(
+            bridge, "_runtime_utc_now",
+            return_value=NOW - timedelta(minutes=2),
+        ):
+            with self.assertRaisesRegex(
+                bridge.ProjectReadDenied, "SESSION_CLOCK_ROLLBACK"
+            ):
+                session.read("sample.txt", self.fixture.sha)
 
     def test_posthoc_read_cannot_be_attached_to_completed_task(self):
         event = self.prepared(0)
