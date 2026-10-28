@@ -47,17 +47,16 @@ try:
    lines=[v.strip() for v in t.splitlines() if v.strip()]
    tables=page.find_tables()
    matches=[]
-   for table in tables.tables:
+   for table_no,table in enumerate(tables.tables):
     grid=table.extract()
-    if len(grid)<3:continue
-    header=" ".join(str(z or "") for row in grid[:2] for z in row)
-    if "الوحدة" not in header and "unit" not in header.lower():continue
+    if len(grid)<2:continue
     for row_num,row in enumerate(grid):
      vals=[(z or "").strip() if isinstance(z,str) else str(z or "") for z in row]
-     if row_num<2 or not any(z for z in vals):continue
-     state["rows"].append({"source":name,"pdf_url":url,"page_number":page_idx+1,"table_index":table.index,
+     if not any(z for z in vals):continue
+     state["rows"].append({"source":name,"pdf_url":url,"page_number":page_idx+1,"table_index":table_no,
                            "row_num":row_num,"original_cells":vals})
      matches.append(vals)
+    print("PDF_TABLE_RAW_SHAPE "+json.dumps({"source":name,"page":page_idx+1,"table":table_no,"rows":len(grid),"columns":table.col_count,"first":grid[:5]},ensure_ascii=False)[:3500],flush=True)
    sample={"source":name,"page":page_idx+1,"text_line_count":len(lines),"tables":len(tables.tables),
            "matching_rows":len(matches),"text_sample":lines[:60]}
    state["pages_with_unit_tables"].append(sample)
