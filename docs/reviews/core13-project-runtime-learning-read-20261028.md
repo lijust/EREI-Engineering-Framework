@@ -38,7 +38,13 @@ checkout and exact loaded Framework SHA using the existing authoritative
 `ACTIVE_STABLE` or `ACTIVE_CANDIDATE`, never authorizes based on the
 existence of code alone. Allowed capabilities are explicitly bounded
 to `learning_pattern_analysis` and `framework_effectiveness_measurement`.
-An aware caller-provided clock is mandatory and replayable.
+An aware caller-provided clock is mandatory, but is **not sufficient by itself**
+for live eligibility: at session opening its timestamp must be within five
+minutes of the local UTC system clock. Every read and finalization rechecks
+capability activation with a **fresh UTC clock value**, so a Candidate cannot
+be kept active with an old supplied timestamp after its adoption expires.
+More than five seconds of local clock rollback fails closed. The machine
+clock is still **not independently authenticated time evidence**.
 
 Read uses the prior `KnowledgeReadObserver`, which pins actual bytes to a
 provided SHA-256 digest and denies traversal, symlinked trust roots, empty or
