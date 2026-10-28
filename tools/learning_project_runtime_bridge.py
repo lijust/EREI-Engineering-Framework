@@ -99,6 +99,10 @@ class ProjectKnowledgeReadSession:
         self.capability = capability
         self.now = now
         self.bound = _activation_snapshot(root, capability, now)
+        # An existing completed occurrence must never gain retrospective
+        # "exposure" merely because knowledge was read after task completion.
+        self._started_occurrence = occurrence_id
+        self._assert_no_terminal_occurrence()
         try:
             self.observer = reference.KnowledgeReadObserver(
                 root, occurrence_id, intervention_id, implementation_ref,
@@ -107,6 +111,19 @@ class ProjectKnowledgeReadSession:
             raise ProjectReadDenied("SESSION_IDENTITY_INVALID") from exc
         self.observed_read = False
 
+    def _assert_no_terminal_occurrence(self) -> None:
+        try:
+            snapshot = task_learning.authoritative_snapshot(self.root)
+            if any(
+                task_learning._occurrence(event) == self._started_occurrence
+                for event in snapshot["events"]
+            ):
+                raise ProjectReadDenied("TASK_ALREADY_TERMINAL_BEFORE_READ")
+        except ProjectReadDenied:
+            raise
+        except (task_learning.LearningError, OSError, ValueError) as exc:
+            raise ProjectReadDenied("TASK_SOURCE_UNVERIFIED") from exc
+
     def _recheck(self) -> None:
         new = _activation_snapshot(self.root, self.capability, self.now)
         if new != self.bound:
@@ -114,10 +131,12 @@ class ProjectKnowledgeReadSession:
 
     def read(self, relative_path: str, expected_sha256: str) -> bytes:
         self._recheck()
+        self._assert_no_terminal_occurrence()
         try:
             data = self.observer.read(relative_path, expected_sha256)
         except reference.ObservationDenied as exc:
             raise ProjectReadDenied(str(exc)) from exc
+        self._assert_no_terminal_occurrence()
         self._recheck()
         self.observed_read = True
         return data
