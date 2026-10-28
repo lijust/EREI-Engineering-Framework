@@ -1,0 +1,77 @@
+name: Core13 Learning Trace Export
+
+on:
+  workflow_dispatch:
+    inputs:
+      expected_framework_sha:
+        description: Exact immutable 40-character commit expected for this manual reference run
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+env:
+  PYTHONDONTWRITEBYTECODE: '1'
+
+jobs:
+  synthetic-reference-export:
+    # Never execute PR branch code or treat these traces as real project exposure.
+    if: ${{ github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout immutable framework revision
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ inputs.expected_framework_sha }}
+          persist-credentials: false
+
+      - name: Setup Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+
+      - name: Fail closed on mismatched source identity
+        shell: bash
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_framework_sha }}
+        run: |
+          set -euo pipefail
+          if [[ ! "$EXPECTED_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "Expected exact immutable 40-character lowercase commit SHA" >&2
+            exit 2
+          fi
+          actual_sha="$(git rev-parse HEAD)"
+          if [[ "$actual_sha" != "$EXPECTED_SHA" || "$GITHUB_SHA" != "$EXPECTED_SHA" ]]; then
+            echo "Run revision does not match the exact authorized checkout" >&2
+            exit 2
+          fi
+
+      - name: Verify synthetic observation hook regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m unittest evals.tests.test_learning_trace_reference_producer -v
+
+      - name: Execute isolated synthetic reference and export trace
+        shell: bash
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_framework_sha }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/core13-learning"
+          python -m tools.learning_trace_reference_producer \
+            --reference-fixture \
+            --framework-sha "$EXPECTED_SHA" \
+            --output "$RUNNER_TEMP/core13-learning/learning-traces.json"
+          python -c 'import json,os,pathlib; p=pathlib.Path(os.environ["RUNNER_TEMP"])/"core13-learning"/"learning-traces.json"; b=json.loads(p.read_text()); assert len(b["traces"])==1; assert b["traces"][0]["steps"][0]["op"]=="learning_reuse"; print("SYNTHETIC_ONLY_TRACE_FILE_VALIDATED")'
+
+      - name: Upload one-file synthetic trace reference
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: core13-learning-traces-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/core13-learning/learning-traces.json
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 7
