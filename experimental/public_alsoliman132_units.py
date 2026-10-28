@@ -53,8 +53,15 @@ try:
   sample={"id":pub_unit_id,"row_structure":table,"status":status,"text":text_of(rootitem)[:300]}
   if len(table)<2 or len(table[1])<5:
    state["errors"].append({"error":"MISSING_UNIT_CELLS","sample":sample});continue
+  header=table[0]
   values=table[1]
-  number, floor, building, area_raw, beds_raw=values[:5]
+  fields={k:v for k,v in zip(header,values)}
+  number=fields.get("الوحدة","")
+  floor=fields.get("الدور","")
+  building=fields.get("العمارة","")
+  area_raw=fields.get("المساحة","")
+  beds_raw=fields.get("الغرف","")
+  model=fields.get("النموذج","")
   if not re.fullmatch(r"[A-Z]",building,re.I) or not re.fullmatch(r"\d{2,4}",number) or not re.fullmatch(r"\d+(?:\.\d+)?",area_raw):
    state["errors"].append({"error":"BAD_CARD_IDENTITY","sample":sample});continue
   code=building.upper()+"-"+number
@@ -70,7 +77,7 @@ try:
   n=re.search(r"(?<!\d)([1-9]\d{5,7})(?!\d)",price_text.replace(",","").replace(" ",""))
   if n:price=int(n.group(1))
   state["cards"].append({"publisher_unit_id":pub_unit_id,"source_unit_code":code,
-    "unit_number":number,"building_no":building.upper(),"floor_original":floor,
+    "unit_number":number,"building_no":building.upper(),"floor_original":floor,"publisher_model":model,
     "area_sqm":float(area_raw),"bedrooms":int(beds_raw) if beds_raw.isdigit() else None,
     "publisher_status":status,"publisher_status_visible":status_text,
     "source_bathroom_detail":detail,"source_asking_price_sar_ex_vat":price,
