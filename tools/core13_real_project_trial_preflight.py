@@ -81,6 +81,64 @@ def _git_clean(root: Path) -> bool:
         return False
 
 
+def _git_tree_bytes(root: Path, relative: str, maximum: int) -> bytes | None:
+    """Read only a bounded blob from the exact local HEAD tree, not worktree."""
+    try:
+        obj = f"HEAD:{relative}"
+        size_result = subprocess.run(
+            ["git", "cat-file", "-s", obj], cwd=root, capture_output=True,
+            check=True, timeout=5,
+        )
+        size = int(size_result.stdout.strip())
+        if size < 0 or size > maximum:
+            return None
+        data = subprocess.run(
+            ["git", "show", obj], cwd=root, capture_output=True, check=True,
+            timeout=5,
+        ).stdout
+        return data if len(data) == size else None
+    except (OSError, ValueError, OverflowError, subprocess.SubprocessError):
+        return None
+
+
+def _git_bound_file(root: Path, path: Path, *, limit: int = _MAX_CONFIG_BYTES) -> bool:
+    """Reject ignored/untracked/symlink/modified files absent from HEAD tree."""
+    try:
+        rel = path.relative_to(root).as_posix()
+        if not path.is_file() or path.resolve(strict=True) != path:
+            return False
+        if path.stat().st_size > limit:
+            return False
+        committed = _git_tree_bytes(root, rel, limit)
+        if committed is None:
+            return False
+        live = path.read_bytes()
+        return len(live) <= limit and live == committed
+    except (OSError, ValueError):
+        return False
+
+
+def _git_bound_knowledge_present(root: Path) -> bool:
+    """Only HEAD-tracked knowledge files can meet the source preflight."""
+    try:
+        files = subprocess.run(
+            ["git", "ls-files", "-z", "--", ".erei/knowledge/"],
+            cwd=root, check=True, capture_output=True, timeout=5,
+        ).stdout
+        if len(files) > _MAX_CONFIG_BYTES:
+            return False
+        paths = [x.decode("utf-8") for x in files.split(b"\0") if x]
+        if len(paths) > 1024:
+            return False
+        return any(
+            relative.startswith(".erei/knowledge/") and
+            _git_bound_file(root, root / relative, limit=128 * 1024)
+            for relative in paths
+        )
+    except (OSError, UnicodeError, subprocess.SubprocessError):
+        return False
+
+
 def inspect_trial_admission(
     project_root: Path | str, expected_project_sha: str,
     candidate_framework_sha: str, *,
@@ -115,7 +173,10 @@ def inspect_trial_admission(
             return {**base, "blockers": ["PROJECT_CHECKOUT_DIRTY"]}
         manifest_path = root / ".erei" / "framework.json"
         adoption_path = root / ".erei" / "CANDIDATE_CAPABILITIES.json"
-        manifest = _safe_json(root, manifest_path)
+        manifest = (
+            _safe_json(root, manifest_path)
+            if _git_bound_file(root, manifest_path) else None
+        )
         blockers = []
         pin = None
         if manifest is None:
@@ -130,7 +191,10 @@ def inspect_trial_admission(
                     blockers.append("PROJECT_PIN_DIFFERS_FROM_CANDIDATE")
             except (activation.ActivationError, TypeError, ValueError, KeyError, AttributeError):
                 blockers.append("PROJECT_MANIFEST_INVALID")
-        adoption = _safe_json(root, adoption_path)
+        adoption = (
+            _safe_json(root, adoption_path)
+            if _git_bound_file(root, adoption_path) else None
+        )
         if adoption is None:
             blockers.append("CANDIDATE_ADOPTION_NOT_PRESENT_OR_INVALID")
         else:
@@ -146,13 +210,9 @@ def inspect_trial_admission(
         knowledge_root = root / ".erei" / "knowledge"
         if (knowledge_root.is_symlink() or
                 not knowledge_root.is_dir() or
-                knowledge_root.resolve(strict=True) != knowledge_root):
+                knowledge_root.resolve(strict=True) != knowledge_root or
+                not _git_bound_knowledge_present(root)):
             blockers.append("PROJECT_KNOWLEDGE_ARTIFACT_NOT_PRESENT")
-        else:
-            # Do not inspect the content or emit file names/sensitive data.
-            if not any(p.is_file() and not p.is_symlink()
-                       for p in knowledge_root.iterdir()):
-                blockers.append("PROJECT_KNOWLEDGE_ARTIFACT_NOT_PRESENT")
         if not blockers:
             # A project pin/adoption/knowledge file is not proof of deployed
             # code, authentic owner approval, prospective task selection or
@@ -161,8 +221,14 @@ def inspect_trial_admission(
         return {
             **base, "project_commit_verified": True,
             "project_ref": actual_head,
-            "manifest_sha256": _sha256_file(root, manifest_path),
-            "adoption_sha256": _sha256_file(root, adoption_path),
+            "manifest_sha256": (
+                _sha256_file(root, manifest_path)
+                if _git_bound_file(root, manifest_path) else None
+            ),
+            "adoption_sha256": (
+                _sha256_file(root, adoption_path)
+                if _git_bound_file(root, adoption_path) else None
+            ),
             "declared_pin": pin,
             "candidate_framework_sha": candidate_framework_sha,
             "blockers": sorted(set(blockers)),
