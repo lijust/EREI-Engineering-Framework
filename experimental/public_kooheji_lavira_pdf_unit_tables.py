@@ -45,6 +45,22 @@ try:
    book["pages_with_unit_label"].append(page_idx+1)
    # record exact original publisher text lines around physical table
    lines=[v.strip() for v in t.splitlines() if v.strip()]
+   # All labels explicitly present on the publisher drawing, never generated from a declared 264-unit total.
+   block="61" if name=="bareh" else "47"
+   source_matches={}
+   for match in re.finditer(r"(?<![\\w])(?:("+block+r")[-\\s]([0-9]{2})|([0-9]{2})[-\\s]("+block+r"))(?![\\w])",t):
+    raw=match.group(0)
+    n=int(match.group(2) or match.group(3))
+    if not 1<=n<=99:continue
+    k=block+"-"+str(n).zfill(2)
+    source_matches.setdefault(k,set()).add(raw)
+   stage=[{"publisher_block":block,"original_label_normalized":k,
+           "original_text_variants":sorted(v),"source":name,"pdf_url":url,
+           "publisher_page_number":page_idx+1,"source_page_sha256":hashlib.sha256(b).hexdigest(),
+           "verification":"PUBLISHER_NUMBERED_SITE_PLAN_SOURCE_ONLY_NO_CURRENT_STATUS"} for k,v in source_matches.items()]
+   stage.sort(key=lambda x:int(x["original_label_normalized"].split("-")[1]))
+   state.setdefault("numbered_site_plan_unit_identifiers",[]).extend(stage)
+   print("PDF_ORIGINAL_NUMBERED_PLOT_CODES "+json.dumps({"source":name,"page":page_idx+1,"codes":stage},ensure_ascii=False,separators=(",",":")),flush=True)
    tables=page.find_tables()
    matches=[]
    for table_no,table in enumerate(tables.tables):
