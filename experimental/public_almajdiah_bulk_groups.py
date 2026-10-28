@@ -36,11 +36,6 @@ def get(url,api_id=None):
  if int(r.status)!=200:raise RuntimeError("PUBLISHER_HTTP_"+str(r.status))
  return json.loads(r.body)
 try:
- r=get("https://"+HOST+"/robots.txt")
- # Fetcher response of robots cannot be JSON; use the same exact restricted host request here.
-except Exception:
- r=None
-try:
  rb=Fetcher.get("https://"+HOST+"/robots.txt",retries=1,timeout=30,follow_redirects="safe",headers={"User-Agent":UA})
  if int(rb.status)==429:raise RuntimeError("HTTP_429_GLOBAL_HALT")
  if int(rb.status)!=200:raise RuntimeError("ROBOTS_HTTP_"+str(rb.status))
