@@ -1,0 +1,27 @@
+name: Public NHC and Retal eight firstparty project XHR discovery
+on:
+  push:
+    branches: [experiment/public-scrapling-v05-smoke-20261027]
+    paths: [.github/workflows/public-nhc-retal8-firstparty-xhr.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  original-publisher-api-discovery:
+    runs-on: ubuntu-latest
+    timeout-minutes: 28
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install 'scrapling[fetchers]==0.5'
+      - run: scrapling install
+      - run: python experimental/public_nhc_retal_8_existing_highvolume_firstparty_api.py
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nhc-retal-eight-existing-project-xhr-source-candidates
+          path: ${{ runner.temp }}/nhc_retal8_firstparty_api_xhr_shapes_20261028.json
+          retention-days: 5
+          if-no-files-found: warn
