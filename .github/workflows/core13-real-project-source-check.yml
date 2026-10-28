@@ -1,0 +1,88 @@
+name: Core13 Real Project Trial Admission Source Check
+
+on:
+  pull_request:
+    paths:
+      - tools/core13_real_project_trial_preflight.py
+      - evals/tests/test_core13_real_project_trial_preflight.py
+      - .github/workflows/core13-real-project-source-check.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  PYTHONDONTWRITEBYTECODE: '1'
+
+jobs:
+  real-source-no-go:
+    # No project mutation or candidate activation. PR code gets no secrets.
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout Framework test implementation
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+          path: framework
+
+      - name: Checkout exact real App Google project snapshot
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          repository: lijust/EREI-App-Google
+          ref: 6d32e7a14a4324dbdea228f695d6b75e0b8bd246
+          persist-credentials: false
+          path: app-google
+
+      - name: Checkout exact real EREI 3.2 project snapshot
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          repository: lijust/EREI-3.2
+          ref: 87d730ddc3547f863de2a6895e91f9b83e9c6e72
+          persist-credentials: false
+          path: erei-32
+
+      - name: Run isolated offline Git-backed unit regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd framework
+          python -m unittest evals.tests.test_core13_real_project_trial_preflight -v
+
+      - name: Verify exact source blockers on both REAL project snapshots
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd framework
+          python - <<'PY'
+          import json
+          from datetime import datetime, timezone
+          from pathlib import Path
+          from tools.core13_real_project_trial_preflight import inspect_trial_admission
+
+          snapshots = [
+              ("EREI-App-Google", Path("../app-google"),
+               "6d32e7a14a4324dbdea228f695d6b75e0b8bd246"),
+              ("EREI-3.2", Path("../erei-32"),
+               "87d730ddc3547f863de2a6895e91f9b83e9c6e72"),
+          ]
+          # Exact candidate ref is deliberately different from old Stable pins.
+          # Avoid depending on mutable HEAD or using checkout's merge commit as
+          # an independently authenticated runtime version.
+          candidate = "2cd08aaea50af8623687014efb2151adf6555395"
+          for name, directory, commit in snapshots:
+              result = inspect_trial_admission(
+                  directory, commit, candidate, now=datetime.now(timezone.utc)
+              )
+              assert result["project_commit_verified"] is True
+              assert result["status"] == "BLOCKED"
+              assert result["admission_authorized"] is False
+              assert result["real_project_trial_executed"] is False
+              assert result["files_written"] is False
+              assert "PROJECT_PIN_DIFFERS_FROM_CANDIDATE" in result["blockers"]
+              assert "CANDIDATE_ADOPTION_NOT_PRESENT_OR_INVALID" in result["blockers"]
+              assert "PROJECT_KNOWLEDGE_ARTIFACT_NOT_PRESENT" in result["blockers"]
+              print(json.dumps({"project": name, "result": result},
+                               separators=(",", ":"), sort_keys=True))
+          print("REAL_SOURCE_ADMISSION=BLOCKED_AS_EXPECTED; ZERO_PROJECT_WRITES")
+          PY
