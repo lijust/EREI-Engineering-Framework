@@ -183,9 +183,7 @@ class ActivatedProjectKnowledgeTests(unittest.TestCase):
         with self.assertRaisesRegex(
             bridge.ProjectReadDenied, "TASK_FRAMEWORK_REVISION_MISMATCH"
         ):
-            session.finalize_after_capture(
-                self.fixture.f.data([event]), self.fixture.f.selector(), SHA,
-            )
+            session.finalize_after_capture(None, self.fixture.f.selector(), SHA)
 
     def test_denominator_omission_of_failed_task_still_denied(self):
         first = self.prepared(0)
