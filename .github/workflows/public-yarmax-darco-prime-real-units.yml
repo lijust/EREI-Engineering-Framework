@@ -1,0 +1,26 @@
+name: Public Yarmax Darco Prime exact numbered unit cards
+on:
+  push:
+    branches: [experiment/public-scrapling-v05-smoke-20261027]
+    paths: [.github/workflows/public-yarmax-darco-prime-real-units.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-only-unit-card-extraction:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install 'scrapling[fetchers]==0.5'
+      - run: python experimental/public_yarmax_darco_prime_numbered_cards.py
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: yarmax-darco-prime-original-individual-public-cards
+          path: ${{ runner.temp }}/yarmax_darco_prj660_original_unit_links.json
+          if-no-files-found: warn
+          retention-days: 3
