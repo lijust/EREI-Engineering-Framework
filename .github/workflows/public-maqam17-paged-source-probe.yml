@@ -1,0 +1,26 @@
+name: Public Maqam17 complete unit table paginated source
+on:
+  push:
+    branches: [experiment/public-scrapling-v05-smoke-20261027]
+    paths: [experimental/public_maqam17_paged_source_probe.py, .github/workflows/public-maqam17-paged-source-probe.yml]
+permissions:
+  contents: read
+jobs:
+  public-original-source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: |
+          python -m pip install playwright
+          python -m playwright install chromium --with-deps
+      - run: python experimental/public_maqam17_paged_source_probe.py
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: maqam17-paginated-public-source-unit-rows
+          path: ${{ runner.temp }}/maqam17-pages.json
+          retention-days: 5
