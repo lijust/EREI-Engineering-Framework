@@ -86,6 +86,45 @@ finally:
  save()
  print("REWAN_VECTOR_RESULT "+json.dumps({"status":doc["status"],"pdf_pages":doc.get("pdf_pages"),"pdf_bytes":doc.get("pdf_bytes"),"candidate_pages":[{k:v for k,v in p.items() if k!="numbers"} for p in doc["pages"] if p.get("number_token_count",0)>=45],"error":doc["errors"],"confirmed_new_physical_units":0,"master_writes":0},separators=(",",":")))
 if doc["status"]=="COMPLETE_VECTOR_INVENTORY_PROBE":
+ try:
+  p26=pdf[26]
+  pp=p26.get_pixmap(matrix=fitz.Matrix(2,2),alpha=False)
+  swatch_xy={"C1":[135.2,663.2],"C2":[135.2,680.8],"D1":[135.2,718.4],"D2":[135.2,735.0],"E1":[135.2,765.6],"E2":[135.2,782.0],"A1":[227.2,662.0],"A2":[227.2,680.0],"A3":[227.2,697.0],"B1":[227.2,719.0],"B2":[227.2,735.0],"B3":[227.2,753.0],"FACILITIES":[227.2,780.0]}
+  def rgb_at(x,y):
+   sx,sy=round(x*2),round(y*2)
+   if sx<0 or sy<0 or sx>=pp.width or sy>=pp.height:return None
+   j=(sy*pp.width+sx)*pp.n
+   return tuple(pp.samples[j:j+3])
+  palette={k:rgb_at(*xy) for k,xy in swatch_xy.items()}
+  import math,collections
+  cards=[]
+  words=[w for w in p26.get_text("words") if re.fullmatch(r"[0-9]{1,4}",str(w[4]).strip()) and 1<=int(w[4])<=1270 and float(w[1])<800]
+  for w in words:
+   cx,cy=(w[0]+w[2])/2,(w[1]+w[3])/2
+   samples=[(-3,0),(3,0),(-2.1,-2.3),(2.1,-2.3),(-2.1,2.3),(2.1,2.3),(0,-3.6),(0,3.6),(-4.5,0),(4.5,0)]
+   good=[]
+   for dx,dy in samples:
+    px=rgb_at(cx+dx,cy+dy)
+    if px is None:continue
+    ranks=sorted((math.dist(px,color),key) for key,color in palette.items())
+    if ranks[0][0]<=36:good.append(ranks[0])
+   votes=collections.Counter(k for _,k in good)
+   if votes:
+    best,num=votes.most_common(1)[0]
+    ds=sorted(d for d,k in good if k==best)
+    second=max([v for k,v in votes.items() if k!=best] or [0])
+    confidence="HIGH" if num>=4 and second<=1 and ds[len(ds)//2]<15 else ("MEDIUM" if num>=3 and num>second*2 and ds[len(ds)//2]<27 else "LOW")
+    dist=round(ds[len(ds)//2],1)
+   else:best="UNCLASSIFIED";num=0;second=0;dist=None;confidence="UNCLASSIFIED"
+   cards.append({"publisher_plot_label":str(w[4]),"villa_type":best,"confidence":confidence,"vote_count":num,"runner_up_vote_count":second,"median_color_distance":dist})
+  cards.sort(key=lambda x:int(x["publisher_plot_label"]))
+  if len(cards)!=1270 or len(set(x["publisher_plot_label"] for x in cards))!=1270:raise ValueError("LABEL_COUNT_DID_NOT_MATCH_1270")
+  grouped=dict(collections.Counter(c["villa_type"] for c in cards))
+  conf=dict(collections.Counter(c["confidence"] for c in cards))
+  print("REWAN_TYPE_CLASSIFICATION_SUMMARY "+json.dumps({"plot_labels":len(cards),"model_distribution":grouped,"confidence":conf,"non_villa_or_unclassified":[c for c in cards if c["villa_type"] in ("FACILITIES","UNCLASSIFIED")],"low_confidence_examples":[c for c in cards if c["confidence"]=="LOW"][:20]},separators=(",",":")))
+  for i in range(0,len(cards),80):print("REWAN_TYPE_CARDS_CHUNK "+json.dumps(cards[i:i+80],separators=(",",":")))
+ except Exception as exc:print("REWAN_TYPE_CLASSIFICATION_ERROR "+str(exc)[:270])
+if doc["status"]=="COMPLETE_VECTOR_INVENTORY_PROBE":
  for p in doc["pages"]:
   if p.get("page_zero_based")==26 and "numbers" in p:
    raw=p["numbers"]
