@@ -33,7 +33,7 @@ try:
   time.sleep(max(3.0,float(rp.crawl_delay(UA) or rp.crawl_delay("*") or 0)))
   r=fetch(url)
   if int(r.status)!=200:raise RuntimeError("SOURCE_HTTP_"+project+"_"+str(r.status))
-  root=LX.fromstring(r.body)
+  root=LX.fromstring(r.body.decode('utf-8','replace'))
   heading=txt(root.xpath("//h1[1]")[0]) if root.xpath("//h1[1]") else ""
   expected="مكين "+project
   if heading!=expected:raise RuntimeError("UNEXPECTED_PUBLISHER_PROJECT_"+heading)
