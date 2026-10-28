@@ -14,7 +14,7 @@ import json
 from pathlib import Path
 import re
 import time
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urljoin, urlparse, parse_qs
 from urllib.robotparser import RobotFileParser
 
 BASE = "https://kite.sa"
@@ -64,12 +64,18 @@ def canonical_url(path):
     if p.username or p.password or p.fragment:
         raise ValueError("Unexpected credentials/fragment")
     if not (p.path == "/robots.txt" or
-            p.path == "/en/projects/riyadh" or
+            p.path in ("/en/projects/riyadh", "/en/search") or
             PROJECT_URL_RE.fullmatch(p.path) or LISTING_URL_RE.fullmatch(p.path)):
         raise ValueError("Unapproved URL path")
-    if p.query and not (p.path == "/en/projects/riyadh" and
-                        re.fullmatch(r"page=[1-4]", p.query)):
-        raise ValueError("Unapproved query")
+    if p.query:
+        index_ok = p.path == "/en/projects/riyadh" and re.fullmatch(r"page=[1-4]", p.query)
+        qs = parse_qs(p.query, keep_blank_values=True)
+        search_ok = (p.path == "/en/search" and qs.get("project", [""])[0] in ("47", "10")
+                     and qs.get("city") == ["riyadh"]
+                     and qs.get("listing_type") == ["sale"]
+                     and set(qs).issubset({"project", "city", "listing_type", "lat", "lng"}))
+        if not (index_ok or search_ok):
+            raise ValueError("Unapproved query")
     return url
 
 
@@ -191,6 +197,33 @@ def main():
                 if urlparse(urljoin(BASE, href)).hostname == "kite.sa"
                 and ("list" in href.lower() or "unit" in href.lower() or "page=" in href.lower())
             ][:90]
+            for browsing in all_browse_links:
+                browse_url = browsing["url"]
+                p2 = urlparse(browse_url)
+                if p2.path != "/en/search" or p2.hostname != "kite.sa":
+                    continue
+                try:
+                    browse_url = canonical_url(browse_url)
+                except ValueError:
+                    continue
+                if not rules.can_fetch(UA, browse_url):
+                    continue
+                time.sleep(args.delay)
+                page_html = download(browse_url)
+                discovered = 0
+                for href, txt in links(page_html):
+                    item = urlparse(urljoin(BASE, href))
+                    if item.hostname != "kite.sa" or not LISTING_URL_RE.fullmatch(item.path):
+                        continue
+                    target = canonical_url(item.path)
+                    if target in found:
+                        continue
+                    found.add(target)
+                    candidates_links.append({"url": target, "preview": clean_name(txt)[:240]})
+                    discovered += 1
+                result.setdefault("browse_pages", []).append({"source_project": url,
+                    "browse_url": browse_url, "new_linked_items": discovered})
+                atomic_save(args.output, result)
             result["matched_project_pages"].append(
                 {"public_source_project_label": pid, "project_name": label,
                  "url": url, "status": "FETCHED", "linked_listing_urls": len(candidates_links),
