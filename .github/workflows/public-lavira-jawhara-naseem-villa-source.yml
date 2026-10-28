@@ -1,0 +1,29 @@
+name: Public Lavira Jawhara and Naseem actual numbered PDF villas
+on:
+  push:
+    branches:
+      - experiment/public-scrapling-v05-smoke-20261027
+    paths:
+      - '.github/workflows/public-lavira-jawhara-naseem-villa-source.yml'
+      - 'experimental/public_kooheji_lavira_jawhara_naseem_pdf_units.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  official-lavira-villa-EF-pdfs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install 'pymupdf>=1.24,<2' 'scrapling[fetchers]==0.5'
+      - run: python experimental/public_kooheji_lavira_jawhara_naseem_pdf_units.py
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: official-lavira-jawhara-naseem-PDF-source-villa-codes
+          path: ${{ runner.temp }}/lavira_villaEF_source_candidates.json
+          if-no-files-found: warn
+          retention-days: 3
