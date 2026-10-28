@@ -12,6 +12,7 @@ import io
 import json
 import re
 import zipfile
+import zlib
 from pathlib import Path
 from typing import Any
 
@@ -49,7 +50,7 @@ def _decode_json(raw: bytes) -> Any:
     try:
         return json.loads(raw.decode("utf-8"), object_pairs_hook=_object_pairs,
                           parse_constant=_bad_constant)
-    except (UnicodeError, ValueError) as exc:
+    except (UnicodeError, ValueError, RecursionError, OverflowError) as exc:
         raise TraceOriginError("TRACE_JSON_INVALID") from exc
 
 
@@ -57,7 +58,7 @@ def _canonical(value: Any) -> bytes:
     try:
         return json.dumps(value, sort_keys=True, ensure_ascii=False,
                           allow_nan=False, separators=(",", ":")).encode("utf-8")
-    except (ValueError, TypeError, OverflowError) as exc:
+    except (ValueError, TypeError, OverflowError, RecursionError) as exc:
         raise TraceOriginError("TRACE_BUNDLE_INVALID") from exc
 
 
@@ -78,6 +79,7 @@ def _read_archive(archive: Path | str) -> tuple[bytes, dict]:
             entry = files[0]
             kind = (entry.external_attr >> 16) & 0o170000
             if (entry.is_dir() or kind == 0o120000 or entry.flag_bits & 1
+                    or entry.compress_type not in (zipfile.ZIP_STORED, zipfile.ZIP_DEFLATED)
                     or entry.file_size > MAX_MEMBER_BYTES):
                 raise TraceOriginError("TRACE_ARCHIVE_UNSAFE_MEMBER")
             with handle.open(entry) as file:
@@ -87,7 +89,7 @@ def _read_archive(archive: Path | str) -> tuple[bytes, dict]:
     except TraceOriginError:
         raise
     except (OSError, zipfile.BadZipFile, zipfile.LargeZipFile, RuntimeError,
-            ValueError, EOFError) as exc:
+            ValueError, EOFError, zlib.error, RecursionError, OverflowError) as exc:
         raise TraceOriginError("TRACE_ARCHIVE_INVALID") from exc
     bundle = _decode_json(payload)
     if type(bundle) is not dict:
