@@ -18,7 +18,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - run: python -m pip install 'pymupdf>=1.24,<2' 'requests>=2.31,<3'
+      - run: python -m pip install 'pymupdf>=1.24,<2' 'scrapling[fetchers]==0.5'
       - run: python experimental/public_kooheji_next_brochure_unit_vector_probe.py
       - if: always()
         uses: actions/upload-artifact@v4
