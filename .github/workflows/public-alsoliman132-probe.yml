@@ -1,0 +1,29 @@
+name: Public Al Soliman 132 firstparty unit probe
+on:
+  push:
+    branches:
+      - experiment/public-scrapling-v05-smoke-20261027
+    paths:
+      - '.github/workflows/public-alsoliman132-probe.yml'
+      - 'experimental/public_alsoliman132_probe.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  public-firstparty-probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install 'scrapling[fetchers]==0.5'
+      - run: python experimental/public_alsoliman132_probe.py
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: alsoliman132-public-unit-dom-probe
+          path: ${{ runner.temp }}/alsoliman132-public-firstparty-probe.json
+          if-no-files-found: warn
+          retention-days: 2
