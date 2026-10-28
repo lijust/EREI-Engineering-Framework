@@ -37,6 +37,9 @@ try:
    for needle in ("unit","item","apartment","building"):
     v["class_counts"][needle]=[(c,n) for c,n in sorted({c:len(root.xpath("//*[@class]")) for c in []}.items())]
    v["cards"]=[{"class":el.get("class"),"html":LH.tostring(el,encoding="unicode")[:2100]} for el in root.xpath("//*[contains(@class,'unit') or contains(@class,'Unit')]")[:7]]
+   v["toggle_total"]=len(root.xpath("//a[contains(concat(' ',normalize-space(@class),' '),' toggle ')]"))
+   v["toggle_parent_sample"]=[LH.tostring(el.getparent(),encoding="unicode")[:3100] for el in root.xpath("//a[contains(concat(' ',normalize-space(@class),' '),' toggle ')]")[:3]]
+   v["building_headers"]=[{"tag":n.tag,"class":n.get("class"),"text":" ".join(n.itertext()).strip()[:200]} for n in root.xpath("//*[contains(text(),'مباني') or contains(text(),'Buildings')]")[:7]]
   data["projects"].append(v);save()
  data["status"]="COMPLETE_PROBE"
 except Exception as e:
