@@ -152,6 +152,8 @@ class ProjectKnowledgeReadSession:
         """
         if not self.observed_read:
             raise ProjectReadDenied("NO_PROJECT_READ_OBSERVED")
+        if type(trace_ref) is not str or trace_ref != self.bound["framework_sha"]:
+            raise ProjectReadDenied("TRACE_FRAMEWORK_REVISION_MISMATCH")
         self._recheck()
         try:
             snapshot = task_learning.authoritative_snapshot(self.root)
