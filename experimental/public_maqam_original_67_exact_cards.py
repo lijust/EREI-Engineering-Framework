@@ -96,7 +96,15 @@ def main():
        "pages":[],"cards":[],"errors":[],"canonical_writes":0,"status":"STARTED"}
     try:
         robots=RobotFileParser()
-        robots.parse(fetch("/robots.txt").splitlines())
+        try:
+            robots.parse(fetch("/robots.txt").splitlines())
+        except ValueError as exc:
+            if str(exc)!="HTTP_404 from /robots.txt":
+                raise
+            # RFC 9309: HTTP 404 for robots.txt = unavailable rules, may crawl.
+            # This does NOT override HTTP403 or 429 and never follows login paths.
+            robots.parse([])
+            state["robots_note"]="404_ROBOTS_UNAVAILABLE_RFC9309_ALLOW_PUBLIC_PAGES"
         for name,path,expected in TARGETS:
             url=BASE+path
             if not robots.can_fetch(UA,url):
