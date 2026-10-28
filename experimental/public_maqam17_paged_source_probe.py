@@ -28,11 +28,15 @@ async def main():
                       "pagination_markup":(await page.locator("table").first.evaluate("e=>e.parentElement.parentElement.outerHTML.slice(-8500)")) if await page.locator("table").count() else ""}
                     out.write_text(json.dumps(state,ensure_ascii=False,indent=2))
                 if n==7:break
-                btn=page.get_by_role("button",name=str(n+1),exact=True)
-                if not await btn.count():
-                    btn=page.get_by_text(str(n+1),exact=True)
-                if not await btn.count():break
-                await btn.first.click(timeout=10000)
+                buttons=page.locator("button")
+                selected=None
+                for b in range(await buttons.count()):
+                    element=buttons.nth(b)
+                    if (await element.inner_text()).strip()==str(n+1):
+                        selected=element
+                        break
+                if selected is None:break
+                await selected.click(timeout=10000)
             await browser.close()
         state["status"]="COMPLETE"
     except Exception as e:state.update(status="FAILED",error=str(e))
