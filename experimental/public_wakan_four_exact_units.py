@@ -40,17 +40,14 @@ try:
    match=re.search(r"\bbuilding\s+(.+?)$",heading,re.I)
    building_name=match.group(1).strip() if match else None
    if not building_name:raise ValueError("SOURCE_BUILDING_HEADING_MISSING_"+key)
-   for acc in building.xpath('.//div[contains(concat(" ",normalize-space(@class)," ")," accordion ")]'):
-    anchors=acc.xpath('./a[contains(concat(" ",normalize-space(@class)," ")," toggle ")]')
-    if len(anchors)!=1:raise ValueError("SOURCE_UNIT_TOGGLE_COUNT_"+key)
-    anchor=anchors[0]
+   for anchor in building.xpath('.//a[contains(concat(" ",normalize-space(@class)," ")," toggle ")]'):
     raw_code=" ".join(" ".join(anchor.xpath("./text()")).split()).strip()
     if not re.fullmatch(r"[A-Za-z0-9]{1,4}(?:/[A-Za-z0-9]{1,4})?",raw_code):raise ValueError("BAD_UNIT_CODE_"+key+"_"+raw_code[:30])
     pub_code=(building_name+" "+raw_code) if building_name in ("A","B","C","D","E") else raw_code
     identity=key+"|"+pub_code
     if identity in seen:raise ValueError("DUP_SOURCE_KEY_"+identity)
     seen.add(identity)
-    sub=acc.xpath('./div[contains(concat(" ",normalize-space(@class)," ")," accordion-inner ")]')
+    sub=anchor.xpath('following-sibling::div[contains(concat(" ",normalize-space(@class)," ")," accordion-inner ")][1]')
     if len(sub)!=1:raise ValueError("ORIGINAL_CARD_BODY_MISSING_"+identity)
     body=sub[0]
     header=body.xpath('.//h4[contains(translate(normalize-space(.),"ABCDEFGHIJKLMNOPQRSTUVWXYZ","abcdefghijklmnopqrstuvwxyz"),"unit area")]')
