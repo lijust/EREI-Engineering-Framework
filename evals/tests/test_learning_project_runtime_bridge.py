@@ -189,6 +189,18 @@ class ActivatedProjectKnowledgeTests(unittest.TestCase):
         ):
             session.finalize_after_capture(self.fixture.f.data([event]), self.fixture.f.selector(), SHA)
 
+    def test_implementation_ref_not_loaded_cannot_start_or_claim_read(self):
+        event = self.prepared(0)
+        with self.assertRaisesRegex(
+            bridge.ProjectReadDenied, "IMPLEMENTATION_FRAMEWORK_REVISION_MISMATCH"
+        ):
+            bridge.ProjectKnowledgeReadSession(
+                self.root, event["occurrence_id"], "synthetic-intervention",
+                "f" * 40, capability=CAPABILITY, now=NOW
+            )
+        # No evidence, terminal capture or additional read occurred.
+        self.assertFalse((self.root / ".erei" / "learning" / "events").exists())
+
     def test_trace_commit_must_equal_exact_loaded_framework_sha(self):
         event = self.prepared(0)
         session = self.session(event)
