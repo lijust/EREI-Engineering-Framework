@@ -1,0 +1,26 @@
+name: Public Darco unit API endpoint and page schema candidates
+on:
+  push:
+    branches: [experiment/public-scrapling-v05-smoke-20261027]
+    paths: [.github/workflows/public-darco-unit-endpoint-candidates.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-endpoint-probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install 'scrapling[fetchers]==0.5'
+      - run: python experimental/public_darco_original_unit_api_candidate_paths.py
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: darco-original-public-unit-endpoint-shapes
+          path: ${{ runner.temp }}/darco_unit_endpoint_candidate_shapes.json
+          retention-days: 3
+          if-no-files-found: warn
