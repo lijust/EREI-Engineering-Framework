@@ -4,7 +4,8 @@ import json,os,hashlib,re,time,sys
 from pathlib import Path
 from urllib.parse import urlsplit
 from urllib.robotparser import RobotFileParser
-import requests,fitz
+import fitz
+from scrapling.fetchers import Fetcher
 ROOT="https://koohejidevelopment.sa"
 BOOKS=[
  ("vellano",ROOT+"/wp-content/uploads/2025/11/Vellano-Brochure-2025.pdf",130000000),
@@ -15,29 +16,27 @@ UA="SAE-DB-Official-Source-Unit-Vector-Research/1.0"
 out=Path(os.environ.get("RUNNER_TEMP","/tmp"))/"sae_kooheji_next_firstparty_brochure_vector_probe.json"
 state={"schema":"SAE_KOOHEJI_NEXT_BROCHURES_V1","books":[],"status":"STARTED","errors":[],"production_writes":0}
 def save():out.write_text(json.dumps(state,ensure_ascii=False,separators=(",",":")),encoding="utf-8")
-s=requests.Session();s.headers["User-Agent"]=UA
+def get_source(url,timeout=120):
+ r=Fetcher.get(url,retries=0,timeout=timeout,follow_redirects="safe",headers={"User-Agent":UA})
+ if int(r.status)==429:raise RuntimeError("HTTP_429_STOP")
+ if int(r.status)!=200:raise RuntimeError("SOURCE_HTTP_"+str(r.status))
+ if urlsplit(str(r.url)).hostname!="koohejidevelopment.sa":raise RuntimeError("SOURCE_REDIRECT_OUTSIDE")
+ return r.body
 try:
- rr=s.get(ROOT+"/robots.txt",timeout=30,allow_redirects=False)
- if rr.status_code==429:raise RuntimeError("HTTP_429_STOP")
- if rr.status_code!=200:raise RuntimeError("ROBOTS_ERROR_"+str(rr.status_code))
- rp=RobotFileParser();rp.parse(rr.text.splitlines())
+ rb=get_source(ROOT+"/robots.txt",timeout=65)
+ rp=RobotFileParser();rp.parse(rb.decode("utf-8","replace").splitlines())
  for key,url,cap in BOOKS:
   if not rp.can_fetch(UA,url):
    state["books"].append({"key":key,"status":"ROBOTS_DISALLOW"});save();continue
   time.sleep(max(3.,float(rp.crawl_delay(UA) or rp.crawl_delay("*") or 0)))
   book={"key":key,"url":url,"status":"STARTED","pages":[],"top_label_pages":[]}
   state["books"].append(book)
-  with s.get(url,timeout=150,stream=True,allow_redirects=False) as resp:
-   if resp.status_code==429:raise RuntimeError("HTTP_429_STOP")
-   if resp.status_code!=200:raise RuntimeError("PDF_HTTP_"+key+"_"+str(resp.status_code))
-   if urlsplit(resp.url).hostname!="koohejidevelopment.sa":raise RuntimeError("PDF_HOST_CHANGED")
-   path=Path(os.environ.get("RUNNER_TEMP","/tmp"))/("source_"+key+".pdf")
-   sha=hashlib.sha256();n=0
-   with path.open("wb") as fo:
-    for chunk in resp.iter_content(chunk_size=256*1024):
-     if not chunk:continue
-     fo.write(chunk);sha.update(chunk);n+=len(chunk)
-     if n>cap:raise RuntimeError("PDF_EXCEEDS_BOUNDED_MAX_"+key)
+  b=get_source(url,timeout=160)
+  n=len(b)
+  if n>cap:raise RuntimeError("PDF_EXCEEDS_BOUNDED_MAX_"+key)
+  path=Path(os.environ.get("RUNNER_TEMP","/tmp"))/("source_"+key+".pdf")
+  path.write_bytes(b)
+  sha=hashlib.sha256(b)
   with path.open("rb") as fo:
    if fo.read(4)!=b"%PDF":raise RuntimeError("NOT_PDF_"+key)
   pdf=fitz.open(path)
