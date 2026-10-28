@@ -132,6 +132,35 @@ class KnowledgeReadProducerTests(unittest.TestCase):
             with self.assertRaisesRegex(producer.ObservationDenied, "KNOWLEDGE_LOCATION_INVALID"):
                 self.observer(e).read("link.txt", self.sha)
 
+    def test_reject_symlinked_knowledge_directory_external_to_project(self):
+        e = self.f.add(0)
+        with tempfile.TemporaryDirectory() as outside:
+            external = Path(outside) / "external-knowledge"
+            self.knowledge.rename(external)
+            try:
+                self.knowledge.symlink_to(external, target_is_directory=True)
+            except (OSError, NotImplementedError):
+                self.skipTest("symlink directory creation unavailable")
+            with self.assertRaisesRegex(
+                producer.ObservationDenied, "KNOWLEDGE_LOCATION_INVALID"
+            ):
+                self.observer(e).read("sample.txt", self.sha)
+
+    def test_reject_symlinked_erei_ancestor_external_to_project(self):
+        e = self.f.add(0)
+        erei = self.f.root / ".erei"
+        with tempfile.TemporaryDirectory() as outside:
+            external = Path(outside) / "external-erei"
+            erei.rename(external)
+            try:
+                erei.symlink_to(external, target_is_directory=True)
+            except (OSError, NotImplementedError):
+                self.skipTest("symlink directory creation unavailable")
+            with self.assertRaisesRegex(
+                producer.ObservationDenied, "KNOWLEDGE_LOCATION_INVALID"
+            ):
+                self.observer(e).read("sample.txt", self.sha)
+
     def test_wrong_intervention_or_incomplete_cohort_denied(self):
         a = self.f.add(0)
         b = self.f.add(1, outcome_class="failed", terminal_state="FAILED")
