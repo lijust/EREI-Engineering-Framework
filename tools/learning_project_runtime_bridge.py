@@ -8,7 +8,7 @@ capture remains a separate owner-controlled operation.
 from __future__ import annotations
 
 import hashlib
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -19,6 +19,13 @@ from tools import task_learning
 ALLOWED_CAPABILITIES = frozenset({
     "learning_pattern_analysis", "framework_effectiveness_measurement",
 })
+MAX_SESSION_CLOCK_SKEW = timedelta(minutes=5)
+MAX_CLOCK_ROLLBACK = timedelta(seconds=5)
+
+
+def _runtime_utc_now() -> datetime:
+    # Local runtime clock is not a remotely authenticated time source.
+    return datetime.now(timezone.utc)
 
 
 class ProjectReadDenied(RuntimeError):
@@ -95,10 +102,19 @@ class ProjectKnowledgeReadSession:
                 raise ProjectReadDenied("PROJECT_ROOT_INVALID")
         except (TypeError, OSError, ValueError, AttributeError) as exc:
             raise ProjectReadDenied("PROJECT_ROOT_INVALID") from exc
+        try:
+            clock = _runtime_utc_now()
+            if (clock.tzinfo is None or clock.utcoffset() is None or
+                    abs((now.astimezone(timezone.utc) - clock).total_seconds()) >
+                    MAX_SESSION_CLOCK_SKEW.total_seconds()):
+                raise ProjectReadDenied("SESSION_CLOCK_OUT_OF_SYNC")
+        except (TypeError, ValueError, OverflowError) as exc:
+            raise ProjectReadDenied("SESSION_CLOCK_UNVERIFIED") from exc
         self.root = root
         self.capability = capability
         self.now = now
-        self.bound = _activation_snapshot(root, capability, now)
+        self._last_runtime_clock = clock
+        self.bound = _activation_snapshot(root, capability, clock)
         # An existing completed occurrence must never gain retrospective
         # "exposure" merely because knowledge was read after task completion.
         self._started_occurrence = occurrence_id
@@ -125,7 +141,15 @@ class ProjectKnowledgeReadSession:
             raise ProjectReadDenied("TASK_SOURCE_UNVERIFIED") from exc
 
     def _recheck(self) -> None:
-        new = _activation_snapshot(self.root, self.capability, self.now)
+        # Recheck at the actual time of use: a fixed caller-supplied clock
+        # could otherwise keep a now-expired candidate active indefinitely.
+        clock = _runtime_utc_now()
+        if clock.tzinfo is None or clock.utcoffset() is None:
+            raise ProjectReadDenied("SESSION_CLOCK_UNVERIFIED")
+        if clock < self._last_runtime_clock - MAX_CLOCK_ROLLBACK:
+            raise ProjectReadDenied("SESSION_CLOCK_ROLLBACK")
+        self._last_runtime_clock = max(clock, self._last_runtime_clock)
+        new = _activation_snapshot(self.root, self.capability, clock)
         if new != self.bound:
             raise ProjectReadDenied("ACTIVATION_CHANGED_DURING_SESSION")
 
