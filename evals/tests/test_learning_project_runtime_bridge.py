@@ -99,15 +99,18 @@ class ActivatedProjectKnowledgeTests(unittest.TestCase):
         self.assertEqual(result["causation"], "NOT_ESTABLISHED")
 
     def test_missing_terminal_event_denies_no_false_exposure(self):
+        # Existing ledger is intact; this observation uses a new occurrence
+        # that has never been captured as a terminal task.
         event = self.fixture.f.add(0)
-        session = self.session(event)
+        never_captured = dict(
+            event, occurrence_id="EOCC-20261028T070000Z-1234ABCD"
+        )
+        session = self.session(never_captured)
         session.read("sample.txt", self.fixture.sha)
-        # Project-local event deliberately disappears from the authoritative ledger.
-        from tools import task_learning
-        directory = task_learning._paths(self.root)["event_dir"]
-        (directory / (event["occurrence_id"] + ".json")).unlink()
         with self.assertRaisesRegex(bridge.ProjectReadDenied, "TERMINAL_TASK_NOT_RECORDED"):
-            session.finalize_after_capture(self.fixture.f.data([]), self.fixture.f.selector(), SHA)
+            session.finalize_after_capture(
+                self.fixture.f.data([event]), self.fixture.f.selector(), SHA
+            )
 
     def test_candidate_without_adoption_and_expired_adoption_deny(self):
         event = self.fixture.f.add(0)
