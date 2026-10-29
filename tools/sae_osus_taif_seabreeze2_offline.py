@@ -82,7 +82,7 @@ def main():
         print("QUALIFIED",x["project_id"],"cards",len(rows),"source_sha256",hashlib.sha256(x["final_text"].encode()).hexdigest(),flush=True)
         results.extend(rows)
     for q in results:
-        if q["area_sqm"] < 50 or q["area_sqm"] > 350:
+        if q["area_sqm"] is None or q["area_sqm"] < 50 or q["area_sqm"] > 350:
             print("SAE_SOURCE_AREA_HOLD|"+json.dumps(q,ensure_ascii=False,separators=(",",":")),flush=True)
     if len(results)!=171:raise ValueError("source cards not exactly 171")
     output={"schema":"SAE_DB_OSUS_TAIF_SEABREEZE2_171_SOURCE_ORIGINAL_CARDS_STAGED_ONLY",
