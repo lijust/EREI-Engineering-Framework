@@ -1,0 +1,31 @@
+name: SAE Wakan Existing 043 and 045 Original Public Brochure Siteplan Links
+on:
+  push:
+    branches: [sae-source-study-20261029]
+    paths:
+      - 'tools/sae_wakan_043_045_public_brochure_links.py'
+      - '.github/workflows/sae-wakan-043-045-public-brochure.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install vector-PDF parser
+        run: python -m pip install pymupdf==1.26.5
+      - name: Inspect original official public brochure annotations in one pass
+        run: python tools/sae_wakan_043_045_public_brochure_links.py
+      - name: Preserve source-only evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sae-wakan-043-045-original-public-brochures
+          path: sae-wakan-043-045-firstparty-brochure-links.json
+          retention-days: 7
+          if-no-files-found: warn
