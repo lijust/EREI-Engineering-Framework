@@ -100,6 +100,9 @@ async def probe(seed,browser):
         if report["main_status"] not in (403,429) and not stop:
             await page.wait_for_timeout(12000)
             report["title"]=await page.title()
+            report["document_inventory"]=await page.evaluate("""() => ({scripts:[...document.querySelectorAll("script[src]")].map(x=>x.src).slice(0,40),iframes:[...document.querySelectorAll("iframe[src]")].map(x=>x.src).slice(0,15),body_text:(document.body?.innerText||"").slice(0,650),svg_nodes:document.querySelectorAll("svg").length,canvas_nodes:document.querySelectorAll("canvas").length})""")
+            if seed["id"]=="PRJ-001093":
+                await page.screenshot(path="sae-dpg-narjis-interactive-preview.png")
             report["links"]=await page.locator("a[href]").evaluate_all(
                 "(a)=>a.map(x=>({text:(x.innerText||'').trim().slice(0,60),href:x.href}))"
                 ".filter(x=>/interactive|map|الوحدات|المخطط|الخريطة|master/i.test(x.text+' '+x.href))"
