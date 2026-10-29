@@ -1,0 +1,75 @@
+name: SAE Original Interactive Domains New High Yield (source-only)
+on:
+  push:
+    branches: [experiment/sae-saraya-high-yield-20261029]
+    paths: [.github/workflows/sae-new-inventory-domains-20261029.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  observe-public-original-app-domains:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install 'playwright>=1.55,<2'
+      - run: python -m playwright install --with-deps chromium
+      - name: Probe publicly linked Khuzam original app and discover other community domains
+        shell: bash
+        run: |
+          python - <<'PY'
+          import datetime,json,hashlib
+          from pathlib import Path
+          from playwright.sync_api import sync_playwright
+          sites=[
+            ('khuzam_interactive','https://talakhuzam.darwaemaar.com/'),
+            ('lazurd_interactive','https://saraya-lazurd.darwaemaar.com/'),
+            ('lazurd_other','https://saraya-al-lazurd.darwaemaar.com/'),
+            ('lazurd_short','https://lazurd.darwaemaar.com/'),
+            ('narjes_heights_app','https://al-narjes-heights.darwaemaar.com/'),
+            ('saraya_narjis_app','https://saraya-al-narjis.darwaemaar.com/'),
+            ('fursan1_official','https://saraya-al-fursan.darwaemaar.com/')]
+          Path('out').mkdir(exist_ok=True)
+          with sync_playwright() as pw:
+            browser=pw.chromium.launch(headless=True,args=['--no-sandbox'])
+            for site,url in sites:
+              doc={'site':site,'url':url,'ts':datetime.datetime.now(datetime.timezone.utc).isoformat(),'auth_used':False,'writes':0,'responses':[]}
+              p=browser.new_page(locale='ar-SA')
+              def handle(r):
+                try:
+                  if r.request.resource_type not in ('xhr','fetch') or len(doc['responses'])>=130:return
+                  if r.status in (403,429):doc.setdefault('access_control_stop',[]).append({'status':r.status,'url':r.url});return
+                  record={'url':r.url[:360],'status':r.status,'content_type':r.headers.get('content-type','')[:100]}
+                  if r.status==200 and 'json' in record['content_type']:
+                    body=r.body();record['bytes']=len(body);record['sha256']=hashlib.sha256(body).hexdigest()
+                    if len(body)<8_000_000:
+                      try:
+                        o=json.loads(body);record['shape']={'type':type(o).__name__,'keys':list(o)[:50] if isinstance(o,dict) else None,'size':len(o)}
+                        if any(t in r.url.lower() for t in ('inventory','unit','villa','property','plot')) and len(body)<6_000_000:record['original_public_json']=o
+                      except Exception as e:record['json_error']=str(e)[:80]
+                  doc['responses'].append(record)
+                except Exception as e:doc.setdefault('callback_errors',[]).append(type(e).__name__)
+              p.on('response',handle)
+              try:
+                response=p.goto(url,wait_until='domcontentloaded',timeout=18000)
+                doc['http']=response.status if response else None
+                p.wait_for_timeout(6300 if site in ('khuzam_interactive','lazurd_interactive','narjes_heights_app','saraya_narjis_app') else 3300)
+                doc['title']=p.title()
+                doc['links']=[{'text':a.inner_text()[:50],'href':a.get_attribute('href')} for a in p.locator('a').all()[:40]]
+                doc['body_sample']=p.locator('body').inner_text()[:1300]
+              except Exception as e:doc['page_error']=str(e)[:200]
+              p.close()
+              Path('out/'+site+'.json').write_text(json.dumps(doc,ensure_ascii=False,indent=2),encoding='utf8')
+              print('SAE_SUBDOMAIN',site,json.dumps({'http':doc.get('http'),'title':doc.get('title'),'xhr':len(doc['responses']),'inventories':[{'url':r['url'],'size':r.get('bytes')} for r in doc['responses'] if 'original_public_json' in r],'error':doc.get('page_error')},ensure_ascii=False),flush=True)
+            browser.close()
+          PY
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sae-new-firstparty-inventory-domain-discovery-20261029
+          path: out/*.json
