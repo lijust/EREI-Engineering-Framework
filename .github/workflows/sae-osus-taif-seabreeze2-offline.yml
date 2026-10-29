@@ -1,0 +1,27 @@
+name: SAE Osus Taif and Sea Breeze 2 offline original 171 unit card normalization
+on:
+  push:
+    branches: [sae-source-study-20261029]
+    paths: [tools/sae_osus_taif_seabreeze2_offline.py, .github/workflows/sae-osus-taif-seabreeze2-offline.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  normalize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: sae-osus-taif-seabreeze2-original-public-cards
+          run-id: 40915090600
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - run: python tools/sae_osus_taif_seabreeze2_offline.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sae-osus-taif-seabreeze2-171-normalized-cards
+          path: sae-osus-taif-seabreeze2-171-source-cards.json
+          retention-days: 7
