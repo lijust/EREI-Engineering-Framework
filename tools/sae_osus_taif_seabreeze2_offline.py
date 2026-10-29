@@ -54,7 +54,7 @@ def extract_one(item):
         floor=field(block,"الطابق")
         area=field(block,"المساحة الإجمالية")
         private_area=field(block,"المساحة الخاصة")
-        if status is None or room is None or floor is None or area is None or price is None:
+        if status is None or area is None or price is None:
             raise ValueError("missing source card data "+repr((pid,building,code,block[:20])))
         key=(building,code)
         if key in seen:raise ValueError("duplicated physical code in building "+repr((pid,key)))
@@ -62,7 +62,7 @@ def extract_one(item):
         rec={"canonical_project_id":pid,"publisher_unit_code":code,
             "publisher_building_no":building,
             "status_original_ar":status,"price_sar":parse_number(price,True),
-            "bedrooms":parse_number(room,True),"floor":parse_number(floor,True),
+            "bedrooms":parse_number(room,True) if room is not None else None,"floor":parse_number(floor,True) if floor is not None else None,
             "area_sqm":parse_number(area,False),
             "publisher_private_area_sqm":parse_number(private_area,False,True) if private_area else None,
             "source_url":item["original_url"],"source_capture_utc":item["capture_utc"],
