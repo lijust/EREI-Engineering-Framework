@@ -1,0 +1,29 @@
+name: SAE NHC Public Marketplace Original Inventory Study
+on:
+  push:
+    branches: [sae-source-study-20261029]
+    paths:
+      - tools/sae_nhc_marketplace_original_inventory_probe.py
+      - .github/workflows/sae-nhc-marketplace-original-listings.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-study:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: |
+          python -m pip install playwright==1.58.0
+          python -m playwright install --with-deps chromium
+      - run: python tools/sae_nhc_marketplace_original_inventory_probe.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sae-nhc-marketplace-guest-original-feed-study
+          path: sae-nhc-public-marketplace-source-study.json
+          retention-days: 7
