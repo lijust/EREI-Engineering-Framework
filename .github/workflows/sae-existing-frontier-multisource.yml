@@ -1,0 +1,37 @@
+name: SAE existing projects 11-source original inventory batch (read only)
+on:
+  push:
+    branches: [sae-source-study-20261029]
+    paths:
+      - 'tools/sae_existing_frontier_batch_probe.py'
+      - 'tools/sae_existing_frontier_batch_20261029.json'
+      - '.github/workflows/sae-existing-frontier-multisource.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: sae-existing-frontier-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install source-only browser
+        run: |
+          python -m pip install playwright==1.58.0
+          python -m playwright install --with-deps chromium
+      - name: Verify code, run 11 distinct existing-project source scans, stage original itemized rows
+        run: python tools/sae_existing_frontier_batch_probe.py --manifest tools/sae_existing_frontier_batch_20261029.json --output "$RUNNER_TEMP/sae-existing-frontier-batch-original.json"
+      - name: Preserve original source observations for manual canonical reconciliation
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sae-existing-frontier-source-only
+          path: ${{ runner.temp }}/sae-existing-frontier-batch-original.json
+          retention-days: 7
+          if-no-files-found: warn
