@@ -1,0 +1,20 @@
+name: SAE site intelligence evidence gate tests
+on:
+  push:
+    branches: [experiment/public-scrapling-v05-smoke-20261027]
+    paths:
+      - experimental/site_intelligence_evidence_gate.py
+      - experimental/test_site_intelligence_evidence_gate.py
+      - .github/workflows/public-sae-site-intelligence-evidence-gate-ci.yml
+permissions:
+  contents: read
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: cd experimental && python -m unittest -v test_site_intelligence_evidence_gate
