@@ -1,0 +1,34 @@
+name: SAE Alargan other original brochures source-only
+on:
+  push:
+    branches: [sae-source-study-20261029]
+    paths:
+      - tools/sae_alargan_additional_brochures.py
+      - .github/workflows/sae-alargan-additional-source.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  original-brochures:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install raster PDF inspection
+        run: pip install pymupdf==1.26.4 pillow
+      - name: Inspect original public developer PDF without creating units
+        run: python tools/sae_alargan_additional_brochures.py
+      - name: Save firstparty source evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sae-alargan-two-more-original-brochures
+          path: |
+            sae-alargan-additional-pdf-discovery.json
+            sae-alargan-contact-*.png
+          retention-days: 7
