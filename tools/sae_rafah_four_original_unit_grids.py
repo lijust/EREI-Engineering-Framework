@@ -67,5 +67,25 @@ async def main():
    out["projects"].append(rec)
    Path("sae-raffah-four-original-unit-tables.json").write_text(json.dumps(out,ensure_ascii=False,indent=2))
    print(id,"HTTP",rec.get("status_code"),"tables",len(rec["tables"]),"rows",sum(len(x["rows"]) for x in rec["tables"]),flush=True)
+   if rec.get("status_code")==200 and not rec.get("access_denied"):
+    import re
+    extracted=[]
+    for table in rec["tables"]:
+     building=None
+     for row in table["rows"]:
+      cells=[cell["text"].strip() for cell in row["cells"]]
+      if len(cells)==1:
+       matched=re.search(r"عمارة\\s*([A-E])",cells[0])
+       if matched:building=matched.group(1)
+      elif len(cells)==7 and building and cells[0] in ("مباعة","متاحة","محجوزة"):
+       area=cells[3].replace(",","")
+       if not re.fullmatch(r"\\d+(?:\\.\\d+)?",area):continue
+       extracted.append({"building":building,"publisher_unit_code":cells[1],
+          "publisher_subunit_label":cells[2],"area_sqm":float(area),
+          "publisher_status":cells[0],"features":cells[4],
+          "specs":cells[5],"publisher_price_text":cells[6],
+          "source_url":rec["url"]})
+    print("SAE_RAFFAH_CAPTURED="+id+"="+out["captured_utc"],flush=True)
+    print("SAE_RAFFAH_RECORDS_"+id+"="+json.dumps(extracted,ensure_ascii=False,separators=(",",":")),flush=True)
   await browser.close()
 if __name__=="__main__":asyncio.run(main())
