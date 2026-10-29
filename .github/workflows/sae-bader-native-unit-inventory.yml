@@ -1,0 +1,33 @@
+name: SAE Saraya Al Bader original coded units source-only
+on:
+  push:
+    branches: [sae-source-study-20261029]
+    paths:
+      - tools/sae_bader_native_unit_inventory_probe.py
+      - .github/workflows/sae-bader-native-unit-inventory.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-study:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install Playwright for the official original project app
+        run: |
+          python -m pip install playwright==1.58.0
+          python -m playwright install --with-deps chromium
+      - name: Capture first-party original public unit API shapes (read only)
+        run: python tools/sae_bader_native_unit_inventory_probe.py
+      - name: Preserve source evidence only; never canonical DB writes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sae-bader-original-public-unit-source
+          path: sae-bader-original-unit-discovery.json
+          if-no-files-found: warn
+          retention-days: 7
