@@ -87,7 +87,19 @@ async def main():
                 rec["http"]=p.status if p else None
                 if p and p.status in (403,429):blocked=True
                 if rec.get("http")==200 and not blocked:
-                    await page.wait_for_timeout(3500)
+                    await page.wait_for_timeout(1700)
+                    # Project hides its per-unit cards behind explicit public
+                    # "عرض الوحدات" display control. Opening this visible UI
+                    # is required before its "تحميل المزيد" pagination exists.
+                    tab=page.get_by_text("عرض الوحدات",exact=True)
+                    rec["unit_tab_control_count"]=await tab.count()
+                    if await tab.count() and await tab.first.is_visible():
+                        try:
+                            await tab.first.click(timeout=4500)
+                            rec["unit_tab_clicked"]=True
+                            await page.wait_for_timeout(2600)
+                        except Exception as exc:
+                            rec["errors"].append("UNIT_TAB_CLICK_"+type(exc).__name__)
                     previous=""
                     for step in range(30):
                         if blocked:break
@@ -99,7 +111,7 @@ async def main():
                         if current==previous:break
                         previous=current
                         # A public 'Load More' button is part of ordinary UI, not an access bypass.
-                        load=page.get_by_text(re.compile(r"^(?:تحميل المزيد|Load More)$",re.I))
+                        load=page.get_by_text(re.compile(r"^(?:تحميل المزيد|Load More)(?:\s|$)",re.I))
                         if not await load.count():break
                         enabled=False
                         for ix in range(min(4,await load.count())):
