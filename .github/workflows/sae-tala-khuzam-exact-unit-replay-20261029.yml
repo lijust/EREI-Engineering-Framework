@@ -1,0 +1,40 @@
+name: SAE Tala Khuzam Archived 1298 Exact Unit Replay (source-only)
+on:
+  push:
+    branches: [experiment/sae-saraya-high-yield-20261029]
+    paths: [.github/workflows/sae-tala-khuzam-exact-unit-replay-20261029.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  replay-original-public-crm:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - name: Retrieve immutable original public inventory artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh run download 40865682129 -R lijust/EREI-Engineering-Framework -n sae-khuzam-1298-firstparty-interactive-crm-original-units-20261029 -D "$RUNNER_TEMP/sae-tala"
+      - name: Reconstruct source exact rows into auditable read-only log
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json,os,collections,hashlib
+          from pathlib import Path
+          doc=json.loads((Path(os.environ['RUNNER_TEMP'])/'sae-tala'/'khuzam_full_original.json').read_text())
+          assert doc['count']==1298 and doc['source_sha256']=='94e4f8274de65e9c68fbd65faa6bd5740f439cb1baeef584b2a48f4b31fcaee6'
+          rows=[]
+          for item in doc['records']:
+            a=item['acf']
+            assert a['project_code']=='02-01-0120' and 'تالا الخزام' in a['project_name']
+            prefix='02-01-0120-'
+            assert a['unit_code'].startswith(prefix)
+            rows.append([item['id'],a['unit_code'][len(prefix):],a['unit_code'],a['unit_price'],a['unit_size'],a['living_area'],a['number_bedrooms'],a['number_bathrooms'],a['unit_status'],a['booking_status'],a['published'],(item.get('class_list') or []),item['link'],item['modified_gmt'],a['moh_price']])
+          assert len(set(r[2] for r in rows))==1298
+          assert len(set(r[0] for r in rows))==1298
+          print('SAE_TALA_SOURCE_HEAD|'+json.dumps({'count':len(rows),'hash':doc['source_sha256'],'original_run':40865682129,'api':doc['api'],'observed':doc['recorded_at_utc']},ensure_ascii=False,separators=(',',':')),flush=True)
+          for start in range(0,len(rows),25):
+            print('SAE_TALA_SOURCE_ROWS|'+str(start)+'|'+json.dumps(rows[start:start+25],ensure_ascii=False,separators=(',',':')),flush=True)
+          print('SAE_TALA_SOURCE_END|'+str(len(rows)),flush=True)
+          PY
