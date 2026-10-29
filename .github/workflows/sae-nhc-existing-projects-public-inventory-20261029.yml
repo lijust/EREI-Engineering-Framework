@@ -1,0 +1,70 @@
+name: SAE Existing NHC Large Project Public Unit Inventory Discovery
+on:
+  push:
+    branches: [experiment/sae-saraya-high-yield-20261029]
+    paths: [.github/workflows/sae-nhc-existing-projects-public-inventory-20261029.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-only-browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 13
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install 'playwright>=1.55,<2' 'scrapling[fetchers]>=0.5,<0.6'
+      - run: python -m playwright install --with-deps chromium
+      - name: Discover exact already registered NHC project booking/map sources
+        run: |
+          python - <<'PY'
+          import json,hashlib,datetime
+          from pathlib import Path
+          from playwright.sync_api import sync_playwright
+          sites=[
+            ('rihab_al_wareef','https://www.nhc.sa/real-estate-development/projects/47838/'),
+            ('saraya_narjis','https://www.nhc.sa/real-estate-development/projects/331/'),
+            ('bouvardia_city','https://www.nhc.sa/real-estate-development/projects/'),
+            ('nhc_portal','https://www.nhc.sa/'),
+            ('jazan_suburb','https://sateaa.com/مشروع-إسكان-ضاحية-الملك-عبدالله/')]
+          Path('out').mkdir(exist_ok=True)
+          with sync_playwright() as pw:
+            b=pw.chromium.launch(headless=True,args=['--no-sandbox'])
+            for name,url in sites:
+              d={'name':name,'url':url,'utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),'no_auth':True,'write_count':0,'xhr':[]}
+              p=b.new_page(locale='ar-SA',viewport={'width':1365,'height':840})
+              def capture(res):
+                try:
+                  if res.request.resource_type not in ('xhr','fetch') or len(d['xhr'])>=120:return
+                  if res.status in (403,429):d.setdefault('stop_codes',[]).append({'url':res.url[:240],'status':res.status});return
+                  x={'url':res.url[:360],'http':res.status,'type':res.request.resource_type,'ct':res.headers.get('content-type','')[:85]}
+                  if res.status==200 and ('json' in x['ct'] or any(t in res.url.lower() for t in ('unit','property','inventory','floor','project'))):
+                    body=res.body();x['bytes']=len(body);x['sha256']=hashlib.sha256(body).hexdigest()
+                    if 'json' in x['ct'] and len(body)<4_000_000:
+                      try:
+                        obj=json.loads(body);x['keys']=list(obj)[:40] if isinstance(obj,dict) else None;x['count']=len(obj)
+                        if len(body)<1_000_000 and any(t in res.url.lower() for t in ('unit','property','inventory','project')):x['raw_public_json']=obj
+                      except Exception as e:x['parse_error']=type(e).__name__
+                  d['xhr'].append(x)
+                except Exception as e:d.setdefault('errors',[]).append(type(e).__name__)
+              p.on('response',capture)
+              try:
+                r=p.goto(url,wait_until='domcontentloaded',timeout=33000)
+                d['http']=r.status if r else None;p.wait_for_timeout(7000)
+                d['title']=p.title();d['body_text']=p.locator('body').inner_text()[:3000]
+                d['anchors']=[{'text':a.inner_text()[:110],'href':a.get_attribute('href')} for a in p.locator('a').all()[:130]]
+              except Exception as e:d['page_error']=type(e).__name__+':'+str(e)[:200]
+              p.close()
+              Path('out/'+name+'.json').write_text(json.dumps(d,ensure_ascii=False,indent=2),encoding='utf8')
+              print('SAE_NHC_PUBLIC_SOURCE',name,json.dumps({'http':d.get('http'),'title':d.get('title'),'xhr_count':len(d['xhr']),'inventory_candidate':[x['url'] for x in d['xhr'] if 'inventory' in x['url'] or 'units' in x['url']][:8],'links':[x for x in d.get('anchors',[]) if any(t in (x['text'] or '') for t in ('حجز','احجز','خريطة','تفاعلي'))][:5],'error':d.get('page_error')},ensure_ascii=False),flush=True)
+            b.close()
+          PY
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sae-nhc-five-existing-projects-public-inventory-probe-20261029
+          path: out/*.json
