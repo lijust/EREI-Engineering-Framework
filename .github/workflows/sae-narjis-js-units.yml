@@ -1,0 +1,30 @@
+name: SAE Narjis original public JS unit inventory source only
+on:
+  push:
+    branches: [sae-source-study-20261029]
+    paths:
+      - tools/sae_narjis_js_embedded_units.py
+      - .github/workflows/sae-narjis-js-units.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  read-original:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Extract literal code-linked original viewer records
+        run: python tools/sae_narjis_js_embedded_units.py
+      - name: Archive source-only whitelist fields
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sae-narjis-literal-numbered-villas
+          path: sae-narjis-original-js-coded-units.json
+          retention-days: 7
