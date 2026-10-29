@@ -1,0 +1,23 @@
+name: SAE Riyadh OSUS Eye Original Nine Cards Offline Audit
+on:
+  push:
+    branches: [sae-source-study-20261029]
+    paths:
+      - tools/sae_osus_riyadh_eye_offline_cards.py
+      - .github/workflows/sae-osus-riyadh-eye-offline.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: sae-osus-riyadh-eye-original-public-listings
+          run-id: 40918426852
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - run: python tools/sae_osus_riyadh_eye_offline_cards.py
