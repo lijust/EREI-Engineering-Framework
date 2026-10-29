@@ -26,6 +26,11 @@ def normalize_cards(original_visible_text):
     for i,p in enumerate(positions):
         cut=positions[i+1] if i+1<len(positions) else len(lines)
         text=lines[p+1:cut]
+        # Footer and navigation can repeat 'للبيع' after the final card;
+        # delimit the actual original unit card at the first visible CTA.
+        for stop_label in ("تحميل المزيد", "خدمة العملاء المجانية", "جاري التحميل..."):
+            if stop_label in text:
+                text=text[:text.index(stop_label)]
         limited="\n".join(text[:25])
         bedrooms=re.search(r"(?m)^(\d+)\s*غرفة نوم$", limited)
         bathrooms=re.search(r"(?m)^(\d+)\s*حمام$", limited)
