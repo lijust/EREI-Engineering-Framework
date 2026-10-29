@@ -1,0 +1,79 @@
+name: SAE Existing 1K+ Project Publisher Inventory Discovery Batch
+on:
+  push:
+    branches: [experiment/sae-saraya-high-yield-20261029]
+    paths: [.github/workflows/sae-6-next-developers-inventory-probe-20261029.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  discover:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install 'playwright>=1.55,<2' 'scrapling[fetchers]>=0.5,<0.6'
+      - run: python -m playwright install --with-deps chromium
+      - name: Inspect public interactive links and unit XHR on six exact original developer project sites
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json,datetime,re,hashlib
+          from pathlib import Path
+          from playwright.sync_api import sync_playwright
+          sources=[
+            ('vellano','https://koohejidevelopment.sa/community/vellano/'),
+            ('alargan_suhool','https://alargan.com.sa/suhool/'),
+            ('alsoliman_nukhba','https://alsoliman.com.sa/ar/product/مخطط-نخبة-السليمان'),
+            ('retal_nesaj_town','https://retal.com.sa/communities/'),
+            ('aloula_jeddah_gate','https://www.aloula.com/ar/portfolio-item/jeddah-gate/'),
+            ('nhc_wahat_dammam','https://www.nhc.sa/real-estate-development/projects/319/')]
+          Path('out').mkdir(exist_ok=True)
+          def shp(o,depth=0):
+            if isinstance(o,dict):return {'t':'dict','keys':list(o)[:45],'sample':{k:shp(v,depth+1) for k,v in list(o.items())[:4]} if depth<2 else None}
+            if isinstance(o,list):return {'t':'list','n':len(o),'sample':shp(o[0],depth+1) if depth<2 and o else None}
+            return str(o)[:65]
+          with sync_playwright() as pw:
+            b=pw.chromium.launch(headless=True,args=['--no-sandbox'])
+            for name,url in sources:
+              d={'name':name,'url':url,'utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),'auth':False,'writes':0,'xhr':[]}
+              page=b.new_page(locale='ar-SA',viewport={'width':1365,'height':800})
+              def handle(r):
+                try:
+                  if r.request.resource_type not in ('xhr','fetch') or len(d['xhr'])>=140:return
+                  x={'url':r.url[:400],'status':r.status,'ct':r.headers.get('content-type','')[:85]}
+                  if r.status in (403,429):d.setdefault('access_control_stop',[]).append(x);return
+                  if r.status==200 and 'json' in x['ct']:
+                    body=r.body();x['bytes']=len(body);x['sha256']=hashlib.sha256(body).hexdigest()
+                    if len(body)<9_000_000:
+                      try:
+                        o=json.loads(body);x['shape']=shp(o)
+                        if any(k in x['url'].lower() for k in ('unit','inventory','property','plot','project','villa','apart','estate','listing')) and len(body)<2_000_000:x['source_original_public_json']=o
+                      except Exception as e:x['parse_error']=type(e).__name__
+                  d['xhr'].append(x)
+                except Exception as e:d.setdefault('callback_errors',[]).append(type(e).__name__)
+              page.on('response',handle)
+              try:
+                r=page.goto(url,wait_until='domcontentloaded',timeout=29000)
+                d['http']=r.status if r else None
+                page.wait_for_timeout(6500)
+                d['title']=page.title()
+                d['text']=page.locator('body').inner_text()[:2400]
+                d['links']=[{'text':a.inner_text()[:60],'href':a.get_attribute('href')} for a in page.locator('a').all()[:110]]
+                d['iframes']=[f.get_attribute('src') for f in page.locator('iframe').all()[:12]]
+              except Exception as e:d['page_error']=type(e).__name__+':'+str(e)[:200]
+              page.close()
+              Path('out/'+name+'.json').write_text(json.dumps(d,ensure_ascii=False,indent=2),encoding='utf8')
+              print('SAE_PUBLISHER',name,json.dumps({'http':d.get('http'),'title':d.get('title'),'xhr':len(d['xhr']),'public_api':[{'url':x['url'],'shape':x.get('shape',{}).get('keys',[])} for x in d['xhr'] if 'source_original_public_json' in x][:8],'error':d.get('page_error')},ensure_ascii=False),flush=True)
+            b.close()
+          PY
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sae-6-existing-original-developer-inventory-probe-20261029
+          path: out/*.json
