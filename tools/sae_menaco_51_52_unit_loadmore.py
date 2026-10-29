@@ -30,6 +30,40 @@ def check_robots(url):
     if len(data)>150000:return False,"ROBOTS_TOO_LARGE"
     rp=RobotFileParser();rp.parse(data.decode("utf8","replace").splitlines())
     return rp.can_fetch(UA,url),"ROBOTS_CHECKED"
+
+def normalized_original_cards(raw_text, project_id):
+    """Use original visible unit-list text only; never marketing totals."""
+    if "الوحدات المتاحة" not in raw_text:
+        return []
+    segment = raw_text.split("الوحدات المتاحة", 1)[1].split("خدمة العملاء المجانية", 1)[0]
+    lines = [x.strip() for x in segment.splitlines() if x.strip()]
+    codepat = CODES_51 if project_id == "PRJ-001802" else CODES_52
+    positions = [i for i, line in enumerate(lines) if codepat.fullmatch(line)]
+    result = []
+    for index, start in enumerate(positions):
+        stop = positions[index+1] if index+1 < len(positions) else len(lines)
+        block = lines[start+1:stop]
+        content = "\n".join(block)
+        area = re.search(r"(?m)^(\d+(?:\.\d+)?)\s*متر مربع$", content)
+        bedrooms = re.search(r"(?m)^(\d+)\s*غرفة نوم$", content)
+        bathrooms = re.search(r"(?m)^(\d+)\s*حمام$", content)
+        statuses = [line for line in block if line in ("للبيع", "محجوز", "مباع")]
+        price = re.fullmatch(r"\d{1,3}(?:,\d{3})+", block[0]) if block else None
+        row = {
+            "project_id": project_id, "original_unit_code": lines[start],
+            "area_sqm": float(area.group(1)) if area else None,
+            "bedrooms": int(bedrooms.group(1)) if bedrooms else None,
+            "bathrooms": int(bathrooms.group(1)) if bathrooms else None,
+            "published_price_sar": int(price.group().replace(",", "")) if price else None,
+            "source_status_ar": statuses[0] if len(statuses)==1 else None,
+            "original_card_text": "\n".join([lines[start]]+block[:12])[:500],
+            "source_snapshot_not_live": True
+        }
+        row["qualifies_physical"] = bool(row["area_sqm"] and row["bedrooms"] and
+                                         row["bathrooms"] and row["source_status_ar"])
+        result.append(row)
+    return result
+
 def save(doc):
     t=OUT.with_suffix(".tmp")
     t.write_text(json.dumps(doc,ensure_ascii=False,indent=2)+"\n",encoding="utf8")
