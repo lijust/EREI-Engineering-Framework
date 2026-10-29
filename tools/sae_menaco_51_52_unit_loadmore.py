@@ -124,6 +124,10 @@ async def main():
             rec["visible_exact_original_unit_code_candidates"]=codes
             rec["visible_code_count"]=len(codes)
             rec["stage_count"]=len(rec["pages"])
+            if rec["pages"]:
+                start=rec["pages"][0]
+                txt=start.get("body_text","")
+                print("SAE_MENACO_DOM_DIAG",json.dumps({"project":s["project_id"],"title":start.get("title"),"buttons":start.get("buttons",[])[:8],"visible_links":start.get("visible_links",[])[:8],"text_start":txt[:8000],"text_end":txt[-12000:],"card_candidates":len(start.get("cards",[]))},ensure_ascii=False),flush=True)
             rec["blocked"]=blocked
             save(result)
             print("SAE_MENACO_SOURCE",json.dumps({"project":s["project_id"],"state":rec.get("state"),"http":rec.get("http"),"stage_count":rec["stage_count"],"original_code_count":rec["visible_code_count"],"codes_preview":codes[:70],"xhr_count":len(rec["network"]),"errors":rec["errors"][:5],"blocked":blocked},ensure_ascii=False),flush=True)
