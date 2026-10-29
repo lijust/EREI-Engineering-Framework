@@ -1,0 +1,81 @@
+name: SAE Saraya Original Siteplan PDF Probe (source-only)
+on:
+  push:
+    branches:
+      - experiment/sae-saraya-high-yield-20261029
+    paths:
+      - .github/workflows/sae-saraya-siteplan-probe-20261029.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-only:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install original PDF siteplan tools
+        run: pip install 'pymupdf>=1.24,<1.28' 'requests>=2.32,<3' 'scrapling[fetchers]>=0.5,<0.6' 'beautifulsoup4>=4.12,<5'
+      - name: Read only three original public Saraya brochures
+        shell: bash
+        run: |
+          python - <<'PY'
+          import datetime,hashlib,json,re
+          from pathlib import Path
+          import requests,fitz
+          from bs4 import BeautifulSoup
+          SOURCES=[
+            {'name':'Saraya Al Jawan','aggregate':936,'project':'https://darwaemaar.com/en/project/saraya-al-jawan/','brochure':'https://darwaemaar.com/wp-content/uploads/2023/05/Saraya-Aljewan_Brochure-v4-e-ver.pdf','map':'https://dpg.gg/saj/prod/'},
+            {'name':'Saraya Al Bader','aggregate':634,'project':'https://darwaemaar.com/project/saraya-al-bader-al-madinah-ar/','brochure':'https://darwaemaar.com/wp-content/uploads/2023/06/DWE-SABR-Brochure-V3.pdf','map':'https://saraya-al-bader.darwaemaar.com/'},
+            {'name':'Saraya Al Fursan first phase — canonical matching needed','aggregate':827,'project':'https://darwaemaar.com/en/project/saraya-al-fursan/','brochure':'https://darwaemaar.com/wp-content/uploads/2025/07/DWE-SAF-Brochure-_compressed-1.pdf','map':'https://dpg.gg/dwe_saf/4'}
+          ]
+          session=requests.Session()
+          session.headers['User-Agent']='Mozilla/5.0 (compatible; PublicPDFresearch/1.0)'
+          def html_details(url):
+            try:
+              from scrapling.fetchers import Fetcher
+              r=Fetcher.get(url,retries=0,timeout=20,follow_redirects='safe')
+              html=str(getattr(r,'html_content','') or getattr(r,'text','') or '')
+              return {'status':getattr(r,'status',None),'html_len':len(html),'js_srcs':[x.get('src') for x in BeautifulSoup(html,'html.parser').find_all('script',src=True)][:15]}
+            except Exception as e:return {'error':type(e).__name__+': '+str(e)[:90]}
+          def geometry(page,index):
+            groups=[];digits=[];text=page.get_text('words')
+            for x0,y0,x1,y1,w,*_ in text:
+              w=w.strip().strip('[]()،. ')
+              w=w.translate(str.maketrans('٠١٢٣٤٥٦٧٨٩','0123456789'))
+              if re.fullmatch(r'[0-9]{1,3}-[0-9]{1,3}',w):groups.append([w,round((x0+x1)/2),round((y0+y1)/2)])
+              elif re.fullmatch(r'[0-9]{1,3}',w):digits.append([w,round((x0+x1)/2),round((y0+y1)/2)])
+            return {'page':index,'width':round(page.rect.width),'height':round(page.rect.height),'words':len(text),'groups':groups,'digits':digits,'score':len(digits)+2*len(groups)}
+          report={'version':1,'utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),'privacy':'public-source-only: no private project IDs','master_writes':0,'new_units':0,'note':'Spatial numeric tokens are unqualified labels, not physical units. Never generate missing sequences or infer sale, price, or availability.','sources':[]}
+          for source in SOURCES:
+            output={**source,'html':html_details(source['project'])}
+            try:
+              resp=session.get(source['brochure'],timeout=50,allow_redirects=True)
+              if resp.status_code in (403,429):raise RuntimeError('STOP_ACCESS_OR_RATE_LIMIT_'+str(resp.status_code))
+              resp.raise_for_status()
+              if not resp.content.startswith(b'%PDF-'):raise RuntimeError('NOT_A_PDF')
+              if len(resp.content)>75_000_000:raise RuntimeError('PDF_TOO_BIG')
+              doc=fitz.open(stream=resp.content,filetype='pdf')
+              page_summaries=[geometry(page,i) for i,page in enumerate(doc)]
+              leaders=sorted(page_summaries,key=lambda x:x['score'],reverse=True)[:5]
+              output.update(status='SOURCE_READ',pdf_sha256=hashlib.sha256(resp.content).hexdigest(),pdf_bytes=len(resp.content),pdf_pages=len(doc),ranked_pdf_pages=leaders,
+                all_pages=[{'page':p['page'],'score':p['score'],'group_count':len(p['groups']),'digit_count':len(p['digits'])} for p in page_summaries])
+            except Exception as e:output.update(status='STOP_UNVERIFIED',error=type(e).__name__+': '+str(e)[:170])
+            report['sources'].append(output)
+            print('SITEPLAN_SOURCE '+json.dumps({'name':source['name'],'status':output['status'],'pages':output.get('pdf_pages'),'top_scores':[p['score'] for p in output.get('ranked_pdf_pages',[])],'error':output.get('error')},ensure_ascii=False),flush=True)
+          Path('out').mkdir(exist_ok=True)
+          Path('out/siteplan_sources.json').write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding='utf-8')
+          print('SITEPLAN_SOURCE_ONLY_DONE',json.dumps({'sources':len(report['sources']),'read':sum(x['status']=='SOURCE_READ' for x in report['sources']),'canonical_units_written':0}),flush=True)
+          PY
+      - name: Upload source-only candidate labels with original PDF provenance
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sae-saraya-siteplan-source-probe-20261029
+          path: out/siteplan_sources.json
+          if-no-files-found: warn
