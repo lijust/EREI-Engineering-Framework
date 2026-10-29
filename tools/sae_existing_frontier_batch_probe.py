@@ -214,7 +214,30 @@ async def run(manifest, outfile, *, delay=2.5):
                     rec["original_unit_tables"]=sanitize_table(dom.get("tables",[]))
                     rec["unit_navigation"]=dom.get("unit_navigation",[])[:20]
                     rec["table_count_total"]=len(dom.get("tables",[]))
-                    # Never automatically click arbitrary CTA, login or lead-generation widgets.
+                    rec["original_unit_table_history"] = [{"stage": "initial", "tables":rec["original_unit_tables"]}]
+                    # Only click explicitly labeled public *unit-list pagination*.
+                    # Do not interact with sign-in, lead-gen, reservations or unnumbered global controls.
+                    if rec["original_unit_tables"] and not stop_event.is_set():
+                        prior_fp=hashlib.sha256(json.dumps(rec["original_unit_tables"],sort_keys=True,ensure_ascii=False).encode()).hexdigest()
+                        for step in range(1,9):
+                            if stop_event.is_set():break
+                            loc=page.get_by_role("button",name=re.compile(r"^(?:تحميل المزيد|عرض المزيد|Load more|Show more)$",re.I))
+                            if not await loc.count():break
+                            button=loc.first
+                            if not await button.is_visible() or not await button.is_enabled():break
+                            try:
+                                await button.click(timeout=2500)
+                                await page.wait_for_timeout(1400)
+                                if stop_event.is_set():break
+                                next_dom=await page.evaluate(EVAL_DOM)
+                                tables=sanitize_table(next_dom.get("tables",[]))
+                                next_fp=hashlib.sha256(json.dumps(tables,sort_keys=True,ensure_ascii=False).encode()).hexdigest()
+                                if next_fp==prior_fp:break
+                                rec["original_unit_table_history"].append({"stage":"load_more_"+str(step),"tables":tables})
+                                prior_fp=next_fp
+                            except Exception as exc:
+                                rec["errors"].append("PAGINATION_"+type(exc).__name__)
+                                break
                 rec["state"]="ORIGIN_ACCESS_STOP" if stop_event.is_set() else ("SITE_VISITED" if rec.get("http")==200 else "HTTP_OR_PAGE_UNAVAILABLE")
             except Exception as exc:
                 rec["state"]="PAGE_ERROR"
