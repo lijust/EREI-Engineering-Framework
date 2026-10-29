@@ -1,0 +1,23 @@
+name: SAE Vellano Flamant Offline Diagnostics for Two Publisher PDFs
+on:
+  push:
+    branches: [sae-source-study-20261029]
+    paths: [.github/workflows/sae-vellano-flamant-offline-diagnostics.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  diagnostics:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: sae-vellano-flamant-native-brochure-plot-tokens
+          run-id: 40919792983
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Read original source PDF page-density metadata only
+        shell: bash
+        run: |
+          python -c 'import json; o=json.load(open("sae-vellano-flamant-official-pdf-token-study.json")); print("SAE_KOOHEJI_PDF_SUMMARY",json.dumps([{"pid":r["project_id"],"error":r.get("error"),"pdf_pages":r.get("pdf_pages"),"pdf_bytes":r.get("pdf_bytes"),"top_numeric":sorted([x["unique_numeric_tokens"] for x in r["pages"]],reverse=True)[:12],"page_count":len(r["pages"])} for r in o["pdfs"]]))'
