@@ -1,0 +1,29 @@
+name: SAE AlsOliman firstparty deep site intelligence original inventory
+on:
+  push:
+    branches: [experiment/public-scrapling-v05-smoke-20261027]
+    paths:
+      - experimental/site_intelligence_alsoliman_deep_inventory.py
+      - .github/workflows/public-sae-alsoliman-site-intelligence-deep.yml
+permissions:
+  contents: read
+jobs:
+  deep-source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Setup
+        run: |
+          python -m pip install 'scrapling[fetchers]==0.5' 'lxml>=5,<7'
+          python -m playwright install chromium
+      - run: python experimental/site_intelligence_alsoliman_deep_inventory.py
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sae-alsoliman-132-133-firstparty-itemized-unit-source-intelligence
+          path: ${{ runner.temp }}/sae_alsoliman_two_projects_deep_source.json
+          retention-days: 14
