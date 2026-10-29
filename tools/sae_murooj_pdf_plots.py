@@ -45,9 +45,9 @@ try:
     report["top_pages"]=[{"index":x["page_zero_based"],
                         "numeric_labels":x["numeric_labels"],
                         "distinct_labels":x["distinct_numeric_labels"]} for x in best]
-    for p in best[:2]:
-        ix=p["page_zero_based"]
-        pix=doc[ix].get_pixmap(matrix=fitz.Matrix(2,2),alpha=False)
+    for ix in [23,24,25,26,27]:
+        if ix >= len(doc):continue
+        pix=doc[ix].get_pixmap(matrix=fitz.Matrix(2.8,2.8),alpha=False)
         pix.save("sae-murooj-map-page-"+str(ix+1)+".png")
     doc.close()
     report["status"]="SOURCE_NUMERIC_SITEPLAN_WORDS_NOT_YET_HUMAN_VERIFIED"
