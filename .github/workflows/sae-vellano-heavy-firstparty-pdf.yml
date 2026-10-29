@@ -1,0 +1,27 @@
+name: SAE Vellano Heavy Original Publisher Siteplan Labels
+on:
+  push:
+    branches: [sae-source-study-20261029]
+    paths:
+      - tools/sae_vellano_large_pdf_plotted_units.py
+      - .github/workflows/sae-vellano-heavy-firstparty-pdf.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  original-publisher-pdf:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install pymupdf==1.26.4
+      - run: python tools/sae_vellano_large_pdf_plotted_units.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sae-vellano-heavy-firstparty-pdf-siteplan-probe
+          path: sae-vellano-heavy-brochure-publisher-plot-evidence.json
+          retention-days: 7
