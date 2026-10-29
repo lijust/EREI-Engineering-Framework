@@ -169,6 +169,22 @@ async def main():
             codes=sorted({x["code"] for p in rec["pages"] for x in p.get("cards",[]) if codepat.fullmatch(x["code"])})
             rec["visible_exact_original_unit_code_candidates"]=codes
             rec["visible_code_count"]=len(codes)
+            rec["original_source_physical_cards"] = normalized_original_cards(
+                rec["pages"][-1]["body_text"], s["project_id"]) if rec["pages"] else []
+            normalized_codes = {x["original_unit_code"] for x in rec["original_source_physical_cards"]}
+            rec["normalized_codes_match_visible_dom"] = normalized_codes == set(codes)
+            rec["source_card_qa_pass"] = bool(
+                rec["normalized_codes_match_visible_dom"]
+                and len(normalized_codes) == len(rec["original_source_physical_cards"])
+                and all(x["qualifies_physical"] for x in rec["original_source_physical_cards"]))
+            if rec["source_card_qa_pass"]:
+                for pos in range(0, len(rec["original_source_physical_cards"]), 12):
+                    print("SAE_MENACO_EXACT_SOURCE_CHUNK", json.dumps({
+                        "project_id": s["project_id"], "source_page": s["url"],
+                        "source_captured_at_utc": result["captured_utc"],
+                        "chunk": pos//12,
+                        "cards": rec["original_source_physical_cards"][pos:pos+12]
+                    }, ensure_ascii=False, separators=(",",":")), flush=True)
             rec["stage_count"]=len(rec["pages"])
             if rec["pages"]:
                 start=rec["pages"][0]
@@ -183,4 +199,7 @@ async def main():
     save(result)
 if __name__=="__main__":
     assert CODES_51.fullmatch("A51") and not CODES_51.fullmatch("A52-C")
+    sample="الوحدات المتاحة\nA51\n1,964,000\nالرياض\n3 غرفة نوم\n3 حمام\n268.72 متر مربع\nللبيع\nخدمة العملاء المجانية"
+    rows=normalized_original_cards(sample, "PRJ-001802")
+    assert len(rows)==1 and rows[0]["published_price_sar"]==1964000 and rows[0]["qualifies_physical"]
     asyncio.run(main())
