@@ -1,0 +1,29 @@
+name: SAE OSUS Riyadh Eye Firstparty Exact Unit Listings
+on:
+  push:
+    branches: [sae-source-study-20261029]
+    paths:
+      - tools/sae_osus_riyadh_eye_original_units.py
+      - .github/workflows/sae-osus-riyadh-eye-unit-listing.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  public-source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: |
+          python -m pip install playwright==1.58.0
+          python -m playwright install --with-deps chromium
+      - run: python tools/sae_osus_riyadh_eye_original_units.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sae-osus-riyadh-eye-original-public-listings
+          path: sae-osus-riyadh-original-unit-inventory.json
+          retention-days: 7
