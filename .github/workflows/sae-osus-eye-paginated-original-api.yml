@@ -1,0 +1,29 @@
+name: SAE OSUS Eye Original Exact Unit API Pagination
+on:
+  push:
+    branches: [sae-source-study-20261029]
+    paths:
+      - 'tools/sae_osus_eye_publisher_api_deep_pagination.py'
+      - '.github/workflows/sae-osus-eye-paginated-original-api.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Inspect firstparty source original coded unit pages
+        run: python tools/sae_osus_eye_publisher_api_deep_pagination.py
+      - name: Save source evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sae-osus-eye-original-api-source-only
+          path: sae-osus-eye-exact-publisher-pagination-original.json
+          retention-days: 7
+          if-no-files-found: warn
