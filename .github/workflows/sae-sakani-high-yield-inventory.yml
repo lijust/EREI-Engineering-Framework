@@ -1,0 +1,33 @@
+name: SAE Sakani two existing high-yield project original unit grids (read only)
+on:
+  push:
+    branches: [sae-source-study-20261029]
+    paths:
+      - tools/sae_sakani_high_yield_inventory_study.py
+      - .github/workflows/sae-sakani-high-yield-inventory.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install Playwright Chromium
+        run: |
+          python -m pip install playwright==1.58.0
+          python -m playwright install --with-deps chromium
+      - name: Inspect exact public unit identity records, no production writes
+        run: python tools/sae_sakani_high_yield_inventory_study.py
+      - name: Save original-source study without import
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sae-sakani-35-36-public-source-audit
+          path: sae-sakani-35-36-public-structured-inventory.json
+          if-no-files-found: warn
+          retention-days: 7
