@@ -171,7 +171,7 @@ async def main():
                                     let body=txt.slice(ix,end>ix?end:undefined);
                                     let match=body.match(/^(A[0-9]{1,3}|[0-9]{1,2}\\/[0-9]{1,2})$/gm)||[];
                                     return match.length>prev;
-                                }""",oldcodes,timeout=14000)
+                                }""",arg=oldcodes,timeout=14000)
                         except Exception:
                             rec["errors"].append("LOAD_MORE_NO_NEW_CARD_WITHIN_TIMEOUT")
                             break
