@@ -9,12 +9,12 @@ OUT=Path("sae-osus-two-source-qualified-units.json")
 EXPECTED={"PRJ-001140":151,"PRJ-001139":54}
 VALID_STATUS={"متاحة","مباعة","محجوزة"}
 AR_NUMS=str.maketrans("٠١٢٣٤٥٦٧٨٩۰۱۲۳۴۵۶۷۸۹","01234567890123456789")
-def parse_number(raw, whole=False):
+def parse_number(raw, whole=False, allow_zero=False):
     s=str(raw).translate(AR_NUMS).replace("٬","").replace(",","").replace("٫",".").replace(" ","")
     s=re.sub(r"[^0-9.]","",s)
     if not s or s.count(".")>1:raise ValueError("invalid source number "+repr(raw))
     value=float(s)
-    if value<=0:raise ValueError("nonpositive number")
+    if value<0 or (value==0 and not allow_zero):raise ValueError("nonpositive number")
     if whole and value!=int(value):raise ValueError("noninteger source field")
     return int(value) if whole else value
 def extract_one(item):
@@ -53,6 +53,7 @@ def extract_one(item):
         room=field(block,"الغرف")
         floor=field(block,"الطابق")
         area=field(block,"المساحة الإجمالية")
+        private_area=field(block,"المساحة الخاصة")
         if status is None or room is None or floor is None or area is None or price is None:
             raise ValueError("missing source card data "+repr((pid,building,code,block[:20])))
         key=(building,code)
@@ -63,6 +64,7 @@ def extract_one(item):
             "status_original_ar":status,"price_sar":parse_number(price,True),
             "bedrooms":parse_number(room,True),"floor":parse_number(floor,True),
             "area_sqm":parse_number(area,False),
+            "publisher_private_area_sqm":parse_number(private_area,False,True) if private_area else None,
             "source_url":item["original_url"],"source_capture_utc":item["capture_utc"],
             "source_card_excerpt":block[:14]}
         records.append(rec)
