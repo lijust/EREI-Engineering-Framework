@@ -39,5 +39,6 @@ jobs:
             sae-public-source-discovery.json
             sae-murooj-pdf-numerical-evidence.json
             sae-murooj-map-page-*.png
+            sae-dpg-narjis-interactive-preview.png
           if-no-files-found: warn
           retention-days: 7
