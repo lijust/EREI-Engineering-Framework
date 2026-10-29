@@ -1,0 +1,27 @@
+name: SAE Dama Jazan 539 Official Publisher PDF Individual Plot Study
+on:
+  push:
+    branches: [sae-source-study-20261029]
+    paths:
+      - tools/sae_dama_jazan_539_original_publisher_plan.py
+      - .github/workflows/sae-dama539-firstparty-plot-audit.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  original-brochure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install pymupdf==1.26.4
+      - run: python tools/sae_dama_jazan_539_original_publisher_plan.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sae-dama539-publisher-pdf-physical-unit-plan-evidence
+          path: sae-dama-jazan-firstparty-source-pdf-page-diagnostics.json
+          retention-days: 7
