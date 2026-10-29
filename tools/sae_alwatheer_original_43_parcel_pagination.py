@@ -97,6 +97,12 @@ async def main():
   DATA["distinct_original_property_links"]=len(codes)
   DATA["source_cards_unique"]=list(codes.values())
   DATA["stopped_due_to_access"]=stop
+  for pos in range(0,len(DATA["source_cards_unique"]),9):
+   print("SAE_WATHEER_ORIGINAL_LINK_CHUNK",json.dumps({
+    "publisher_project_id":"301871","canonical_existing_project_id":"PRJ-001017",
+    "source_page":PAGE,"capture_utc":DATA["captured_utc"],
+    "chunk_index":pos//9,"links":DATA["source_cards_unique"][pos:pos+9]
+   },ensure_ascii=False,separators=(",",":")),flush=True)
   OUT.write_text(json.dumps(DATA,ensure_ascii=False,indent=2)+"\n",encoding="utf8")
   print("SAE_WATHEER_SUMMARY",json.dumps({"http":DATA.get("http"),"stages":len(DATA["stages"]),
     "unique_links":len(codes),"errors":DATA["errors"],"controls":DATA["stages"][-1]["controls"][:15] if DATA["stages"] else []},ensure_ascii=False)[:3500],flush=True)
