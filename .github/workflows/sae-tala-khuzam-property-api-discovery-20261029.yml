@@ -1,0 +1,52 @@
+name: SAE Tala Khuzam 1298 Individual Source Properties (source-only)
+on:
+  push:
+    branches: [experiment/sae-saraya-high-yield-20261029]
+    paths: [.github/workflows/sae-tala-khuzam-property-api-discovery-20261029.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inspect-original-public-properties:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install 'scrapling>=0.5,<0.7' 'httpx>=0.27,<1'
+      - name: Capture public CRM inventory linked by official interactive project site
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json,datetime,hashlib,collections
+          from pathlib import Path
+          import httpx
+          api='https://talacrm.speed.hebergement-com4design.fr/index.php/wp-json/wp/v2/properties?per_page=5000'
+          doc={'schema':'SAE_TALA_KHUZAM_FIRSTPARTY_INTERACTIVE_CRM_PUBLIC_PROPERTIES_20261029','api':api,'linked_original_app':'https://talakhuzam.darwaemaar.com/','recorded_at_utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),'writes':0,'auth':False}
+          with httpx.Client(timeout=55,follow_redirects=True,headers={'User-Agent':'Mozilla/5.0 (compatible; SAE-DB Research; origin official project website)','Accept':'application/json','Referer':'https://talakhuzam.darwaemaar.com/'}) as client:
+            r=client.get(api)
+            doc['status']=r.status_code
+            if r.status_code in (403,429):raise RuntimeError('ACCESS_CONTROL_STOP '+str(r.status_code))
+            r.raise_for_status()
+            raw=r.content;data=r.json()
+            assert isinstance(data,list) and len(data)>=500,('Unexpected inventory structure',str(type(data)),len(data))
+            doc['source_sha256']=hashlib.sha256(raw).hexdigest()
+            doc['count']=len(data)
+            doc['keys_union']=collections.Counter(key for record in data for key in record.keys())
+            doc['sample_first']=data[0]
+            doc['sample_middle']=data[len(data)//2]
+            doc['sample_last']=data[-1]
+            doc['records']=data
+          Path('out').mkdir(exist_ok=True)
+          Path('out/khuzam_full_original.json').write_text(json.dumps(doc,ensure_ascii=False,default=list),encoding='utf8')
+          print('SAE_TALA_KHUZAM_METADATA',json.dumps({'status':doc['status'],'url':api,'sha256':doc['source_sha256'],'count':doc['count'],'keys_union':doc['keys_union'],'first':doc['sample_first'],'middle':doc['sample_middle'],'last':doc['sample_last']},ensure_ascii=False,default=list)[:16000],flush=True)
+          PY
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sae-khuzam-1298-firstparty-interactive-crm-original-units-20261029
+          path: out/khuzam_full_original.json
