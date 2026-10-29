@@ -69,7 +69,9 @@ async def main():
     for j in range(2,11):
      if stop:break
      # Strictly ordinary public numbered pagination, not speculative URLs.
-     target=page.get_by_role("button",name=str(j),exact=True)
+     target=page.locator('button[aria-label="Go to page '+str(j)+'"]')
+     if not await target.count():
+      target=page.get_by_role("button",name=str(j),exact=True)
      if not await target.count():
       target=page.get_by_role("link",name=str(j),exact=True)
      if not await target.count():break
