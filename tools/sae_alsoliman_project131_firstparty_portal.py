@@ -73,7 +73,7 @@ async def main():
   if tasks:await asyncio.gather(*tasks,return_exceptions=True)
   result["blocked"]=blocked
   OUT.write_text(json.dumps(result,ensure_ascii=False,indent=2)+"\n")
-  print("SAE_ALSOLIMAN_131",json.dumps({k:result.get(k) for k in ("http","131_html","131_anchors","after_click_url","after_click","blocked","errors")},ensure_ascii=False).slice(0,9000),flush=True)
-  print("SAE_ALSOLIMAN_131_API",json.dumps(result["net"],ensure_ascii=False).slice(0,14000),flush=True)
+  print("SAE_ALSOLIMAN_131",json.dumps({k:result.get(k) for k in ("http","131_html","131_anchors","after_click_url","after_click","blocked","errors")},ensure_ascii=False)[:9000],flush=True)
+  print("SAE_ALSOLIMAN_131_API",json.dumps(result["net"],ensure_ascii=False)[:14000],flush=True)
   await page.close();await b.close()
 if __name__=="__main__":asyncio.run(main())
