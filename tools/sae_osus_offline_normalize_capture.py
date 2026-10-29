@@ -12,7 +12,7 @@ AR_NUMS=str.maketrans("٠١٢٣٤٥٦٧٨٩۰۱۲۳۴۵۶۷۸۹","01234567890123
 def parse_number(raw, whole=False):
     s=str(raw).translate(AR_NUMS).replace("٬","").replace(",","").replace("٫",".").replace(" ","")
     s=re.sub(r"[^0-9.]","",s)
-    if not s or s.count(".")>1:raise ValueError("invalid source number")
+    if not s or s.count(".")>1:raise ValueError("invalid source number "+repr(raw))
     value=float(s)
     if value<=0:raise ValueError("nonpositive number")
     if whole and value!=int(value):raise ValueError("noninteger source field")
