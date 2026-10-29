@@ -12,7 +12,7 @@ PAGE="https://menaco.sa/listings/178544"
 PID="PRJ-000132"
 UA="SAE-DB-Menaco-Rise-original-source-study/1.0"
 OUT=Path("sae-mena-rise-native-original-unit-cards.json")
-RE_CODE=re.compile(r"^\d+\s*[–-]\s*\d+\s*[bB][rR]$")
+RE_CODE=re.compile(r"^(?:\d+\s*[–-]\s*\d+\s*[bB][rR]|Duplex\s*[-–]\s*[A-D])$",re.I)
 def robots_ok():
  rp=urllib.robotparser.RobotFileParser()
  with urllib.request.urlopen(urllib.request.Request("https://menaco.sa/robots.txt",headers={"User-Agent":UA}),timeout=15) as r:
@@ -91,7 +91,7 @@ async def main():
      try:
       await page.wait_for_function("""(n)=> {
        let t=document.body.innerText||'';
-       let codes=t.match(/^\\d+\\s*[–-]\\s*\\d+\\s*[bB][rR]$/gm)||[];
+       let codes=t.match(/^(?:\\d+\\s*[–-]\\s*\\d+\\s*[bB][rR]|Duplex\\s*[-–]\\s*[A-D])$/gm)||[];
        return codes.length>n;
       }""",arg=len(cards),timeout=12000)
      except Exception:output["errors"].append("NO_ADDITIONAL_ORIGINAL_CODE_AFTER_CLICK");break
