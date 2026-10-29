@@ -1,0 +1,4302 @@
+{
+  "schema": "SAE_KITE_20261030_EXISTING_CANONICAL_PROJECTS_ONLY_CROSSWALK_MANIFEST_V1",
+  "source_of_truth": "SAE-DB Master Projects and Units as at 2026-10-30",
+  "identity": "Exactly matching original publisher project title and city required; candidate names not proof",
+  "scope": "DO_NOT_CREATE_DEVELOPERS_OR_PROJECTS",
+  "count": 477,
+  "projects": [
+    {
+      "project_id": "PRJ-000562",
+      "name_ar": "بوابة الملك سلمان",
+      "name_en": "",
+      "developer_id": "DEV-000240",
+      "city": "Makkah",
+      "marketed": 50000,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000425",
+      "name_ar": "الفلوة",
+      "name_en": "",
+      "developer_id": "DEV-000005",
+      "city": "Al Ahsa",
+      "marketed": 18000,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000451",
+      "name_ar": "أعالي جدة - جدة - جدارة العقارية",
+      "name_en": "",
+      "developer_id": "DEV-000182",
+      "city": "Jeddah",
+      "marketed": 8649,
+      "current_physical_units": 2
+    },
+    {
+      "project_id": "PRJ-000900",
+      "name_ar": "تلال الغروب - جدة - ساني العامرية",
+      "name_en": "",
+      "developer_id": "DEV-000400",
+      "city": "Jeddah",
+      "marketed": 6512,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000346",
+      "name_ar": "مرسية",
+      "name_en": "",
+      "developer_id": "DEV-000001",
+      "city": "Riyadh",
+      "marketed": 5590,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001610",
+      "name_ar": "باب جدة",
+      "name_en": "Jeddah Gate",
+      "developer_id": "DEV-000184",
+      "city": "Jeddah",
+      "marketed": 5000,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000456",
+      "name_ar": "اللؤلؤة",
+      "name_en": "",
+      "developer_id": "DEV-000186",
+      "city": "Riyadh",
+      "marketed": 4736,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001648",
+      "name_ar": "إسكان ضاحية الملك عبدالله — جازان",
+      "name_en": "King Abdullah Suburb Housing Jazan",
+      "developer_id": "",
+      "city": "Jazan",
+      "marketed": 4170,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000304",
+      "name_ar": "رحاب جدة هايتس",
+      "name_en": "",
+      "developer_id": "DEV-000001",
+      "city": "Jeddah",
+      "marketed": 3900,
+      "current_physical_units": 3
+    },
+    {
+      "project_id": "PRJ-001038",
+      "name_ar": "رحاب الوريف",
+      "name_en": "Rihab Al Wareef",
+      "developer_id": "DEV-000001",
+      "city": "Jeddah",
+      "marketed": 3320,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000217",
+      "name_ar": "ذا ريزيدنس ات سدايم",
+      "name_en": "",
+      "developer_id": "DEV-000001",
+      "city": "Jeddah",
+      "marketed": 3255,
+      "current_physical_units": 4
+    },
+    {
+      "project_id": "PRJ-000232",
+      "name_ar": "دانية السدن",
+      "name_en": "",
+      "developer_id": "DEV-000001",
+      "city": "Jeddah",
+      "marketed": 2706,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001054",
+      "name_ar": "بوفارديا سيتي",
+      "name_en": "Bouvardia City",
+      "developer_id": "",
+      "city": "Jeddah",
+      "marketed": 2606,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000998",
+      "name_ar": "رحاب الربى - الرياض",
+      "name_en": "",
+      "developer_id": "DEV-000001",
+      "city": "Riyadh",
+      "marketed": 2556,
+      "current_physical_units": 2
+    },
+    {
+      "project_id": "PRJ-000978",
+      "name_ar": "جادة السكب - المدينة المنورة",
+      "name_en": "",
+      "developer_id": "DEV-000408",
+      "city": "Madinah",
+      "marketed": 2364,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001041",
+      "name_ar": "واحة الدمام",
+      "name_en": "Dammam Oasis",
+      "developer_id": "DEV-000182",
+      "city": "Dammam",
+      "marketed": 2341,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001109",
+      "name_ar": "إشراق ليفينج",
+      "name_en": "",
+      "developer_id": "DEV-000058",
+      "city": "Riyadh",
+      "marketed": 2229,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000311",
+      "name_ar": "أراسي هايتس",
+      "name_en": "",
+      "developer_id": "DEV-000001",
+      "city": "Khobar",
+      "marketed": 2208,
+      "current_physical_units": 2
+    },
+    {
+      "project_id": "PRJ-000002",
+      "name_ar": "رحاب الأصالة",
+      "name_en": "Rihab Alassalah",
+      "developer_id": "DEV-000001",
+      "city": "Riyadh",
+      "marketed": 2134,
+      "current_physical_units": 3
+    },
+    {
+      "project_id": "PRJ-001578",
+      "name_ar": "مخطط نخبة السليمان",
+      "name_en": "Alsoliman Elite Plan",
+      "developer_id": "DEV-000007",
+      "city": "Riyadh",
+      "marketed": 2000,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000966",
+      "name_ar": "خميس فيو",
+      "name_en": "",
+      "developer_id": "",
+      "city": "Khamis Mushait",
+      "marketed": 1988,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000001",
+      "name_ar": "دانية المشرقية",
+      "name_en": "Daniat Almashriqiya",
+      "developer_id": "DEV-000001",
+      "city": "Riyadh",
+      "marketed": 1906,
+      "current_physical_units": 3
+    },
+    {
+      "project_id": "PRJ-001106",
+      "name_ar": "درة المدينة 2",
+      "name_en": "",
+      "developer_id": "DEV-000406",
+      "city": "Madinah",
+      "marketed": 1877,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000468",
+      "name_ar": "سنايا",
+      "name_en": "",
+      "developer_id": "DEV-000001",
+      "city": "Riyadh",
+      "marketed": 1840,
+      "current_physical_units": 1
+    },
+    {
+      "project_id": "PRJ-000316",
+      "name_ar": "ازيان الفرسان",
+      "name_en": "",
+      "developer_id": "DEV-000073",
+      "city": "Riyadh",
+      "marketed": 1766,
+      "current_physical_units": 1
+    },
+    {
+      "project_id": "PRJ-001028",
+      "name_ar": "أزيان الفرسان",
+      "name_en": "",
+      "developer_id": "DEV-000073",
+      "city": "Riyadh",
+      "marketed": 1766,
+      "current_physical_units": 4
+    },
+    {
+      "project_id": "PRJ-000077",
+      "name_ar": "نساج تاون II",
+      "name_en": "",
+      "developer_id": "DEV-000004",
+      "city": "Dammam",
+      "marketed": 1653,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000236",
+      "name_ar": "دانية الغروب",
+      "name_en": "",
+      "developer_id": "DEV-000001",
+      "city": "Medina",
+      "marketed": 1606,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000276",
+      "name_ar": "رواسي",
+      "name_en": "",
+      "developer_id": "DEV-000001",
+      "city": "Jeddah",
+      "marketed": 1473,
+      "current_physical_units": 16
+    },
+    {
+      "project_id": "PRJ-000912",
+      "name_ar": "رحاب السدن - NHC - جدة",
+      "name_en": "",
+      "developer_id": "DEV-000001",
+      "city": "Jeddah",
+      "marketed": 1400,
+      "current_physical_units": 1
+    },
+    {
+      "project_id": "PRJ-001043",
+      "name_ar": "الفريدة",
+      "name_en": "Al Fareeda",
+      "developer_id": "DEV-000431",
+      "city": "Dammam",
+      "marketed": 1396,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001046",
+      "name_ar": "أراسي كوارترز",
+      "name_en": "Arasi Quarters",
+      "developer_id": "DEV-000001",
+      "city": "Khobar",
+      "marketed": 1372,
+      "current_physical_units": 1
+    },
+    {
+      "project_id": "PRJ-000430",
+      "name_ar": "سدو تبوك",
+      "name_en": "",
+      "developer_id": "DEV-000133",
+      "city": "Tabuk",
+      "marketed": 1336,
+      "current_physical_units": 1
+    },
+    {
+      "project_id": "PRJ-001047",
+      "name_ar": "عبية إيليت",
+      "name_en": "Obayya Elite",
+      "developer_id": "DEV-000001",
+      "city": "Riyadh",
+      "marketed": 1322,
+      "current_physical_units": 2
+    },
+    {
+      "project_id": "PRJ-000919",
+      "name_ar": "فينان - جدة - لدن للاستثمار",
+      "name_en": "",
+      "developer_id": "DEV-000197",
+      "city": "Jeddah",
+      "marketed": 1292,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000280",
+      "name_ar": "ذا روز هاوس",
+      "name_en": "",
+      "developer_id": "DEV-000001",
+      "city": "Al Ahsa",
+      "marketed": 1290,
+      "current_physical_units": 1
+    },
+    {
+      "project_id": "PRJ-001562",
+      "name_ar": "ينبع 1",
+      "name_en": "",
+      "developer_id": "DEV-000422",
+      "city": "Yanbu",
+      "marketed": 1261,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000003",
+      "name_ar": "دانية الأصالة",
+      "name_en": "Daniat Alassalah",
+      "developer_id": "DEV-000001",
+      "city": "Riyadh",
+      "marketed": 1260,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001215",
+      "name_ar": "فيلانو",
+      "name_en": "Vellano",
+      "developer_id": "DEV-000465",
+      "city": "Al Khobar",
+      "marketed": 1250,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001487",
+      "name_ar": "السهول",
+      "name_en": "",
+      "developer_id": "DEV-000548",
+      "city": "Jubail",
+      "marketed": 1250,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001042",
+      "name_ar": "ربى جدة",
+      "name_en": "Ruba Jeddah",
+      "developer_id": "DEV-000040",
+      "city": "Jeddah",
+      "marketed": 1248,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000336",
+      "name_ar": "عين أسس Osus Eye",
+      "name_en": "",
+      "developer_id": "DEV-000134",
+      "city": "Riyadh",
+      "marketed": 1241,
+      "current_physical_units": 9
+    },
+    {
+      "project_id": "PRJ-000984",
+      "name_ar": "جوهرة الربى - الرياض",
+      "name_en": "",
+      "developer_id": "",
+      "city": "Riyadh",
+      "marketed": 1232,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001315",
+      "name_ar": "دار الربى",
+      "name_en": "Dar Al Ruba",
+      "developer_id": "DEV-000076",
+      "city": "Riyadh",
+      "marketed": 1192,
+      "current_physical_units": 1
+    },
+    {
+      "project_id": "PRJ-000967",
+      "name_ar": "دانية وديانا",
+      "name_en": "",
+      "developer_id": "DEV-000001",
+      "city": "Taif",
+      "marketed": 1188,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000314",
+      "name_ar": "رحاب الورود",
+      "name_en": "",
+      "developer_id": "DEV-000001",
+      "city": "Al Ahsa",
+      "marketed": 1190,
+      "current_physical_units": 3
+    },
+    {
+      "project_id": "PRJ-000247",
+      "name_ar": "ريفان",
+      "name_en": "",
+      "developer_id": "DEV-000077",
+      "city": "Dammam",
+      "marketed": 1152,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000303",
+      "name_ar": "مشاعل الفرسان",
+      "name_en": "",
+      "developer_id": "DEV-000116",
+      "city": "Riyadh",
+      "marketed": 1150,
+      "current_physical_units": 15
+    },
+    {
+      "project_id": "PRJ-001055",
+      "name_ar": "تبوك فالي 1",
+      "name_en": "Tabuk Valley 1",
+      "developer_id": "DEV-000001",
+      "city": "Tabuk",
+      "marketed": 1106,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000266",
+      "name_ar": "رحاب الدار",
+      "name_en": "",
+      "developer_id": "DEV-000001",
+      "city": "Medina",
+      "marketed": 1092,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000376",
+      "name_ar": "رحاب الواجهة - NHC - الدمام",
+      "name_en": "",
+      "developer_id": "DEV-000001",
+      "city": "Dammam",
+      "marketed": 1092,
+      "current_physical_units": 3
+    },
+    {
+      "project_id": "PRJ-000209",
+      "name_ar": "سجايا من أسس Sajaya by OSUS",
+      "name_en": "",
+      "developer_id": "DEV-000083",
+      "city": "Riyadh",
+      "marketed": 1088,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000938",
+      "name_ar": "عبية كوارترز",
+      "name_en": "",
+      "developer_id": "DEV-000001",
+      "city": "Riyadh",
+      "marketed": 1075,
+      "current_physical_units": 6
+    },
+    {
+      "project_id": "PRJ-000046",
+      "name_ar": "نساج لازورد",
+      "name_en": "",
+      "developer_id": "DEV-000004",
+      "city": "Khobar",
+      "marketed": 1064,
+      "current_physical_units": 1
+    },
+    {
+      "project_id": "PRJ-001107",
+      "name_ar": "واحة الخميس",
+      "name_en": "",
+      "developer_id": "DEV-000062",
+      "city": "Khamis Mushait",
+      "marketed": 1041,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001021",
+      "name_ar": "أزيان البشاير",
+      "name_en": "",
+      "developer_id": "DEV-000073",
+      "city": "Jeddah",
+      "marketed": 1041,
+      "current_physical_units": 5
+    },
+    {
+      "project_id": "PRJ-000987",
+      "name_ar": "الجبيل 1 - الجبيل الصناعية",
+      "name_en": "",
+      "developer_id": "DEV-000422",
+      "city": "Jubail Industrial City",
+      "marketed": 1004,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000528",
+      "name_ar": "ديار الحرم3",
+      "name_en": "",
+      "developer_id": "DEV-000147",
+      "city": "Makkah",
+      "marketed": 998,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000911",
+      "name_ar": "سدين - الدمام - سدين العربية للعقارات",
+      "name_en": "",
+      "developer_id": "DEV-000403",
+      "city": "Dammam",
+      "marketed": 997,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000914",
+      "name_ar": "الجوهرة ريزيدينس - جدة",
+      "name_en": "",
+      "developer_id": "DEV-000405",
+      "city": "Jeddah",
+      "marketed": 990,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000242",
+      "name_ar": "وهج الأصالة - NHC - الرياض",
+      "name_en": "",
+      "developer_id": "DEV-000001",
+      "city": "Riyadh",
+      "marketed": 956,
+      "current_physical_units": 3
+    },
+    {
+      "project_id": "PRJ-000564",
+      "name_ar": "أبراج موطن",
+      "name_en": "",
+      "developer_id": "DEV-000242",
+      "city": "Makkah",
+      "marketed": 947,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000051",
+      "name_ar": "إيوان خزام",
+      "name_en": "",
+      "developer_id": "DEV-000004",
+      "city": "Riyadh",
+      "marketed": 947,
+      "current_physical_units": 1
+    },
+    {
+      "project_id": "PRJ-001484",
+      "name_ar": "الواحة الخضراء",
+      "name_en": "",
+      "developer_id": "DEV-000548",
+      "city": "Riyadh",
+      "marketed": 931,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001357",
+      "name_ar": "درة الجنوب",
+      "name_en": "",
+      "developer_id": "DEV-000186",
+      "city": "Khamis Mushait",
+      "marketed": 928,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001463",
+      "name_ar": "سرايا لازورد",
+      "name_en": "Saraya Lazurd",
+      "developer_id": "DEV-000079",
+      "city": "Khobar",
+      "marketed": 912,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001102",
+      "name_ar": "الجبيل 2",
+      "name_en": "",
+      "developer_id": "DEV-000422",
+      "city": "Jubail Industrial City",
+      "marketed": 902,
+      "current_physical_units": 1
+    },
+    {
+      "project_id": "PRJ-000452",
+      "name_ar": "ازيان جدة - التطوير الشامل - جدة",
+      "name_en": "",
+      "developer_id": "DEV-000073",
+      "city": "Jeddah",
+      "marketed": 900,
+      "current_physical_units": 2
+    },
+    {
+      "project_id": "PRJ-000279",
+      "name_ar": "تبوك فالي 2",
+      "name_en": "",
+      "developer_id": "DEV-000001",
+      "city": "Tabuk",
+      "marketed": 874,
+      "current_physical_units": 1
+    },
+    {
+      "project_id": "PRJ-000862",
+      "name_ar": "اسس مكان OSUS Makan",
+      "name_en": "",
+      "developer_id": "DEV-000083",
+      "city": "Riyadh",
+      "marketed": 873,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000982",
+      "name_ar": "نعمى 2 - الدمام",
+      "name_en": "",
+      "developer_id": "DEV-000174",
+      "city": "Dammam",
+      "marketed": 864,
+      "current_physical_units": 1
+    },
+    {
+      "project_id": "PRJ-000642",
+      "name_ar": "سما جدة - جدة - مكيون مطورون عمرانيون",
+      "name_en": "",
+      "developer_id": "DEV-000040",
+      "city": "Jeddah",
+      "marketed": 858,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001108",
+      "name_ar": "تلال الخميس",
+      "name_en": "",
+      "developer_id": "DEV-000443",
+      "city": "Khamis Mushait",
+      "marketed": 816,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000896",
+      "name_ar": "إيال الخزام 2 - شركة محمد الحبيب العقارية",
+      "name_en": "",
+      "developer_id": "DEV-000091",
+      "city": "Riyadh",
+      "marketed": 809,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001550",
+      "name_ar": "إيال خزام 2",
+      "name_en": "",
+      "developer_id": "DEV-000091",
+      "city": "Riyadh",
+      "marketed": 809,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000496",
+      "name_ar": "مرسى لازورد",
+      "name_en": "",
+      "developer_id": "DEV-000114",
+      "city": "Khobar",
+      "marketed": 806,
+      "current_physical_units": 4
+    },
+    {
+      "project_id": "PRJ-000223",
+      "name_ar": "اسس هاوسنق مرسية",
+      "name_en": "",
+      "developer_id": "DEV-000083",
+      "city": "Riyadh",
+      "marketed": 772,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001053",
+      "name_ar": "بوفارديا فيو",
+      "name_en": "Bouvardia View",
+      "developer_id": "DEV-000147",
+      "city": "Jeddah",
+      "marketed": 772,
+      "current_physical_units": 1
+    },
+    {
+      "project_id": "PRJ-000190",
+      "name_ar": "أزيان خزام",
+      "name_en": "",
+      "developer_id": "DEV-000073",
+      "city": "Riyadh",
+      "marketed": 767,
+      "current_physical_units": 1
+    },
+    {
+      "project_id": "PRJ-000068",
+      "name_ar": "نساج الفرسان",
+      "name_en": "",
+      "developer_id": "DEV-000004",
+      "city": "Riyadh",
+      "marketed": 759,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000327",
+      "name_ar": "انارا",
+      "name_en": "",
+      "developer_id": "DEV-000006",
+      "city": "Riyadh",
+      "marketed": 753,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000337",
+      "name_ar": "آكام هومز",
+      "name_en": "",
+      "developer_id": "DEV-000068",
+      "city": "Jeddah",
+      "marketed": 750,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000905",
+      "name_ar": "مد لازورد - شركة ثبات المسكن العقارية - الخبر",
+      "name_en": "",
+      "developer_id": "DEV-000080",
+      "city": "Khobar",
+      "marketed": 753,
+      "current_physical_units": 4
+    },
+    {
+      "project_id": "PRJ-000941",
+      "name_ar": "إيال الفرسان",
+      "name_en": "",
+      "developer_id": "DEV-000091",
+      "city": "Riyadh",
+      "marketed": 742,
+      "current_physical_units": 3
+    },
+    {
+      "project_id": "PRJ-001040",
+      "name_ar": "النرجس فيو",
+      "name_en": "Al Narjis View",
+      "developer_id": "DEV-000062",
+      "city": "Riyadh",
+      "marketed": 728,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001095",
+      "name_ar": "سرايا الفرسان 2",
+      "name_en": "",
+      "developer_id": "DEV-000079",
+      "city": "Riyadh",
+      "marketed": 718,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000863",
+      "name_ar": "اسس برايم OSUS Prime",
+      "name_en": "",
+      "developer_id": "DEV-000083",
+      "city": "Riyadh",
+      "marketed": 711,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000212",
+      "name_ar": "ميار السكني",
+      "name_en": "",
+      "developer_id": "DEV-000085",
+      "city": "Makkah",
+      "marketed": 710,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000175",
+      "name_ar": "الثريا",
+      "name_en": "",
+      "developer_id": "DEV-000001",
+      "city": "Jeddah",
+      "marketed": 712,
+      "current_physical_units": 4
+    },
+    {
+      "project_id": "PRJ-000786",
+      "name_ar": "البحيرات",
+      "name_en": "",
+      "developer_id": "DEV-000352",
+      "city": "Dammam",
+      "marketed": 702,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000133",
+      "name_ar": "أسدام | ASDAM",
+      "name_en": "",
+      "developer_id": "DEV-000038",
+      "city": "Riyadh",
+      "marketed": 701,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001259",
+      "name_ar": "بوابة طيبة",
+      "name_en": "Bawabat Taibah",
+      "developer_id": "DEV-000471",
+      "city": "Madinah",
+      "marketed": 700,
+      "current_physical_units": 1
+    },
+    {
+      "project_id": "PRJ-000915",
+      "name_ar": "درة المدينة 1 - المدينة المنورة",
+      "name_en": "",
+      "developer_id": "DEV-000406",
+      "city": "Madinah",
+      "marketed": 694,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000074",
+      "name_ar": "نساج الرياض",
+      "name_en": "",
+      "developer_id": "DEV-000004",
+      "city": "Riyadh",
+      "marketed": 690,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001093",
+      "name_ar": "سرايا النرجس",
+      "name_en": "",
+      "developer_id": "DEV-000079",
+      "city": "Riyadh",
+      "marketed": 1984,
+      "current_physical_units": 1294
+    },
+    {
+      "project_id": "PRJ-000927",
+      "name_ar": "ملفى المكيمن",
+      "name_en": "",
+      "developer_id": "DEV-000082",
+      "city": "Madinah",
+      "marketed": 687,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000465",
+      "name_ar": "الندى",
+      "name_en": "",
+      "developer_id": "DEV-000001",
+      "city": "Makkah",
+      "marketed": 684,
+      "current_physical_units": 2
+    },
+    {
+      "project_id": "PRJ-000078",
+      "name_ar": "نساج تاون",
+      "name_en": "",
+      "developer_id": "DEV-000004",
+      "city": "Dammam",
+      "marketed": 674,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000902",
+      "name_ar": "مكنان السدن - الشركة العالمية للتطوير العقاري - جدة",
+      "name_en": "",
+      "developer_id": "DEV-000401",
+      "city": "Jeddah",
+      "marketed": 674,
+      "current_physical_units": 3
+    },
+    {
+      "project_id": "PRJ-001483",
+      "name_ar": "بيوت الفرسان",
+      "name_en": "",
+      "developer_id": "DEV-000548",
+      "city": "Dammam",
+      "marketed": 623,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000120",
+      "name_ar": "جدن الغروب",
+      "name_en": "",
+      "developer_id": "DEV-000025",
+      "city": "Medina",
+      "marketed": 621,
+      "current_physical_units": 1
+    },
+    {
+      "project_id": "PRJ-000211",
+      "name_ar": "جدايا",
+      "name_en": "",
+      "developer_id": "DEV-000056",
+      "city": "Riyadh",
+      "marketed": 620,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000332",
+      "name_ar": "داما المشرقية",
+      "name_en": "",
+      "developer_id": "DEV-000131",
+      "city": "Riyadh",
+      "marketed": 618,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000193",
+      "name_ar": "آكام مكة",
+      "name_en": "",
+      "developer_id": "DEV-000068",
+      "city": "Makkah",
+      "marketed": 611,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000252",
+      "name_ar": "دارة الفرسان",
+      "name_en": "",
+      "developer_id": "DEV-000061",
+      "city": "Riyadh",
+      "marketed": 606,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001092",
+      "name_ar": "أصالة الجوان",
+      "name_en": "",
+      "developer_id": "DEV-000439",
+      "city": "Riyadh",
+      "marketed": 600,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000487",
+      "name_ar": "درة السدن - جدة",
+      "name_en": "",
+      "developer_id": "DEV-000133",
+      "city": "Jeddah",
+      "marketed": 609,
+      "current_physical_units": 11
+    },
+    {
+      "project_id": "PRJ-000184",
+      "name_ar": "Alborada Villas by ad home البورادا فيلا من اد هوم",
+      "name_en": "",
+      "developer_id": "DEV-000069",
+      "city": "Riyadh",
+      "marketed": 596,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001456",
+      "name_ar": "مارفيلا",
+      "name_en": "Marvela",
+      "developer_id": "DEV-000546",
+      "city": "Riyadh",
+      "marketed": 594,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000472",
+      "name_ar": "سما الورود 2",
+      "name_en": "",
+      "developer_id": "DEV-000077",
+      "city": "Al Ahsa",
+      "marketed": 593,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000352",
+      "name_ar": "الكادي",
+      "name_en": "",
+      "developer_id": "DEV-000077",
+      "city": "Jazan",
+      "marketed": 585,
+      "current_physical_units": 1
+    },
+    {
+      "project_id": "PRJ-000397",
+      "name_ar": "أوبحور ديونز",
+      "name_en": "",
+      "developer_id": "DEV-000159",
+      "city": "Jeddah",
+      "marketed": 581,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000925",
+      "name_ar": "داره المدينة",
+      "name_en": "",
+      "developer_id": "DEV-000184",
+      "city": "Madinah",
+      "marketed": 580,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001764",
+      "name_ar": "ديار السعد",
+      "name_en": "Diyar Al Saad",
+      "developer_id": "",
+      "city": "Riyadh",
+      "marketed": 577,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001691",
+      "name_ar": "إيال خزام 3",
+      "name_en": "Eyal Khuzam 3",
+      "developer_id": "DEV-000091",
+      "city": "Riyadh",
+      "marketed": 574,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000907",
+      "name_ar": "دارة الواجهة - أجدان للتطوير العقاري - الدمام",
+      "name_en": "",
+      "developer_id": "DEV-000061",
+      "city": "Dammam",
+      "marketed": 568,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000901",
+      "name_ar": "البيت - شركة عبر المملكة العقارية - مكة المكرمة",
+      "name_en": "",
+      "developer_id": "DEV-000056",
+      "city": "Makkah",
+      "marketed": 554,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000057",
+      "name_ar": "نساج السدن",
+      "name_en": "",
+      "developer_id": "DEV-000004",
+      "city": "Jeddah",
+      "marketed": 550,
+      "current_physical_units": 1
+    },
+    {
+      "project_id": "PRJ-000333",
+      "name_ar": "داما جازان",
+      "name_en": "",
+      "developer_id": "DEV-000131",
+      "city": "Jazan",
+      "marketed": 539,
+      "current_physical_units": 4
+    },
+    {
+      "project_id": "PRJ-000476",
+      "name_ar": "سما الفرسان",
+      "name_en": "",
+      "developer_id": "DEV-000058",
+      "city": "Riyadh",
+      "marketed": 534,
+      "current_physical_units": 1
+    },
+    {
+      "project_id": "PRJ-000208",
+      "name_ar": "ملفى الحوية",
+      "name_en": "",
+      "developer_id": "DEV-000082",
+      "city": "Taif",
+      "marketed": 524,
+      "current_physical_units": 1
+    },
+    {
+      "project_id": "PRJ-001548",
+      "name_ar": "سما قمره",
+      "name_en": "",
+      "developer_id": "DEV-000077",
+      "city": "Qatif",
+      "marketed": 522,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000195",
+      "name_ar": "جوهرة تلال",
+      "name_en": "",
+      "developer_id": "DEV-000062",
+      "city": "Jeddah",
+      "marketed": 521,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000226",
+      "name_ar": "إيال الخزام",
+      "name_en": "",
+      "developer_id": "DEV-000091",
+      "city": "Riyadh",
+      "marketed": 515,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001091",
+      "name_ar": "إيال خزام",
+      "name_en": "",
+      "developer_id": "DEV-000439",
+      "city": "Riyadh",
+      "marketed": 515,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000385",
+      "name_ar": "داركو الشاطئ",
+      "name_en": "",
+      "developer_id": "DEV-000152",
+      "city": "Jeddah",
+      "marketed": 514,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000839",
+      "name_ar": "ناف 14",
+      "name_en": "",
+      "developer_id": "DEV-000377",
+      "city": "Medina",
+      "marketed": 510,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000353",
+      "name_ar": "جوهرة مكة",
+      "name_en": "",
+      "developer_id": "DEV-000062",
+      "city": "Makkah",
+      "marketed": 510,
+      "current_physical_units": 1
+    },
+    {
+      "project_id": "PRJ-001094",
+      "name_ar": "شمس الديار",
+      "name_en": "",
+      "developer_id": "DEV-000147",
+      "city": "Riyadh",
+      "marketed": 503,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001089",
+      "name_ar": "تلال قمرة",
+      "name_en": "",
+      "developer_id": "DEV-000100",
+      "city": "Safwa",
+      "marketed": 499,
+      "current_physical_units": 2
+    },
+    {
+      "project_id": "PRJ-001497",
+      "name_ar": "مشروع الراية",
+      "name_en": "",
+      "developer_id": "DEV-000427",
+      "city": "Sabya",
+      "marketed": 496,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000301",
+      "name_ar": "مسكان السدن",
+      "name_en": "",
+      "developer_id": "DEV-000030",
+      "city": "Jeddah",
+      "marketed": 494,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000357",
+      "name_ar": "جدن السديم",
+      "name_en": "",
+      "developer_id": "DEV-000025",
+      "city": "Khamis Mushait",
+      "marketed": 491,
+      "current_physical_units": 1
+    },
+    {
+      "project_id": "PRJ-000317",
+      "name_ar": "اصيل الغروب 2",
+      "name_en": "",
+      "developer_id": "DEV-000029",
+      "city": "Medina",
+      "marketed": 490,
+      "current_physical_units": 1
+    },
+    {
+      "project_id": "PRJ-000899",
+      "name_ar": "الفتح - الطائف - تواصل الإمداد",
+      "name_en": "",
+      "developer_id": "DEV-000399",
+      "city": "Taif",
+      "marketed": 488,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001086",
+      "name_ar": "السامية - المدينة المنورة",
+      "name_en": "",
+      "developer_id": "DEV-000006",
+      "city": "Madinah",
+      "marketed": 489,
+      "current_physical_units": 1
+    },
+    {
+      "project_id": "PRJ-000983",
+      "name_ar": "جزلا - جدة",
+      "name_en": "",
+      "developer_id": "DEV-000056",
+      "city": "Jeddah",
+      "marketed": 478,
+      "current_physical_units": 2
+    },
+    {
+      "project_id": "PRJ-000929",
+      "name_ar": "زاهية",
+      "name_en": "",
+      "developer_id": "DEV-000408",
+      "city": "Madinah",
+      "marketed": 475,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001088",
+      "name_ar": "داره قمرة",
+      "name_en": "",
+      "developer_id": "DEV-000061",
+      "city": "Safwa",
+      "marketed": 472,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000474",
+      "name_ar": "المرسى",
+      "name_en": "",
+      "developer_id": "DEV-000056",
+      "city": "Jeddah",
+      "marketed": 472,
+      "current_physical_units": 2
+    },
+    {
+      "project_id": "PRJ-000898",
+      "name_ar": "خيالا 1 - الماجدية - جدة",
+      "name_en": "",
+      "developer_id": "DEV-000011",
+      "city": "Jeddah",
+      "marketed": 726,
+      "current_physical_units": 259
+    },
+    {
+      "project_id": "PRJ-000741",
+      "name_ar": "شرفات الصحافة",
+      "name_en": "",
+      "developer_id": "DEV-000332",
+      "city": "Jeddah",
+      "marketed": 466,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000254",
+      "name_ar": "فلل ميان",
+      "name_en": "",
+      "developer_id": "DEV-000040",
+      "city": "Jeddah",
+      "marketed": 458,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000466",
+      "name_ar": "دار طيبة",
+      "name_en": "",
+      "developer_id": "DEV-000189",
+      "city": "Medina",
+      "marketed": 459,
+      "current_physical_units": 2
+    },
+    {
+      "project_id": "PRJ-000075",
+      "name_ar": "نساج النرجس",
+      "name_en": "",
+      "developer_id": "DEV-000004",
+      "city": "Riyadh",
+      "marketed": 455,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001388",
+      "name_ar": "أبراج القشلة",
+      "name_en": "",
+      "developer_id": "DEV-000247",
+      "city": "Khobar",
+      "marketed": 455,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000230",
+      "name_ar": "ازيان الهضبة",
+      "name_en": "",
+      "developer_id": "DEV-000073",
+      "city": "Jeddah",
+      "marketed": 450,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001723",
+      "name_ar": "كثيب لبن",
+      "name_en": "",
+      "developer_id": "DEV-000605",
+      "city": "Riyadh",
+      "marketed": 450,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001020",
+      "name_ar": "أزيان الهضبة",
+      "name_en": "",
+      "developer_id": "DEV-000073",
+      "city": "Jeddah",
+      "marketed": 450,
+      "current_physical_units": 2
+    },
+    {
+      "project_id": "PRJ-000475",
+      "name_ar": "مد سدايم",
+      "name_en": "",
+      "developer_id": "DEV-000080",
+      "city": "Jeddah",
+      "marketed": 447,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001048",
+      "name_ar": "المهرة",
+      "name_en": "Al Mahra",
+      "developer_id": "DEV-000432",
+      "city": "Riyadh",
+      "marketed": 446,
+      "current_physical_units": 1
+    },
+    {
+      "project_id": "PRJ-001044",
+      "name_ar": "تلال الغروب - الدمام",
+      "name_en": "Tilal Al Ghoroub Dammam",
+      "developer_id": "DEV-000400",
+      "city": "Dammam",
+      "marketed": 442,
+      "current_physical_units": 1
+    },
+    {
+      "project_id": "PRJ-001458",
+      "name_ar": "برج رافال",
+      "name_en": "Burj Rafal",
+      "developer_id": "DEV-000546",
+      "city": "Riyadh",
+      "marketed": 440,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000160",
+      "name_ar": "سما مكة",
+      "name_en": "",
+      "developer_id": "DEV-000040",
+      "city": "Makkah",
+      "marketed": 438,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001034",
+      "name_ar": "أديم الفرسان",
+      "name_en": "",
+      "developer_id": "DEV-000011",
+      "city": "Riyadh",
+      "marketed": 540,
+      "current_physical_units": 103
+    },
+    {
+      "project_id": "PRJ-000479",
+      "name_ar": "دار السدن",
+      "name_en": "",
+      "developer_id": "DEV-000076",
+      "city": "Jeddah",
+      "marketed": 438,
+      "current_physical_units": 2
+    },
+    {
+      "project_id": "PRJ-001045",
+      "name_ar": "عوالي الفرسان",
+      "name_en": "Awali Al Fursan",
+      "developer_id": "",
+      "city": "Riyadh",
+      "marketed": 437,
+      "current_physical_units": 1
+    },
+    {
+      "project_id": "PRJ-001752",
+      "name_ar": "أكنان الشرق",
+      "name_en": "Aknan Al Sharq",
+      "developer_id": "DEV-000438",
+      "city": "Riyadh",
+      "marketed": 434,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000930",
+      "name_ar": "كناز - أزهر",
+      "name_en": "",
+      "developer_id": "DEV-000085",
+      "city": "Tabuk",
+      "marketed": 428,
+      "current_physical_units": 6
+    },
+    {
+      "project_id": "PRJ-000736",
+      "name_ar": "جادة البساتين",
+      "name_en": "",
+      "developer_id": "DEV-000224",
+      "city": "Riyadh",
+      "marketed": 421,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000269",
+      "name_ar": "بدر 2",
+      "name_en": "",
+      "developer_id": "DEV-000077",
+      "city": "Medina",
+      "marketed": 421,
+      "current_physical_units": 1
+    },
+    {
+      "project_id": "PRJ-001493",
+      "name_ar": "مشروع زهرة عسير",
+      "name_en": "",
+      "developer_id": "DEV-000427",
+      "city": "Mahayil Asir",
+      "marketed": 420,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000085",
+      "name_ar": "رتال ريزيدنس",
+      "name_en": "",
+      "developer_id": "DEV-000004",
+      "city": "Dammam",
+      "marketed": 416,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000263",
+      "name_ar": "جوهرة البحيرات",
+      "name_en": "",
+      "developer_id": "DEV-000062",
+      "city": "Jeddah",
+      "marketed": 414,
+      "current_physical_units": 1
+    },
+    {
+      "project_id": "PRJ-000916",
+      "name_ar": "دار سمو - جدة",
+      "name_en": "",
+      "developer_id": "DEV-000006",
+      "city": "Jeddah",
+      "marketed": 412,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000433",
+      "name_ar": "إيال سدايم",
+      "name_en": "",
+      "developer_id": "DEV-000091",
+      "city": "Jeddah",
+      "marketed": 390,
+      "current_physical_units": 1
+    },
+    {
+      "project_id": "PRJ-000065",
+      "name_ar": "إيوان ثروة",
+      "name_en": "",
+      "developer_id": "DEV-000004",
+      "city": "Dammam",
+      "marketed": 386,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000408",
+      "name_ar": "طليعة المشرقية",
+      "name_en": "",
+      "developer_id": "DEV-000166",
+      "city": "Riyadh",
+      "marketed": 470,
+      "current_physical_units": 84
+    },
+    {
+      "project_id": "PRJ-000917",
+      "name_ar": "ميار - ذهب للتطوير العقاري - الرياض",
+      "name_en": "",
+      "developer_id": "DEV-000096",
+      "city": "Riyadh",
+      "marketed": 374,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000265",
+      "name_ar": "ميان هايتس",
+      "name_en": "",
+      "developer_id": "DEV-000040",
+      "city": "Jeddah",
+      "marketed": 369,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000059",
+      "name_ar": "رويا سدرة",
+      "name_en": "",
+      "developer_id": "DEV-000004",
+      "city": "Riyadh",
+      "marketed": 366,
+      "current_physical_units": 1
+    },
+    {
+      "project_id": "PRJ-000580",
+      "name_ar": "منزل المستقبل 23",
+      "name_en": "",
+      "developer_id": "DEV-000252",
+      "city": "Riyadh",
+      "marketed": 360,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000069",
+      "name_ar": "نساج صفوى",
+      "name_en": "",
+      "developer_id": "DEV-000004",
+      "city": "Safwa",
+      "marketed": 356,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000060",
+      "name_ar": "نساج سدايم",
+      "name_en": "",
+      "developer_id": "DEV-000004",
+      "city": "Jeddah",
+      "marketed": 352,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000920",
+      "name_ar": "نزل الحزم - الرياض - شركة فيصل عبدالله بن سعيدان للاستثمار",
+      "name_en": "",
+      "developer_id": "DEV-000082",
+      "city": "Riyadh",
+      "marketed": 352,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000215",
+      "name_ar": "جوهرة خزام 1",
+      "name_en": "",
+      "developer_id": "DEV-000062",
+      "city": "Riyadh",
+      "marketed": 350,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000464",
+      "name_ar": "داما هيلز",
+      "name_en": "",
+      "developer_id": "DEV-000131",
+      "city": "Tabuk",
+      "marketed": 349,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000062",
+      "name_ar": "نساج الأحساء",
+      "name_en": "",
+      "developer_id": "DEV-000004",
+      "city": "Al Hofuf",
+      "marketed": 347,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000936",
+      "name_ar": "نساج تاون الأحساء",
+      "name_en": "",
+      "developer_id": "DEV-000004",
+      "city": "Al Hofuf",
+      "marketed": 347,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000201",
+      "name_ar": "سما الورود",
+      "name_en": "",
+      "developer_id": "DEV-000077",
+      "city": "Al Ahsa",
+      "marketed": 346,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000196",
+      "name_ar": "أفونير الفرسان",
+      "name_en": "",
+      "developer_id": "DEV-000075",
+      "city": "Riyadh",
+      "marketed": 343,
+      "current_physical_units": 1
+    },
+    {
+      "project_id": "PRJ-000290",
+      "name_ar": "ملفى تبوك هيلز",
+      "name_en": "",
+      "developer_id": "DEV-000082",
+      "city": "Tabuk",
+      "marketed": 340,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001488",
+      "name_ar": "الشروق",
+      "name_en": "",
+      "developer_id": "DEV-000548",
+      "city": "Riyadh",
+      "marketed": 334,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000216",
+      "name_ar": "دارةالفرسان 2",
+      "name_en": "",
+      "developer_id": "DEV-000061",
+      "city": "Riyadh",
+      "marketed": 329,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001083",
+      "name_ar": "داما لازورد",
+      "name_en": "",
+      "developer_id": "DEV-000131",
+      "city": "Khobar",
+      "marketed": 330,
+      "current_physical_units": 2
+    },
+    {
+      "project_id": "PRJ-001491",
+      "name_ar": "مرجانة",
+      "name_en": "",
+      "developer_id": "DEV-000548",
+      "city": "Dammam",
+      "marketed": 327,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000891",
+      "name_ar": "الأصيلة - شركة سمو العقارية",
+      "name_en": "",
+      "developer_id": "DEV-000006",
+      "city": "Riyadh",
+      "marketed": 326,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000176",
+      "name_ar": "جوهرة الفرسان المرحلة الثانية",
+      "name_en": "",
+      "developer_id": "DEV-000062",
+      "city": "Riyadh",
+      "marketed": 325,
+      "current_physical_units": 5
+    },
+    {
+      "project_id": "PRJ-000460",
+      "name_ar": "عبية هايتس 1",
+      "name_en": "",
+      "developer_id": "DEV-000001",
+      "city": "Riyadh",
+      "marketed": 315,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000477",
+      "name_ar": "نزل خيالا",
+      "name_en": "",
+      "developer_id": "DEV-000082",
+      "city": "Jeddah",
+      "marketed": 312,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000163",
+      "name_ar": "سما الفرسان 2",
+      "name_en": "",
+      "developer_id": "DEV-000058",
+      "city": "Riyadh",
+      "marketed": 299,
+      "current_physical_units": 2
+    },
+    {
+      "project_id": "PRJ-001387",
+      "name_ar": "مدائن سكوير",
+      "name_en": "",
+      "developer_id": "DEV-000537",
+      "city": "Makkah",
+      "marketed": 295,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000056",
+      "name_ar": "نساج الأصالة",
+      "name_en": "",
+      "developer_id": "DEV-000004",
+      "city": "Riyadh",
+      "marketed": 288,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001495",
+      "name_ar": "مشروع مكة 2",
+      "name_en": "",
+      "developer_id": "DEV-000427",
+      "city": "Makkah",
+      "marketed": 287,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000052",
+      "name_ar": "ريجان هيلز",
+      "name_en": "",
+      "developer_id": "DEV-000004",
+      "city": "Riyadh",
+      "marketed": 285,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000894",
+      "name_ar": "رسين سدرة - الرياض - شركة أجدان للتطوير العقاري",
+      "name_en": "",
+      "developer_id": "DEV-000061",
+      "city": "Riyadh",
+      "marketed": 284,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001082",
+      "name_ar": "الموسى سدن",
+      "name_en": "",
+      "developer_id": "DEV-000404",
+      "city": "Jeddah",
+      "marketed": 274,
+      "current_physical_units": 1
+    },
+    {
+      "project_id": "PRJ-001402",
+      "name_ar": "مسار العبيكان",
+      "name_en": "",
+      "developer_id": "DEV-000542",
+      "city": "Makkah",
+      "marketed": 273,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001103",
+      "name_ar": "دار خزام",
+      "name_en": "",
+      "developer_id": "DEV-000189",
+      "city": "Riyadh",
+      "marketed": 270,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000218",
+      "name_ar": "مشروع جيدا",
+      "name_en": "",
+      "developer_id": "DEV-000086",
+      "city": "Al Ahsa",
+      "marketed": 260,
+      "current_physical_units": 2
+    },
+    {
+      "project_id": "PRJ-001218",
+      "name_ar": "برج الحزم",
+      "name_en": "Al Hazem Tower",
+      "developer_id": "DEV-000466",
+      "city": "Al Khobar",
+      "marketed": 257,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000192",
+      "name_ar": "رسين ريجان هيلز",
+      "name_en": "",
+      "developer_id": "DEV-000061",
+      "city": "Riyadh",
+      "marketed": 246,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000398",
+      "name_ar": "مسكن الرفيعة",
+      "name_en": "",
+      "developer_id": "DEV-000160",
+      "city": "Riyadh",
+      "marketed": 240,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000652",
+      "name_ar": "منازل الحداوي",
+      "name_en": "",
+      "developer_id": "DEV-000176",
+      "city": "Diriyah",
+      "marketed": 239,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001330",
+      "name_ar": "لاغونا",
+      "name_en": "Laguna Umluj",
+      "developer_id": "DEV-000502",
+      "city": "Umluj",
+      "marketed": 237,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000422",
+      "name_ar": "ميم هايتس",
+      "name_en": "",
+      "developer_id": "DEV-000175",
+      "city": "Riyadh",
+      "marketed": 233,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000965",
+      "name_ar": "أجياد السديم",
+      "name_en": "",
+      "developer_id": "DEV-000412",
+      "city": "Khamis Mushait",
+      "marketed": 231,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000044",
+      "name_ar": "أيالا سدرة",
+      "name_en": "",
+      "developer_id": "DEV-000004",
+      "city": "Riyadh",
+      "marketed": 228,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000521",
+      "name_ar": "مشروع صندوق ثمارية العقاري",
+      "name_en": "",
+      "developer_id": "DEV-000211",
+      "city": "Riyadh",
+      "marketed": 226,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000664",
+      "name_ar": "تلالة ليفينغ - المرحلة الأولى",
+      "name_en": "",
+      "developer_id": "DEV-000243",
+      "city": "Riyadh",
+      "marketed": 226,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001454",
+      "name_ar": "الغريا",
+      "name_en": "Alegria",
+      "developer_id": "DEV-000546",
+      "city": "Riyadh",
+      "marketed": 225,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001457",
+      "name_ar": "الرابية",
+      "name_en": "Al Rabia",
+      "developer_id": "DEV-000546",
+      "city": "Diriyah",
+      "marketed": 225,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000610",
+      "name_ar": "مشروع مسقا 31",
+      "name_en": "",
+      "developer_id": "DEV-000268",
+      "city": "Riyadh",
+      "marketed": 220,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000135",
+      "name_ar": "ميان الفرسان",
+      "name_en": "",
+      "developer_id": "DEV-000040",
+      "city": "Riyadh",
+      "marketed": 222,
+      "current_physical_units": 4
+    },
+    {
+      "project_id": "PRJ-000162",
+      "name_ar": "ادل رايز",
+      "name_en": "",
+      "developer_id": "DEV-000057",
+      "city": "Khobar",
+      "marketed": 216,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000614",
+      "name_ar": "مشروع صندوق وريف العقاري",
+      "name_en": "",
+      "developer_id": "DEV-000270",
+      "city": "Riyadh",
+      "marketed": 216,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001462",
+      "name_ar": "النرجس هايتس",
+      "name_en": "Al Narjes Heights",
+      "developer_id": "DEV-000079",
+      "city": "Riyadh",
+      "marketed": 210,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000004",
+      "name_ar": "مريفة",
+      "name_en": "Marifa",
+      "developer_id": "DEV-000001",
+      "city": "Riyadh",
+      "marketed": 209,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001438",
+      "name_ar": "الماجدية 124",
+      "name_en": "",
+      "developer_id": "DEV-000011",
+      "city": "Riyadh",
+      "marketed": 206,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001113",
+      "name_ar": "النايفة",
+      "name_en": "",
+      "developer_id": "DEV-000445",
+      "city": "Riyadh",
+      "marketed": 204,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000174",
+      "name_ar": "سكينة كمباوند 133",
+      "name_en": "",
+      "developer_id": "DEV-000007",
+      "city": "Makkah",
+      "marketed": 276,
+      "current_physical_units": 73
+    },
+    {
+      "project_id": "PRJ-000806",
+      "name_ar": "طيبة جاليري",
+      "name_en": "",
+      "developer_id": "DEV-000363",
+      "city": "Riyadh",
+      "marketed": 200,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001527",
+      "name_ar": "مشروع القطيف البدراني",
+      "name_en": "",
+      "developer_id": "DEV-000093",
+      "city": "Qatif",
+      "marketed": 196,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000414",
+      "name_ar": "برج العوالي",
+      "name_en": "",
+      "developer_id": "DEV-000068",
+      "city": "Riyadh",
+      "marketed": 194,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001324",
+      "name_ar": "سفانة 5-6",
+      "name_en": "Safana 5-6",
+      "developer_id": "DEV-000205",
+      "city": "Riyadh",
+      "marketed": 193,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001439",
+      "name_ar": "الماجدية 130",
+      "name_en": "",
+      "developer_id": "DEV-000011",
+      "city": "Riyadh",
+      "marketed": 192,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001371",
+      "name_ar": "يمامة هيلز",
+      "name_en": "",
+      "developer_id": "DEV-000279",
+      "city": "Riyadh",
+      "marketed": 189,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000079",
+      "name_ar": "إيوان مراسي",
+      "name_en": "",
+      "developer_id": "DEV-000004",
+      "city": "Khobar",
+      "marketed": 184,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000699",
+      "name_ar": "دار بريدة",
+      "name_en": "",
+      "developer_id": "DEV-000189",
+      "city": "Buraidah",
+      "marketed": 182,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001581",
+      "name_ar": "سكينة كمباوند - المدينة المنورة",
+      "name_en": "Sakenah Compound Madinah",
+      "developer_id": "DEV-000007",
+      "city": "Madinah",
+      "marketed": 182,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000635",
+      "name_ar": "برج جوار",
+      "name_en": "",
+      "developer_id": "DEV-000282",
+      "city": "Makkah",
+      "marketed": 180,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001216",
+      "name_ar": "أنس بن مالك",
+      "name_en": "Anas Bin Malik",
+      "developer_id": "DEV-000465",
+      "city": "Riyadh",
+      "marketed": 180,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000567",
+      "name_ar": "تدوم ال متعب",
+      "name_en": "",
+      "developer_id": "DEV-000244",
+      "city": "Riyadh",
+      "marketed": 176,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001212",
+      "name_ar": "بلجرافيا",
+      "name_en": "Belgravia",
+      "developer_id": "DEV-000465",
+      "city": "Al Khobar",
+      "marketed": 176,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001213",
+      "name_ar": "فلامنت",
+      "name_en": "Flamant",
+      "developer_id": "DEV-000465",
+      "city": "Al Khobar",
+      "marketed": 175,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000802",
+      "name_ar": "مشروع سوار",
+      "name_en": "",
+      "developer_id": "DEV-000363",
+      "city": "Riyadh",
+      "marketed": 174,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001455",
+      "name_ar": "رافال ريزيدنس",
+      "name_en": "Rafal Residence",
+      "developer_id": "DEV-000546",
+      "city": "Riyadh",
+      "marketed": 172,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000127",
+      "name_ar": "سنا الجبيلة",
+      "name_en": "",
+      "developer_id": "DEV-000032",
+      "city": "Riyadh",
+      "marketed": 171,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000124",
+      "name_ar": "أصيل الغروب",
+      "name_en": "",
+      "developer_id": "DEV-000029",
+      "city": "Medina",
+      "marketed": 169,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001052",
+      "name_ar": "النخلة",
+      "name_en": "Al Nakhla",
+      "developer_id": "DEV-000101",
+      "city": "Unaizah",
+      "marketed": 169,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001580",
+      "name_ar": "ماربيلا كمباوند",
+      "name_en": "MARBELLA COMPOUND",
+      "developer_id": "DEV-000007",
+      "city": "Dhahran",
+      "marketed": 168,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000895",
+      "name_ar": "جديل الرمال - شركة الرمز للعقارات",
+      "name_en": "",
+      "developer_id": "DEV-000063",
+      "city": "Riyadh",
+      "marketed": 168,
+      "current_physical_units": 1
+    },
+    {
+      "project_id": "PRJ-000080",
+      "name_ar": "إيوان القيروان",
+      "name_en": "",
+      "developer_id": "DEV-000004",
+      "city": "Dammam",
+      "marketed": 164,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000372",
+      "name_ar": "مشروع مشارق 2",
+      "name_en": "",
+      "developer_id": "DEV-000043",
+      "city": "Riyadh",
+      "marketed": 164,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001724",
+      "name_ar": "نصل 24",
+      "name_en": "",
+      "developer_id": "DEV-000606",
+      "city": "Riyadh",
+      "marketed": 164,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001214",
+      "name_ar": "لافيرا",
+      "name_en": "Lavira",
+      "developer_id": "DEV-000465",
+      "city": "Al Khobar",
+      "marketed": 264,
+      "current_physical_units": 101
+    },
+    {
+      "project_id": "PRJ-000674",
+      "name_ar": "مركان كوارتر",
+      "name_en": "",
+      "developer_id": "DEV-000299",
+      "city": "Khobar",
+      "marketed": 160,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000627",
+      "name_ar": "برج جذير",
+      "name_en": "",
+      "developer_id": "DEV-000279",
+      "city": "Riyadh",
+      "marketed": 155,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000640",
+      "name_ar": "لورا فيو",
+      "name_en": "",
+      "developer_id": "DEV-000016",
+      "city": "Riyadh",
+      "marketed": 149,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000694",
+      "name_ar": "الضاحية ريزيدنس",
+      "name_en": "",
+      "developer_id": "DEV-000006",
+      "city": "Makkah",
+      "marketed": 149,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000597",
+      "name_ar": "مشروع ركائز",
+      "name_en": "",
+      "developer_id": "DEV-000262",
+      "city": "Jeddah",
+      "marketed": 144,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001460",
+      "name_ar": "بلنسية",
+      "name_en": "Blncyah",
+      "developer_id": "DEV-000546",
+      "city": "Riyadh",
+      "marketed": 144,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001436",
+      "name_ar": "الماجدية 117",
+      "name_en": "",
+      "developer_id": "DEV-000011",
+      "city": "Riyadh",
+      "marketed": 143,
+      "current_physical_units": 1
+    },
+    {
+      "project_id": "PRJ-001437",
+      "name_ar": "الماجدية 118",
+      "name_en": "",
+      "developer_id": "DEV-000011",
+      "city": "Riyadh",
+      "marketed": 136,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000070",
+      "name_ar": "الضواحي",
+      "name_en": "",
+      "developer_id": "DEV-000004",
+      "city": "Dammam",
+      "marketed": 133,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000673",
+      "name_ar": "العجلان ريفييرا 58",
+      "name_en": "",
+      "developer_id": "DEV-000016",
+      "city": "Riyadh",
+      "marketed": 133,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001434",
+      "name_ar": "الماجدية 120",
+      "name_en": "",
+      "developer_id": "DEV-000011",
+      "city": "Riyadh",
+      "marketed": 133,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000509",
+      "name_ar": "ارسان",
+      "name_en": "",
+      "developer_id": "DEV-000203",
+      "city": "Riyadh",
+      "marketed": 132,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000061",
+      "name_ar": "رتال رايز",
+      "name_en": "",
+      "developer_id": "DEV-000004",
+      "city": "Khobar",
+      "marketed": 129,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001655",
+      "name_ar": "غـرة 1 و 2",
+      "name_en": "Ghurra 1 & 2",
+      "developer_id": "DEV-000584",
+      "city": "Riyadh",
+      "marketed": 123,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001173",
+      "name_ar": "ذا يارد - النرجس 1",
+      "name_en": "",
+      "developer_id": "DEV-000459",
+      "city": "Riyadh",
+      "marketed": 122,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000076",
+      "name_ar": "نساج الخبر",
+      "name_en": "",
+      "developer_id": "DEV-000004",
+      "city": "Khobar",
+      "marketed": 118,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000121",
+      "name_ar": "روايا الأصالة",
+      "name_en": "",
+      "developer_id": "DEV-000026",
+      "city": "Riyadh",
+      "marketed": 114,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001396",
+      "name_ar": "ناف 15",
+      "name_en": "",
+      "developer_id": "DEV-000377",
+      "city": "Al Madinah",
+      "marketed": 114,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001097",
+      "name_ar": "عمائر الجوهرة",
+      "name_en": "",
+      "developer_id": "DEV-000062",
+      "city": "Riyadh",
+      "marketed": 112,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000510",
+      "name_ar": "جادة جبل القرين",
+      "name_en": "",
+      "developer_id": "DEV-000176",
+      "city": "Diriyah",
+      "marketed": 111,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000708",
+      "name_ar": "اصالة ريزيدنس النهضة 3",
+      "name_en": "",
+      "developer_id": "DEV-000091",
+      "city": "Riyadh",
+      "marketed": 109,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000268",
+      "name_ar": "بارك فيو",
+      "name_en": "",
+      "developer_id": "DEV-000032",
+      "city": "Riyadh",
+      "marketed": 108,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001669",
+      "name_ar": "مركز العوالي للأعمال",
+      "name_en": "Al Awali Business Center",
+      "developer_id": "DEV-000068",
+      "city": "Riyadh",
+      "marketed": 106,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000598",
+      "name_ar": "مدايا فيوز",
+      "name_en": "",
+      "developer_id": "DEV-000263",
+      "city": "Khobar",
+      "marketed": 102,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000624",
+      "name_ar": "جِزال الخير",
+      "name_en": "",
+      "developer_id": "DEV-000276",
+      "city": "Medina",
+      "marketed": 100,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001355",
+      "name_ar": "ايوان ليفنج",
+      "name_en": "",
+      "developer_id": "DEV-000516",
+      "city": "Jeddah",
+      "marketed": 100,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001498",
+      "name_ar": "مشروع الروضة",
+      "name_en": "",
+      "developer_id": "DEV-000427",
+      "city": "Tathleeth",
+      "marketed": 100,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001602",
+      "name_ar": "فلل أسوار 01",
+      "name_en": "Aswar Villas 01",
+      "developer_id": "DEV-000571",
+      "city": "Khobar",
+      "marketed": 100,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000470",
+      "name_ar": "سدين لفينق 12",
+      "name_en": "",
+      "developer_id": "DEV-000191",
+      "city": "Jeddah",
+      "marketed": 99,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000866",
+      "name_ar": "لافينيا",
+      "name_en": "",
+      "developer_id": "DEV-000388",
+      "city": "Jeddah",
+      "marketed": 99,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001381",
+      "name_ar": "مشروع روفكس طيبة",
+      "name_en": "",
+      "developer_id": "DEV-000533",
+      "city": "Riyadh",
+      "marketed": 99,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001559",
+      "name_ar": "يمامه سيتي سنتر",
+      "name_en": "",
+      "developer_id": "DEV-000279",
+      "city": "Riyadh",
+      "marketed": 97,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000073",
+      "name_ar": "رتال سكوير",
+      "name_en": "",
+      "developer_id": "DEV-000004",
+      "city": "Khobar",
+      "marketed": 96,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001206",
+      "name_ar": "دار قرطبة",
+      "name_en": "Dar Cordoba",
+      "developer_id": "DEV-000189",
+      "city": "Riyadh",
+      "marketed": 96,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001543",
+      "name_ar": "إيلاف جدة",
+      "name_en": "",
+      "developer_id": "DEV-000311",
+      "city": "Jeddah",
+      "marketed": 95,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000436",
+      "name_ar": "الدرة 1",
+      "name_en": "",
+      "developer_id": "DEV-000179",
+      "city": "Sabya",
+      "marketed": 93,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000865",
+      "name_ar": "أبراج المها",
+      "name_en": "",
+      "developer_id": "DEV-000388",
+      "city": "Jeddah",
+      "marketed": 93,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001663",
+      "name_ar": "داركو ايليت 2",
+      "name_en": "Darco Elite 2",
+      "developer_id": "DEV-000152",
+      "city": "Jeddah",
+      "marketed": 90,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001665",
+      "name_ar": "رافلز ريزيدنسز الدرعية",
+      "name_en": "Raffles Residences Diriyah",
+      "developer_id": "DEV-000176",
+      "city": "Diriyah",
+      "marketed": 90,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001714",
+      "name_ar": "ريزيدنس 45",
+      "name_en": "",
+      "developer_id": "DEV-000436",
+      "city": "Jizan",
+      "marketed": 88,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000566",
+      "name_ar": "تلالة ريزيدنس المرحلة الأولى - الطرح الثاني",
+      "name_en": "",
+      "developer_id": "DEV-000243",
+      "city": "Riyadh",
+      "marketed": 86,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001496",
+      "name_ar": "مشروع مجمع جارات الوادي",
+      "name_en": "",
+      "developer_id": "DEV-000427",
+      "city": "Riyadh",
+      "marketed": 86,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000662",
+      "name_ar": "المجالات الواحد وتسعون",
+      "name_en": "",
+      "developer_id": "DEV-000274",
+      "city": "Riyadh",
+      "marketed": 85,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001492",
+      "name_ar": "مشروع الهيام",
+      "name_en": "",
+      "developer_id": "DEV-000427",
+      "city": "Abha",
+      "marketed": 85,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001362",
+      "name_ar": "ريفييرا55",
+      "name_en": "",
+      "developer_id": "DEV-000016",
+      "city": "Riyadh",
+      "marketed": 84,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000045",
+      "name_ar": "أيالا هيلز",
+      "name_en": "",
+      "developer_id": "DEV-000004",
+      "city": "Riyadh",
+      "marketed": 82,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000377",
+      "name_ar": "الفاخرية - الدمام - الرائم",
+      "name_en": "",
+      "developer_id": "DEV-000093",
+      "city": "Dammam",
+      "marketed": 83,
+      "current_physical_units": 1
+    },
+    {
+      "project_id": "PRJ-000541",
+      "name_ar": "جادة الهدا",
+      "name_en": "",
+      "developer_id": "DEV-000224",
+      "city": "Riyadh",
+      "marketed": 82,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001601",
+      "name_ar": "فلل أسوار 02",
+      "name_en": "Aswar Villas 02",
+      "developer_id": "DEV-000571",
+      "city": "Khobar",
+      "marketed": 82,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000131",
+      "name_ar": "صفا 86",
+      "name_en": "",
+      "developer_id": "DEV-000036",
+      "city": "Buraidah",
+      "marketed": 80,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000401",
+      "name_ar": "هدف بيتش 20",
+      "name_en": "",
+      "developer_id": "DEV-000132",
+      "city": "Khobar",
+      "marketed": 80,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001776",
+      "name_ar": "محافظ دايموند",
+      "name_en": "Mahafeth Diamond",
+      "developer_id": "",
+      "city": "Abha",
+      "marketed": 80,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001553",
+      "name_ar": "برج العدوان",
+      "name_en": "",
+      "developer_id": "DEV-000562",
+      "city": "Riyadh",
+      "marketed": 79,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000081",
+      "name_ar": "إيوان النورس",
+      "name_en": "",
+      "developer_id": "DEV-000004",
+      "city": "Khobar",
+      "marketed": 78,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000366",
+      "name_ar": "مصانعكم",
+      "name_en": "",
+      "developer_id": "DEV-000147",
+      "city": "Jeddah",
+      "marketed": 78,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000323",
+      "name_ar": "الشبيلي 23",
+      "name_en": "",
+      "developer_id": "DEV-000125",
+      "city": "Khobar",
+      "marketed": 77,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000083",
+      "name_ar": "إيوان المعالي",
+      "name_en": "",
+      "developer_id": "DEV-000004",
+      "city": "Dammam",
+      "marketed": 76,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000437",
+      "name_ar": "اللؤلؤة",
+      "name_en": "",
+      "developer_id": "DEV-000179",
+      "city": "Samtah",
+      "marketed": 76,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001552",
+      "name_ar": "منازل الرحاب 2",
+      "name_en": "",
+      "developer_id": "DEV-000561",
+      "city": "Jazan",
+      "marketed": 75,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000229",
+      "name_ar": "واجهة بريمان",
+      "name_en": "",
+      "developer_id": "DEV-000094",
+      "city": "Jeddah",
+      "marketed": 74,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001531",
+      "name_ar": "مشروع عوالي الظهران السكني",
+      "name_en": "",
+      "developer_id": "DEV-000093",
+      "city": "Dammam",
+      "marketed": 74,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000319",
+      "name_ar": "صندوق طويق العقاري 1",
+      "name_en": "",
+      "developer_id": "DEV-000122",
+      "city": "Riyadh",
+      "marketed": 72,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001325",
+      "name_ar": "العجلان ريفييرا 57",
+      "name_en": "Al Ajlan Riviera 57",
+      "developer_id": "DEV-000016",
+      "city": "Riyadh",
+      "marketed": 72,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001541",
+      "name_ar": "ذا سنترينا",
+      "name_en": "",
+      "developer_id": "DEV-000175",
+      "city": "Riyadh",
+      "marketed": 72,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001549",
+      "name_ar": "برندة ريز دنس",
+      "name_en": "",
+      "developer_id": "DEV-000501",
+      "city": "Buraidah",
+      "marketed": 72,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001569",
+      "name_ar": "مشروع ديتيلز النرجس-04",
+      "name_en": "",
+      "developer_id": "DEV-000254",
+      "city": "Riyadh",
+      "marketed": 72,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000913",
+      "name_ar": "مطلات ريزدنس - جدة",
+      "name_en": "",
+      "developer_id": "DEV-000404",
+      "city": "Jeddah",
+      "marketed": 72,
+      "current_physical_units": 1
+    },
+    {
+      "project_id": "PRJ-001532",
+      "name_ar": "فندق تولان القصيم",
+      "name_en": "",
+      "developer_id": "DEV-000093",
+      "city": "",
+      "marketed": 71,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000274",
+      "name_ar": "مكانة",
+      "name_en": "",
+      "developer_id": "DEV-000011",
+      "city": "Riyadh",
+      "marketed": 140,
+      "current_physical_units": 71
+    },
+    {
+      "project_id": "PRJ-000084",
+      "name_ar": "رويا النخيل",
+      "name_en": "",
+      "developer_id": "DEV-000004",
+      "city": "Khobar",
+      "marketed": 68,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001341",
+      "name_ar": "مكاسب ريزدنت",
+      "name_en": "",
+      "developer_id": "DEV-000244",
+      "city": "Riyadh",
+      "marketed": 68,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001373",
+      "name_ar": "فلل تل النخيل",
+      "name_en": "",
+      "developer_id": "DEV-000527",
+      "city": "Khobar",
+      "marketed": 68,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001827",
+      "name_ar": "كيان ريزيدنس",
+      "name_en": "Kian Residence",
+      "developer_id": "DEV-000285",
+      "city": "Jeddah",
+      "marketed": 68,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000227",
+      "name_ar": "اليغريا 3",
+      "name_en": "",
+      "developer_id": "DEV-000092",
+      "city": "Riyadh",
+      "marketed": 66,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000369",
+      "name_ar": "امارا ريزيدنس",
+      "name_en": "",
+      "developer_id": "DEV-000149",
+      "city": "Dammam",
+      "marketed": 66,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001385",
+      "name_ar": "ترفة 8",
+      "name_en": "",
+      "developer_id": "DEV-000536",
+      "city": "Riyadh",
+      "marketed": 66,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000277",
+      "name_ar": "صلة 3",
+      "name_en": "",
+      "developer_id": "DEV-000106",
+      "city": "Riyadh",
+      "marketed": 64,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000358",
+      "name_ar": "الشاكرين 97",
+      "name_en": "",
+      "developer_id": "DEV-000144",
+      "city": "Jeddah",
+      "marketed": 64,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000071",
+      "name_ar": "ذا جراند",
+      "name_en": "",
+      "developer_id": "DEV-000004",
+      "city": "Dammam",
+      "marketed": 63,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000047",
+      "name_ar": "نوبو الخبر",
+      "name_en": "",
+      "developer_id": "DEV-000004",
+      "city": "Khobar",
+      "marketed": 62,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000134",
+      "name_ar": "مشروع ريما السكني 1",
+      "name_en": "",
+      "developer_id": "DEV-000039",
+      "city": "Dammam",
+      "marketed": 62,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000733",
+      "name_ar": "مسايا البحر",
+      "name_en": "",
+      "developer_id": "DEV-000174",
+      "city": "Khobar",
+      "marketed": 62,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001378",
+      "name_ar": "برج طريق المدينة",
+      "name_en": "",
+      "developer_id": "DEV-000531",
+      "city": "Jeddah",
+      "marketed": 62,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000350",
+      "name_ar": "المها ريزدنس ثلاثة عشر",
+      "name_en": "",
+      "developer_id": "DEV-000140",
+      "city": "Riyadh",
+      "marketed": 61,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000055",
+      "name_ar": "أيالا المحمدية",
+      "name_en": "",
+      "developer_id": "DEV-000004",
+      "city": "Jeddah",
+      "marketed": 60,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000338",
+      "name_ar": "صندوق طويق العقاري 2",
+      "name_en": "",
+      "developer_id": "DEV-000122",
+      "city": "Riyadh",
+      "marketed": 60,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001132",
+      "name_ar": "MODN 15",
+      "name_en": "MODN 15",
+      "developer_id": "DEV-000450",
+      "city": "Riyadh",
+      "marketed": 60,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001391",
+      "name_ar": "HS RESIDENCES2",
+      "name_en": "",
+      "developer_id": "DEV-000232",
+      "city": "Riyadh",
+      "marketed": 60,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001494",
+      "name_ar": "بوابة العوالي",
+      "name_en": "",
+      "developer_id": "DEV-000427",
+      "city": "Makkah",
+      "marketed": 60,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001716",
+      "name_ar": "مورث 38",
+      "name_en": "",
+      "developer_id": "DEV-000601",
+      "city": "Riyadh",
+      "marketed": 60,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000064",
+      "name_ar": "أيالا النخيل",
+      "name_en": "",
+      "developer_id": "DEV-000004",
+      "city": "Khobar",
+      "marketed": 59,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000576",
+      "name_ar": "اوتاد ريزدنس",
+      "name_en": "",
+      "developer_id": "DEV-000250",
+      "city": "Qatif",
+      "marketed": 58,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001428",
+      "name_ar": "دروازة",
+      "name_en": "",
+      "developer_id": "DEV-000011",
+      "city": "Riyadh",
+      "marketed": 70,
+      "current_physical_units": 12
+    },
+    {
+      "project_id": "PRJ-000072",
+      "name_ar": "سكنات الصفا",
+      "name_en": "",
+      "developer_id": "DEV-000004",
+      "city": "Dammam",
+      "marketed": 56,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000506",
+      "name_ar": "ليفورا 10 - الخليج",
+      "name_en": "",
+      "developer_id": "DEV-000200",
+      "city": "Riyadh",
+      "marketed": 56,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000710",
+      "name_ar": "اليم ريزيدنس 3",
+      "name_en": "",
+      "developer_id": "DEV-000314",
+      "city": "Khobar",
+      "marketed": 56,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001222",
+      "name_ar": "الحزم ريزدنس",
+      "name_en": "Alhazem Residence",
+      "developer_id": "DEV-000466",
+      "city": "Al Khobar",
+      "marketed": 56,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000556",
+      "name_ar": "بدء 40",
+      "name_en": "",
+      "developer_id": "DEV-000236",
+      "city": "Riyadh",
+      "marketed": 55,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000751",
+      "name_ar": "خوالد 20",
+      "name_en": "",
+      "developer_id": "DEV-000335",
+      "city": "Riyadh",
+      "marketed": 55,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001530",
+      "name_ar": "مشروع فندق تولان الخبر",
+      "name_en": "",
+      "developer_id": "DEV-000093",
+      "city": "Khobar",
+      "marketed": 55,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000599",
+      "name_ar": "وشاح العارض 87",
+      "name_en": "",
+      "developer_id": "DEV-000164",
+      "city": "Riyadh",
+      "marketed": 54,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001526",
+      "name_ar": "مشروع الخالدية السكني",
+      "name_en": "",
+      "developer_id": "DEV-000093",
+      "city": "Buraidah",
+      "marketed": 53,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000202",
+      "name_ar": "ويف تاور",
+      "name_en": "",
+      "developer_id": "DEV-000078",
+      "city": "Khobar",
+      "marketed": 52,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000861",
+      "name_ar": "بالانس مكة",
+      "name_en": "",
+      "developer_id": "DEV-000386",
+      "city": "Makkah",
+      "marketed": 52,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001539",
+      "name_ar": "ذا أرش",
+      "name_en": "",
+      "developer_id": "DEV-000437",
+      "city": "Khobar",
+      "marketed": 52,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001726",
+      "name_ar": "مشروع لامير W",
+      "name_en": "",
+      "developer_id": "DEV-000162",
+      "city": "Jeddah",
+      "marketed": 52,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000726",
+      "name_ar": "وشاح 12",
+      "name_en": "",
+      "developer_id": "DEV-000164",
+      "city": "Riyadh",
+      "marketed": 51,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000928",
+      "name_ar": "أنوار السكني",
+      "name_en": "",
+      "developer_id": "DEV-000408",
+      "city": "Madinah",
+      "marketed": 51,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001499",
+      "name_ar": "مشروع يوفالي",
+      "name_en": "",
+      "developer_id": "DEV-000427",
+      "city": "Hafar Al Batin",
+      "marketed": 50,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001597",
+      "name_ar": "تركواز",
+      "name_en": "Turquoise",
+      "developer_id": "DEV-000571",
+      "city": "Riyadh",
+      "marketed": 50,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000205",
+      "name_ar": "سرايا هومز",
+      "name_en": "",
+      "developer_id": "DEV-000079",
+      "city": "Riyadh",
+      "marketed": 49,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001518",
+      "name_ar": "بوليفارد تبوك",
+      "name_en": "",
+      "developer_id": "DEV-000550",
+      "city": "Tabuk",
+      "marketed": 48,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001734",
+      "name_ar": "الصفا هومز",
+      "name_en": "",
+      "developer_id": "DEV-000611",
+      "city": "Riyadh",
+      "marketed": 48,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000429",
+      "name_ar": "فور ويز H158 - H159",
+      "name_en": "",
+      "developer_id": "DEV-000173",
+      "city": "Jeddah",
+      "marketed": 47,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000705",
+      "name_ar": "وشاح 11",
+      "name_en": "",
+      "developer_id": "DEV-000164",
+      "city": "Riyadh",
+      "marketed": 47,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000777",
+      "name_ar": "فيو آرش",
+      "name_en": "",
+      "developer_id": "DEV-000010",
+      "city": "Riyadh",
+      "marketed": 47,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000342",
+      "name_ar": "تلال المربع",
+      "name_en": "",
+      "developer_id": "DEV-000137",
+      "city": "Riyadh",
+      "marketed": 46,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000411",
+      "name_ar": "الجامعة فيو 112",
+      "name_en": "",
+      "developer_id": "DEV-000169",
+      "city": "Jeddah",
+      "marketed": 46,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001685",
+      "name_ar": "ريزي 46 الربيع",
+      "name_en": "Rezi 46 Al Rabea",
+      "developer_id": "DEV-000154",
+      "city": "Riyadh",
+      "marketed": 46,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001779",
+      "name_ar": "محافظ دايموند 2",
+      "name_en": "Mahafeth Diamond 2",
+      "developer_id": "",
+      "city": "Abha",
+      "marketed": 46,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000552",
+      "name_ar": "لوريلا فيلا",
+      "name_en": "",
+      "developer_id": "DEV-000233",
+      "city": "Riyadh",
+      "marketed": 45,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000727",
+      "name_ar": "وشاح العارض 86",
+      "name_en": "",
+      "developer_id": "DEV-000164",
+      "city": "Riyadh",
+      "marketed": 45,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000755",
+      "name_ar": "ديتيلز المنار - 07",
+      "name_en": "",
+      "developer_id": "DEV-000254",
+      "city": "Riyadh",
+      "marketed": 45,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000426",
+      "name_ar": "الوسام 95",
+      "name_en": "",
+      "developer_id": "DEV-000144",
+      "city": "Jeddah",
+      "marketed": 44,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000663",
+      "name_ar": "سكاي برستيج",
+      "name_en": "",
+      "developer_id": "DEV-000293",
+      "city": "Riyadh",
+      "marketed": 44,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000823",
+      "name_ar": "اوراتيل",
+      "name_en": "",
+      "developer_id": "DEV-000371",
+      "city": "Jeddah",
+      "marketed": 44,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001278",
+      "name_ar": "شقق تمليك رهاء 3–6",
+      "name_en": "",
+      "developer_id": "DEV-000472",
+      "city": "Riyadh",
+      "marketed": 44,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001400",
+      "name_ar": "ابداع 1",
+      "name_en": "",
+      "developer_id": "DEV-000540",
+      "city": "Riyadh",
+      "marketed": 44,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001528",
+      "name_ar": "مشروع مجمع اكسترا السكني",
+      "name_en": "",
+      "developer_id": "DEV-000093",
+      "city": "Khobar",
+      "marketed": 44,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001540",
+      "name_ar": "برج إيليت Elite tower",
+      "name_en": "",
+      "developer_id": "DEV-000557",
+      "city": "Riyadh",
+      "marketed": 43,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000546",
+      "name_ar": "مشروع حوي الصفا",
+      "name_en": "",
+      "developer_id": "DEV-000228",
+      "city": "Riyadh",
+      "marketed": 42,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000558",
+      "name_ar": "مشارق4",
+      "name_en": "",
+      "developer_id": "DEV-000043",
+      "city": "Riyadh",
+      "marketed": 42,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000737",
+      "name_ar": "وبل 14",
+      "name_en": "",
+      "developer_id": "DEV-000329",
+      "city": "Riyadh",
+      "marketed": 42,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000981",
+      "name_ar": "عنواني ريزيدنس - الدمام",
+      "name_en": "",
+      "developer_id": "DEV-000419",
+      "city": "Dammam",
+      "marketed": 42,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000502",
+      "name_ar": "برج صمد the summit tower",
+      "name_en": "",
+      "developer_id": "DEV-000196",
+      "city": "Riyadh",
+      "marketed": 41,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001223",
+      "name_ar": "جوهرة الحزم",
+      "name_en": "Jawharat Al Hazem",
+      "developer_id": "DEV-000466",
+      "city": "Al Khobar",
+      "marketed": 41,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001326",
+      "name_ar": "مشروع سفانة ٤ السكني",
+      "name_en": "Safana 4 Residential Project",
+      "developer_id": "DEV-000205",
+      "city": "Riyadh",
+      "marketed": 41,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000400",
+      "name_ar": "لامير سيرين",
+      "name_en": "",
+      "developer_id": "DEV-000162",
+      "city": "Jeddah",
+      "marketed": 40,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000570",
+      "name_ar": "سواعد 108 الحمراء",
+      "name_en": "",
+      "developer_id": "DEV-000245",
+      "city": "Jeddah",
+      "marketed": 40,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000788",
+      "name_ar": "تربل ون",
+      "name_en": "",
+      "developer_id": "DEV-000353",
+      "city": "Jeddah",
+      "marketed": 40,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000836",
+      "name_ar": "القصور 28",
+      "name_en": "",
+      "developer_id": "DEV-000125",
+      "city": "Dammam",
+      "marketed": 40,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001546",
+      "name_ar": "فلل اللاجونا 2",
+      "name_en": "",
+      "developer_id": "DEV-000497",
+      "city": "Khobar",
+      "marketed": 40,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001579",
+      "name_ar": "يمام ڤيليج",
+      "name_en": "YAMAM VILLAGE",
+      "developer_id": "DEV-000007",
+      "city": "Riyadh",
+      "marketed": 40,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001593",
+      "name_ar": "فيو لوفت",
+      "name_en": "View Loft",
+      "developer_id": "DEV-000010",
+      "city": "Riyadh",
+      "marketed": 40,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001644",
+      "name_ar": "كاردن 25",
+      "name_en": "KARDEN 25",
+      "developer_id": "DEV-000572",
+      "city": "Abha",
+      "marketed": 40,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001775",
+      "name_ar": "محافظ بلاتينيوم",
+      "name_en": "Mahafeth Platinum",
+      "developer_id": "",
+      "city": "Abha",
+      "marketed": 40,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000620",
+      "name_ar": "المجالات السابعة والسبعون",
+      "name_en": "",
+      "developer_id": "DEV-000274",
+      "city": "Riyadh",
+      "marketed": 39,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001077",
+      "name_ar": "مخطط 192 - شركة بصمة الأركان",
+      "name_en": "",
+      "developer_id": "DEV-000436",
+      "city": "Jizan",
+      "marketed": 40,
+      "current_physical_units": 1
+    },
+    {
+      "project_id": "PRJ-000185",
+      "name_ar": "برج ايفوري 2",
+      "name_en": "",
+      "developer_id": "DEV-000070",
+      "city": "Riyadh",
+      "marketed": 38,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000267",
+      "name_ar": "برج الصحافة كالما",
+      "name_en": "",
+      "developer_id": "DEV-000103",
+      "city": "Riyadh",
+      "marketed": 38,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000082",
+      "name_ar": "إيوان النهضة",
+      "name_en": "",
+      "developer_id": "DEV-000004",
+      "city": "Dammam",
+      "marketed": 37,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000557",
+      "name_ar": "هيف ريزدنس6",
+      "name_en": "",
+      "developer_id": "DEV-000237",
+      "city": "Khobar",
+      "marketed": 36,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000568",
+      "name_ar": "سواعد 106 الروضة",
+      "name_en": "",
+      "developer_id": "DEV-000245",
+      "city": "Jeddah",
+      "marketed": 36,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001100",
+      "name_ar": "برج روض الخزامى السكني",
+      "name_en": "",
+      "developer_id": "DEV-000441",
+      "city": "Dammam",
+      "marketed": 60,
+      "current_physical_units": 24
+    },
+    {
+      "project_id": "PRJ-001411",
+      "name_ar": "NAYAN 32",
+      "name_en": "NAYAN 32",
+      "developer_id": "DEV-000545",
+      "city": "Riyadh",
+      "marketed": 36,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000086",
+      "name_ar": "ذا فالي",
+      "name_en": "",
+      "developer_id": "DEV-000004",
+      "city": "Al Hofuf",
+      "marketed": 35,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001336",
+      "name_ar": "بدء 41",
+      "name_en": "Badaa 41",
+      "developer_id": "DEV-000236",
+      "city": "Riyadh",
+      "marketed": 35,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000359",
+      "name_ar": "قمرا ليفنج",
+      "name_en": "",
+      "developer_id": "DEV-000070",
+      "city": "Riyadh",
+      "marketed": 34,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000764",
+      "name_ar": "مشروع الروابي2",
+      "name_en": "",
+      "developer_id": "DEV-000341",
+      "city": "Khobar",
+      "marketed": 34,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001036",
+      "name_ar": "دان 3",
+      "name_en": "Dan 3",
+      "developer_id": "DEV-000430",
+      "city": "Khobar",
+      "marketed": 34,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000344",
+      "name_ar": "بار لامير",
+      "name_en": "",
+      "developer_id": "DEV-000111",
+      "city": "Khobar",
+      "marketed": 33,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001081",
+      "name_ar": "نمو لابيلا",
+      "name_en": "",
+      "developer_id": "DEV-000402",
+      "city": "Dammam",
+      "marketed": 34,
+      "current_physical_units": 1
+    },
+    {
+      "project_id": "PRJ-001211",
+      "name_ar": "ريوان الربى",
+      "name_en": "Rewan Al Ruba",
+      "developer_id": "DEV-000465",
+      "city": "Riyadh",
+      "marketed": 1300,
+      "current_physical_units": 1267
+    },
+    {
+      "project_id": "PRJ-001478",
+      "name_ar": "مشروع غصون",
+      "name_en": "",
+      "developer_id": "DEV-000547",
+      "city": "Riyadh",
+      "marketed": 33,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000453",
+      "name_ar": "إنبار 10 - الرياض - شركة إنبار للتطوير و الاستثمار العقاري",
+      "name_en": "",
+      "developer_id": "DEV-000183",
+      "city": "Riyadh",
+      "marketed": 33,
+      "current_physical_units": 1
+    },
+    {
+      "project_id": "PRJ-000526",
+      "name_ar": "سيفيل الحزام الذهبي",
+      "name_en": "",
+      "developer_id": "DEV-000214",
+      "city": "Khobar",
+      "marketed": 32,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000789",
+      "name_ar": "رواق الروضة",
+      "name_en": "",
+      "developer_id": "DEV-000354",
+      "city": "Jeddah",
+      "marketed": 32,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000873",
+      "name_ar": "دار حمد 3",
+      "name_en": "",
+      "developer_id": "DEV-000232",
+      "city": "Riyadh",
+      "marketed": 32,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001239",
+      "name_ar": "أرسيليا فيلا",
+      "name_en": "Arcelia Villas",
+      "developer_id": "DEV-000469",
+      "city": "Dammam",
+      "marketed": 32,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001279",
+      "name_ar": "أصالة 08",
+      "name_en": "",
+      "developer_id": "DEV-000472",
+      "city": "Riyadh",
+      "marketed": 32,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001354",
+      "name_ar": "ديارا الحمراء D6",
+      "name_en": "",
+      "developer_id": "DEV-000516",
+      "city": "Jeddah",
+      "marketed": 32,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001277",
+      "name_ar": "شقق تمليك رهاء 1–2",
+      "name_en": "",
+      "developer_id": "DEV-000472",
+      "city": "Riyadh",
+      "marketed": 31,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001471",
+      "name_ar": "مشروع حي طويق A",
+      "name_en": "",
+      "developer_id": "DEV-000547",
+      "city": "Riyadh",
+      "marketed": 31,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000594",
+      "name_ar": "فيا رزيدنس",
+      "name_en": "",
+      "developer_id": "DEV-000259",
+      "city": "Riyadh",
+      "marketed": 30,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000698",
+      "name_ar": "بيرفكت هاوس واحد",
+      "name_en": "",
+      "developer_id": "DEV-000307",
+      "city": "Damad",
+      "marketed": 30,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000709",
+      "name_ar": "مونتاج ريزيدنسز وادي صفار",
+      "name_en": "",
+      "developer_id": "DEV-000176",
+      "city": "Diriyah",
+      "marketed": 30,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001158",
+      "name_ar": "أدوار كلتا بلس",
+      "name_en": "Adwar Kelta Plus",
+      "developer_id": "",
+      "city": "Riyadh",
+      "marketed": 30,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001459",
+      "name_ar": "بافيليونز",
+      "name_en": "Pavilions",
+      "developer_id": "DEV-000546",
+      "city": "Diriyah",
+      "marketed": 30,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001640",
+      "name_ar": "ناف 10",
+      "name_en": "NAF 10",
+      "developer_id": "DEV-000377",
+      "city": "Madinah",
+      "marketed": 30,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001129",
+      "name_ar": "MODN 12",
+      "name_en": "MODN 12",
+      "developer_id": "DEV-000450",
+      "city": "Riyadh",
+      "marketed": 29,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001670",
+      "name_ar": "نجد بالم الملك فيصل",
+      "name_en": "Najd Palm King Faisal",
+      "developer_id": "DEV-000141",
+      "city": "Riyadh",
+      "marketed": 29,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000410",
+      "name_ar": "نجد 2",
+      "name_en": "",
+      "developer_id": "DEV-000168",
+      "city": "Riyadh",
+      "marketed": 28,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000636",
+      "name_ar": "وارف فلورز",
+      "name_en": "",
+      "developer_id": "DEV-000283",
+      "city": "Riyadh",
+      "marketed": 28,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000650",
+      "name_ar": "مثُل 3",
+      "name_en": "",
+      "developer_id": "DEV-000288",
+      "city": "Makkah",
+      "marketed": 28,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001662",
+      "name_ar": "فيو آرش ريزيدنس",
+      "name_en": "View Arch Residence",
+      "developer_id": "DEV-000010",
+      "city": "Riyadh",
+      "marketed": 28,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000535",
+      "name_ar": "نجد 6",
+      "name_en": "",
+      "developer_id": "DEV-000016",
+      "city": "Riyadh",
+      "marketed": 27,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000420",
+      "name_ar": "رويال النهضة",
+      "name_en": "",
+      "developer_id": "DEV-000173",
+      "city": "Jeddah",
+      "marketed": 26,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001017",
+      "name_ar": "مخطط الوثير - جازان",
+      "name_en": "",
+      "developer_id": "DEV-000425",
+      "city": "Jizan",
+      "marketed": 41,
+      "current_physical_units": 15
+    },
+    {
+      "project_id": "PRJ-001638",
+      "name_ar": "ناف 08",
+      "name_en": "NAF 08",
+      "developer_id": "DEV-000377",
+      "city": "Madinah",
+      "marketed": 26,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001668",
+      "name_ar": "مباني الرياض إحدى عشر المها ريزدنس",
+      "name_en": "Mabani Al Riyadh 11 Al Maha Residence",
+      "developer_id": "DEV-000140",
+      "city": "Riyadh",
+      "marketed": 26,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000307",
+      "name_ar": "العجلان ريفييرا 59",
+      "name_en": "",
+      "developer_id": "DEV-000016",
+      "city": "Riyadh",
+      "marketed": 25,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000655",
+      "name_ar": "أفق 115",
+      "name_en": "",
+      "developer_id": "DEV-000290",
+      "city": "Makkah",
+      "marketed": 25,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001233",
+      "name_ar": "شقق أبراج الظهران",
+      "name_en": "Al Dhahran Towers Apartments",
+      "developer_id": "DEV-000468",
+      "city": "Dammam",
+      "marketed": 25,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001319",
+      "name_ar": "نمو ڤيراندا",
+      "name_en": "Numo Veranda",
+      "developer_id": "DEV-000402",
+      "city": "Dammam",
+      "marketed": 25,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001162",
+      "name_ar": "أجود 42",
+      "name_en": "",
+      "developer_id": "DEV-000457",
+      "city": "Riyadh",
+      "marketed": 24,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001320",
+      "name_ar": "نمو الكوڤ",
+      "name_en": "Numo Cove",
+      "developer_id": "DEV-000402",
+      "city": "Dammam",
+      "marketed": 24,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001474",
+      "name_ar": "مشروع حي العارض",
+      "name_en": "",
+      "developer_id": "DEV-000547",
+      "city": "Riyadh",
+      "marketed": 24,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001475",
+      "name_ar": "مشروع حي الرمال",
+      "name_en": "",
+      "developer_id": "DEV-000547",
+      "city": "Riyadh",
+      "marketed": 24,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001477",
+      "name_ar": "مشروع حي الروضة",
+      "name_en": "",
+      "developer_id": "DEV-000547",
+      "city": "Madinah",
+      "marketed": 24,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001656",
+      "name_ar": "سخاء 1",
+      "name_en": "Sakhaa 1",
+      "developer_id": "DEV-000517",
+      "city": "Riyadh",
+      "marketed": 24,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001683",
+      "name_ar": "أرام ريزيدنس 3",
+      "name_en": "Aram Residence 3",
+      "developer_id": "DEV-000130",
+      "city": "Madinah",
+      "marketed": 24,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000308",
+      "name_ar": "وريف أبارتمنت 46 حي المحمدية",
+      "name_en": "",
+      "developer_id": "DEV-000117",
+      "city": "Riyadh",
+      "marketed": 23,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001003",
+      "name_ar": "الواحة - الخرج",
+      "name_en": "",
+      "developer_id": "DEV-000418",
+      "city": "Al Kharj",
+      "marketed": 23,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001111",
+      "name_ar": "عمارة الفال",
+      "name_en": "",
+      "developer_id": "DEV-000404",
+      "city": "Jeddah",
+      "marketed": 23,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001627",
+      "name_ar": "أجود 14",
+      "name_en": "",
+      "developer_id": "DEV-000457",
+      "city": "Riyadh",
+      "marketed": 23,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000264",
+      "name_ar": "مشروع رفيعة السكني 2",
+      "name_en": "",
+      "developer_id": "DEV-000102",
+      "city": "Riyadh",
+      "marketed": 22,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000393",
+      "name_ar": "وريف تاون هاوس 47 حي العارض",
+      "name_en": "",
+      "developer_id": "DEV-000117",
+      "city": "Riyadh",
+      "marketed": 22,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000501",
+      "name_ar": "مزن الصفا (1)",
+      "name_en": "",
+      "developer_id": "DEV-000195",
+      "city": "Riyadh",
+      "marketed": 22,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000551",
+      "name_ar": "اتش اس فيلاز - HS Villas",
+      "name_en": "",
+      "developer_id": "DEV-000232",
+      "city": "Jeddah",
+      "marketed": 22,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000830",
+      "name_ar": "تزدان",
+      "name_en": "",
+      "developer_id": "DEV-000304",
+      "city": "Jeddah",
+      "marketed": 22,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001570",
+      "name_ar": "عمارة سكنية بحي العليا مدينة عنيزة",
+      "name_en": "",
+      "developer_id": "DEV-000570",
+      "city": "Unaizah",
+      "marketed": 22,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001576",
+      "name_ar": "السليمان بيزنس كمباوند",
+      "name_en": "Alsoliman Business Compound",
+      "developer_id": "DEV-000007",
+      "city": "Riyadh",
+      "marketed": 22,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000603",
+      "name_ar": "أدفا نمار",
+      "name_en": "",
+      "developer_id": "DEV-000265",
+      "city": "Riyadh",
+      "marketed": 21,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001130",
+      "name_ar": "MODN 13",
+      "name_en": "MODN 13",
+      "developer_id": "DEV-000450",
+      "city": "Riyadh",
+      "marketed": 21,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001628",
+      "name_ar": "أجود 15",
+      "name_en": "",
+      "developer_id": "DEV-000457",
+      "city": "Riyadh",
+      "marketed": 21,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001630",
+      "name_ar": "أجود 17",
+      "name_en": "",
+      "developer_id": "DEV-000457",
+      "city": "Riyadh",
+      "marketed": 21,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001639",
+      "name_ar": "ناف 09",
+      "name_en": "NAF 09",
+      "developer_id": "DEV-000377",
+      "city": "Madinah",
+      "marketed": 21,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000291",
+      "name_ar": "كام السكني",
+      "name_en": "",
+      "developer_id": "DEV-000110",
+      "city": "Riyadh",
+      "marketed": 20,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000318",
+      "name_ar": "تمليك المحمدية 3",
+      "name_en": "",
+      "developer_id": "DEV-000121",
+      "city": "Baljurashi",
+      "marketed": 20,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000593",
+      "name_ar": "وشاح المروج",
+      "name_en": "",
+      "developer_id": "DEV-000164",
+      "city": "Riyadh",
+      "marketed": 20,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000728",
+      "name_ar": "وشاح 8",
+      "name_en": "",
+      "developer_id": "DEV-000164",
+      "city": "Riyadh",
+      "marketed": 20,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-000840",
+      "name_ar": "الريم 46",
+      "name_en": "",
+      "developer_id": "DEV-000378",
+      "city": "Medina",
+      "marketed": 20,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001149",
+      "name_ar": "ظلال 06 - شقق القيروان",
+      "name_en": "",
+      "developer_id": "DEV-000454",
+      "city": "Riyadh",
+      "marketed": 20,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001301",
+      "name_ar": "مشروع التعاون A-103",
+      "name_en": "",
+      "developer_id": "DEV-000474",
+      "city": "Riyadh",
+      "marketed": 20,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001302",
+      "name_ar": "سكنى الملقا",
+      "name_en": "",
+      "developer_id": "DEV-000474",
+      "city": "Riyadh",
+      "marketed": 20,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001482",
+      "name_ar": "مشروع محطة العليا",
+      "name_en": "",
+      "developer_id": "DEV-000547",
+      "city": "Unaizah",
+      "marketed": 20,
+      "current_physical_units": 0
+    },
+    {
+      "project_id": "PRJ-001256",
+      "name_ar": "HAVEN 2 – النهضة",
+      "name_en": "HAVEN 2 Al Nahdah",
+      "developer_id": "DEV-000286",
+      "city": "Jeddah",
+      "marketed": 86,
+      "current_physical_units": 74
+    },
+    {
+      "project_id": "PRJ-001090",
+      "name_ar": "سرايا البدر",
+      "name_en": "",
+      "developer_id": "DEV-000079",
+      "city": "Madinah",
+      "marketed": 634,
+      "current_physical_units": 623
+    },
+    {
+      "project_id": "PRJ-001794",
+      "name_ar": "وكن 013",
+      "name_en": "WAKAN 013",
+      "developer_id": "DEV-000369",
+      "city": "Riyadh",
+      "marketed": 42,
+      "current_physical_units": 39
+    },
+    {
+      "project_id": "PRJ-000132",
+      "name_ar": "مينا رايز",
+      "name_en": "",
+      "developer_id": "DEV-000037",
+      "city": "Riyadh",
+      "marketed": 49,
+      "current_physical_units": 48
+    },
+    {
+      "project_id": "PRJ-001464",
+      "name_ar": "تالا السيف",
+      "name_en": "Tala Al Seef",
+      "developer_id": "DEV-000079",
+      "city": "Khobar",
+      "marketed": 135,
+      "current_physical_units": 134
+    }
+  ]
+}
