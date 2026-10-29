@@ -151,5 +151,5 @@ async def main():
 if __name__=="__main__":
     assert get_arrays({"count":315})==[]
     assert not any(x.get("distinct_physical_code_field") for x in get_arrays({"models":[{"name":"A"} for _ in range(10)]}))
-    assert get_arrays({"data":[{"unitNumber":str(i),"price":1} for i in range(25)]})[0]["distinct_physical_code_field"]=="unitNumber"
+    assert get_arrays({"data":[{"unitNumber":str(i+1),"price":1} for i in range(25)]})[0]["distinct_physical_code_field"]=="unitNumber"
     asyncio.run(main())
