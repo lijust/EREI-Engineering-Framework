@@ -79,6 +79,9 @@ def main():
         rows=extract_one(x)
         print("QUALIFIED",x["project_id"],"cards",len(rows),"source_sha256",hashlib.sha256(x["final_text"].encode()).hexdigest(),flush=True)
         results.extend(rows)
+    for q in results:
+        if q["area_sqm"] < 50 or q["area_sqm"] > 350:
+            print("SAE_SOURCE_AREA_HOLD|"+json.dumps(q,ensure_ascii=False,separators=(",",":")),flush=True)
     if len(results)!=205:raise ValueError("source cards not exactly 205")
     output={"schema":"SAE_DB_OSUS_TWO_ORIGINAL_PUBLIC_UNIT_GRIDS_205_SOURCE_RECORDS_STAGED_ONLY",
         "source_capture_artifact_sha256":hashlib.sha256(raw).hexdigest(),
