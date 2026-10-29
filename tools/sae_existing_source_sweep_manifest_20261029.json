@@ -1,0 +1,235 @@
+{
+  "schema": "SAE_DB_EXISTING_PROJECTS_TIERED_MULTI_PUBLISHER_20261029",
+  "source": "live Google Sheets SAE-DB Projects A,D,U,AL",
+  "created_at_utc": "2026-10-29T16:14:45.550Z",
+  "mode": "READ_ONLY_SOURCE_INTELLIGENCE",
+  "single_run_target_count": 36,
+  "marketing_totals_not_unit_count": 20170,
+  "default_max_concurrent_projects": 4,
+  "default_max_per_origin": 1,
+  "source_seeds": [
+    {
+      "project_id": "PRJ-000051",
+      "name_ar": "إيوان خزام",
+      "marketing_total": 947,
+      "publisher_page": "https://retal.com.sa/en/properties/ewan-khuzam/"
+    },
+    {
+      "project_id": "PRJ-000057",
+      "name_ar": "نساج السدن",
+      "marketing_total": 550,
+      "publisher_page": "https://retal.com.sa/en/properties/nasaj-alsadan/"
+    },
+    {
+      "project_id": "PRJ-000060",
+      "name_ar": "نساج سدايم",
+      "marketing_total": 352,
+      "publisher_page": "https://retal.com.sa/en/properties/nesaj-sadayem/"
+    },
+    {
+      "project_id": "PRJ-000059",
+      "name_ar": "رويا سدرة",
+      "marketing_total": 366,
+      "publisher_page": "https://retal.com.sa/en/properties/roya-sedra/"
+    },
+    {
+      "project_id": "PRJ-000062",
+      "name_ar": "نساج الأحساء",
+      "marketing_total": 347,
+      "publisher_page": "https://retal.com.sa/en/properties/nesaj-town-al-hasa/"
+    },
+    {
+      "project_id": "PRJ-001484",
+      "name_ar": "الواحة الخضراء",
+      "marketing_total": 931,
+      "publisher_page": "https://alargan.com.sa/green-oasis/"
+    },
+    {
+      "project_id": "PRJ-001483",
+      "name_ar": "بيوت الفرسان",
+      "marketing_total": 623,
+      "publisher_page": "https://alargan.com.sa/fursan/"
+    },
+    {
+      "project_id": "PRJ-001488",
+      "name_ar": "الشروق",
+      "marketing_total": 334,
+      "publisher_page": "https://alargan.com.sa/shurouq/"
+    },
+    {
+      "project_id": "PRJ-001491",
+      "name_ar": "مرجانة",
+      "marketing_total": 327,
+      "publisher_page": "https://alargan.com.sa/murjana/"
+    },
+    {
+      "project_id": "PRJ-001489",
+      "name_ar": "مروج",
+      "marketing_total": 324,
+      "publisher_page": "https://alargan.com.sa/murooj/"
+    },
+    {
+      "project_id": "PRJ-001212",
+      "name_ar": "بلجرافيا",
+      "marketing_total": 176,
+      "publisher_page": "https://koohejidevelopment.sa/community/belgravia/"
+    },
+    {
+      "project_id": "PRJ-001213",
+      "name_ar": "فلامنت",
+      "marketing_total": 175,
+      "publisher_page": "https://koohejidevelopment.sa/community/flamant/"
+    },
+    {
+      "project_id": "PRJ-001214",
+      "name_ar": "لافيرا",
+      "marketing_total": 264,
+      "publisher_page": "https://koohejidevelopment.sa/community/lavira/"
+    },
+    {
+      "project_id": "PRJ-001463",
+      "name_ar": "سرايا لازورد",
+      "marketing_total": 912,
+      "publisher_page": "https://darwaemaar.com/project/saraya-lazurd-2/"
+    },
+    {
+      "project_id": "PRJ-001462",
+      "name_ar": "النرجس هايتس",
+      "marketing_total": 210,
+      "publisher_page": "https://darwaemaar.com/project/al-narjes-heights/"
+    },
+    {
+      "project_id": "PRJ-001438",
+      "name_ar": "الماجدية 124",
+      "marketing_total": 206,
+      "publisher_page": "https://almajdiah.com/projects/156"
+    },
+    {
+      "project_id": "PRJ-001439",
+      "name_ar": "الماجدية 130",
+      "marketing_total": 192,
+      "publisher_page": "https://almajdiah.com/projects/161"
+    },
+    {
+      "project_id": "PRJ-001437",
+      "name_ar": "الماجدية 118",
+      "marketing_total": 136,
+      "publisher_page": "https://almajdiah.com/projects/119"
+    },
+    {
+      "project_id": "PRJ-001434",
+      "name_ar": "الماجدية 120",
+      "marketing_total": 133,
+      "publisher_page": "https://almajdiah.com/projects/153"
+    },
+    {
+      "project_id": "PRJ-001601",
+      "name_ar": "فلل أسوار 02",
+      "marketing_total": 82,
+      "publisher_page": "https://aswar.com.sa/our-projects/aswar-villas-02"
+    },
+    {
+      "project_id": "PRJ-001597",
+      "name_ar": "تركواز",
+      "marketing_total": 50,
+      "publisher_page": "https://aswar.com.sa/our-projects/turquoise"
+    },
+    {
+      "project_id": "PRJ-001598",
+      "name_ar": "روت",
+      "marketing_total": 50,
+      "publisher_page": "https://aswar.com.sa/our-projects/root"
+    },
+    {
+      "project_id": "PRJ-001132",
+      "name_ar": "MODN 15",
+      "marketing_total": 60,
+      "publisher_page": "https://modn-alshmal.sa/property/modn-15/"
+    },
+    {
+      "project_id": "PRJ-001129",
+      "name_ar": "MODN 12",
+      "marketing_total": 29,
+      "publisher_page": "https://modn-alshmal.sa/property/modn-12/"
+    },
+    {
+      "project_id": "PRJ-001130",
+      "name_ar": "MODN 13",
+      "marketing_total": 21,
+      "publisher_page": "https://modn-alshmal.sa/property/modn-13/"
+    },
+    {
+      "project_id": "PRJ-001458",
+      "name_ar": "برج رافال",
+      "marketing_total": 440,
+      "publisher_page": "https://www.rafal.com.sa/ar/communities/burj-rafal"
+    },
+    {
+      "project_id": "PRJ-001454",
+      "name_ar": "الغريا",
+      "marketing_total": 225,
+      "publisher_page": "https://www.rafal.com.sa/ar/communities/alegria"
+    },
+    {
+      "project_id": "PRJ-001222",
+      "name_ar": "الحزم ريزدنس",
+      "marketing_total": 56,
+      "publisher_page": "https://alhazem.com.sa/en/project/alhazem-residence/"
+    },
+    {
+      "project_id": "PRJ-001223",
+      "name_ar": "جوهرة الحزم",
+      "marketing_total": 41,
+      "publisher_page": "https://alhazem.com.sa/project/جوهرة-الحزم/"
+    },
+    {
+      "project_id": "PRJ-001752",
+      "name_ar": "أكنان الشرق",
+      "marketing_total": 434,
+      "publisher_page": "https://sateaa.com/مشروع-أكنان-الشرق/"
+    },
+    {
+      "project_id": "PRJ-001648",
+      "name_ar": "إسكان ضاحية الملك عبدالله — جازان",
+      "marketing_total": 4170,
+      "publisher_page": "https://sateaa.com/مشروع-إسكان-ضاحية-الملك-عبدالله/"
+    },
+    {
+      "project_id": "PRJ-000333",
+      "name_ar": "داما جازان",
+      "marketing_total": 539,
+      "publisher_page": "https://www.alomarinvest.sa/ar/projects/301526"
+    },
+    {
+      "project_id": "PRJ-001173",
+      "name_ar": "ذا يارد - النرجس 1",
+      "marketing_total": 122,
+      "publisher_page": "https://rasf.sa/listing/dh-yrd-21"
+    },
+    {
+      "project_id": "PRJ-001206",
+      "name_ar": "دار قرطبة",
+      "marketing_total": 96,
+      "publisher_page": "https://darredc.com/project/dar-cordoba"
+    },
+    {
+      "project_id": "PRJ-001215",
+      "name_ar": "فيلانو",
+      "marketing_total": 1250,
+      "publisher_page": "https://koohejidevelopment.sa/community/vellano/"
+    },
+    {
+      "project_id": "PRJ-001610",
+      "name_ar": "باب جدة",
+      "marketing_total": 5000,
+      "publisher_page": "https://www.aloula.com/ar/portfolio-item/jeddah-gate/"
+    }
+  ],
+  "excluded": [
+    {
+      "project_id": "PRJ-001256",
+      "reason": "generic publisher home, not exact project page; fail closed before identity matching"
+    }
+  ],
+  "selection_policy": "All project_id must exist in Master; exact primary publisher URL only; no generic cross-project attribution or manufactured per-unit records"
+}
