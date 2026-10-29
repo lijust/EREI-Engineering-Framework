@@ -75,11 +75,11 @@ async def main():
      for row in table["rows"]:
       cells=[cell["text"].strip() for cell in row["cells"]]
       if len(cells)==1:
-       matched=re.search(r"عمارة\\s*([A-E])",cells[0])
+       matched=re.search(r"عمارة\s*([A-E])",cells[0])
        if matched:building=matched.group(1)
       elif len(cells)==7 and building and cells[0] in ("مباعة","متاحة","محجوزة"):
        area=cells[3].replace(",","")
-       if not re.fullmatch(r"\\d+(?:\\.\\d+)?",area):continue
+       if not re.fullmatch(r"\d+(?:\.\d+)?",area):continue
        extracted.append({"building":building,"publisher_unit_code":cells[1],
           "publisher_subunit_label":cells[2],"area_sqm":float(area),
           "publisher_status":cells[0],"features":cells[4],
