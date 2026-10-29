@@ -1,0 +1,117 @@
+name: SAE Lazurd Official Brochure and DWE World Inventory Discovery
+on:
+  push:
+    branches: [experiment/sae-saraya-high-yield-20261029]
+    paths: [.github/workflows/sae-lazurd-brochure-world-probe-20261029.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  lazurd-firstparty-plan:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install 'scrapling>=0.5,<0.7' 'httpx>=0.27,<1' 'pymupdf>=1.24,<2'
+      - name: Discover vector unit-plot labels in official PDF
+        shell: bash
+        run: |
+          python - <<'PY'
+          import httpx,fitz,collections,json,hashlib,datetime,re
+          from pathlib import Path
+          paths=[
+          'https://darwaemaar.com/wp-content/uploads/2025/08/Saraya-Lazurd-Brochure-V5.pdf',
+          'https://darwaemaar.com/wp-content/uploads/2025/08/Saraya-Lazurd-Brochure-V2-2.pdf',
+          'https://darwaemaar.com/wp-content/uploads/2025/09/Saraya-Lazurd-Brochure-Mobile-Version-Small-size.pdf']
+          out={'schema':'SAE_LAZURD_FIRSTPARTY_PDF_PLAN_DISCOVERY','created_utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),'auth':False,'writes':0,'items':[]}
+          with httpx.Client(follow_redirects=True,timeout=80) as client:
+            for u in paths:
+              info={'url':u}
+              try:
+                r=client.get(u,headers={'User-Agent':'Mozilla/5.0','Accept':'application/pdf'})
+                info['http']=r.status_code
+                if r.status_code in (403,429):info['stop']='ACCESS_CONTROL';out['items'].append(info);break
+                r.raise_for_status();raw=r.content
+                if not raw.startswith(b'%PDF'):raise ValueError('not_pdf '+r.headers.get('content-type',''))
+                info['bytes']=len(raw);info['sha256']=hashlib.sha256(raw).hexdigest()
+                doc=fitz.open(stream=raw,filetype='pdf')
+                info['pages']=len(doc)
+                pp=[]
+                for i,p in enumerate(doc):
+                  words=p.get_text('words');nums=[w for w in words if re.fullmatch(r'\d{1,5}',w[4])]
+                  unique=len(set(w[4] for w in nums))
+                  pp.append({'page0':i,'words':len(words),'numeric_words':len(nums),'numeric_unique':unique,'images':len(p.get_images(full=True)),'vector_drawings':len(p.get_drawings()),'page_w':int(p.rect.width),'page_h':int(p.rect.height),'numeric_samples':[{'t':w[4],'x':round(w[0],1),'y':round(w[1],1)} for w in nums[:6]]})
+                info['most_numeric_pages']=sorted(pp,key=lambda x:x['numeric_words'],reverse=True)[:12]
+                info['all_pages']=pp
+              except Exception as e:info['error']=type(e).__name__+':'+str(e)[:250]
+              out['items'].append(info)
+          Path('out').mkdir(exist_ok=True)
+          Path('out/lazurd_brochure_probe.json').write_text(json.dumps(out,ensure_ascii=False,indent=2),encoding='utf8')
+          for a in out['items']:print('SAE_LAZURD_PDF',json.dumps({k:v for k,v in a.items() if k not in ('all_pages',)},ensure_ascii=False)[:9000],flush=True)
+          PY
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sae-lazurd-brochure-sourceonly-20261029
+          path: out/lazurd_brochure_probe.json
+  developer-world:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install 'playwright>=1.55,<2' 'scrapling[fetchers]>=0.5,<0.6'
+      - run: python -m playwright install --with-deps chromium
+      - name: Discover original public developer world project inventory APIs
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json,hashlib,datetime
+          from pathlib import Path
+          from playwright.sync_api import sync_playwright
+          url='https://dwe-world.darwaemaar.com/?state=saudi_arabia&lang=ar&vr=VR01&color=cold&theme=light'
+          out={'schema':'SAE_DWE_WORLD_PUBLIC_SITE_MAP_DISCOVERY','utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),'url':url,'auth':False,'writes':0,'xhr':[]}
+          with sync_playwright() as pw:
+            browser=pw.chromium.launch(headless=True,args=['--no-sandbox'])
+            page=browser.new_page(locale='ar-SA',viewport={'width':1440,'height':900})
+            def on_response(res):
+              try:
+                if res.request.resource_type not in ('xhr','fetch') or len(out['xhr'])>=200:return
+                x={'url':res.url[:400],'status':res.status,'content_type':res.headers.get('content-type','')[:80]}
+                if res.status in (403,429):out.setdefault('stop_control',[]).append(x);return
+                if res.status==200 and 'json' in x['content_type']:
+                  b=res.body();x['bytes']=len(b);x['sha256']=hashlib.sha256(b).hexdigest()
+                  if len(b)<15_000_000:
+                    try:
+                      data=json.loads(b);x['top_keys']=list(data)[:60] if isinstance(data,dict) else None;x['shape']=len(data) if hasattr(data,'__len__') else None
+                      if len(b)<4_000_000:x['public_json']=data
+                    except Exception as e:x['error']=str(e)[:100]
+                out['xhr'].append(x)
+              except Exception as e:out.setdefault('callback_errors',[]).append(type(e).__name__)
+            page.on('response',on_response)
+            try:
+              r=page.goto(url,wait_until='domcontentloaded',timeout=65000)
+              out['http']=r.status if r else None;page.wait_for_timeout(15000)
+              out['title']=page.title()
+              out['text']=page.locator('body').inner_text()[:3500]
+              out['links']=[{'text':a.inner_text()[:90],'href':a.get_attribute('href')} for a in page.locator('a').all()[:100]]
+            except Exception as e:out['page_error']=type(e).__name__+':'+str(e)[:300]
+            browser.close()
+          Path('out').mkdir(exist_ok=True)
+          Path('out/world_public_xhr.json').write_text(json.dumps(out,ensure_ascii=False,indent=2),encoding='utf8')
+          print('SAE_DWE_WORLD_RESULT',json.dumps({'http':out.get('http'),'title':out.get('title'),'xhr_count':len(out['xhr']),'xhr_json':[{'url':x['url'],'top_keys':x.get('top_keys')} for x in out['xhr'] if 'public_json' in x][:12],'error':out.get('page_error')},ensure_ascii=False),flush=True)
+          PY
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sae-dwe-world-original-public-xhr-sourceonly-20261029
+          path: out/world_public_xhr.json
