@@ -30,8 +30,11 @@ def extract_one(item):
     lines=[s.strip() for s in body.splitlines() if s.strip()]
     records=[];building=None;seen=set()
     def field(block,prefix):
-        p=next((s for s in block if s.startswith(prefix)),None)
-        return p.split(":",1)[1].strip() if p and ":" in p else None
+        for j,p in enumerate(block):
+            if p.startswith(prefix) and ":" in p:
+                val=p.split(":",1)[1].strip()
+                return val or (block[j+1] if j+1<len(block) else None)
+        return None
     for i,line in enumerate(lines):
         mb=re.fullmatch(r"المبنى\s+(.+)",line)
         if mb:
