@@ -19,6 +19,31 @@ def robots_ok():
   if r.status!=200:raise RuntimeError("ROBOTS_HTTP_"+str(r.status))
   rp.parse(r.read(150000).decode("utf8","replace").splitlines())
  return rp.can_fetch(UA,PAGE)
+def normalize_cards(original_visible_text):
+    lines=[x.strip() for x in original_visible_text.splitlines() if x.strip()]
+    positions=[i for i,x in enumerate(lines) if RE_CODE.fullmatch(x)]
+    records=[]
+    for i,p in enumerate(positions):
+        cut=positions[i+1] if i+1<len(positions) else len(lines)
+        text=lines[p+1:cut]
+        limited="\n".join(text[:25])
+        bedrooms=re.search(r"(?m)^(\d+)\s*غرفة نوم$", limited)
+        bathrooms=re.search(r"(?m)^(\d+)\s*حمام$", limited)
+        area=re.search(r"(?m)^(\d+(?:\.\d+)?)\s*متر مربع$", limited)
+        statuses=[s for s in text if s in ("للبيع","مباع","محجوز")]
+        price=re.fullmatch(r"\d{1,3}(?:,\d{3})+",text[0]) if text else None
+        card={"project_id":PID,"original_unit_code":lines[p],
+              "bedrooms":int(bedrooms[1]) if bedrooms else None,
+              "bathrooms":int(bathrooms[1]) if bathrooms else None,
+              "area_sqm":float(area[1]) if area else None,
+              "publisher_asking_price_sar":int(price[0].replace(",","")) if price else None,
+              "original_status_ar":statuses[0] if len(statuses)==1 else None,
+              "visible_original_card_text":"\n".join([lines[p]]+text[:12])[:500]}
+        card["qualifies_physical"]=bool(card["bedrooms"] and card["bathrooms"] and
+                                        card["area_sqm"] and card["original_status_ar"])
+        records.append(card)
+    return records
+
 async def main():
  output={"schema":"SAE_EXISTING_PRJ_000132_MENACO_RISE_NATIVE_ITEMIZED_UI_V1","original_url":PAGE,"canonical_project_id":PID,"source_id":"SRC-000204","timestamp_utc":datetime.now(timezone.utc).isoformat(),"production_writes":0,"stages":[],"xhr":[],"errors":[]}
  try:ok=await asyncio.to_thread(robots_ok)
@@ -73,7 +98,24 @@ async def main():
   except Exception as e:output["errors"].append("PAGE_"+type(e).__name__+":"+str(e)[:160])
   if tasks:await asyncio.gather(*tasks,return_exceptions=True)
   output["blocked"]=blocked
-  output["state"]="SOURCE_ONLY_CARDS" if output["stages"] and output["stages"][-1]["exact_source_code_lines"] else "NO_ITEMIZED_PUBLIC_UNITS"
+  output["exact_original_cards"]=normalize_cards(output["stages"][-1]["body_text"]) if output["stages"] else []
+  source_codes=[x["original_unit_code"] for x in output["exact_original_cards"]]
+  output["exact_code_count"]=len(source_codes)
+  output["unique_code_count"]=len(set(source_codes))
+  output["qualified_card_count"]=sum(x["qualifies_physical"] for x in output["exact_original_cards"])
+  output["all_cards_qualified"]=bool(source_codes and
+        output["unique_code_count"]==output["exact_code_count"] and
+        output["qualified_card_count"]==output["exact_code_count"])
+  output["state"]="SOURCE_ONLY_CARDS" if output["exact_original_cards"] else "NO_ITEMIZED_PUBLIC_UNITS"
+  print("SAE_MENA_RISE_QA",json.dumps({"project":PID,"status":output["state"],"unique":output["unique_code_count"],
+        "qualified":output["qualified_card_count"],"all_cards_qualified":output["all_cards_qualified"],
+        "hold":[x for x in output["exact_original_cards"] if not x["qualifies_physical"]][:6]
+  },ensure_ascii=False),flush=True)
+  for i in range(0,len(output["exact_original_cards"]),12):
+   print("SAE_MENA_RISE_EXACT_SOURCE_CHUNK",json.dumps({
+    "project_id":PID,"source_page":PAGE,"observed_at_utc":output["timestamp_utc"],
+    "chunk":i//12,"cards":output["exact_original_cards"][i:i+12]
+   },ensure_ascii=False,separators=(",",":")),flush=True)
   print("SAE_MENA_RISE_DEEP",json.dumps({"state":output["state"],"http":output.get("http"),"clicked":output.get("clicked"),"steps":len(output["stages"]),"last_codes":output["stages"][-1]["exact_source_code_lines"] if output["stages"] else [],"errors":output["errors"]},ensure_ascii=False)[:11000],flush=True)
   OUT.write_text(json.dumps(output,ensure_ascii=False,indent=2)+"\n",encoding="utf8")
   await page.close();await b.close()
