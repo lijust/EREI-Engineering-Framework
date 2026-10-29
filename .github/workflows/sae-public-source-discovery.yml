@@ -1,0 +1,37 @@
+name: SAE original public inventory browser discovery
+on:
+  push:
+    branches: [sae-source-study-20261029]
+    paths:
+      - tools/sae_public_inventory_discovery.py
+      - .github/workflows/sae-public-source-discovery.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  public-inventory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Check out public research code
+        uses: actions/checkout@v4
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install browser runtime
+        run: |
+          python -m pip install playwright==1.58.0
+          python -m playwright install --with-deps chromium
+      - name: Run source-only extraction
+        run: python tools/sae_public_inventory_discovery.py
+      - name: Retain source evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sae-public-source-discovery-20261029
+          path: sae-public-source-discovery.json
+          if-no-files-found: warn
+          retention-days: 7
