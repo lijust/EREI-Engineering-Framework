@@ -4,6 +4,7 @@ on:
     branches: [sae-source-study-20261029]
     paths:
       - tools/sae_public_inventory_discovery.py
+      - tools/sae_murooj_pdf_plots.py
       - .github/workflows/sae-public-source-discovery.yml
   workflow_dispatch:
 
@@ -23,15 +24,20 @@ jobs:
           python-version: '3.12'
       - name: Install browser runtime
         run: |
-          python -m pip install playwright==1.58.0
+          python -m pip install playwright==1.58.0 pymupdf==1.26.4
           python -m playwright install --with-deps chromium
       - name: Run source-only extraction
         run: python tools/sae_public_inventory_discovery.py
+      - name: Inspect original Murooj numbered plan (read only)
+        run: python tools/sae_murooj_pdf_plots.py
       - name: Retain source evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: sae-public-source-discovery-20261029
-          path: sae-public-source-discovery.json
+          path: |
+            sae-public-source-discovery.json
+            sae-murooj-pdf-numerical-evidence.json
+            sae-murooj-map-page-*.png
           if-no-files-found: warn
           retention-days: 7
