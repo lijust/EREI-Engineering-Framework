@@ -1,0 +1,92 @@
+{
+  "schema": "SAE_DB_EXISTING_PROJECTS_SOURCE_DEEP_DISCOVERY_MANIFEST_20261029_V1",
+  "scope": "EXISTING_ONLY_READONLY",
+  "target_count": 14,
+  "priority": "UNPROVEN_SOURCE_IDENTITIES_ONLY; source itemized row identity must be independently verified before canonical writes",
+  "projects": [
+    {
+      "project_id": "PRJ-001827",
+      "url": "https://kian-d.com/projects/kian-residence/",
+      "note": "Kian Residence models versus individual codes",
+      "existing_canonical": true
+    },
+    {
+      "project_id": "PRJ-001802",
+      "url": "https://menaco.sa/listings/276031",
+      "note": "Mena 51 load-more listed physical units",
+      "existing_canonical": true
+    },
+    {
+      "project_id": "PRJ-001803",
+      "url": "https://menaco.sa/listings/865393",
+      "note": "Mena 52 load-more",
+      "existing_canonical": true
+    },
+    {
+      "project_id": "PRJ-001822",
+      "url": "https://www.senanrealestate.sa/projects/301371",
+      "note": "Senan Masif itemized card",
+      "existing_canonical": true
+    },
+    {
+      "project_id": "PRJ-001823",
+      "url": "https://www.senanrealestate.sa/projects/301368",
+      "note": "Senan Monsak itemized card",
+      "existing_canonical": true
+    },
+    {
+      "project_id": "PRJ-001478",
+      "url": "https://www.dor.com.sa/",
+      "note": "Dor Ghsoon linked listing",
+      "existing_canonical": true
+    },
+    {
+      "project_id": "PRJ-001278",
+      "url": "https://rahaa.sa/",
+      "note": "Raha apartments project exact attribution pending",
+      "existing_canonical": true
+    },
+    {
+      "project_id": "PRJ-001518",
+      "url": "https://qamat.com.sa/projects/",
+      "note": "Qamat Tabuk Boulevard source discovery",
+      "existing_canonical": true
+    },
+    {
+      "project_id": "PRJ-001776",
+      "url": "https://mahafeth.com.sa/projects/",
+      "note": "Mahafeth Diamond source discovery",
+      "existing_canonical": true
+    },
+    {
+      "project_id": "PRJ-000820",
+      "url": "https://wakan.sa/EstateProjects",
+      "note": "Wakan 043 card class under construction",
+      "existing_canonical": true
+    },
+    {
+      "project_id": "PRJ-000825",
+      "url": "https://wakan.sa/EstateProjects",
+      "note": "Wakan 045 card class under construction",
+      "existing_canonical": true
+    },
+    {
+      "project_id": "PRJ-001214",
+      "url": "https://koohejidevelopment.sa/community/lavira/",
+      "note": "Lavira 101 original verified other publication candidates",
+      "existing_canonical": true
+    },
+    {
+      "project_id": "PRJ-001127",
+      "url": "https://rafah.sa/projects/56/",
+      "note": "Rafah 56 reconciliation source refresh",
+      "existing_canonical": true
+    },
+    {
+      "project_id": "PRJ-001075",
+      "url": "https://www.alolayanholding.sa/projects/301568",
+      "note": "Nuzul page 2 source fully extracted, control",
+      "existing_canonical": true
+    }
+  ]
+}
