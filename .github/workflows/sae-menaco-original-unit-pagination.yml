@@ -1,0 +1,33 @@
+name: SAE Menaco 51 and 52 Original Unit Cards Pagination
+on:
+  push:
+    branches: [sae-source-study-20261029]
+    paths:
+      - 'tools/sae_menaco_51_52_unit_loadmore.py'
+      - '.github/workflows/sae-menaco-original-unit-pagination.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  menaco-original-unit-pages:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install Playwright
+        run: |
+          python -m pip install playwright==1.58.0
+          python -m playwright install --with-deps chromium
+      - name: Read original publisher per-unit cards and public pagination
+        run: python tools/sae_menaco_51_52_unit_loadmore.py
+      - name: Preserve entire original source snapshot and page-stage evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sae-menaco-original-cards-public-loadmore
+          path: sae-menaco-51-52-original-pagination.json
+          if-no-files-found: warn
+          retention-days: 7
