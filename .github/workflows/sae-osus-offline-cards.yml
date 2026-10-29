@@ -1,0 +1,34 @@
+name: SAE Osus original 205 captured cards offline normalization
+on:
+  push:
+    branches: [sae-source-study-20261029]
+    paths:
+      - tools/sae_osus_offline_normalize_capture.py
+      - .github/workflows/sae-osus-offline-cards.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  offline-normalize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - name: Retrieve prior fully captured Osus original public 205-unit source snapshot
+        uses: actions/download-artifact@v4
+        with:
+          name: sae-osus-existing-two-full-source-snapshot
+          run-id: 40905645699
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: .
+      - name: Strict original unit identity, price and area normalization, no writes
+        run: python tools/sae_osus_offline_normalize_capture.py
+      - name: Preserve normalized provisional source evidence for reconciliation
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sae-osus-205-normalized-original-unit-cards
+          path: sae-osus-two-source-qualified-units.json
+          if-no-files-found: warn
+          retention-days: 7
