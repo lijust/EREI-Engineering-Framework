@@ -157,7 +157,25 @@ async def main():
                             except Exception as exc:
                                 rec["errors"].append("CLICK_"+type(exc).__name__)
                         if not enabled:break
-                        await page.wait_for_timeout(1750)
+                        # Livewire updates asynchronously. A fixed sleep can
+                        # accidentally record the loading overlay as the last
+                        # source page, dropping later source codes.
+                        oldcodes=len(normalized_original_cards(state["body_text"],s["project_id"]))
+                        try:
+                            await page.wait_for_function(
+                                """(prev) => {
+                                    let txt=document.body.innerText||'';
+                                    let ix=txt.indexOf('الوحدات المتاحة');
+                                    let end=txt.indexOf('خدمة العملاء المجانية',ix);
+                                    if(ix<0) return false;
+                                    let body=txt.slice(ix,end>ix?end:undefined);
+                                    let match=body.match(/^(A[0-9]{1,3}|[0-9]{1,2}\\/[0-9]{1,2})$/gm)||[];
+                                    return match.length>prev;
+                                }""",oldcodes,timeout=14000)
+                        except Exception:
+                            rec["errors"].append("LOAD_MORE_NO_NEW_CARD_WITHIN_TIMEOUT")
+                            break
+                        await page.wait_for_timeout(400)
                     rec["state"]="PUBLIC_PAGINATION_CAPTURED" if rec["pages"] else "NO_PUBLIC_PAGES"
                 else:rec["state"]="HTTP_ERROR_STOP"
             except Exception as exc:
@@ -177,6 +195,15 @@ async def main():
                 rec["normalized_codes_match_visible_dom"]
                 and len(normalized_codes) == len(rec["original_source_physical_cards"])
                 and all(x["qualifies_physical"] for x in rec["original_source_physical_cards"]))
+            print("SAE_MENACO_RECONCILIATION_QA",json.dumps({
+                "project":s["project_id"],"code_count":len(codes),
+                "normalized_count":len(rec["original_source_physical_cards"]),
+                "same_codes":rec["normalized_codes_match_visible_dom"],
+                "qualified_count":sum(x["qualifies_physical"] for x in rec["original_source_physical_cards"]),
+                "source_card_qa_pass":rec["source_card_qa_pass"],
+                "holds":[x for x in rec["original_source_physical_cards"]
+                         if not x["qualifies_physical"]][:5]
+            },ensure_ascii=False),flush=True)
             if rec["source_card_qa_pass"]:
                 for pos in range(0, len(rec["original_source_physical_cards"]), 12):
                     print("SAE_MENACO_EXACT_SOURCE_CHUNK", json.dumps({
