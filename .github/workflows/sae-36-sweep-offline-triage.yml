@@ -1,0 +1,19 @@
+name: SAE source sweep offline triage
+on:
+  push:
+    branches: [sae-source-study-20261029]
+    paths: [tools/sae_36_sweep_offline_triage.py, .github/workflows/sae-36-sweep-offline-triage.yml]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: sae-36-existing-projects-source-sweep
+          run-id: 40909999199
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - run: python tools/sae_36_sweep_offline_triage.py
