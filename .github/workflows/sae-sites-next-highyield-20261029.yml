@@ -1,0 +1,81 @@
+name: SAE Phase 2 Official Interactive Site Discovery (source-only)
+on:
+  push:
+    branches: [experiment/sae-saraya-high-yield-20261029]
+    paths: [.github/workflows/sae-sites-next-highyield-20261029.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inspect-original-public-projects:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 16
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install 'playwright>=1.55,<2' 'scrapling[fetchers]>=0.5,<0.6'
+      - run: python -m playwright install --with-deps chromium
+      - name: Inspect exact existing project websites and app APIs, no writes
+        shell: bash
+        run: |
+          python - <<'PY'
+          import datetime,json,re,hashlib
+          from pathlib import Path
+          from playwright.sync_api import sync_playwright
+          sites=[
+            ('fursan_first','https://saraya-al-fursan.darwaemaar.com/'),
+            ('narjes_residence','https://al-narjes-residence.darwaemaar.com/'),
+            ('lazurd_official','https://darwaemaar.com/project/saraya-lazurd-2/'),
+            ('narjes_heights','https://darwaemaar.com/project/al-narjes-heights/'),
+            ('khuzam_official','https://tala-khuzam.darwaemaar.com/'),
+            ('narjis_official','https://darwaemaar.com/project/saraya-al-narjis/'),
+            ('buhairat_official','https://darwaemaar.com/project/saraya-al-buhairat/')]
+          Path('out').mkdir(exist_ok=True)
+          def shape(o,depth=0):
+            if isinstance(o,dict):return {'type':'object','keys':list(o)[:60],'sample':{k:shape(v,depth+1) for k,v in list(o.items())[:4]} if depth<2 else None}
+            if isinstance(o,list):return {'type':'array','count':len(o),'example':shape(o[0],depth+1) if o and depth<2 else None}
+            return {'type':type(o).__name__,'value':str(o)[:60]}
+          with sync_playwright() as pw:
+            b=pw.chromium.launch(headless=True,args=['--no-sandbox'])
+            for name,url in sites:
+              data={'schema':'SAE_PUBLIC_PROJECT_FIRSTPARTY_DISCOVERY_20261029_V2','name':name,'url':url,'observed_utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),'writes':0,'auth':False,'responses':[]}
+              page=b.new_page(locale='ar-SA',viewport={'width':1440,'height':900})
+              def handle(res):
+                try:
+                  if res.request.resource_type not in ('xhr','fetch') or len(data['responses'])>=130:return
+                  rec={'url':res.url[:400],'status':res.status,'type':res.request.resource_type,'content_type':res.headers.get('content-type','')[:100]}
+                  if res.status in (403,429):data.setdefault('access_control_stop',[]).append(rec);return
+                  if res.status==200 and ('json' in rec['content_type'] or re.search(r'(units|inventory|villas|plot|master|properties)',res.url,re.I)):
+                    body=res.body();rec.update({'size':len(body),'sha256':hashlib.sha256(body).hexdigest()})
+                    if len(body)<10_000_000 and 'json' in rec['content_type']:
+                      try:
+                        obj=json.loads(body);rec['shape']=shape(obj)
+                        if any(t in res.url.lower() for t in ('inventory','unit','villa','property','plot')) and len(body)<5_000_000:
+                          rec['original_public_json']=obj
+                      except Exception as e:rec['parse_error']=type(e).__name__
+                  data['responses'].append(rec)
+                except Exception as e:data.setdefault('callback_errors',[]).append(type(e).__name__)
+              page.on('response',handle)
+              try:
+                response=page.goto(url,wait_until='domcontentloaded',timeout=28000)
+                data['http']=response.status if response else None
+                page.wait_for_timeout(4800 if 'official' in name else 7200)
+                data['title']=page.title()
+                data['body_text']=page.locator('body').inner_text()[:1800]
+                data['links']=[{'text':a.inner_text()[:55],'href':a.get_attribute('href')} for a in page.locator('a').all()[:95]]
+                data['iframes']=[f.get_attribute('src') for f in page.locator('iframe').all()[:12]]
+              except Exception as e:data['page_error']=type(e).__name__+':'+str(e)[:200]
+              page.close()
+              Path('out/'+name+'.json').write_text(json.dumps(data,ensure_ascii=False,indent=2),encoding='utf8')
+              print('SAE_SITE_NEXT',name,json.dumps({'http':data.get('http'),'title':data.get('title'),'xhr':len(data['responses']),'inventory_endpoints':[{'url':r['url'],'keys':r.get('shape',{}).get('keys',[])} for r in data['responses'] if 'original_public_json' in r][:6],'error':data.get('page_error')},ensure_ascii=False),flush=True)
+            b.close()
+          PY
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sae-seven-existing-official-projects-discovery-20261029
+          path: out/*.json
