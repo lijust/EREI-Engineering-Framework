@@ -1,0 +1,403 @@
+{
+  "schema": "SAE_ALWATHEER_43_ORIGINAL_PUBLIC_SOURCE_CARDS_41_REAL_LAND_2_FACILITIES_20261030",
+  "captured_at_utc": "2026-10-29T22:41:22.514122+00:00",
+  "source_run": "https://github.com/lijust/EREI-Engineering-Framework/actions/runs/40967704755",
+  "canonical_existing_project_id": "PRJ-001017",
+  "publisher_original_project_id": "301871",
+  "source_id": "SRC-000114",
+  "original_project_url": "https://www.albaytalwathir.com/en/projects/301871",
+  "original_source_rows": 43,
+  "individual_land_parcels": 41,
+  "non_unit_common_facilities": 2,
+  "known_existing_seller_parcels": 14,
+  "unknown_requiring_source_detail": 27,
+  "records": [
+    {
+      "original_display_label": "قطعة رقم 1",
+      "original_property_url": "https://www.albaytalwathir.com/en/properties/51005?projectId=301871",
+      "original_property_id": "51005",
+      "original_unit_code": "1",
+      "classification": "INDIVIDUAL_LAND_PARCEL",
+      "already_in_canonical": true,
+      "source_initial_card_text": "قطعة رقم 1"
+    },
+    {
+      "original_display_label": "قطعة رقم 2",
+      "original_property_url": "https://www.albaytalwathir.com/en/properties/51007?projectId=301871",
+      "original_property_id": "51007",
+      "original_unit_code": "2",
+      "classification": "INDIVIDUAL_LAND_PARCEL",
+      "already_in_canonical": true,
+      "source_initial_card_text": "قطعة رقم 2"
+    },
+    {
+      "original_display_label": "قطعة رقم 3",
+      "original_property_url": "https://www.albaytalwathir.com/en/properties/51008?projectId=301871",
+      "original_property_id": "51008",
+      "original_unit_code": "3",
+      "classification": "INDIVIDUAL_LAND_PARCEL",
+      "already_in_canonical": true,
+      "source_initial_card_text": "قطعة رقم 3"
+    },
+    {
+      "original_display_label": "قطعة رقم 4",
+      "original_property_url": "https://www.albaytalwathir.com/en/properties/51016?projectId=301871",
+      "original_property_id": "51016",
+      "original_unit_code": "4",
+      "classification": "INDIVIDUAL_LAND_PARCEL",
+      "already_in_canonical": true,
+      "source_initial_card_text": "قطعة رقم 4"
+    },
+    {
+      "original_display_label": "قطعة رقم 5",
+      "original_property_url": "https://www.albaytalwathir.com/en/properties/51019?projectId=301871",
+      "original_property_id": "51019",
+      "original_unit_code": "5",
+      "classification": "INDIVIDUAL_LAND_PARCEL",
+      "already_in_canonical": true,
+      "source_initial_card_text": "قطعة رقم 5"
+    },
+    {
+      "original_display_label": "قطعة رقم 6",
+      "original_property_url": "https://www.albaytalwathir.com/en/properties/51020?projectId=301871",
+      "original_property_id": "51020",
+      "original_unit_code": "6",
+      "classification": "INDIVIDUAL_LAND_PARCEL",
+      "already_in_canonical": true,
+      "source_initial_card_text": "قطعة رقم 6"
+    },
+    {
+      "original_display_label": "قطعة رقم 7",
+      "original_property_url": "https://www.albaytalwathir.com/en/properties/51021?projectId=301871",
+      "original_property_id": "51021",
+      "original_unit_code": "7",
+      "classification": "INDIVIDUAL_LAND_PARCEL",
+      "already_in_canonical": true,
+      "source_initial_card_text": "قطعة رقم 7"
+    },
+    {
+      "original_display_label": "قطعة رقم 8",
+      "original_property_url": "https://www.albaytalwathir.com/en/properties/51022?projectId=301871",
+      "original_property_id": "51022",
+      "original_unit_code": "8",
+      "classification": "INDIVIDUAL_LAND_PARCEL",
+      "already_in_canonical": true,
+      "source_initial_card_text": "قطعة رقم 8"
+    },
+    {
+      "original_display_label": "قطعة رقم 9",
+      "original_property_url": "https://www.albaytalwathir.com/en/properties/51023?projectId=301871",
+      "original_property_id": "51023",
+      "original_unit_code": "9",
+      "classification": "INDIVIDUAL_LAND_PARCEL",
+      "already_in_canonical": true,
+      "source_initial_card_text": "قطعة رقم 9"
+    },
+    {
+      "original_display_label": "قطعة رقم 10",
+      "original_property_url": "https://www.albaytalwathir.com/en/properties/51024?projectId=301871",
+      "original_property_id": "51024",
+      "original_unit_code": "10",
+      "classification": "INDIVIDUAL_LAND_PARCEL",
+      "already_in_canonical": true,
+      "source_initial_card_text": "قطعة رقم 10"
+    },
+    {
+      "original_display_label": "قطعة رقم 11",
+      "original_property_url": "https://www.albaytalwathir.com/en/properties/51025?projectId=301871",
+      "original_property_id": "51025",
+      "original_unit_code": "11",
+      "classification": "INDIVIDUAL_LAND_PARCEL",
+      "already_in_canonical": true,
+      "source_initial_card_text": "قطعة رقم 11"
+    },
+    {
+      "original_display_label": "قطعة رقم 12",
+      "original_property_url": "https://www.albaytalwathir.com/en/properties/51026?projectId=301871",
+      "original_property_id": "51026",
+      "original_unit_code": "12",
+      "classification": "INDIVIDUAL_LAND_PARCEL",
+      "already_in_canonical": true,
+      "source_initial_card_text": "قطعة رقم 12"
+    },
+    {
+      "original_display_label": "قطعة رقم 13",
+      "original_property_url": "https://www.albaytalwathir.com/en/properties/51027?projectId=301871",
+      "original_property_id": "51027",
+      "original_unit_code": "13",
+      "classification": "INDIVIDUAL_LAND_PARCEL",
+      "already_in_canonical": false,
+      "source_initial_card_text": "قطعة رقم 13"
+    },
+    {
+      "original_display_label": "قطعة رقم 14",
+      "original_property_url": "https://www.albaytalwathir.com/en/properties/51028?projectId=301871",
+      "original_property_id": "51028",
+      "original_unit_code": "14",
+      "classification": "INDIVIDUAL_LAND_PARCEL",
+      "already_in_canonical": false,
+      "source_initial_card_text": "قطعة رقم 14"
+    },
+    {
+      "original_display_label": "قطعة رقم 15",
+      "original_property_url": "https://www.albaytalwathir.com/en/properties/51029?projectId=301871",
+      "original_property_id": "51029",
+      "original_unit_code": "15",
+      "classification": "INDIVIDUAL_LAND_PARCEL",
+      "already_in_canonical": false,
+      "source_initial_card_text": "قطعة رقم 15"
+    },
+    {
+      "original_display_label": "قطعة رقم 16",
+      "original_property_url": "https://www.albaytalwathir.com/en/properties/51057?projectId=301871",
+      "original_property_id": "51057",
+      "original_unit_code": "16",
+      "classification": "INDIVIDUAL_LAND_PARCEL",
+      "already_in_canonical": true,
+      "source_initial_card_text": "قطعة رقم 16"
+    },
+    {
+      "original_display_label": "قطعة رقم 17",
+      "original_property_url": "https://www.albaytalwathir.com/en/properties/51056?projectId=301871",
+      "original_property_id": "51056",
+      "original_unit_code": "17",
+      "classification": "INDIVIDUAL_LAND_PARCEL",
+      "already_in_canonical": false,
+      "source_initial_card_text": "قطعة رقم 17"
+    },
+    {
+      "original_display_label": "قطعة رقم 18",
+      "original_property_url": "https://www.albaytalwathir.com/en/properties/51058?projectId=301871",
+      "original_property_id": "51058",
+      "original_unit_code": "18",
+      "classification": "INDIVIDUAL_LAND_PARCEL",
+      "already_in_canonical": false,
+      "source_initial_card_text": "قطعة رقم 18"
+    },
+    {
+      "original_display_label": "قطعة رقم 19",
+      "original_property_url": "https://www.albaytalwathir.com/en/properties/51055?projectId=301871",
+      "original_property_id": "51055",
+      "original_unit_code": "19",
+      "classification": "INDIVIDUAL_LAND_PARCEL",
+      "already_in_canonical": false,
+      "source_initial_card_text": "قطعة رقم 19"
+    },
+    {
+      "original_display_label": "قطعة رقم 20",
+      "original_property_url": "https://www.albaytalwathir.com/en/properties/51059?projectId=301871",
+      "original_property_id": "51059",
+      "original_unit_code": "20",
+      "classification": "INDIVIDUAL_LAND_PARCEL",
+      "already_in_canonical": false,
+      "source_initial_card_text": "قطعة رقم 20"
+    },
+    {
+      "original_display_label": "قطعة رقم 21",
+      "original_property_url": "https://www.albaytalwathir.com/en/properties/51030?projectId=301871",
+      "original_property_id": "51030",
+      "original_unit_code": "21",
+      "classification": "INDIVIDUAL_LAND_PARCEL",
+      "already_in_canonical": false,
+      "source_initial_card_text": "قطعة رقم 21"
+    },
+    {
+      "original_display_label": "قطعة رقم 22",
+      "original_property_url": "https://www.albaytalwathir.com/en/properties/51031?projectId=301871",
+      "original_property_id": "51031",
+      "original_unit_code": "22",
+      "classification": "INDIVIDUAL_LAND_PARCEL",
+      "already_in_canonical": false,
+      "source_initial_card_text": "قطعة رقم 22"
+    },
+    {
+      "original_display_label": "قطعة رقم 23",
+      "original_property_url": "https://www.albaytalwathir.com/en/properties/51052?projectId=301871",
+      "original_property_id": "51052",
+      "original_unit_code": "23",
+      "classification": "INDIVIDUAL_LAND_PARCEL",
+      "already_in_canonical": false,
+      "source_initial_card_text": "قطعة رقم 23"
+    },
+    {
+      "original_display_label": "مسجد",
+      "original_property_url": "https://www.albaytalwathir.com/en/properties/51053?projectId=301871",
+      "original_property_id": "51053",
+      "original_unit_code": null,
+      "classification": "NON_RESIDENTIAL_COMMON_FACILITY_EXCLUDE",
+      "already_in_canonical": false,
+      "source_initial_card_text": "مسجد"
+    },
+    {
+      "original_display_label": "قطعة رقم 25",
+      "original_property_url": "https://www.albaytalwathir.com/en/properties/51051?projectId=301871",
+      "original_property_id": "51051",
+      "original_unit_code": "25",
+      "classification": "INDIVIDUAL_LAND_PARCEL",
+      "already_in_canonical": false,
+      "source_initial_card_text": "قطعة رقم 25"
+    },
+    {
+      "original_display_label": "قطعة رقم 27",
+      "original_property_url": "https://www.albaytalwathir.com/en/properties/51050?projectId=301871",
+      "original_property_id": "51050",
+      "original_unit_code": "27",
+      "classification": "INDIVIDUAL_LAND_PARCEL",
+      "already_in_canonical": false,
+      "source_initial_card_text": "قطعة رقم 27"
+    },
+    {
+      "original_display_label": "قطعة رقم 28",
+      "original_property_url": "https://www.albaytalwathir.com/en/properties/51043?projectId=301871",
+      "original_property_id": "51043",
+      "original_unit_code": "28",
+      "classification": "INDIVIDUAL_LAND_PARCEL",
+      "already_in_canonical": false,
+      "source_initial_card_text": "قطعة رقم 28"
+    },
+    {
+      "original_display_label": "قطعة رقم 29",
+      "original_property_url": "https://www.albaytalwathir.com/en/properties/51042?projectId=301871",
+      "original_property_id": "51042",
+      "original_unit_code": "29",
+      "classification": "INDIVIDUAL_LAND_PARCEL",
+      "already_in_canonical": false,
+      "source_initial_card_text": "قطعة رقم 29"
+    },
+    {
+      "original_display_label": "قطعة رقم 30",
+      "original_property_url": "https://www.albaytalwathir.com/en/properties/51044?projectId=301871",
+      "original_property_id": "51044",
+      "original_unit_code": "30",
+      "classification": "INDIVIDUAL_LAND_PARCEL",
+      "already_in_canonical": false,
+      "source_initial_card_text": "قطعة رقم 30"
+    },
+    {
+      "original_display_label": "قطعة رقم 31",
+      "original_property_url": "https://www.albaytalwathir.com/en/properties/51041?projectId=301871",
+      "original_property_id": "51041",
+      "original_unit_code": "31",
+      "classification": "INDIVIDUAL_LAND_PARCEL",
+      "already_in_canonical": false,
+      "source_initial_card_text": "قطعة رقم 31"
+    },
+    {
+      "original_display_label": "قطعة رقم 32",
+      "original_property_url": "https://www.albaytalwathir.com/en/properties/51045?projectId=301871",
+      "original_property_id": "51045",
+      "original_unit_code": "32",
+      "classification": "INDIVIDUAL_LAND_PARCEL",
+      "already_in_canonical": false,
+      "source_initial_card_text": "قطعة رقم 32"
+    },
+    {
+      "original_display_label": "قطعة رقم 33",
+      "original_property_url": "https://www.albaytalwathir.com/en/properties/51040?projectId=301871",
+      "original_property_id": "51040",
+      "original_unit_code": "33",
+      "classification": "INDIVIDUAL_LAND_PARCEL",
+      "already_in_canonical": false,
+      "source_initial_card_text": "قطعة رقم 33"
+    },
+    {
+      "original_display_label": "قطعة رقم 34",
+      "original_property_url": "https://www.albaytalwathir.com/en/properties/51046?projectId=301871",
+      "original_property_id": "51046",
+      "original_unit_code": "34",
+      "classification": "INDIVIDUAL_LAND_PARCEL",
+      "already_in_canonical": false,
+      "source_initial_card_text": "قطعة رقم 34"
+    },
+    {
+      "original_display_label": "قطعة رقم 35",
+      "original_property_url": "https://www.albaytalwathir.com/en/properties/51039?projectId=301871",
+      "original_property_id": "51039",
+      "original_unit_code": "35",
+      "classification": "INDIVIDUAL_LAND_PARCEL",
+      "already_in_canonical": false,
+      "source_initial_card_text": "قطعة رقم 35"
+    },
+    {
+      "original_display_label": "قطعة رقم 36",
+      "original_property_url": "https://www.albaytalwathir.com/en/properties/51047?projectId=301871",
+      "original_property_id": "51047",
+      "original_unit_code": "36",
+      "classification": "INDIVIDUAL_LAND_PARCEL",
+      "already_in_canonical": false,
+      "source_initial_card_text": "قطعة رقم 36"
+    },
+    {
+      "original_display_label": "قطعة رقم 37",
+      "original_property_url": "https://www.albaytalwathir.com/en/properties/51038?projectId=301871",
+      "original_property_id": "51038",
+      "original_unit_code": "37",
+      "classification": "INDIVIDUAL_LAND_PARCEL",
+      "already_in_canonical": false,
+      "source_initial_card_text": "قطعة رقم 37"
+    },
+    {
+      "original_display_label": "قطعة رقم 38",
+      "original_property_url": "https://www.albaytalwathir.com/en/properties/51048?projectId=301871",
+      "original_property_id": "51048",
+      "original_unit_code": "38",
+      "classification": "INDIVIDUAL_LAND_PARCEL",
+      "already_in_canonical": false,
+      "source_initial_card_text": "قطعة رقم 38"
+    },
+    {
+      "original_display_label": "قطعة رقم 39",
+      "original_property_url": "https://www.albaytalwathir.com/en/properties/51037?projectId=301871",
+      "original_property_id": "51037",
+      "original_unit_code": "39",
+      "classification": "INDIVIDUAL_LAND_PARCEL",
+      "already_in_canonical": false,
+      "source_initial_card_text": "قطعة رقم 39"
+    },
+    {
+      "original_display_label": "قطعة رقم 40",
+      "original_property_url": "https://www.albaytalwathir.com/en/properties/51035?projectId=301871",
+      "original_property_id": "51035",
+      "original_unit_code": "40",
+      "classification": "INDIVIDUAL_LAND_PARCEL",
+      "already_in_canonical": false,
+      "source_initial_card_text": "قطعة رقم 40"
+    },
+    {
+      "original_display_label": "قطعة رقم 41",
+      "original_property_url": "https://www.albaytalwathir.com/en/properties/51036?projectId=301871",
+      "original_property_id": "51036",
+      "original_unit_code": "41",
+      "classification": "INDIVIDUAL_LAND_PARCEL",
+      "already_in_canonical": false,
+      "source_initial_card_text": "قطعة رقم 41"
+    },
+    {
+      "original_display_label": "قطعة رقم 42",
+      "original_property_url": "https://www.albaytalwathir.com/en/properties/51032?projectId=301871",
+      "original_property_id": "51032",
+      "original_unit_code": "42",
+      "classification": "INDIVIDUAL_LAND_PARCEL",
+      "already_in_canonical": true,
+      "source_initial_card_text": "قطعة رقم 42"
+    },
+    {
+      "original_display_label": "قطعة رقم 43",
+      "original_property_url": "https://www.albaytalwathir.com/en/properties/51034?projectId=301871",
+      "original_property_id": "51034",
+      "original_unit_code": "43",
+      "classification": "INDIVIDUAL_LAND_PARCEL",
+      "already_in_canonical": false,
+      "source_initial_card_text": "قطعة رقم 43"
+    },
+    {
+      "original_display_label": "حديقة",
+      "original_property_url": "https://www.albaytalwathir.com/en/properties/51049?projectId=301871",
+      "original_property_id": "51049",
+      "original_unit_code": null,
+      "classification": "NON_RESIDENTIAL_COMMON_FACILITY_EXCLUDE",
+      "already_in_canonical": false,
+      "source_initial_card_text": "حديقة"
+    }
+  ]
+}
