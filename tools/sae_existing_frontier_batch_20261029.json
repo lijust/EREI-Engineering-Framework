@@ -1,7 +1,7 @@
 {
   "schema": "SAE_DB_EXISTING_PROJECTS_SOURCE_DEEP_DISCOVERY_MANIFEST_20261029_V1",
   "scope": "EXISTING_ONLY_READONLY",
-  "target_count": 14,
+  "target_count": 11,
   "priority": "UNPROVEN_SOURCE_IDENTITIES_ONLY; source itemized row identity must be independently verified before canonical writes",
   "projects": [
     {
@@ -65,28 +65,15 @@
       "existing_canonical": true
     },
     {
-      "project_id": "PRJ-000825",
-      "url": "https://wakan.sa/EstateProjects",
-      "note": "Wakan 045 card class under construction",
-      "existing_canonical": true
-    },
-    {
       "project_id": "PRJ-001214",
       "url": "https://koohejidevelopment.sa/community/lavira/",
       "note": "Lavira 101 original verified other publication candidates",
       "existing_canonical": true
-    },
-    {
-      "project_id": "PRJ-001127",
-      "url": "https://rafah.sa/projects/56/",
-      "note": "Rafah 56 reconciliation source refresh",
-      "existing_canonical": true
-    },
-    {
-      "project_id": "PRJ-001075",
-      "url": "https://www.alolayanholding.sa/projects/301568",
-      "note": "Nuzul page 2 source fully extracted, control",
-      "existing_canonical": true
     }
+  ],
+  "excluded_exhausted_sources": [
+    "PRJ-001127",
+    "PRJ-001075",
+    "PRJ-000825"
   ]
 }
