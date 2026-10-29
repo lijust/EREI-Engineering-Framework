@@ -1,0 +1,19 @@
+name: SAE Retal Verse Original Source Access Offline Diagnosis
+on:
+  push:
+    branches: [sae-source-study-20261029]
+    paths: [.github/workflows/sae-retal-verse-offline-access.yml]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: sae-retal-verse-nesaj-lazurd-original-public-drill
+          run-id: 40922523460
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - run: python -c 'import json; o=json.load(open("sae-retal-verse-nesaj-lazurd-drilldown.json")); print("SOURCE_ACCESS_RESULT",json.dumps({k:v for k,v in o.items() if k not in ("xhr","errors")}))'
