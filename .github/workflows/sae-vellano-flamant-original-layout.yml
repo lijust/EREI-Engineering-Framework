@@ -1,0 +1,27 @@
+name: SAE Kooheji Vellano Flamant Original Brochures Siteplan Numbered Probe
+on:
+  push:
+    branches: [sae-source-study-20261029]
+    paths:
+      - tools/sae_kooheji_vellano_flamant_original_pdf.py
+      - .github/workflows/sae-vellano-flamant-original-layout.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  pdf-probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install pymupdf==1.26.4
+      - run: python tools/sae_kooheji_vellano_flamant_original_pdf.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sae-vellano-flamant-native-brochure-plot-tokens
+          path: sae-vellano-flamant-official-pdf-token-study.json
+          retention-days: 7
