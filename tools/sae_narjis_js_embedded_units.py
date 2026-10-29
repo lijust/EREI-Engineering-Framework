@@ -77,6 +77,11 @@ except Exception as e:
     out["status"]="STOP_NO_SOURCE_PROMOTION"
     out["error"]=str(e)[:280]
 Path("sae-narjis-original-js-coded-units.json").write_text(json.dumps(out,ensure_ascii=False,indent=2))
+if out["status"]=="SOURCE_ONLY_EXACT_JS_RECORDS_FOR_CANONICAL_PROJECT_AND_DUPLICATE_QA":
+    # Original public unit metadata only, no private Sheet content or personal data.
+    for i in range(0,len(out["records"]),100):
+        print("SAE_NARJIS_ORIGINAL_RECORDS_CHUNK_"+str(i//100).zfill(3)+"="+
+              json.dumps(out["records"][i:i+100],ensure_ascii=False,separators=(",",":")))
 print(json.dumps({k:out.get(k) for k in (
     "status","source_sha256","landNumber_field_mentions","source_pattern_matches",
     "unit_count_total","distinct_exact_original_unit_codes",
