@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """SAE public first-party Fursan PDF siteplan discovery. No DB writes."""
-import io,json,hashlib,re,urllib.request,urllib.robotparser
+import io,json,hashlib,re,urllib.request,urllib.robotparser,urllib.parse
 from datetime import datetime,timezone
 from pathlib import Path
 from PIL import Image,ImageDraw
@@ -19,7 +19,7 @@ out={"schema":"SAE_FIRSTPARTY_ARGAN_TWO_OFFICIAL_BROCHURES_READ_ONLY",
      "captured_at_utc":datetime.now(timezone.utc).isoformat(),"source_only":True,
      "sheets_writes":0,"brochures":[]}
 def allow(url):
-    p=urllib.request.urlsplit(url)
+    p=urllib.parse.urlsplit(url)
     request=urllib.request.Request("https://"+p.hostname+"/robots.txt",headers={"User-Agent":UA})
     with urllib.request.urlopen(request,timeout=20) as r:
         if r.status!=200:return False,"ROBOTS_HTTP_"+str(r.status)
