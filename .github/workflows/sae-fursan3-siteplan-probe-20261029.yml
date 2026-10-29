@@ -1,0 +1,75 @@
+name: SAE Fursan 3 Siteplan Discovery (source-only)
+on:
+  push:
+    branches:
+      - experiment/sae-saraya-high-yield-20261029
+    paths:
+      - .github/workflows/sae-fursan3-siteplan-probe-20261029.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  check-original-siteplans:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install 'pymupdf>=1.24,<1.28' requests 'scrapling[fetchers]>=0.5,<0.6'
+      - name: Scan only Fursan-3 original two brochures (no production write)
+        shell: bash
+        run: |
+          python - <<'PY'
+          import requests,fitz,json,re,datetime,hashlib
+          from pathlib import Path
+          from scrapling.fetchers import Fetcher
+          link='https://darwaemaar.com/project/al-fursan-3/'
+          PDFs=[
+            'https://darwaemaar.com/wp-content/uploads/2026/04/Al-Fursan-Communities-Brochure-1.pdf',
+            'https://darwaemaar.com/wp-content/uploads/2026/01/Al-Fursan-Communities-Brochure-11.pdf']
+          out={'schema':'SAE_FURSAN3_PUBLIC_ORIGINAL_PDF_SPATIAL_DISCOVERY_V1','date':'2026-10-29',
+               'project_name':'Saraya Al Fursan 3','original_project':link,'publisher_total':1718,
+               'no_private_master_metadata':True,'production_writes':0,'pdfs':[]}
+          try:
+            x=Fetcher.get(link,retries=0,timeout=25)
+            out['site_http_status']=getattr(x,'status',None)
+          except Exception as e:out['site_error']=str(e)[:120]
+          s=requests.Session()
+          s.headers['User-Agent']='Mozilla/5.0 (compatible; PublicPDFresearch/1.0)'
+          for url in PDFs:
+            rec={'url':url}
+            try:
+              resp=s.get(url,timeout=65)
+              if resp.status_code in (403,429):raise RuntimeError('STOP_'+str(resp.status_code))
+              resp.raise_for_status()
+              if len(resp.content)>65_000_000 or not resp.content.startswith(b'%PDF-'):raise RuntimeError('UNQUALIFIED_FILE')
+              doc=fitz.open(stream=resp.content,filetype='pdf')
+              rec.update(status='SOURCE_READ',sha256=hashlib.sha256(resp.content).hexdigest(),size=len(resp.content),pages=len(doc))
+              scores=[]
+              for i,p in enumerate(doc):
+                digs=[]; groups=[]
+                for x0,y0,x1,y1,w,*_ in p.get_text('words'):
+                  w=w.strip('()[],. ').translate(str.maketrans('٠١٢٣٤٥٦٧٨٩','0123456789'))
+                  if re.fullmatch(r'[0-9]{1,3}-[0-9]{1,3}',w):groups.append([w,round((x0+x1)/2),round((y0+y1)/2)])
+                  elif re.fullmatch(r'[0-9]{1,4}',w):digs.append([w,round((x0+x1)/2),round((y0+y1)/2)])
+                scores.append({'page':i,'count':len(digs),'group_count':len(groups),'score':len(digs)+len(groups)*2,'numbers':digs,'group_labels':groups})
+              scores.sort(key=lambda p:p['score'],reverse=True)
+              rec['top_pages']=scores[:5]
+              rec['page_summary']=[{k:v for k,v in p.items() if k not in ('numbers','group_labels')} for p in scores]
+              print('FURSAN3_PROBE',json.dumps({'source':url,'pdf_pages':len(doc),'top_pages':[(p['page'],p['count'],p['group_count']) for p in scores[:5]]}),flush=True)
+            except Exception as e:
+              rec.update(status='STOP_UNVERIFIED',error=type(e).__name__+': '+str(e)[:150])
+              print('FURSAN3_PROBE',json.dumps({'source':url,'status':rec['status'],'error':rec['error']}),flush=True)
+            out['pdfs'].append(rec)
+          Path('out').mkdir(exist_ok=True)
+          Path('out/fursan3_probes.json').write_text(json.dumps(out,ensure_ascii=False),encoding='utf8')
+          PY
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sae-fursan3-pdf-page-spatial-probe-20261029
+          path: out/fursan3_probes.json
