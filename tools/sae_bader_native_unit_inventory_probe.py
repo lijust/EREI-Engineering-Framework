@@ -103,7 +103,7 @@ async def main():
         print("SAE_BADER_SOURCE", json.dumps({"status": result["status"], "master_writes": 0}), flush=True)
         return
     except Exception as e:
-        result["status"] = "ROBOTS_UNVERIFIED_" + type(e).__name__
+        result["status"] = ("ROBOTS_HTTP_" + str(getattr(e, "code", "UNVERIFIED")) if hasattr(e, "code") else "ROBOTS_UNVERIFIED_" + type(e).__name__)
         save()
         print("SAE_BADER_SOURCE", json.dumps({"status": result["status"], "master_writes": 0}), flush=True)
         return
