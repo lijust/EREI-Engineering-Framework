@@ -141,7 +141,6 @@ async def run(manifest, outfile, *, delay=2.5):
     info={"schema":"SAE_EXISTING_MULTISOURCE_ITEMIZED_DEEP_STUDY_V1",
           "observed_at_utc":datetime.now(timezone.utc).isoformat(),
           "scope":"EXISTING_ONLY", "canonical_writes":0,"sources":[],"stop":None}
-    robots_cache={}
     blocked_hosts=set()
     async with async_playwright() as p:
         browser=await p.chromium.launch(headless=True)
@@ -154,10 +153,13 @@ async def run(manifest, outfile, *, delay=2.5):
             if h in blocked_hosts:
                 rec["state"]="ORIGIN_BLOCKED_PREVIOUS"
                 save(outfile,info);continue
-            if h not in robots_cache:
-                robots_cache[h]=await asyncio.to_thread(check_robots,source["url"])
-            allowed,rs=robots_cache[h]
+            allowed,rs=await asyncio.to_thread(check_robots,source["url"])
             rec["robots"]=rs
+            if rs == "ROBOTS_HTTP_429":
+                rec["state"]="HTTP_429_GLOBAL_STOP"
+                info["stop"]="HTTP_429"
+                save(outfile, info)
+                break
             if not allowed:
                 rec["state"]="ACCESS_NOT_VERIFIED_OR_DISALLOWED"
                 blocked_hosts.add(h)
@@ -168,7 +170,7 @@ async def run(manifest, outfile, *, delay=2.5):
             seen=set()
             async def inspect_response(r):
                 target=urlsplit(r.url)
-                rh=host(r.url) if target.scheme=="https" and target.hostname else ""
+                rh=(target.hostname or "").lower().removeprefix("www.") if target.scheme=="https" else ""
                 if rh!=h:return
                 if r.status in STOP_CODES:
                     stop_event.set()
