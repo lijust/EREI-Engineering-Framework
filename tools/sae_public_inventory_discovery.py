@@ -120,6 +120,6 @@ async def main():
 
 if __name__=="__main__":
     assert unit_arrays({"marketing_units":1064,"models":[{"count":556}]})==[]
-    assert unit_arrays({"inventory":[{"unitCode":str(i)} for i in range(30)]})[0]["count"]==30
+    assert unit_arrays({"inventory":[{"unitCode":str(i+1)} for i in range(30)]})[0]["count"]==30
     assert unit_arrays({"inventory":[{"unitCode":"A"} for _ in range(30)]})==[]
     asyncio.run(main())
