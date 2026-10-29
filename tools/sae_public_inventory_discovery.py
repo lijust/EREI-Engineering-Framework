@@ -47,7 +47,16 @@ def unit_arrays(obj):
                 for key in CODE_FIELDS:
                     vals=[str(r.get(key,"")).strip() for r in item]
                     if all(v and v.lower() not in ("null","none","0") for v in vals) and len(set(vals))==len(vals):
-                        found.append({"count":len(item),"field":key,"sample":vals[:8]})
+                        found.append({"count":len(item),"field":key,"sample":vals[:8],
+                                      "public_unit_fields_only":[
+                                        {k:v for k,v in row.items()
+                                         if k in ("unitCode","unit_code","unitNumber","landNumber",
+                                                  "villaNumber","plotNumber","building","buildingNo",
+                                                  "block","floor","area","area_sqm","price",
+                                                  "price_sar","status","available","real_available",
+                                                  "bedrooms","bathrooms","model","type")
+                                         and isinstance(v,(str,int,float,bool,type(None)))}
+                                        for row in item]})
             queue.extend(item[:15])
     return sorted(found,key=lambda x:x["count"],reverse=True)[:3]
 
@@ -79,7 +88,7 @@ async def probe(seed,browser):
                 info["arrays"]=unit_arrays(blob)
                 if info["arrays"] and len(report.setdefault("candidate_original_records",[]))<8:
                     # Keep original fields only for discovered real unique coded inventories.
-                    report["candidate_original_records"].append({"source":r.url,"body":blob})
+                    report["candidate_original_records"].append({"source":r.url,"unit_arrays":info["arrays"]})
             except Exception:pass
             report["network"].append(info)
         except Exception as e:
