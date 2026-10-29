@@ -1,0 +1,80 @@
+name: SAE Multi Site Official Inventory Discovery (source-only)
+on:
+  push:
+    branches: [experiment/sae-saraya-high-yield-20261029]
+    paths:
+      - .github/workflows/sae-multisite-interactive-inventory-probe-20261029.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inspect-original-public-project-apps:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install 'playwright>=1.55,<2' 'scrapling[fetchers]>=0.5,<0.6'
+      - run: python -m playwright install --with-deps chromium
+      - name: Inspect six public existing project websites in one browser session
+        shell: bash
+        run: |
+          python - <<'PY'
+          import datetime, json, re, hashlib
+          from pathlib import Path
+          from playwright.sync_api import sync_playwright
+          targets=[
+            ('tala_khuzam','https://tala-khuzam.darwaemaar.com/'),
+            ('saraya_bahar','https://saraya-al-bahar.darwaemaar.com/'),
+            ('tala_seef','https://tala.darwaemaar.com/'),
+            ('saraya_ruba','https://saraya-al-ruba.darwaemaar.com/'),
+            ('saraya_sharq','https://saraya-al-sharq.darwaemaar.com/'),
+            ('saraya_buhairat','https://saraya-albuhairat.darwaemaar.com/')]
+          Path('out').mkdir(exist_ok=True)
+          def describe(o,depth=0):
+            if isinstance(o,dict): return {'type':'object','keys':list(o)[:70],'sample':{k:describe(v,depth+1) for k,v in list(o.items())[:5]} if depth<2 else None}
+            if isinstance(o,list):return {'type':'array','count':len(o),'example':describe(o[0],depth+1) if o and depth<2 else None}
+            return {'type':type(o).__name__,'value':str(o)[:60]}
+          with sync_playwright() as pw:
+            browser=pw.chromium.launch(headless=True,args=['--no-sandbox'])
+            for name,url in targets:
+              data={'schema':'SAE_PUBLIC_SITE_XHR_SOURCE_ONLY_20261029','name':name,'url':url,'utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),'master_writes':0,'auth_used':False,'responses':[]}
+              page=browser.new_page(locale='ar-SA',viewport={'width':1440,'height':900})
+              def handle(res):
+                try:
+                  if res.request.resource_type not in ('xhr','fetch') or len(data['responses'])>180:return
+                  if res.status in (403,429):data.setdefault('access_control_stop',[]).append({'status':res.status,'url':res.url[:240]});return
+                  rec={'url':res.url[:360],'status':res.status,'content_type':res.headers.get('content-type','')[:80]}
+                  if res.status==200 and ('json' in rec['content_type'] or re.search(r'(units|inventory|villa|plot|master|property)',res.url,re.I)):
+                    body=res.body()
+                    rec.update({'bytes':len(body),'sha256':hashlib.sha256(body).hexdigest()})
+                    if len(body)<8_000_000 and 'json' in rec['content_type']:
+                      try:
+                        ob=json.loads(body);rec['shape']=describe(ob)
+                        if any(z in res.url.lower() for z in ('unit','inventory','villa','plot','property','map')) and len(body)<2_000_000:rec['original_public_json']=ob
+                      except Exception as e:rec['error']=type(e).__name__
+                  data['responses'].append(rec)
+                except Exception as e:data.setdefault('callback_errors',[]).append(type(e).__name__)
+              page.on('response',handle)
+              try:
+                response=page.goto(url,wait_until='domcontentloaded',timeout=28000)
+                data['http']=response.status if response else None
+                page.wait_for_timeout(6500)
+                data['title']=page.title()
+                data['body_preview']=page.locator('body').inner_text()[:1500]
+                data['links']=[{'text':a.inner_text()[:55],'href':a.get_attribute('href')} for a in page.locator('a').all()[:45]]
+              except Exception as e:data['page_error']=type(e).__name__+':'+str(e)[:250]
+              page.close()
+              Path('out/'+name+'.json').write_text(json.dumps(data,ensure_ascii=False,indent=2),encoding='utf8')
+              print('SAE_SITE',name,json.dumps({'http':data.get('http'),'title':data.get('title'),'xhr':len(data['responses']),'candidate_json':[{'url':r['url'],'shape':r.get('shape',{}).get('keys',[])} for r in data['responses'] if 'original_public_json' in r][:8],'error':data.get('page_error')},ensure_ascii=False),flush=True)
+            browser.close()
+          PY
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sae-six-original-firstparty-interactive-site-discovery-20261029
+          path: out/*.json
