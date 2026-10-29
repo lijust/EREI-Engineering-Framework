@@ -13,7 +13,8 @@ from pathlib import Path
 from urllib.parse import urljoin, urlsplit, urlunsplit
 from urllib.robotparser import RobotFileParser
 
-from scrapling.fetchers import Fetcher, DynamicFetcher
+from scrapling.fetchers import Fetcher
+from playwright.sync_api import sync_playwright
 
 UA = "SAE-Site-Intelligence-Research/1.0"
 SITES = [
@@ -103,63 +104,76 @@ def classify_json(data):
     return found[:45]
 
 def get_browser(site, record):
-    """DynamicFetcher uses standard Playwright. No stealth or bypass."""
-    action_data = {}
-    def inspect(page):
-        action_data["url_after_load"] = cleaned(page.url)
-        action_data["buttons"] = [x.strip()[:100] for x in page.locator("button").all_inner_texts() if x.strip()][:35]
-        action_data["select_count"] = page.locator("select").count()
-        action_data["table_rows"] = page.locator("table tbody tr").count()
-        action_data["data_unit_nodes"] = page.locator("[data-unit-id], [data-unit-number], [data-unit-code]").count()
-        action_data["unit_links"] = []
-        for a in page.locator("a[href]").all():
-            h = a.get_attribute("href") or ""
-            if re.search(r"(unit|apartment|property|villa|available|availability|inventory)", h, re.I):
-                action_data["unit_links"].append({"url": cleaned(urljoin(page.url, h)), "text": a.inner_text()[:90]})
-                if len(action_data["unit_links"]) >= 45:
-                    break
-        body = " ".join(page.locator("body").inner_text(timeout=10000).split())
-        action_data["visible_text_head"] = body[:1700]
-        # Read-only click ONLY if a clear availability control, not nested in a form.
-        if site["key"]=="rafal-marvela":
-            btn = page.get_by_role("button", name=re.compile(r"View Units Availability",re.I))
-            if btn.count()==1 and btn.locator("xpath=ancestor::form").count()==0:
-                btn.click(timeout=9000)
-                page.wait_for_timeout(2200)
-                action_data["availability_button_clicked"] = True
-                action_data["url_after_availability"] = cleaned(page.url)
-                action_data["after_click_tables"] = page.locator("table tbody tr").count()
-                action_data["after_click_text_head"] = " ".join(page.locator("body").inner_text(timeout=10000).split())[:1800]
-    response = DynamicFetcher.fetch(site["url"], retries=0, timeout=50000,
-                                    capture_xhr=r".+", page_action=inspect,
-                                    network_idle=False, headless=True, disable_resources=True)
-    if int(response.status)==429:
-        raise RuntimeError("GLOBAL_STOP_429")
-    record["browser"] = {"http": int(response.status), "details": action_data, "xhr": []}
-    for x in getattr(response, "captured_xhr", []):
-        if int(x.status)==429:
-            raise RuntimeError("GLOBAL_STOP_429")
-        url = urlsplit(str(x.url))
-        if url.scheme not in ("http", "https"):
-            continue
-        if int(x.status)!=200:
-            record["browser"]["xhr"].append({"url":cleaned(x.url), "http":int(x.status)})
-            continue
-        raw = x.body
-        if not isinstance(raw, bytes) or not 0<len(raw)<3_000_000:
-            continue
+    """Standard Playwright for JS rendering; Scrapling provides HTTP+source layer."""
+    actions = {}
+    events = []
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch(headless=True)
         try:
-            item = json.loads(raw)
-        except (ValueError, UnicodeDecodeError):
-            continue
-        shape = classify_json(item)
-        if shape:
-            record["browser"]["xhr"].append({"url":cleaned(x.url), "http":200,
-                 "firstparty":url.hostname in ("www.rafal.com.sa","rafal.com.sa","koohejidevelopment.sa","darco.com.sa"),
-                 "shape":shape[:12]})
-    record["browser"]["xhr"] = record["browser"]["xhr"][:120]
-    record["browser"]["xhr_matching_item_fields_count"] = len(
-        [x for x in record["browser"]["xhr"] if x.get("shape")])
+            context = browser.new_context()
+            page = context.new_page()
+            def on_response(res):
+                if len(events) >= 250:
+                    return
+                events.append(res)
+            page.on("response", on_response)
+            navigation = page.goto(site["url"], wait_until="domcontentloaded", timeout=45000)
+            if navigation is not None and navigation.status == 429:
+                raise RuntimeError("GLOBAL_STOP_429")
+            page.wait_for_timeout(2200)
+            actions["url_after_load"]=cleaned(page.url)
+            actions["buttons"]=[x.strip()[:100] for x in page.locator("button").all_inner_texts() if x.strip()][:35]
+            actions["select_count"]=page.locator("select").count()
+            actions["table_rows"]=page.locator("table tbody tr").count()
+            actions["data_unit_nodes"]=page.locator("[data-unit-id], [data-unit-number], [data-unit-code]").count()
+            actions["unit_links"]=[]
+            for a in page.locator("a[href]").all()[:1500]:
+                h=a.get_attribute("href") or ""
+                if re.search(r"(unit|apartment|property|villa|available|availability|inventory)",h,re.I):
+                    actions["unit_links"].append({"url":cleaned(urljoin(page.url,h)), "text":a.inner_text()[:90]})
+                    if len(actions["unit_links"])>=45:break
+            actions["visible_text_head"]=" ".join(page.locator("body").inner_text(timeout=10000).split())[:1700]
+            # Safe exploration of existing public availability UI: no form submit.
+            if site["key"]=="rafal-marvela":
+                button=page.get_by_role("button",name=re.compile(r"View Units Availability",re.I))
+                if button.count()==1 and button.locator("xpath=ancestor::form").count()==0:
+                    button.click(timeout=9000)
+                    page.wait_for_timeout(2200)
+                    actions["availability_button_clicked"]=True
+                    actions["url_after_availability"]=cleaned(page.url)
+                    actions["after_click_tables"]=page.locator("table tbody tr").count()
+                    actions["after_click_text_head"]=" ".join(page.locator("body").inner_text(timeout=10000).split())[:1800]
+            record["browser"]={"http":navigation.status if navigation else None, "details":actions,"xhr":[]}
+            for res in events:
+                if res.status==429:
+                    raise RuntimeError("GLOBAL_STOP_429")
+                typ=res.request.resource_type
+                if typ not in ("xhr","fetch"):
+                    continue
+                if len(record["browser"]["xhr"])>=120:
+                    break
+                if res.status!=200:
+                    record["browser"]["xhr"].append({"url":cleaned(res.url),"http":res.status})
+                    continue
+                try:
+                    raw=res.body()
+                except Exception:
+                    continue
+                if not isinstance(raw,bytes) or not 0<len(raw)<3_000_000:
+                    continue
+                try:
+                    obj=json.loads(raw)
+                except (ValueError,UnicodeDecodeError):
+                    continue
+                shapes=classify_json(obj)
+                if shapes:
+                    record["browser"]["xhr"].append({"url":cleaned(res.url),"http":res.status,
+                         "firstparty": urlsplit(res.url).hostname in ("www.rafal.com.sa","rafal.com.sa","koohejidevelopment.sa","darco.com.sa"),
+                         "shape":shapes[:12]})
+            record["browser"]["xhr_matching_item_fields_count"]=len(
+                [x for x in record["browser"]["xhr"] if x.get("shape")])
+        finally:
+            browser.close()
 
 try:
     for site in SITES:
