@@ -1,0 +1,86 @@
+name: SAE Fursan 3 Interactive Project Map Network Probe (source-only)
+on:
+  push:
+    branches:
+      - experiment/sae-saraya-high-yield-20261029
+    paths:
+      - .github/workflows/sae-fursan3-interactive-probe-20261029.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inspect-public-map:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install 'playwright>=1.55,<2' 'scrapling[fetchers]>=0.5,<0.6'
+      - run: python -m playwright install --with-deps chromium
+      - name: Observe public map firstparty XHR and client JSON without authentication
+        shell: bash
+        run: |
+          python - <<'PY'
+          import datetime,json,re,hashlib
+          from pathlib import Path
+          from urllib.parse import urlparse
+          from playwright.sync_api import sync_playwright
+          url='https://saraya-al-fursan3.darwaemaar.com/?lang=ara'
+          data={'schema':'SAE_FURSAN3_OFFICIAL_PUBLIC_INTERACTIVE_CLIENT_NETWORK_OBSERVATION','utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),'url':url,'master_writes':0,'auth_used':False,'responses':[]}
+          def check(res):
+            try:
+              req=res.request
+              typ=req.resource_type
+              u=res.url
+              if typ not in ('xhr','fetch') or len(data['responses'])>=220:return
+              if res.status in (403,429):
+                data.setdefault('access_control_stop',[]).append({'status':res.status,'url':u[:220]});return
+              record={'url':u[:350],'status':res.status,'resource_type':typ,'content_type':res.headers.get('content-type','')[:90]}
+              if res.status==200 and ('json' in record['content_type'] or re.search(r'(?i)(units|properties|projects|master|villa|map|plots)',u)):
+                body=res.body()
+                record['bytes']=len(body)
+                record['sha256']=hashlib.sha256(body).hexdigest()
+                if len(body)<=7_000_000 and ('json' in record['content_type']):
+                  try:
+                    obj=json.loads(body)
+                    def describe(o,depth=0):
+                      if isinstance(o,dict):
+                        return {'type':'object','keys':list(o)[:90],'sample':{k:describe(v,depth+1) for k,v in list(o.items())[:8]} if depth<2 else None}
+                      if isinstance(o,list):
+                        return {'type':'array','count':len(o),'example':describe(o[0],depth+1) if o and depth<2 else None}
+                      return {'type':type(o).__name__,'value':str(o)[:70]}
+                    record['body_shape']=describe(obj)
+                    if any(z in u.lower() for z in ('unit','inventory','villa','plot','property')) and len(body)<1_000_000:
+                      record['source_public_json']=obj
+                  except Exception as e:record['parse_error']=type(e).__name__
+              data['responses'].append(record)
+            except Exception as e:data.setdefault('callback_errors',[]).append(type(e).__name__)
+          try:
+            with sync_playwright() as pw:
+              b=pw.chromium.launch(headless=True,args=['--no-sandbox'])
+              page=b.new_page(viewport={'width':1440,'height':900},locale='ar-SA')
+              page.on('response',check)
+              try:
+                response=page.goto(url,wait_until='domcontentloaded',timeout=60000)
+                data['page_http']=response.status if response else None
+                page.wait_for_timeout(10000)
+                data['title']=page.title()
+                data['app_html_length']=len(page.content())
+                data['body_text_sample']=page.locator('body').inner_text()[:2000]
+                data['nav_links']=[{'text':z.inner_text()[:80],'href':z.get_attribute('href')} for z in page.locator('a').all()[:35]]
+              except Exception as e:data['page_error']=type(e).__name__+': '+str(e)[:250]
+              b.close()
+          except Exception as e:data['browser_error']=type(e).__name__+': '+str(e)[:250]
+          Path('out').mkdir(exist_ok=True)
+          Path('out/interactive_network.json').write_text(json.dumps(data,ensure_ascii=False,indent=2),encoding='utf8')
+          print('FURSAN3_MAP_RESULT',json.dumps({'status':data.get('page_http'),'title':data.get('title'),'public_xhr':len(data['responses']),'status_counts':{str(s):sum(x['status']==s for x in data['responses']) for s in set(x['status'] for x in data['responses'])},'error':data.get('page_error') or data.get('browser_error')}),flush=True)
+          PY
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sae-fursan3-official-interactive-network-probe-20261029
+          path: out/interactive_network.json
