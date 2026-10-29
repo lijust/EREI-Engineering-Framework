@@ -1,0 +1,33 @@
+name: SAE actual original Argan embedded PDF link discovery
+on:
+  push:
+    branches: [sae-source-study-20261029]
+    paths:
+      - tools/sae_argan_real_brochure_links.py
+      - .github/workflows/sae-argan-embedded-links.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install public browser
+        run: |
+          pip install playwright==1.58.0
+          python -m playwright install --with-deps chromium
+      - name: Inspect developer flipbook links
+        run: python tools/sae_argan_real_brochure_links.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sae-argan-actual-original-PDF-links
+          path: sae-argan-official-embedded-pdf-links.json
+          retention-days: 7
