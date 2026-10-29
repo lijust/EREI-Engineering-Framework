@@ -1,0 +1,136 @@
+#!/usr/bin/env python3
+"""Deep per-unit public Menaco listing pagination (existing SAE projects only).
+
+No synthesized A1..A51 sequences, no database writes, no login and no bypass.
+Capture exactly displayed original card codes from the browser after actual UI
+load-more interaction, not advertised project totals.
+"""
+from __future__ import annotations
+import asyncio, hashlib, json, re, urllib.request
+from pathlib import Path
+from datetime import datetime, timezone
+from urllib.parse import urlsplit
+from urllib.robotparser import RobotFileParser
+
+SOURCE = [
+    {"project_id":"PRJ-001802","url":"https://menaco.sa/index.php/listings/276031","name":"Mena 51"},
+    {"project_id":"PRJ-001803","url":"https://menaco.sa/listings/865393","name":"Mena 52"}
+]
+UA="SAE-DB-Menaco-original-public-unit-inventory/1.0"
+OUT=Path("sae-menaco-51-52-original-pagination.json")
+CODES_51=re.compile(r"^A\d{1,3}$")
+CODES_52=re.compile(r"^(?:A\d{1,3}|\d{1,2}/\d{1,2})$")
+def check_robots(url):
+    p=urlsplit(url)
+    if p.scheme!="https" or p.hostname not in ("menaco.sa","www.menaco.sa"):
+        raise ValueError("SOURCE_NOT_MENACO")
+    with urllib.request.urlopen(urllib.request.Request("https://menaco.sa/robots.txt",headers={"User-Agent":UA}),timeout=15) as r:
+        if r.status!=200:return False,"ROBOTS_HTTP_"+str(r.status)
+        data=r.read(150001)
+    if len(data)>150000:return False,"ROBOTS_TOO_LARGE"
+    rp=RobotFileParser();rp.parse(data.decode("utf8","replace").splitlines())
+    return rp.can_fetch(UA,url),"ROBOTS_CHECKED"
+def save(doc):
+    t=OUT.with_suffix(".tmp")
+    t.write_text(json.dumps(doc,ensure_ascii=False,indent=2)+"\n",encoding="utf8")
+    t.replace(OUT)
+EVAL=r"""() => {
+ const section=[...document.querySelectorAll('h2,h3,h4,h5')].find(x=>/الوحدات المتاحة|Available Units/i.test(x.innerText||''));
+ const bodyText=document.body.innerText||'';
+ const options=[...document.querySelectorAll('button,a,[role=button]')].map((x,i)=>({i,tag:x.tagName,text:(x.innerText||'').trim().slice(0,100),aria:x.getAttribute('aria-label'),outerHTML:x.outerHTML.slice(0,700)})).filter(x=>/تحميل المزيد|load more|المزيد|more/i.test(x.text+" "+x.aria)).slice(-25);
+ const cards=[...document.querySelectorAll('h3,h4,h5,h6,a,strong,span,p')].filter(x=>/^(A[0-9]{1,3}|[0-9]{1,2}\/[0-9]{1,2})$/.test((x.innerText||'').trim()) && x.children.length===0).slice(0,90).map(x=>({code:(x.innerText||'').trim(),anchorHTML:x.outerHTML.slice(0,500),parentHTML:x.parentElement?.parentElement?.outerHTML.slice(0,2600),parentText:x.parentElement?.parentElement?.innerText.slice(0,350)}));
+ return {url:location.href,title:document.title,has_section:!!section,buttons:options,cards,body_length:bodyText.length,body_text:bodyText.slice(0,110000),visible_links:[...document.querySelectorAll('a[href]')].filter(x=>/\/listings\/\d+/.test(x.href)&&!/(?:email|phone)/.test(x.href)).map(x=>({text:x.innerText.trim().slice(0,110),url:x.href})).slice(0,90)};
+}"""
+async def main():
+    result={"schema":"SAE_MENACO_51_52_PUBLIC_LOAD_MORE_ORIGINAL_UNITS_READONLY_V1",
+            "captured_utc":datetime.now(timezone.utc).isoformat(),
+            "production_writes":0,"sources":[]}
+    from playwright.async_api import async_playwright
+    async with async_playwright() as pw:
+        browser=await pw.chromium.launch(headless=True)
+        for s in SOURCE:
+            rec={"project_id":s["project_id"],"original_url":s["url"],"pages":[],"network":[],"errors":[]}
+            result["sources"].append(rec)
+            try:
+                allowed,check=await asyncio.to_thread(check_robots,s["url"])
+                rec["robots"]=check
+                if not allowed:
+                    rec["status"]="SOURCE_ACCESS_NOT_VERIFIED"
+                    save(result);continue
+            except Exception as exc:
+                rec["status"]="ROBOTS_UNVERIFIED_"+type(exc).__name__
+                save(result);continue
+            page=await browser.new_page(user_agent=UA,viewport={"width":1400,"height":1100})
+            blocked=False;responses=[]
+            async def xhr(r):
+                nonlocal blocked
+                h=urlsplit(r.url).hostname
+                if h and h.lower().removeprefix("www.")!="menaco.sa":return
+                if r.status in (403,429):blocked=True;rec["errors"].append("PUBLISHER_HTTP_"+str(r.status));return
+                if r.status!=200 or r.request.resource_type not in ("xhr","fetch"):return
+                try:
+                    raw=await r.body()
+                    if len(raw)>5_000_000:return
+                    v={"path":urlsplit(r.url).path,"method":r.request.method,"status":r.status,"bytes":len(raw),"sha256":hashlib.sha256(raw).hexdigest(),"content_type":r.headers.get("content-type","")}
+                    if b"A51" in raw or b"A50" in raw or b"A45" in raw or "json" in r.headers.get("content-type",""):
+                        try:
+                            j=json.loads(raw)
+                            v["json_shape"]=list(j)[:15] if isinstance(j,dict) else str(type(j).__name__)
+                            v["json_preview"]=json.dumps(j,ensure_ascii=False)[:14000]
+                        except Exception:
+                            v["sample_html"]=raw.decode("utf8","replace")[:7500]
+                    if len(rec["network"])<90:rec["network"].append(v)
+                except Exception as exc:rec["errors"].append("XHR_"+type(exc).__name__)
+            page.on("response",lambda r:responses.append(asyncio.create_task(xhr(r))))
+            try:
+                p=await page.goto(s["url"],wait_until="domcontentloaded",timeout=45000)
+                rec["http"]=p.status if p else None
+                if p and p.status in (403,429):blocked=True
+                if rec.get("http")==200 and not blocked:
+                    await page.wait_for_timeout(3500)
+                    previous=""
+                    for step in range(30):
+                        if blocked:break
+                        state=await page.evaluate(EVAL)
+                        state["pagination_stage"]=step
+                        # Preserve visible codes and full original text, not the commercial headline unit count.
+                        rec["pages"].append(state)
+                        current=hashlib.sha256(state["body_text"].encode()).hexdigest()
+                        if current==previous:break
+                        previous=current
+                        # A public 'Load More' button is part of ordinary UI, not an access bypass.
+                        load=page.get_by_text(re.compile(r"^(?:تحميل المزيد|Load More)$",re.I))
+                        if not await load.count():break
+                        enabled=False
+                        for ix in range(min(4,await load.count())):
+                            try:
+                                if await load.nth(ix).is_visible() and await load.nth(ix).is_enabled():
+                                    await load.nth(ix).click(timeout=4500)
+                                    enabled=True
+                                    break
+                            except Exception as exc:
+                                rec["errors"].append("CLICK_"+type(exc).__name__)
+                        if not enabled:break
+                        await page.wait_for_timeout(1750)
+                    rec["state"]="PUBLIC_PAGINATION_CAPTURED" if rec["pages"] else "NO_PUBLIC_PAGES"
+                else:rec["state"]="HTTP_ERROR_STOP"
+            except Exception as exc:
+                rec["state"]="PAGE_ERROR_"+type(exc).__name__
+                rec["errors"].append(str(exc)[:150])
+            if responses:await asyncio.gather(*responses,return_exceptions=True)
+            # Count OBSERVED DOM card code tokens without filling numbering gaps.
+            codepat=CODES_51 if s["project_id"]=="PRJ-001802" else CODES_52
+            codes=sorted({x["code"] for p in rec["pages"] for x in p.get("cards",[]) if codepat.fullmatch(x["code"])})
+            rec["visible_exact_original_unit_code_candidates"]=codes
+            rec["visible_code_count"]=len(codes)
+            rec["stage_count"]=len(rec["pages"])
+            rec["blocked"]=blocked
+            save(result)
+            print("SAE_MENACO_SOURCE",json.dumps({"project":s["project_id"],"state":rec.get("state"),"http":rec.get("http"),"stage_count":rec["stage_count"],"original_code_count":rec["visible_code_count"],"codes_preview":codes[:70],"xhr_count":len(rec["network"]),"errors":rec["errors"][:5],"blocked":blocked},ensure_ascii=False),flush=True)
+            await page.close()
+            if blocked:result["global_stop"]="HTTP_403_OR_429";save(result);break
+        await browser.close()
+    save(result)
+if __name__=="__main__":
+    assert CODES_51.fullmatch("A51") and not CODES_51.fullmatch("A52-C")
+    asyncio.run(main())
