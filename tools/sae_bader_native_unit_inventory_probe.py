@@ -100,15 +100,18 @@ async def main():
     except AccessStop as e:
         result["status"] = str(e)
         save()
+        print("SAE_BADER_SOURCE", json.dumps({"status": result["status"], "master_writes": 0}), flush=True)
         return
     except Exception as e:
         result["status"] = "ROBOTS_UNVERIFIED_" + type(e).__name__
         save()
+        print("SAE_BADER_SOURCE", json.dumps({"status": result["status"], "master_writes": 0}), flush=True)
         return
     result["robots"] = reason
     if not allowed:
         result["status"] = "ROBOTS_DISALLOW"
         save()
+        print("SAE_BADER_SOURCE", json.dumps({"status": result["status"], "master_writes": 0}), flush=True)
         return
 
     from playwright.async_api import async_playwright
