@@ -27,9 +27,9 @@ def run():
     item.update(pdf_sha256=hashlib.sha256(b).hexdigest(),pdf_bytes=len(b),pdf_pages=len(doc))
     for i,page in enumerate(doc):
      words=page.get_text("words")
-     numerics=[(str(w[4]),round(w[0],1),round(w[1],1)) for w in words if re.fullmatch(r"(?:[A-Za-z]{1,2}[-/]?)?\\d{1,4}(?:[-/]\\d{1,4})?",str(w[4]))]
+     numerics=[(str(w[4]),round(w[0],1),round(w[1],1)) for w in words if re.fullmatch(r"(?:[A-Za-z]{1,2}[-/]?)?\d{1,4}(?:[-/]\d{1,4})?",str(w[4]))]
      codes=sorted(set(x[0] for x in numerics))
-     item["pages"].append({"page":i+1,"text_words":len(words),"unique_numeric_tokens":len(codes),"numeric_samples":numerics[:45],"text_preview":page.get_text().replace("\\n"," ")[:620]})
+     item["pages"].append({"page":i+1,"text_words":len(words),"unique_numeric_tokens":len(codes),"numeric_samples":numerics[:45],"text_preview":page.get_text().replace("\n"," ")[:620]})
     top=sorted(item["pages"],key=lambda p:p["unique_numeric_tokens"],reverse=True)[:18]
     print("SAE_KOOHEJI_PDF",json.dumps({"pid":pid,"pages":len(doc),"size":len(b),"top_pages":[{"page":q["page"],"numbered_tokens":q["unique_numeric_tokens"],"text_words":q["text_words"],"preview":q["text_preview"][:120]} for q in top]},ensure_ascii=False),flush=True)
    except Exception as e:item["error"]=type(e).__name__+":"+str(e)[:130]
