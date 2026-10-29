@@ -1,0 +1,72 @@
+name: SAE Alsoliman Official Selling Portal 131 Existing Project Inventory Discovery
+on:
+  push:
+    branches: [experiment/sae-saraya-high-yield-20261029]
+    paths: [.github/workflows/sae-alsoliman-selling-131-sourceprobe-20261029.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  scout:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install 'playwright>=1.55,<2' 'scrapling[fetchers]>=0.5,<0.6'
+      - run: python -m playwright install --with-deps chromium
+      - name: Inspect public Alsoliman Selling listings and direct original project 131
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json,hashlib,datetime
+          from pathlib import Path
+          from playwright.sync_api import sync_playwright
+          sites=[
+            ('selling','https://alsoliman.com.sa/ar/selling'),
+            ('selling131','https://alsoliman.com.sa/ar/selling/project/nokhba'),
+            ('selling132','https://alsoliman.com.sa/ar/selling/project/aris'),
+            ('selling133','https://alsoliman.com.sa/ar/selling/project/sakinah')]
+          Path('out').mkdir(exist_ok=True)
+          with sync_playwright() as pw:
+            b=pw.chromium.launch(headless=True,args=['--no-sandbox'])
+            for name,url in sites:
+              data={'url':url,'name':name,'utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),'writes':0,'auth':False,'xhr':[]}
+              p=b.new_page(locale='ar-SA',viewport={'width':1400,'height':900})
+              def capture(res):
+                try:
+                  if res.request.resource_type not in ('xhr','fetch') or len(data['xhr'])>=160:return
+                  rec={'url':res.url[:400],'status':res.status,'content_type':res.headers.get('content-type','')[:80]}
+                  if res.status in (403,429):data.setdefault('stop',[]).append(rec);return
+                  if res.status==200 and 'json' in rec['content_type']:
+                    raw=res.body();rec['bytes']=len(raw);rec['sha256']=hashlib.sha256(raw).hexdigest()
+                    if len(raw)<5_000_000:
+                      try:
+                        o=json.loads(raw);rec['keys']=list(o)[:80] if isinstance(o,dict) else None;rec['count']=len(o)
+                        if len(raw)<3_000_000:rec['public_json']=o
+                      except Exception as e:rec['err']=type(e).__name__
+                  data['xhr'].append(rec)
+                except Exception as e:data.setdefault('errors',[]).append(type(e).__name__)
+              p.on('response',capture)
+              try:
+                response=p.goto(url,wait_until='domcontentloaded',timeout=29000)
+                data['status']=response.status if response else None
+                p.wait_for_timeout(7000)
+                data['title']=p.title();data['text']=p.locator('body').inner_text()[:4800]
+                data['links']=[{'text':a.inner_text()[:65],'href':a.get_attribute('href')} for a in p.locator('a').all()[:180]]
+                data['clickable_routes']=[{'tag':x.evaluate('(e)=>e.tagName'),'href':x.get_attribute('href'),'onclick':x.get_attribute('onclick'),'text':x.inner_text()[:100]} for x in p.locator('a,button,[wire\\:click]').all()[:180]]
+              except Exception as e:data['page_error']=type(e).__name__+':'+str(e)[:220]
+              p.close()
+              Path('out/'+name+'.json').write_text(json.dumps(data,ensure_ascii=False,indent=2),encoding='utf8')
+              print('SAE_ALSOLIMAN',name,json.dumps({'http':data.get('status'),'xhr':len(data['xhr']),'json':[{'url':x['url'],'count':x.get('count'),'keys':x.get('keys')} for x in data['xhr'] if 'public_json' in x][:10],'body':data.get('text','')[:350],'error':data.get('page_error')},ensure_ascii=False),flush=True)
+            b.close()
+          PY
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sae-alsoliman-sell-131-source-only-20261029
+          path: out/*.json
