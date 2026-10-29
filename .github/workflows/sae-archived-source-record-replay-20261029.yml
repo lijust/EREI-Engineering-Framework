@@ -1,0 +1,42 @@
+name: SAE Replay Archived Source Unit Records (source-only)
+on:
+  push:
+    branches: [experiment/sae-saraya-high-yield-20261029]
+    paths: [.github/workflows/sae-archived-source-record-replay-20261029.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  replay-archived-public-unit-json:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    strategy:
+      fail-fast: false
+      matrix:
+        site: [saraya_sharq, saraya_ruba, saraya_bahar, tala_seef]
+    steps:
+      - name: Retrieve prior public developer site XHR evidence artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh run download 40857012984 -R lijust/EREI-Engineering-Framework -n sae-six-original-firstparty-interactive-site-discovery-20261029 -D "$RUNNER_TEMP/sae-source"
+      - name: Emit full exact archived public data in controlled 35-record log chunks
+        shell: bash
+        env:
+          SAE_SITE: ${{ matrix.site }}
+        run: |
+          python - <<'PY'
+          import os,json,hashlib
+          from pathlib import Path
+          s=os.environ['SAE_SITE']
+          doc=json.loads((Path(os.environ['RUNNER_TEMP'])/'sae-source'/f'{s}.json').read_text())
+          rec=[r for r in doc['responses'] if 'original_public_json' in r and '/inventory' in r['url']]
+          assert len(rec)==1 and rec[0]['original_public_json'].get('success') is True
+          entry=rec[0]
+          items=list(entry['original_public_json']['data'].items())
+          assert len(items)>50
+          print('SAE_SOURCE_HEAD|'+s+'|'+json.dumps({'url':entry['url'],'sha256':entry['sha256'],'source_count':len(items),'original_run':'40857012984'},separators=(',',':')),flush=True)
+          for i in range(0,len(items),35):
+            print('SAE_SOURCE_ROWS|'+s+'|'+str(i)+'|'+json.dumps(items[i:i+35],ensure_ascii=False,separators=(',',':')),flush=True)
+          print('SAE_SOURCE_END|'+s+'|'+str(len(items)),flush=True)
+          PY
