@@ -1,0 +1,27 @@
+name: SAE Belgravia Original PDF Numbered Layout Study
+on:
+  push:
+    branches: [sae-source-study-20261029]
+    paths:
+      - tools/sae_belgravia_original_pdf_layout_study.py
+      - .github/workflows/sae-belgravia-original-pdf-layout.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  pdf-study:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install pymupdf==1.26.4
+      - run: python tools/sae_belgravia_original_pdf_layout_study.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sae-belgravia-original-publisher-pdf-layout
+          path: sae-belgravia-original-pdf-page-token-study.json
+          retention-days: 7
