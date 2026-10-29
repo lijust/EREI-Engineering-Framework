@@ -1,0 +1,24 @@
+name: Public Darco source refresh existing project 603 613 660 204
+on:
+  push:
+    branches: [experiment/public-scrapling-v05-smoke-20261027]
+    paths: [experimental/public_darco_existing_high_yield_units_refresh.py, .github/workflows/public-darco-existing-603-613-660-204-refresh.yml]
+permissions:
+  contents: read
+jobs:
+  darco-public-api:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install 'scrapling[fetchers]==0.5' 'lxml>=5,<7'
+      - run: python experimental/public_darco_existing_high_yield_units_refresh.py
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: darco-original-existing-603-613-660-204-unit-refresh
+          path: ${{ runner.temp }}/darco-existing-source-603-613-660-204-refresh.json
+          retention-days: 7
