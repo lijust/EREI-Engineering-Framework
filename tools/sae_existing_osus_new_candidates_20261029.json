@@ -1,0 +1,13 @@
+{
+  "projects": [
+    {
+      "project_id": "PRJ-001138",
+      "publisher": "osuse.sa"
+    },
+    {
+      "project_id": "PRJ-000774",
+      "publisher": "osuse.sa"
+    }
+  ],
+  "source_only": true
+}
