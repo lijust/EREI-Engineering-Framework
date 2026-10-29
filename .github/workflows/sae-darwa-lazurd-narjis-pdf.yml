@@ -1,0 +1,31 @@
+name: SAE Darwa Lazurd and Narjis Original Brochure Units Analysis
+on:
+  push:
+    branches: [sae-source-study-20261029]
+    paths:
+      - 'tools/sae_darwa_lazurd_narjis_original_pdf_scan.py'
+      - '.github/workflows/sae-darwa-lazurd-narjis-pdf.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  original-pdf-source-survey:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install PDF parser
+        run: python -m pip install pymupdf==1.26.5
+      - name: Inspect printed individual unit codes in the three source brochures
+        run: python tools/sae_darwa_lazurd_narjis_original_pdf_scan.py
+      - name: Archive source text bbox and PDF provenance
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sae-darwa-two-existing-projects-pdf-evidence
+          path: sae-darwa-lazurd-narjes-original-brochures-readonly.json
+          if-no-files-found: warn
+          retention-days: 7
