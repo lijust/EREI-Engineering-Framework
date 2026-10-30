@@ -80,7 +80,7 @@ async def browse(browser,source,project,rule,origin_blocked):
  pending=[];observed_shas=set();blocked=False
  async def watch(r):
   nonlocal blocked
-  if urlsplit(r.url).hostname!=host:return
+  if (urlsplit(r.url).hostname or '').removeprefix('www.')!=host:return
   if r.status in (403,429):
    blocked=True;origin_blocked[host]=True
    item["errors"].append("ORIGIN_HTTP_"+str(r.status))
