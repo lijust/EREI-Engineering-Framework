@@ -1,0 +1,483 @@
+{
+  "schema": "SAE_DEEP_UI_XHR_22_FIRSTPARTY_HOSTS_20261030",
+  "source_catalog_raw_rows": 287,
+  "real_registered_source_ids": 286,
+  "origin": "Live exact SAE Master Projects URL and Research registered source domain",
+  "source_roots_to_review": 22,
+  "existing_projects_targeted": 37,
+  "classification": "DISCOVERY_ONLY_DO_NOT_IMPORT_BY_MARKETING_TOTAL_OR_OFFER_ID",
+  "sources": [
+    {
+      "source_id": "SRC-000110",
+      "domain": "afaqalnasha.com",
+      "status": "ACTIVE",
+      "source_category": "DEVELOPER_FIRST_PARTY_SELECTED_SHOWCASE",
+      "targets": [
+        {
+          "canonical_project_id": "PRJ-001533",
+          "original_project_url": "https://afaqalnasha.com/projects/sultanah-villas-buraydah",
+          "publisher_source_id": "SRC-000110",
+          "project_name": "مشروع حي سلطانة – بريدة",
+          "marketing_total_NOT_UNIT_PROOF": 10,
+          "canonical_existing_real_unit_count": 0
+        }
+      ]
+    },
+    {
+      "source_id": "SRC-000153",
+      "domain": "ajyadarabia.com",
+      "status": "ACTIVE",
+      "source_category": "FIRSTPARTY_DEVELOPER_PORTFOLIO_FOUR_INDIVIDUAL_HISTORIC_ARWAF_PROJECT_BRANDS_WITH_SITE_LEGAL_LICENSE_OPEN",
+      "targets": [
+        {
+          "canonical_project_id": "PRJ-001762",
+          "original_project_url": "https://www.ajyadarabia.com/portfolio/مشروع-ارواف-مخطط-الوسام-1/",
+          "publisher_source_id": "SRC-000153",
+          "project_name": "أرواف — مخطط الوسام 1",
+          "marketing_total_NOT_UNIT_PROOF": 18,
+          "canonical_existing_real_unit_count": 0
+        },
+        {
+          "canonical_project_id": "PRJ-001760",
+          "original_project_url": "https://www.ajyadarabia.com/portfolio/مشروع-ارواف-مخطط-الموسى/",
+          "publisher_source_id": "SRC-000153",
+          "project_name": "أرواف — مخطط الموسى",
+          "marketing_total_NOT_UNIT_PROOF": 0,
+          "canonical_existing_real_unit_count": 0
+        }
+      ]
+    },
+    {
+      "source_id": "SRC-000052",
+      "domain": "aktal.com.sa",
+      "status": "ACTIVE",
+      "source_category": "BROKER_MARKETING",
+      "targets": [
+        {
+          "canonical_project_id": "PRJ-001158",
+          "original_project_url": "https://aktal.com.sa/projects/أدوار-كلتا-بلس",
+          "publisher_source_id": "SRC-000052",
+          "project_name": "أدوار كلتا بلس",
+          "marketing_total_NOT_UNIT_PROOF": 30,
+          "canonical_existing_real_unit_count": 0
+        }
+      ]
+    },
+    {
+      "source_id": "SRC-000093",
+      "domain": "alasas.sa",
+      "status": "ACTIVE",
+      "source_category": "DEVELOPER_FIRST_PARTY",
+      "targets": [
+        {
+          "canonical_project_id": "PRJ-001301",
+          "original_project_url": "https://alasas.sa/project/%D9%85%D8%B4%D8%B1%D9%88%D8%B9-%D8%A7%D9%84%D8%AA%D8%B9%D8%A7%D9%88%D9%86-a-103/",
+          "publisher_source_id": "SRC-000093",
+          "project_name": "مشروع التعاون A-103",
+          "marketing_total_NOT_UNIT_PROOF": 20,
+          "canonical_existing_real_unit_count": 0
+        },
+        {
+          "canonical_project_id": "PRJ-001302",
+          "original_project_url": "https://alasas.sa/project/al-malqa-residence/",
+          "publisher_source_id": "SRC-000093",
+          "project_name": "سكنى الملقا",
+          "marketing_total_NOT_UNIT_PROOF": 20,
+          "canonical_existing_real_unit_count": 0
+        }
+      ]
+    },
+    {
+      "source_id": "SRC-000108",
+      "domain": "alawad-qassim.com",
+      "status": "ACTIVE",
+      "source_category": "FIRST_PARTY_MARKETING",
+      "targets": [
+        {
+          "canonical_project_id": "PRJ-001524",
+          "original_project_url": "https://alawad-qassim.com/%D8%A7%D9%84%D8%AD%D8%B2%D9%85-%D8%AF%D9%8A%D9%84%D9%88%D9%83%D8%B3/",
+          "publisher_source_id": "SRC-000108",
+          "project_name": "الحزم ديلوكس",
+          "marketing_total_NOT_UNIT_PROOF": 0,
+          "canonical_existing_real_unit_count": 0
+        }
+      ]
+    },
+    {
+      "source_id": "SRC-000103",
+      "domain": "alfawzansa.com",
+      "status": "ACTIVE",
+      "source_category": "DEVELOPER_FIRST_PARTY",
+      "targets": [
+        {
+          "canonical_project_id": "PRJ-001502",
+          "original_project_url": "https://www.alfawzansa.com/properties-2/cozy-minimalist-apartment",
+          "publisher_source_id": "SRC-000103",
+          "project_name": "الفوزان ريزيدنس ٧٩",
+          "marketing_total_NOT_UNIT_PROOF": 0,
+          "canonical_existing_real_unit_count": 0
+        },
+        {
+          "canonical_project_id": "PRJ-001503",
+          "original_project_url": "https://www.alfawzansa.com/properties-2/unique-farmhouse-%2B-balcony",
+          "publisher_source_id": "SRC-000103",
+          "project_name": "الفوزان فيو",
+          "marketing_total_NOT_UNIT_PROOF": 0,
+          "canonical_existing_real_unit_count": 0
+        }
+      ]
+    },
+    {
+      "source_id": "SRC-000057",
+      "domain": "alsoliman.com.sa",
+      "status": "ACTIVE",
+      "source_category": "DEVELOPER_OFFICIAL",
+      "targets": [
+        {
+          "canonical_project_id": "PRJ-001578",
+          "original_project_url": "https://alsoliman.com.sa/ar/product/مخطط-نخبة-السليمان",
+          "publisher_source_id": "SRC-000057",
+          "project_name": "مخطط نخبة السليمان",
+          "marketing_total_NOT_UNIT_PROOF": 2000,
+          "canonical_existing_real_unit_count": 0
+        },
+        {
+          "canonical_project_id": "PRJ-001581",
+          "original_project_url": "https://alsoliman.com.sa/ar/project/سكينة-كمباوند",
+          "publisher_source_id": "SRC-000057",
+          "project_name": "سكينة كمباوند - المدينة المنورة",
+          "marketing_total_NOT_UNIT_PROOF": 182,
+          "canonical_existing_real_unit_count": 0
+        }
+      ]
+    },
+    {
+      "source_id": "SRC-000085",
+      "domain": "darahre.com",
+      "status": "ACTIVE",
+      "source_category": "DEVELOPER_OFFICIAL",
+      "targets": [
+        {
+          "canonical_project_id": "PRJ-001234",
+          "original_project_url": "https://www.darahre.com/ar/projects/%D9%85%D8%AE%D8%B7%D8%B7-%D8%A7%D9%84%D8%AC%D9%88%D8%B2%D8%A7%D8%A1/9",
+          "publisher_source_id": "SRC-000085",
+          "project_name": "مخطط الجوزاء",
+          "marketing_total_NOT_UNIT_PROOF": 0,
+          "canonical_existing_real_unit_count": 0
+        },
+        {
+          "canonical_project_id": "PRJ-001235",
+          "original_project_url": "https://www.darahre.com/ar/projects/%D9%83%D9%88%D8%B1%D9%86%D9%8A%D8%B4-%D9%81%D9%8A%D9%88/8",
+          "publisher_source_id": "SRC-000085",
+          "project_name": "كورنيش فيو",
+          "marketing_total_NOT_UNIT_PROOF": 0,
+          "canonical_existing_real_unit_count": 0
+        }
+      ]
+    },
+    {
+      "source_id": "SRC-000031",
+      "domain": "diriyahcompany.sa",
+      "status": "ACTIVE",
+      "source_category": "MEGAPROJECT_DEVELOPER",
+      "targets": [
+        {
+          "canonical_project_id": "PRJ-001665",
+          "original_project_url": "https://www.diriyahcompany.sa/en/diriyah-living/our-residences/raffles",
+          "publisher_source_id": "SRC-000031",
+          "project_name": "رافلز ريزيدنسز الدرعية",
+          "marketing_total_NOT_UNIT_PROOF": 90,
+          "canonical_existing_real_unit_count": 0
+        },
+        {
+          "canonical_project_id": "PRJ-001664",
+          "original_project_url": "https://www.diriyahcompany.sa/ar/news/diriyah-company-announces-the-launch-of-armani-residences-diriyah-marking-armanis-debut-in-saudi-arabia",
+          "publisher_source_id": "SRC-000031",
+          "project_name": "أرماني ريزيدنسز الدرعية",
+          "marketing_total_NOT_UNIT_PROOF": 15,
+          "canonical_existing_real_unit_count": 0
+        }
+      ]
+    },
+    {
+      "source_id": "SRC-000076",
+      "domain": "elitetown.com",
+      "status": "ACTIVE",
+      "source_category": "DEVELOPER_OFFICIAL",
+      "targets": [
+        {
+          "canonical_project_id": "PRJ-001194",
+          "original_project_url": "https://elitetown.com/project-south-jeddah",
+          "publisher_source_id": "SRC-000076",
+          "project_name": "المدينة الجديدة — جنوب جدة",
+          "marketing_total_NOT_UNIT_PROOF": 0,
+          "canonical_existing_real_unit_count": 0
+        }
+      ]
+    },
+    {
+      "source_id": "SRC-000112",
+      "domain": "karden-ksa.com",
+      "status": "ACTIVE",
+      "source_category": "DEVELOPER_FIRST_PARTY_FEATURED_PORTFOLIO",
+      "targets": [
+        {
+          "canonical_project_id": "PRJ-001644",
+          "original_project_url": "https://www.karden-ksa.com/projects/%D9%83%D8%A7%D8%B1%D8%AF%D9%86-25",
+          "publisher_source_id": "SRC-000112",
+          "project_name": "كاردن 25",
+          "marketing_total_NOT_UNIT_PROOF": 40,
+          "canonical_existing_real_unit_count": 0
+        },
+        {
+          "canonical_project_id": "PRJ-001645",
+          "original_project_url": "https://www.karden-ksa.com/projects/%D9%83%D8%A7%D8%B1%D8%AF%D9%86-24",
+          "publisher_source_id": "SRC-000112",
+          "project_name": "كاردن 24",
+          "marketing_total_NOT_UNIT_PROOF": 0,
+          "canonical_existing_real_unit_count": 0
+        }
+      ]
+    },
+    {
+      "source_id": "SRC-000183",
+      "domain": "kian-d.com",
+      "status": "ACTIVE",
+      "source_category": "DEVELOPER_OFFICIAL",
+      "targets": [
+        {
+          "canonical_project_id": "PRJ-001827",
+          "original_project_url": "https://kian-d.com/projects/kian-residence/",
+          "publisher_source_id": "SRC-000183",
+          "project_name": "كيان ريزيدنس",
+          "marketing_total_NOT_UNIT_PROOF": 68,
+          "canonical_existing_real_unit_count": 0
+        }
+      ]
+    },
+    {
+      "source_id": "SRC-000102",
+      "domain": "manafksa.com",
+      "status": "ACTIVE",
+      "source_category": "DEVELOPER_FIRST_PARTY",
+      "targets": [
+        {
+          "canonical_project_id": "PRJ-001500",
+          "original_project_url": "https://manafksa.com/projects/abha-resort/",
+          "publisher_source_id": "SRC-000102",
+          "project_name": "منتجع منارات الضيافة - أبها",
+          "marketing_total_NOT_UNIT_PROOF": 0,
+          "canonical_existing_real_unit_count": 0
+        },
+        {
+          "canonical_project_id": "PRJ-001501",
+          "original_project_url": "https://manafksa.com/projects/virtual-walk/",
+          "publisher_source_id": "SRC-000102",
+          "project_name": "خيال ووك",
+          "marketing_total_NOT_UNIT_PROOF": 0,
+          "canonical_existing_real_unit_count": 0
+        }
+      ]
+    },
+    {
+      "source_id": "SRC-000071",
+      "domain": "mdrdevelopment.sa",
+      "status": "ACTIVE",
+      "source_category": "DEVELOPER_OFFICIAL",
+      "targets": [
+        {
+          "canonical_project_id": "PRJ-001178",
+          "original_project_url": "https://mdrdevelopment.sa/project.php?p=that-nakhl",
+          "publisher_source_id": "SRC-000071",
+          "project_name": "ذات نخل",
+          "marketing_total_NOT_UNIT_PROOF": 0,
+          "canonical_existing_real_unit_count": 0
+        },
+        {
+          "canonical_project_id": "PRJ-001179",
+          "original_project_url": "https://mdrdevelopment.sa/project.php?p=hada-view",
+          "publisher_source_id": "SRC-000071",
+          "project_name": "الهدا فيو",
+          "marketing_total_NOT_UNIT_PROOF": 0,
+          "canonical_existing_real_unit_count": 0
+        }
+      ]
+    },
+    {
+      "source_id": "SRC-000083",
+      "domain": "qebab.sa",
+      "status": "ACTIVE",
+      "source_category": "DEVELOPER_OFFICIAL",
+      "targets": [
+        {
+          "canonical_project_id": "PRJ-001226",
+          "original_project_url": "https://www.qebab.sa/project/elevation-villa",
+          "publisher_source_id": "SRC-000083",
+          "project_name": "إيليفيشن فيلا",
+          "marketing_total_NOT_UNIT_PROOF": 0,
+          "canonical_existing_real_unit_count": 0
+        },
+        {
+          "canonical_project_id": "PRJ-001227",
+          "original_project_url": "https://www.qebab.sa/projects/qebab-lines",
+          "publisher_source_id": "SRC-000083",
+          "project_name": "قباب لاينز",
+          "marketing_total_NOT_UNIT_PROOF": 0,
+          "canonical_existing_real_unit_count": 0
+        }
+      ]
+    },
+    {
+      "source_id": "SRC-000073",
+      "domain": "rafeh.sa",
+      "status": "ACTIVE",
+      "source_category": "BROKER_MARKETING",
+      "targets": [
+        {
+          "canonical_project_id": "PRJ-001166",
+          "original_project_url": "https://rafeh.sa/projects/عمارة-سكنية-بحي-النرجس-نيف-11/",
+          "publisher_source_id": "SRC-000073",
+          "project_name": "عمارة نيف 11 – النرجس",
+          "marketing_total_NOT_UNIT_PROOF": 13,
+          "canonical_existing_real_unit_count": 0
+        }
+      ]
+    },
+    {
+      "source_id": "SRC-000101",
+      "domain": "rayatalmaidan.com",
+      "status": "ACTIVE",
+      "source_category": "DEVELOPER_FIRST_PARTY",
+      "targets": [
+        {
+          "canonical_project_id": "PRJ-001497",
+          "original_project_url": "https://rayatalmaidan.com/ar/project/Al-Raya-Project.html",
+          "publisher_source_id": "SRC-000101",
+          "project_name": "مشروع الراية",
+          "marketing_total_NOT_UNIT_PROOF": 496,
+          "canonical_existing_real_unit_count": 0
+        },
+        {
+          "canonical_project_id": "PRJ-001493",
+          "original_project_url": "https://rayatalmaidan.com/ar/project/Mahayil-Asir-Project.html",
+          "publisher_source_id": "SRC-000101",
+          "project_name": "مشروع زهرة عسير",
+          "marketing_total_NOT_UNIT_PROOF": 420,
+          "canonical_existing_real_unit_count": 0
+        }
+      ]
+    },
+    {
+      "source_id": "SRC-000034",
+      "domain": "real-awaid.com",
+      "status": "ACTIVE",
+      "source_category": "DEVELOPER_OFFICIAL",
+      "targets": [
+        {
+          "canonical_project_id": "PRJ-001064",
+          "original_project_url": "https://real-awaid.com/portfolio/value-5/",
+          "publisher_source_id": "SRC-000034",
+          "project_name": "فاليو 5",
+          "marketing_total_NOT_UNIT_PROOF": 11,
+          "canonical_existing_real_unit_count": 0
+        },
+        {
+          "canonical_project_id": "PRJ-001065",
+          "original_project_url": "https://real-awaid.com/portfolio/value-6/",
+          "publisher_source_id": "SRC-000034",
+          "project_name": "فاليو 6",
+          "marketing_total_NOT_UNIT_PROOF": 6,
+          "canonical_existing_real_unit_count": 0
+        }
+      ]
+    },
+    {
+      "source_id": "SRC-000033",
+      "domain": "rowana.com.sa",
+      "status": "ACTIVE",
+      "source_category": "DEVELOPER_OFFICIAL",
+      "targets": [
+        {
+          "canonical_project_id": "PRJ-001036",
+          "original_project_url": "https://www.rowana.com.sa/projects/project-3",
+          "publisher_source_id": "SRC-000033",
+          "project_name": "دان 3",
+          "marketing_total_NOT_UNIT_PROOF": 34,
+          "canonical_existing_real_unit_count": 0
+        },
+        {
+          "canonical_project_id": "PRJ-001037",
+          "original_project_url": "https://www.rowana.com.sa/projects/project-1",
+          "publisher_source_id": "SRC-000033",
+          "project_name": "دان 1 و 2",
+          "marketing_total_NOT_UNIT_PROOF": 18,
+          "canonical_existing_real_unit_count": 0
+        }
+      ]
+    },
+    {
+      "source_id": "SRC-000113",
+      "domain": "sakanun.com.sa",
+      "status": "ACTIVE",
+      "source_category": "DEVELOPER_FIRST_PARTY_SINGLE_SCHEME",
+      "targets": [
+        {
+          "canonical_project_id": "PRJ-001647",
+          "original_project_url": "https://sakanun.com.sa/alfairouzpage.aspx",
+          "publisher_source_id": "SRC-000113",
+          "project_name": "مخطط الفيروز",
+          "marketing_total_NOT_UNIT_PROOF": 0,
+          "canonical_existing_real_unit_count": 0
+        }
+      ]
+    },
+    {
+      "source_id": "SRC-000030",
+      "domain": "sumou.com.sa",
+      "status": "ACTIVE",
+      "source_category": "DEVELOPER_PORTFOLIO",
+      "targets": [
+        {
+          "canonical_project_id": "PRJ-000098",
+          "original_project_url": "https://sumou.com.sa/%D8%AC%D9%88%D8%AF-%D8%A7%D9%84%D8%B8%D9%87%D8%B1%D8%A7%D9%86/",
+          "publisher_source_id": "SRC-000030",
+          "project_name": "جود الظهران",
+          "marketing_total_NOT_UNIT_PROOF": 0,
+          "canonical_existing_real_unit_count": 0
+        },
+        {
+          "canonical_project_id": "PRJ-000099",
+          "original_project_url": "https://sumou.com.sa/%D8%A7%D9%84%D8%B1%D8%AD%D8%A7%D8%A8/",
+          "publisher_source_id": "SRC-000030",
+          "project_name": "الرحاب",
+          "marketing_total_NOT_UNIT_PROOF": 0,
+          "canonical_existing_real_unit_count": 0
+        }
+      ]
+    },
+    {
+      "source_id": "SRC-000056",
+      "domain": "view.sa",
+      "status": "ACTIVE",
+      "source_category": "DEVELOPER_OFFICIAL",
+      "targets": [
+        {
+          "canonical_project_id": "PRJ-001595",
+          "original_project_url": "https://view.sa/projects/shadow-residence",
+          "publisher_source_id": "SRC-000056",
+          "project_name": "شادو ريزدنس",
+          "marketing_total_NOT_UNIT_PROOF": 14,
+          "canonical_existing_real_unit_count": 0
+        },
+        {
+          "canonical_project_id": "PRJ-001594",
+          "original_project_url": "https://view.sa/projects/light-villa-red-sea",
+          "publisher_source_id": "SRC-000056",
+          "project_name": "لايت فيلا البحر الأحمر",
+          "marketing_total_NOT_UNIT_PROOF": 12,
+          "canonical_existing_real_unit_count": 0
+        }
+      ]
+    }
+  ]
+}
