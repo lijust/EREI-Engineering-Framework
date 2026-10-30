@@ -1,0 +1,24 @@
+name: SAE Source-Portfolio Scheduler 151 Publishers Policy Tests
+on:
+  push:
+    branches: [sae-source-study-20261029]
+    paths:
+      - 'tools/sae_portfolio_scheduler_v3.py'
+      - 'tools/test_sae_portfolio_scheduler_v3.py'
+      - '.github/workflows/sae-portfolio-scheduler-v3-tests.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Test all 151-source queue and 429/robots/terms fail-closed
+        run: |
+          cd tools
+          python -m unittest -v test_sae_portfolio_scheduler_v3
