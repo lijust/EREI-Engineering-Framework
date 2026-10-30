@@ -1,0 +1,95 @@
+{
+  "schema": "SAE_KETAF_AMLAK_ALFAISALIYAH_ORIGINAL_12_INDIVIDUAL_SOURCE_LINKS",
+  "publisher_domain": "www.ketaf.sa",
+  "canonical_existing_project": "PRJ-001144",
+  "source_id": "SRC-000047",
+  "official_project_page": "https://www.ketaf.sa/projects/301667",
+  "source_run": "https://github.com/lijust/EREI-Engineering-Framework/actions/runs/41034024349",
+  "source_only": true,
+  "records": [
+    {
+      "url": "https://www.ketaf.sa/properties/48833?projectId=301667",
+      "source_numeric_id": "48833",
+      "label": "شقق تمليك أملاك الفيصلية",
+      "aria": "9184022 — شقق تمليك أملاك الفيصلية — متاحة",
+      "text": "شقق تمليك أملاك الفيصلية"
+    },
+    {
+      "url": "https://www.ketaf.sa/properties/48831?projectId=301667",
+      "source_numeric_id": "48831",
+      "label": "شقق تمليك أملاك الفيصلية",
+      "aria": "2203784 — شقق تمليك أملاك الفيصلية — متاحة",
+      "text": "شقق تمليك أملاك الفيصلية"
+    },
+    {
+      "url": "https://www.ketaf.sa/properties/48830?projectId=301667",
+      "source_numeric_id": "48830",
+      "label": "شقق تمليك أملاك الفيصلية",
+      "aria": "4452162 — شقق تمليك أملاك الفيصلية — متاحة",
+      "text": "شقق تمليك أملاك الفيصلية"
+    },
+    {
+      "url": "https://www.ketaf.sa/properties/48829?projectId=301667",
+      "source_numeric_id": "48829",
+      "label": "شقق تمليك أملاك الفيصلية",
+      "aria": "2732184 — شقق تمليك أملاك الفيصلية — متاحة",
+      "text": "شقق تمليك أملاك الفيصلية"
+    },
+    {
+      "url": "https://www.ketaf.sa/properties/48827?projectId=301667",
+      "source_numeric_id": "48827",
+      "label": "شقق تمليك أملاك الفيصلية",
+      "aria": "2915944 — شقق تمليك أملاك الفيصلية — متاحة",
+      "text": "شقق تمليك أملاك الفيصلية"
+    },
+    {
+      "url": "https://www.ketaf.sa/properties/48826?projectId=301667",
+      "source_numeric_id": "48826",
+      "label": "شقق تمليك أملاك الفيصلية",
+      "aria": "96185 — شقق تمليك أملاك الفيصلية — متاحة",
+      "text": "شقق تمليك أملاك الفيصلية"
+    },
+    {
+      "url": "https://www.ketaf.sa/properties/48825?projectId=301667",
+      "source_numeric_id": "48825",
+      "label": "شقق تمليك أملاك الفيصلية",
+      "aria": "8547270 — شقق تمليك أملاك الفيصلية — متاحة",
+      "text": "شقق تمليك أملاك الفيصلية"
+    },
+    {
+      "url": "https://www.ketaf.sa/properties/48824?projectId=301667",
+      "source_numeric_id": "48824",
+      "label": "شقق تمليك أملاك الفيصلية",
+      "aria": "4712932 — شقق تمليك أملاك الفيصلية — متاحة",
+      "text": "شقق تمليك أملاك الفيصلية"
+    },
+    {
+      "url": "https://www.ketaf.sa/properties/48822?projectId=301667",
+      "source_numeric_id": "48822",
+      "label": "شقق تمليك أملاك الفيصلية",
+      "aria": "9085128 — شقق تمليك أملاك الفيصلية — متاحة",
+      "text": "شقق تمليك أملاك الفيصلية"
+    },
+    {
+      "url": "https://www.ketaf.sa/properties/48820?projectId=301667",
+      "source_numeric_id": "48820",
+      "label": "شقق تمليك أملاك الفيصلية",
+      "aria": "7913975 — شقق تمليك أملاك الفيصلية — متاحة",
+      "text": "شقق تمليك أملاك الفيصلية"
+    },
+    {
+      "url": "https://www.ketaf.sa/properties/48819?projectId=301667",
+      "source_numeric_id": "48819",
+      "label": "شقق تمليك أملاك الفيصلية",
+      "aria": "6277240 — شقق تمليك أملاك الفيصلية — متاحة",
+      "text": "شقق تمليك أملاك الفيصلية"
+    },
+    {
+      "url": "https://www.ketaf.sa/properties/48818?projectId=301667",
+      "source_numeric_id": "48818",
+      "label": "شقق تمليك أملاك الفيصلية",
+      "aria": "241925 — شقق تمليك أملاك الفيصلية — متاحة",
+      "text": "شقق تمليك أملاك الفيصلية"
+    }
+  ]
+}
