@@ -112,7 +112,7 @@ async def project(browser,src,robots,host_blocked):
        ensure_ascii=False),flush=True)
    if n>=LIMIT_PER_PROJECT:record["status"]="STOP_BOUNDED_14_PAGES";break
    next_no=n+1
-   nxt=page.locator('button.MuiPaginationItem-page').filter(has_text=re.compile('^'+str(next_no)+'
+   nxt=page.locator("button.MuiPaginationItem-page").filter(has_text=re.compile("^" + str(next_no) + "\\z"))
    if not await nxt.count():
     record["status"]="PUBLIC_PAGINATION_EXHAUSTED";break
    if not await nxt.first.is_enabled():
