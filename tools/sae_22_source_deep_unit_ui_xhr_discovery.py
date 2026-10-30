@@ -137,41 +137,52 @@ async def browse(browser,source,project,rule,origin_blocked):
 async def main():
  data=json.loads(MANIFEST.read_text(encoding="utf8"));sources=data["sources"]
  if len(sources)!=22:raise RuntimeError("MANIFEST_PROJECTS_CHANGED")
- per_origin={}
  for s in sources:
   host=s["domain"]
   if not re.fullmatch(r"SRC-\d{6}",s["source_id"]):raise RuntimeError("BAD_SOURCE")
   if any(urlsplit(p["original_project_url"]).hostname.replace("www.","")!=host for p in s["targets"]):
    raise RuntimeError("OFF_ORIGIN_MANIFEST")
-  try:per_origin[host]=await asyncio.to_thread(robots,host)
-  except Exception as exc:per_origin[host]="ROBOTS_UNVERIFIED_"+type(exc).__name__+":"+str(exc)[:90]
- blocked={}
+ # One worker per origin, up to 4 DIFFERENT origins concurrently.
+ # Strictly sequential project requests within an origin.
+ gate=asyncio.Semaphore(4)
+ async def get_one_rules(source):
+  async with gate:
+   try:return source["domain"],await asyncio.to_thread(robots,source["domain"])
+   except Exception as exc:
+    return source["domain"],"ROBOTS_UNVERIFIED_"+type(exc).__name__+":"+str(exc)[:90]
+ discovered=await asyncio.gather(*(get_one_rules(s) for s in sources))
+ per_origin=dict(discovered)
+ blocked={};lock=asyncio.Lock()
  async with async_playwright() as pw:
   browser=await pw.chromium.launch(headless=True)
-  for source in sources:
-   host=source["domain"];r=per_origin[host]
-   result={"source_id":source["source_id"],"domain":host,"targets":[]}
-   if isinstance(r,str):result["status"]=r
-   else:
-    for p in source["targets"]:
-     obs=await browse(browser,source,p,r,blocked)
-     result["targets"].append(obs)
-     print("SAE_DEEP_SOURCE_PROJECT",json.dumps({"domain":host,"pid":p["canonical_project_id"],
-      "http":obs.get("http"),"status":obs["status"],
-      "unit_original_links":sum(len(x["firstparty_unit_links"]) for x in obs.get("snapshots",[])),
-      "native_unit_nodes":sum(len(x["native_unit_nodes"]) for x in obs.get("snapshots",[])),
-      "native_unit_xhr":sum(len(x.get("original_unit_shaped_arrays",[])) for x in obs["xhr"]),
-      "unit_ui_clicked":[x.get("control") for x in obs.get("snapshots",[]) if x["stage"]=="CLICK_UNIT_UI"],
-      "errors":obs["errors"][:4]},ensure_ascii=False)[:1800],flush=True)
-     if blocked.get(host):break
-   CAPTURE["original_publisher_hosts"].append(result)
-   checkpoint()
+  async def worker(source):
+   async with gate:
+    host=source["domain"];r=per_origin[host]
+    result={"source_id":source["source_id"],"domain":host,"targets":[]}
+    if isinstance(r,str):result["status"]=r
+    else:
+     for p in source["targets"]:
+      obs=await browse(browser,source,p,r,blocked)
+      result["targets"].append(obs)
+      print("SAE_DEEP_SOURCE_PROJECT",json.dumps({"domain":host,"pid":p["canonical_project_id"],
+       "http":obs.get("http"),"status":obs["status"],
+       "unit_original_links":sum(len(x["firstparty_unit_links"]) for x in obs.get("snapshots",[])),
+       "native_unit_nodes":sum(len(x["native_unit_nodes"]) for x in obs.get("snapshots",[])),
+       "native_unit_xhr":sum(len(x.get("original_unit_shaped_arrays",[])) for x in obs["xhr"]),
+       "unit_ui_clicked":[x.get("control") for x in obs.get("snapshots",[]) if x["stage"]=="CLICK_UNIT_UI"],
+       "errors":obs["errors"][:4]},ensure_ascii=False)[:1900],flush=True)
+      if blocked.get(host):break
+    async with lock:
+     CAPTURE["original_publisher_hosts"].append(result)
+     checkpoint()
+    return result
+  results=await asyncio.gather(*(worker(s) for s in sources))
   await browser.close()
- CAPTURE["summary"]={"registered_publishers_tested":len(CAPTURE["original_publisher_hosts"]),
-  "public_original_project_pages_scanned":sum(len(x["targets"]) for x in CAPTURE["original_publisher_hosts"]),
-  "source_native_unit_nodes":sum(len(y["native_unit_nodes"]) for x in CAPTURE["original_publisher_hosts"] for p in x["targets"] for y in p.get("snapshots",[])),
-  "source_linked_individual_pages":sum(len(y["firstparty_unit_links"]) for x in CAPTURE["original_publisher_hosts"] for p in x["targets"] for y in p.get("snapshots",[])),
-  "publisher_ajax_itemized_arrays":sum(len(y.get("original_unit_shaped_arrays",[])) for x in CAPTURE["original_publisher_hosts"] for p in x["targets"] for y in p.get("xhr",[])),
+ CAPTURE["summary"]={"registered_publishers_tested":len(results),
+  "public_original_project_pages_scanned":sum(len(x["targets"]) for x in results),
+  "source_native_unit_nodes":sum(len(y["native_unit_nodes"]) for x in results for p in x["targets"] for y in p.get("snapshots",[])),
+  "source_linked_individual_pages":sum(len(y["firstparty_unit_links"]) for x in results for p in x["targets"] for y in p.get("snapshots",[])),
+  "publisher_ajax_itemized_arrays":sum(len(y.get("original_unit_shaped_arrays",[])) for x in results for p in x["targets"] for y in p.get("xhr",[])),
   "blocked_origins":list(blocked),"canonical_writes":0}
  checkpoint()
  print("SAE_DEEP_22_SOURCE_SUMMARY",json.dumps(CAPTURE["summary"],ensure_ascii=False),flush=True)
