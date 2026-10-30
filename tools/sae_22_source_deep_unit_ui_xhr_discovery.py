@@ -18,7 +18,7 @@ UA="SAE-DB-unit-only-official-public-ui/1.0"
 CAPTURE={"schema":"SAE_22_DISTINCT_PUBLISHER_DOMAINS_NATIVE_UNIT_UI_XHR_V1",
 "observed_utc":datetime.now(timezone.utc).isoformat(),
 "master_unit_writes":0,"original_publisher_hosts":[]}
-ACTION_REGEX=re.compile(r"(?i)(عرض الوحدات|الوحدات المتاحة|تفاصيل الوحدات|اختر وحدتك|استعرض الوحدات|شاهد الوحدات|المخطط التفاعلي|view units|unit availability|available units|show units|units list|view inventory)")
+ACTION_REGEX=re.compile(r"(عرض الوحدات|الوحدات المتاحة|تفاصيل الوحدات|اختر وحدتك|استعرض الوحدات|شاهد الوحدات|المخطط التفاعلي|view units|unit availability|available units|show units|units list|view inventory)",re.IGNORECASE)
 DOM=r"""() => {
  let as=[...document.querySelectorAll('a[href]')].filter(a=>{
    try {let u=new URL(a.href);return u.hostname===location.hostname && /\/(properties|units|unit|apartment|listing|villa|plots)\/\d+/.test(u.pathname)}
