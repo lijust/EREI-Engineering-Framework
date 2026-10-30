@@ -1,0 +1,33 @@
+name: SAE Kian Residence Existing Project 12 Native Data Unit Node Identity
+on:
+  push:
+    branches: [sae-source-study-20261029]
+    paths:
+      - 'tools/sae_kian_12_native_unit_node_original_inspection.py'
+      - '.github/workflows/sae-kian-native-12-data-unit.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  exact-native-nodes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install public page reader
+        run: |
+          python -m pip install playwright==1.58.0
+          python -m playwright install --with-deps chromium
+      - name: Verify all native publisher data unit attributes in project
+        run: python tools/sae_kian_12_native_unit_node_original_inspection.py
+      - name: Preserve source snapshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sae-kian-original-native-data-unit-nodes
+          path: sae-kian-original-unit-node-deep-evidence.json
+          retention-days: 7
+          if-no-files-found: warn
