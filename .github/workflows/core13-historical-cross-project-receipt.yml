@@ -1,0 +1,26 @@
+name: core13-historical-cross-project-receipt
+
+on:
+  pull_request:
+    paths:
+      - "tools/core13_external_historical_receipt_boundary.py"
+      - "evals/tests/test_core13_external_historical_receipt_boundary.py"
+      - ".github/workflows/core13-historical-cross-project-receipt.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  offline-cross-project-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: read-only historical receipt policy and reduction
+        run: python -m unittest evals.tests.test_core13_external_historical_receipt_boundary -v
