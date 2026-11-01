@@ -1,0 +1,26 @@
+name: core13-prospective-repair-contract-offline
+
+on:
+  pull_request:
+    paths:
+      - "tools/repair_evidence_contract.py"
+      - "evals/tests/test_core13_repair_evidence_contract.py"
+      - ".github/workflows/core13-prospective-repair-contract-offline.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  offline-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: verify bounded repair identity and false-authority gates
+        run: python -m unittest evals.tests.test_core13_repair_evidence_contract -v
