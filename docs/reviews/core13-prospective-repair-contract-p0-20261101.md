@@ -88,6 +88,6 @@ Task scope / immutable source SHA / sealed oracle ID chosen by project
 python -m unittest evals.tests.test_core13_repair_evidence_contract -v
 ```
 
-22 initial offline tests cover correct envelope without authority, wrong base/task, digest mismatch, forbidden paths, fake claims, incompatible verifier identity, outcome contradictions, and that syntax-valid but functionally wrong source is **not accepted**. **Record actual local/CI results separately; writing tests is not evidence they passed.**
+24 initial offline tests cover correct envelope without authority, wrong base/task, digest mismatch, forbidden paths, fake claims, incompatible verifier identity, outcome contradictions, and that syntax-valid but functionally wrong source is **not accepted**. **Record actual local/CI results separately; writing tests is not evidence they passed.**
 
 **Next acceptance:** independent review of exact J2 sources, final J1 integration decision for selected #229/#230/#125, then project-owned J3 sealed independent oracle specification. Do not start real AI generation until J2–J5 security and attribution gates pass.
