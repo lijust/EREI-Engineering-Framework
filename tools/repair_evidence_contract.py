@@ -193,7 +193,8 @@ def bind_reported_result(task: Any, proposal: Any, result: Any) -> dict:
         raise RepairContractDenied("RESULT_IDENTITY_MISMATCH")
     if result["provenance"] != "caller_reported_unattested":
         raise RepairContractDenied("RESULT_PROVENANCE_NOT_ATTESTED")
-    if (type(result["outcome"]) is not str\n        or result["outcome"] not in {"pass", "fail", "blocked"}):
+    if (type(result["outcome"]) is not str
+        or result["outcome"] not in {"pass", "fail", "blocked"}):
         raise RepairContractDenied("RESULT_OUTCOME_INVALID")
     checks = result["checks"]
     if (type(checks) is not list or len(checks) > 16
