@@ -185,6 +185,18 @@ class RepairEvidenceContractTests(unittest.TestCase):
         with self.assertRaises(c.RepairContractDenied):
             c.validate_patch(task(), patch(evil))
 
+    def test_23_nonstring_outcome_fails_closed(self):
+        modified = result()
+        modified["outcome"] = {"pass": True}
+        with self.assertRaisesRegex(c.RepairContractDenied, "OUTCOME_INVALID"):
+            c.bind_reported_result(task(), patch(), modified)
+
+    def test_24_untrusted_result_cannot_add_acceptance_field(self):
+        modified = result()
+        modified["acceptance_authorized"] = True
+        with self.assertRaisesRegex(c.RepairContractDenied, "SCHEMA_INVALID"):
+            c.bind_reported_result(task(), patch(), modified)
+
     def test_22_diff_is_not_semantic_correctness(self):
         # Semantically useless code is still a syntactically valid envelope.
         # Such a result MUST NOT be upgraded to accepted code by this tool.
