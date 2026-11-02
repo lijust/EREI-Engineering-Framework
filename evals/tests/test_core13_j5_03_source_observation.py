@@ -228,7 +228,9 @@ class J503SourceEvidenceTests(unittest.TestCase):
     def test_12_different_source_declared_rejected(self):
         task = dict(self.task, allowed_paths=["src/nonexistent.py"])
         pins = dict(self.pins, task_sha256=j501.canonical_task_sha256(task))
-        with self.assertRaises(j501.SourceBindingDenied):
+        # J2 is authoritative and rejects a diff targeting a path
+        # outside the newly declared task scope before Git lookup.
+        with self.assertRaises(j2.RepairContractDenied):
             self._run(task=task, trusted_pins=pins)
 
     def test_13_multiple_allowed_sources_not_supported_by_fixed_probe(self):
