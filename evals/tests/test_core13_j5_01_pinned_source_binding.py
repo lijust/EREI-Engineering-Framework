@@ -121,6 +121,7 @@ class J501SourceBindingTests(unittest.TestCase):
         self._git("rm", "-q", "src/example.py")
         (self.root / "src/example.py").unlink(missing_ok=True)
         # Use Git's index mode to preserve portability on Windows.
+        (self.root / "src").mkdir(exist_ok=True)
         self._git("config", "core.symlinks", "false")
         (self.root / "src/example.py").write_text("sibling.py", encoding="ascii")
         self._git("add", "src/example.py")
