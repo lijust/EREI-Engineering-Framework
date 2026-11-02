@@ -67,21 +67,27 @@ def _fixture(value: Path | str, verifier: Path) -> tuple[Path, str, tuple[int, i
     supplied = Path(value)
     if not supplied.is_absolute():
         raise BoundaryDenied("FIXTURE_PATH_MUST_BE_ABSOLUTE")
+    # A lexical-in-verifier check is required BEFORE following a symlink:
+    # /outside/alias -> /verifier/oracle must not be accepted.
+    lexical = Path(os.path.abspath(supplied))
+    if lexical == verifier or not _inside(lexical, verifier):
+        raise BoundaryDenied("FIXTURE_OUTSIDE_VERIFIER")
     try:
-        resolved = supplied.resolve(strict=True)
+        resolved = lexical.resolve(strict=True)
     except (OSError, RuntimeError) as exc:
         raise BoundaryDenied("FIXTURE_UNAVAILABLE") from exc
     if resolved == verifier or not _inside(resolved, verifier):
         raise BoundaryDenied("FIXTURE_OUTSIDE_VERIFIER")
     # Reject symlinked fixture files and traversed parent links. This also
     # eliminates an easy same-filesystem alias in a prospective mount plan.
-    cursor = supplied
+    cursor = lexical
     try:
         while cursor != verifier and _inside(cursor, verifier):
-            if cursor.is_symlink():
+            if (cursor.is_symlink()
+                or (hasattr(cursor, "is_junction") and cursor.is_junction())):
                 raise BoundaryDenied("FIXTURE_SYMLINK_DENIED")
             cursor = cursor.parent
-        info = supplied.lstat()
+        info = lexical.lstat()
         if not stat.S_ISREG(info.st_mode):
             raise BoundaryDenied("FIXTURE_NOT_REGULAR")
         if stat.S_IMODE(info.st_mode) & 0o222:
