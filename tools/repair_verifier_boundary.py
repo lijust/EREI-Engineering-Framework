@@ -61,7 +61,7 @@ def _disjoint(a: Path, b: Path) -> bool:
     return not _inside(a, b) and not _inside(b, a)
 
 
-def _fixture(value: Path | str, verifier: Path) -> tuple[Path, str, tuple[int, int]]:
+def _fixture(value: Path | str, verifier: Path, verifier_lexical: Path) -> tuple[Path, str, tuple[int, int]]:
     if not isinstance(value, (str, Path)):
         raise BoundaryDenied("FIXTURE_ARGUMENT_INVALID")
     supplied = Path(value)
@@ -70,7 +70,10 @@ def _fixture(value: Path | str, verifier: Path) -> tuple[Path, str, tuple[int, i
     # A lexical-in-verifier check is required BEFORE following a symlink:
     # /outside/alias -> /verifier/oracle must not be accepted.
     lexical = Path(os.path.abspath(supplied))
-    if lexical == verifier or not _inside(lexical, verifier):
+    # Match the caller's *lexical* verifier root. On Windows,
+    # Path.resolve() can expand junctions/8.3 aliases: comparing a lexical
+    # fixture with only the resolved root would reject valid in-root files.
+    if lexical == verifier_lexical or not _inside(lexical, verifier_lexical):
         raise BoundaryDenied("FIXTURE_OUTSIDE_VERIFIER")
     try:
         resolved = lexical.resolve(strict=True)
@@ -82,7 +85,7 @@ def _fixture(value: Path | str, verifier: Path) -> tuple[Path, str, tuple[int, i
     # eliminates an easy same-filesystem alias in a prospective mount plan.
     cursor = lexical
     try:
-        while cursor != verifier and _inside(cursor, verifier):
+        while cursor != verifier_lexical and _inside(cursor, verifier_lexical):
             if (cursor.is_symlink()
                 or (hasattr(cursor, "is_junction") and cursor.is_junction())):
                 raise BoundaryDenied("FIXTURE_SYMLINK_DENIED")
@@ -231,8 +234,11 @@ def preflight(
         or not _disjoint(candidate, original)
         or not _disjoint(verifier, original)):
         raise BoundaryDenied("WORKSPACE_INTERSECTION")
-    oracle_path, oracle_sha, oracle_id = _fixture(oracle_fixture, verifier)
-    profile_path, profile_sha, profile_id = _fixture(worker_profile_fixture, verifier)
+    verifier_lexical = Path(os.path.abspath(verifier_workspace))
+    oracle_path, oracle_sha, oracle_id = _fixture(
+        oracle_fixture, verifier, verifier_lexical)
+    profile_path, profile_sha, profile_id = _fixture(
+        worker_profile_fixture, verifier, verifier_lexical)
     if oracle_path == profile_path or oracle_id == profile_id:
         raise BoundaryDenied("FIXTURES_MUST_BE_DISTINCT")
     if oracle_sha != trusted_pins["oracle_sha256"]:
