@@ -171,7 +171,7 @@ class J502VerifierBoundaryTests(unittest.TestCase):
             os.link(self.oracle, alias)
         except (OSError, NotImplementedError):
             self.skipTest("OS cannot create local hardlink in test setup")
-        self._deny("FIXTURE_HARDLINK_IN_CANDIDATE")
+        self._deny("FIXTURE_LINK_COUNT_UNSAFE")
 
     def test_12_wrong_pinned_oracle_digest_denied(self):
         oracle = self.task["oracle_sha256"]
@@ -299,6 +299,18 @@ class J502VerifierBoundaryTests(unittest.TestCase):
             self.skipTest("OS forbids symlinks for ordinary user")
         self._deny("FIXTURE_SYMLINK_DENIED",
                    oracle_fixture=alias / "oracle.json")
+
+
+    def test_31_unrelated_candidate_hardlink_also_rejected(self):
+        source = self.candidate / "one.txt"
+        target = self.candidate / "two.txt"
+        source.write_text("no hardlink aliases accepted", encoding="utf-8")
+        try:
+            os.link(source, target)
+        except (OSError, NotImplementedError):
+            self.skipTest("OS cannot create local hardlink in test setup")
+        self._deny("CANDIDATE_HARDLINK_DENIED")
+
 
 
 if __name__ == "__main__":
