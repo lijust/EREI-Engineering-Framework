@@ -1,0 +1,38 @@
+name: core13-j5-03b-fixed-behavior-control
+
+on:
+  pull_request:
+    paths:
+      - "tools/repair_evidence_contract.py"
+      - "tools/repair_source_binding.py"
+      - "tools/repair_verifier_boundary.py"
+      - "tools/repair_independent_evidence.py"
+      - "tools/repair_fixed_behavior_witness.py"
+      - "evals/tests/test_core13_repair_evidence_contract.py"
+      - "evals/tests/test_core13_j5_01_pinned_source_binding.py"
+      - "evals/tests/test_core13_j5_02_verifier_boundary.py"
+      - "evals/tests/test_core13_j5_03_source_observation.py"
+      - "evals/tests/test_core13_j5_03b_fixed_behavior.py"
+      - ".github/workflows/core13-j5-03b-fixed-behavior-control.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fixed-behavior-control:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: J2 J5-01 J5-02 J5-03 J5-03B fixed-only independent negative controls
+        run: python -m unittest evals.tests.test_core13_repair_evidence_contract evals.tests.test_core13_j5_01_pinned_source_binding evals.tests.test_core13_j5_02_verifier_boundary evals.tests.test_core13_j5_03_source_observation evals.tests.test_core13_j5_03b_fixed_behavior -v
