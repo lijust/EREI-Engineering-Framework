@@ -1,0 +1,34 @@
+name: core13-j5-02-fixed-verifier-topology
+
+on:
+  pull_request:
+    paths:
+      - "tools/repair_evidence_contract.py"
+      - "tools/repair_source_binding.py"
+      - "tools/repair_verifier_boundary.py"
+      - "evals/tests/test_core13_repair_evidence_contract.py"
+      - "evals/tests/test_core13_j5_01_pinned_source_binding.py"
+      - "evals/tests/test_core13_j5_02_verifier_boundary.py"
+      - ".github/workflows/core13-j5-02-fixed-verifier-topology.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fixed-topology-offline:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: J2 J5-01 J5-02 fixed-only regression suites
+        run: python -m unittest evals.tests.test_core13_repair_evidence_contract evals.tests.test_core13_j5_01_pinned_source_binding evals.tests.test_core13_j5_02_verifier_boundary -v
