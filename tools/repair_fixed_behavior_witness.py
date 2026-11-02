@@ -31,20 +31,21 @@ N_CASES = 4
 # 'green' is a fixed control for this tiny calibration, not a model patch.
 # No caller-controlled source text, program path, test code, or shell command.
 _REVIEWED_FIXED_WORKER = (
-    "import json,os,sys;"
-    "mode=sys.argv[1];"
-    "items=['1,200 SAR','850',' 700 SAR ','0 SAR'];"
-    "defn='def parse(s):\\n"
-    "    s=s.strip().replace(\",\",\"\")\\n"
-    "    if MODE==\"green\": s=s.removesuffix(\"SAR\").strip()\\n"
-    "    try: return int(s)\\n"
-    "    except ValueError: return None\\n';"
-    "space={'MODE':mode};"
-    "exec(defn,space);"
-    "out=[space['parse'](v) for v in items];"
+    "import json,os,sys\\n"
+    "mode=sys.argv[1]\\n"
+    "items=['1,200 SAR','850',' 700 SAR ','0 SAR']\\n"
+    "def parse(value):\\n"
+    "    cleaned=value.strip().replace(',', '')\\n"
+    "    if mode=='green':\\n"
+    "        cleaned=cleaned.removesuffix('SAR').strip()\\n"
+    "    try:\\n"
+    "        return int(cleaned)\\n"
+    "    except ValueError:\\n"
+    "        return None\\n"
+    "out=[parse(item) for item in items]\\n"
     "print(json.dumps({'contract':'erei-j5-03b-fixed-behavior-trace-v1',"
     "'mode':mode,'values':out,'pid':os.getpid()},"
-    "sort_keys=True,separators=(',',':')))"
+    "sort_keys=True,separators=(',',':')))\\n"
 )
 
 
