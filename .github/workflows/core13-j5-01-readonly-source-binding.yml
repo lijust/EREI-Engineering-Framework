@@ -1,0 +1,28 @@
+name: core13-j5-01-readonly-source-binding
+
+on:
+  pull_request:
+    paths:
+      - "tools/repair_evidence_contract.py"
+      - "tools/repair_source_binding.py"
+      - "evals/tests/test_core13_repair_evidence_contract.py"
+      - "evals/tests/test_core13_j5_01_pinned_source_binding.py"
+      - ".github/workflows/core13-j5-01-readonly-source-binding.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  readonly-git-and-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Check original J2 and J5-01 real Git negative controls
+        run: python -m unittest evals.tests.test_core13_repair_evidence_contract evals.tests.test_core13_j5_01_pinned_source_binding -v
