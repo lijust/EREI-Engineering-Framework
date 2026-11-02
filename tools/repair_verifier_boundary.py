@@ -93,6 +93,10 @@ def _fixture(value: Path | str, verifier: Path, verifier_lexical: Path) -> tuple
         info = lexical.lstat()
         if not stat.S_ISREG(info.st_mode):
             raise BoundaryDenied("FIXTURE_NOT_REGULAR")
+        # On Windows a linked directory entry may expose a different file ID
+        # in portable stat. Reject any verifier file with multiple hardlinks.
+        if info.st_nlink != 1:
+            raise BoundaryDenied("FIXTURE_LINK_COUNT_UNSAFE")
         if stat.S_IMODE(info.st_mode) & 0o222:
             raise BoundaryDenied("FIXTURE_NOT_READONLY")
         if info.st_size < 1 or info.st_size > MAX_FIXTURE_BYTES:
@@ -129,6 +133,8 @@ def _candidate_tree(candidate: Path, protected_file_ids: set[tuple[int, int]]) -
                     info = entry.stat(follow_symlinks=False)
                     if (info.st_dev, info.st_ino) in protected_file_ids:
                         raise BoundaryDenied("FIXTURE_HARDLINK_IN_CANDIDATE")
+                    if stat.S_ISREG(info.st_mode) and info.st_nlink != 1:
+                        raise BoundaryDenied("CANDIDATE_HARDLINK_DENIED")
                     if stat.S_ISDIR(info.st_mode):
                         # Resolving also detects junction/path redirection.
                         target = Path(entry.path).resolve(strict=True)
