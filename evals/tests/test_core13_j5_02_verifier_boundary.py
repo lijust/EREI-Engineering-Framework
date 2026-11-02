@@ -278,5 +278,28 @@ class J502VerifierBoundaryTests(unittest.TestCase):
         self.assertTrue(result["candidate_and_verifier_workspaces_disjoint"])
 
 
+    def test_29_external_symlink_alias_to_oracle_rejected(self):
+        alias = self.candidate.parent / "outside-oracle-alias"
+        try:
+            alias.symlink_to(self.oracle)
+        except (OSError, NotImplementedError):
+            self.skipTest("OS forbids symlinks for ordinary user")
+        self._deny("FIXTURE_OUTSIDE_VERIFIER", oracle_fixture=alias)
+
+    def test_30_symlinked_verifier_fixture_parent_rejected(self):
+        actual = self.verifier / "actual-private"
+        actual.mkdir()
+        hidden = actual / "oracle.json"
+        hidden.write_bytes(self.oracle_bytes)
+        hidden.chmod(stat.S_IREAD)
+        alias = self.verifier / "alias-private"
+        try:
+            alias.symlink_to(actual, target_is_directory=True)
+        except (OSError, NotImplementedError):
+            self.skipTest("OS forbids symlinks for ordinary user")
+        self._deny("FIXTURE_SYMLINK_DENIED",
+                   oracle_fixture=alias / "oracle.json")
+
+
 if __name__ == "__main__":
     unittest.main()
