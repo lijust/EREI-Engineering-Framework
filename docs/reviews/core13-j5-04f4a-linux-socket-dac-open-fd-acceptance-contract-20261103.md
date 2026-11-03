@@ -14,7 +14,7 @@ The new App F4A branch introduces **a deliberately restricted non-Docker kernel 
 ## F4 acceptance ladder (never collapse the levels)
 | Gate | Required measurable evidence | F4A result |
 | --- | --- | --- |
-| F4A kernel DAC fixture | Separate OS UID, valid positive control, fresh EACCES, retained FD counterexample | Local Linux test PASS; CI pending independent run |
+| F4A kernel DAC fixture | Separate OS UID, valid positive control, fresh EACCES, retained FD counterexample | Local Linux root 7/7 PASS; App PR CI #41629335188 and #41629688119 unprivileged 5 PASS / 2 root-only SKIP (privileged trusted-branch job not established by PR check) |
 | F4B actual Docker bypass | Private owned dockerd and protected socket, denied fixed direct HTTP CREATE from restricted worker, host Docker socket paths considered, no leftovers | NOT TESTED |
 | F4C exclusive broker | Distinct privileged broker identity, restricted worker permitted broker RPC only, raw daemon transport absent from its FD/mount/network namespace, source and credentials independently measured | NOT IMPLEMENTED |
 | F5 in-flight barrier | Existing connections/partial HTTP/detached CREATE fail closed under seal; daemon epoch and durable unresolved intents protected through restart | NOT PROVEN |
