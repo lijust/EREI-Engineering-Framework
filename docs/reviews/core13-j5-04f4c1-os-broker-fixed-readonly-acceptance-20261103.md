@@ -35,3 +35,7 @@ F4C1 passing would prove **one mediated read-only GET path and two rejected RPC 
 `exclusive_transport_owner_attested=false`; `external_socket_bypass_denied=false`; `broker_exclusive_transport_certified=false`; `worker_isolation_certified=false`; `creation_quiescence_barrier_proven=false`; `late_async_create_excluded=false`; `independently_verified=false`; `untrusted_code_execution_authorized=false`. `decision=BLOCK_AI_ACCEPTANCE`; `learning_effectiveness=NOT_ESTABLISHED`.
 
 **Reusable principle:** A broker must be measured separately on both authorization planes: who may connect to broker RPC, who is allowed by its kernel-credential method policy, and what exact operations the broker can perform on the privileged service. A successful read-only mediation alone never proves exclusive transport ownership or safe untrusted execution.
+
+## Offline App verification, not real broker evidence
+
+[App F4C1 Actions #41678597148](https://github.com/lijust/EREI-3.2/actions/runs/41678597148) succeeded with **20 F4C1 + 23 F4B + 40 F3 = 83 PASS, 0 FAIL**, while the privileged real Docker broker job correctly **SKIPPED** for PR trigger. This is an implementation/contract guard, not proof of actual broker mediation, exclusive daemon transport ownership, FD drain, independent verification, or AI acceptance. Remain Draft/HOLD pending distinct owner-authorized manual run and pin exact live receipt if available.
