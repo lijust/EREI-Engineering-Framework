@@ -35,3 +35,9 @@
 `decision=BLOCK_AI_ACCEPTANCE`; `learning_effectiveness=NOT_ESTABLISHED`.
 
 **Reusable engineering rule:** An OS group/ACL boundary must be proven against a real *configured service* under real alternate credentials, with a successful adversarial positive control. Even then, a prevented **new connection** is a smaller claim than exclusive transport ownership, active-request drain, no late CREATE, or safe execution.
+
+## App F4B test status and reusable Python path lesson
+
+The App [Draft #261](https://github.com/lijust/EREI-3.2/pull/261) PR offline CI final [#41633231900](https://github.com/lijust/EREI-3.2/actions/runs/41633231900): **17 F4B PASS, 5 F4A PASS + 2 root-only SKIP, 40 F3 PASS** = **62 PASS, 2 SKIP**. Actual privileged Docker manual job SKIPPED. Prior first [#41632837445](https://github.com/lijust/EREI-3.2/actions/runs/41632837445) had two test failures due an incorrectly strict `type(path) is Path` check (on Linux `Path(...)` produces `PosixPath`). Fixed to `isinstance(path, Path)`; final CI includes isolated immutable child Python source compilation. Keep initial failure history and DO NOT promote from offline green.
+
+Reusable requirement: path-class validation must respect OS-specific `Path` subclasses, but accepting a Path must not replace canonical path traversal checks, no-symlink checks, owner/inode checks, or kernel authority proofs.
