@@ -29,3 +29,7 @@ After D1C, **prioritize D2 engineering and F5**, not indefinite observations of 
 The user supplied Docker Scout screenshot reporting **34 vulnerabilities** in local `python:3.12-slim`, with a truncated digest prefix matching the fixed image used for these trusted tests. This is a separate image risk requiring current full-digest SBOM/CVE triage and acceptable remediation/exception before any untrusted code execution; fixed digest alone is not a vulnerability remediation.
 
 **Generalizable lesson:** distinguish snapshot FDs, known-socket mount-root paths, namespace separation, IPC FD delivery possibilities and future broker-exclusive transport. Every security certificate needs live exact-identity denial evidence and independent review, not a green synthetic or fixed-sleeper test.
+
+## D1C implementation / offline CI checkpoint
+
+[App Actions #41742982156](https://github.com/lijust/EREI-3.2/actions/runs/41742982156) completed **SUCCESS**: **24 D1C +23 D1B +15 D1A +13 D0 = 75 offline PASS/0 FAIL**; privileged real Docker owner-manual job **SKIPPED** in PR. No D1C actual namespace/socket snapshot is certified by this PR CI result. D1B owner-manual #41742253271 remains the last confirmed actual fixed Python process observation. D1C code-only tests and root-helper contract are documented without promoting containment, independent L3, AI or image CVE assurances.
