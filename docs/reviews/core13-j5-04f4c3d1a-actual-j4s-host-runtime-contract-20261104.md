@@ -37,3 +37,9 @@ Until those gates are actually observed, `actual_untrusted_worker_os_process_ver
 ## App D1A offline CI status (4 Nov 2026)
 
 [App Actions #41740498441](https://github.com/lijust/EREI-3.2/actions/runs/41740498441) **SUCCESS** with 15 D1A + 13 D0 + 21 F4C3C = **49 PASS / 0 FAIL**. The actual approved J4S host Docker process runtime job was SKIPPED for the PR event. Thus no D1A live host PID/FD observation or inside-container OS worker isolation has yet been shown. Real scope requires separate owner-triggered reviewed manual workflow run; all global security, Docker image CVE, F5/L3 and AI acceptance flags remain unproven/blocked.
+
+## D1A actual runtime verification checkpoint — App Actions #41740996507
+
+Owner-manual [App #41740996507](https://github.com/lijust/EREI-3.2/actions/runs/41740996507) on pinned App SHA `a95df4f536a7291d58c4580ab4cec82bdb062018` completed **SUCCESS** for real trusted fixed J4S host CLI runtime and offline tests. J4S source-generated receipt observed actual host Docker CLI PID/UID/GID, with one-time FD type counts **socket 0 / pipe 2 / other 1**, verified source-fixed timeout outcome, forced container removal and absence. **49 offline PASS** (15 D1A, 13 D0, 21 F4C3C).
+
+**Only the scoped host CLI observation passed.** This is not the container Python worker PID or FD table, not broker exclusivity, and not a verification of absence of SCM_RIGHTS/alternate endpoint capabilities. Full `worker_isolation_certified`, F5, L3, image vulnerability clearance and AI acceptance are still false / `BLOCK_AI_ACCEPTANCE`. D1B separately inspects actual container process under source-reviewed trusted run.
