@@ -37,3 +37,7 @@ The root broker itself has broader capabilities than its RPC. The runner control
 `exclusive_transport_owner_attested=false`, `external_socket_bypass_denied=false`, `broker_exclusive_transport_certified=false`, `trusted_fixed_create_broker_isolated_capability_certified=false`, `controller_only_docker_transport_certified=false`, `worker_isolation_certified=false`, `creation_quiescence_barrier_proven=false`, `independently_verified=false`, `untrusted_code_execution_authorized=false`, `decision=BLOCK_AI_ACCEPTANCE`, `learning_effectiveness=NOT_ESTABLISHED`.
 
 **Cross-country reusable engineering rule:** For privileged mutations, prove identity of calling principal + identity of daemon peer + immutable operation and resources + exact resulting object removal; never conflate RPC allowlist with restricted broker OS powers, daemon transport exclusivity, or replay/drain safety.
+
+## App F4C2 offline CI status — 3 November 2026
+
+[App Actions #41681545174](https://github.com/lijust/EREI-3.2/actions/runs/41681545174) succeeded for 22 F4C2 + 20 F4C1 + 23 F4B + 40 F3 = **105 PASS, 0 FAIL**; privileged owner-only actual secondary-Docker broker test was **SKIPPED** on PR event. The implementation is available but the F4C2 mutating capability acceptance is **NOT ESTABLISHED** pending an explicit trusted manual run and inspected full receipt. Keep global gate flags false.
