@@ -33,3 +33,7 @@ The user's Docker Scout screenshot showed **34 reported CVEs** on a locally insp
 Until those gates are actually observed, `actual_untrusted_worker_os_process_verified=false`, `actual_container_python_worker_pid_verified=false`, `actual_worker_all_docker_endpoints_denied=false`, `worker_isolation_certified=false`, `exclusive_transport_owner_attested=false`, `creation_quiescence_barrier_proven=false`, `independently_verified=false`, `untrusted_code_execution_authorized=false`, `decision=BLOCK_AI_ACCEPTANCE` and `learning_effectiveness=NOT_ESTABLISHED`.
 
 **Reusable core-framework lesson:** observing the real host-side orchestration subprocess is not evidence about an in-container worker's capabilities. Preserve that distinction in code, tests, receipts and approval gates.
+
+## App D1A offline CI status (4 Nov 2026)
+
+[App Actions #41740498441](https://github.com/lijust/EREI-3.2/actions/runs/41740498441) **SUCCESS** with 15 D1A + 13 D0 + 21 F4C3C = **49 PASS / 0 FAIL**. The actual approved J4S host Docker process runtime job was SKIPPED for the PR event. Thus no D1A live host PID/FD observation or inside-container OS worker isolation has yet been shown. Real scope requires separate owner-triggered reviewed manual workflow run; all global security, Docker image CVE, F5/L3 and AI acceptance flags remain unproven/blocked.
