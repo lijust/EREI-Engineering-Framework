@@ -42,3 +42,7 @@ learning_effectiveness=NOT_ESTABLISHED
 ```
 
 **Generalizable engineering rule:** authenticate kernel peer on every allowed worker IPC, then use `recvmsg` to explicitly inspect and reject FD capabilities rather than equating `recv`, `close_fds` or a prestart snapshot with end-to-end ancillary denial. Even successfully rejecting a dummy FD is not equivalent to certifying all privileged FD delivery paths.
+
+## D2C1 code reviewed and offline CI verified — 4 Nov 2026
+
+[App Actions #41818892284](https://github.com/lijust/EREI-3.2/actions/runs/41818892284) **SUCCESS** with **80 OFFLINE PASS / 0 FAIL** (21 D2C1 +20 D2B1 +21 F4C3C +18 D2A), source SHA `f93cabeb0eedb35995ea0d15020552d487e4f452`. Real owner-manual D2C1 harmless SCM_RIGHTS FD injection into an actual second restricted worker was **SKIPPED** on PR and is therefore not real evidence yet. D2B1 actual owner run #41817999943 remains scoped separate-UID/fixed broker EACCES PASS only. Broad privileged FD transfer, all IPC peers, full Docker endpoints, F5, L3 and AI acceptance remain unproven.
