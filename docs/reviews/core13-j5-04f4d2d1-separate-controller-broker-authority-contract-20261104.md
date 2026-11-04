@@ -52,3 +52,11 @@ learning_effectiveness=NOT_ESTABLISHED
 ## Final reviewed source CI evidence — 4 Nov 2026
 
 Latest App PR #276 source SHA `f49c35d45f1f4a2ad266074e64181c2a18663adc`, [Actions #41869369778](https://github.com/lijust/EREI-3.2/actions/runs/41869369778) **SUCCESS with 78 offline PASS**: 22 D2D1, 22 F4C2, 18 D2A, 16 D2C3A. Privileged real private Docker / separate OS controller job SKIPPED on PR. D2D1 is code-ready for explicit owner-reviewed manual scoped runtime test only; global broker/controller security, F5, L3, current image CVEs and AI acceptance remain blocked.
+
+## Verified actual D2D1 owner-manual result — 4 November 2026
+
+[App GitHub Actions #41872834558](https://github.com/lijust/EREI-3.2/actions/runs/41872834558), exact source `6598d18d1dc5a8611865d4a474ec7a3c6a6a239b`, event `workflow_dispatch`: **SUCCESS for real ephemeral private Docker/OS controller and 78 offline tests (22+22+18+16)**. Actual fixed `www-data` controller kernel PID/UID/GID verified, CapEff zero, NoNewPrivs set prior to Python exec, raw private/host Unix Docker EACCES; original F4C2 root broker rejected unknown method and nobody principal, accepted exact source-fixed CREATE/INSPECT/DELETE of one **never-started** image; private daemon and broker cleaned, 0 model calls/writes.
+
+This is **a scoped real test of a NEW trusted separate controller**, NOT migration of old J4/J4S or loss of host Docker access from privileged test supervisor. Source-generated receipt still says `test_supervisor_has_host_docker_permissions=true`, legacy J4/J4S direct Docker authority NOT removed, alternative Unix/TCP/TLS/SSH endpoints unverified, broker transport exclusivity false, worker isolation false, F5 create-quiescence unproven and L3 independent verification false. `untrusted_code_execution_authorized=false`, `BLOCK_AI_ACCEPTANCE`.
+
+Engineering adoption: D2D2 must map real J4/J4S direct Docker operations and introduce a deny-by-default prospective broker-only adapter behind an explicit integration boundary without enabling arbitrary code. Keep existing Draft PR chain isolated; no automatic rootful CI, and no candidate execution.
