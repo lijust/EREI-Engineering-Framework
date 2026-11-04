@@ -36,3 +36,7 @@ User-supplied Docker Scout screenshot reported 34 issues in locally inspected py
 All runtime/global gates remain FALSE: actual_worker_broker_exclusive_enforced, actual_controller_host_docker_authority_removed, actual_worker_no_possible_scm_rights_transfer_attested, actual_worker_all_alternative_docker_endpoints_denied, worker_isolation_certified, creation_quiescence_barrier_proven, independently_verified, untrusted_code_execution_authorized. Decision BLOCK_AI_ACCEPTANCE; learning_effectiveness NOT_ESTABLISHED.
 
 **Reusable engineering lesson:** show authorization denial on the actual distinct restricted worker and verify both sides of kernel IPC, not only the source of a broker or an auxiliary synthetic process.
+
+## D2B1 code/contract CI verified — no live worker yet
+
+[App #41815627227](https://github.com/lijust/EREI-3.2/actions/runs/41815627227) **SUCCESS**: **81 offline PASS / 0 FAIL** (20 D2B1, 18 D2A, 22 F4C2, 21 F4C3C); privileged real private Docker worker+root broker test **SKIPPED** on PR. Only source/contract tests completed. The distinct UID worker's live PID, denied broker request and fresh Docker EACCES remain **unobserved** until user-reviewed owner-only manual run. D2C/F5/L3/image CVE/untrusted code gate all remain BLOCKED.
