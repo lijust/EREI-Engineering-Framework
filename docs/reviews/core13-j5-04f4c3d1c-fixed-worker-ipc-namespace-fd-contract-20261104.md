@@ -33,3 +33,11 @@ The user supplied Docker Scout screenshot reporting **34 vulnerabilities** in lo
 ## D1C implementation / offline CI checkpoint
 
 [App Actions #41742982156](https://github.com/lijust/EREI-3.2/actions/runs/41742982156) completed **SUCCESS**: **24 D1C +23 D1B +15 D1A +13 D0 = 75 offline PASS/0 FAIL**; privileged real Docker owner-manual job **SKIPPED** in PR. No D1C actual namespace/socket snapshot is certified by this PR CI result. D1B owner-manual #41742253271 remains the last confirmed actual fixed Python process observation. D1C code-only tests and root-helper contract are documented without promoting containment, independent L3, AI or image CVE assurances.
+
+## Verified F4C3D1C live FAILURE and diagnostic containment — 4 Nov 2026
+
+Owner-dispatched [App Actions #41803457914](https://github.com/lijust/EREI-3.2/actions/runs/41803457914) at App SHA `0bde11dbf1967536aa068b08569b496be0b56c14`: root real Docker job **FAILED**, 75 offline tests PASS. Actual application report returned `J4S_TIMEOUT_OR_CLEANUP_UNVERIFIED` as a **generic wrapped failure**, not proof of a specific underlying container cleanup failure. The D1C real namespace/known-socket check was **NOT VERIFIED**.
+
+Static review identified a plausible overly strict actual-container-inspect predicate requiring `Mounts==[]`, even though original fixed J4 creates a bounded `--tmpfs=/tmp` mount. The source has been adjusted to allow **only that exact tmpfs mount or no listed mounts**, never bind or volumes or other destinations, while preserving nonroot/caps/readonly/no-network/exact CID/label/PID identity. Pure extracted predicate behavior controls added. Crucially root fixed failure exit statuses are now translated to **sanitized allowlisted stage reasons** and retained past D1B's worker-thread guard while original trusted J4S lifecycle cleanup continues. This makes a follow-up manual run diagnostically meaningful without disclosing private paths or permitting any untrusted code.
+
+Do not promote a previous green offline CI into a live success. A **new passing source-head CI + separately owner-authorized real manual workflow** is required. D1B actual fixed trusted Python observation remains scoped PASS #41742253271; D1C live remains NOT VERIFIED; all D2/F5/L3/global worker isolation and Docker image vulnerability policy stay BLOCKED.
