@@ -46,3 +46,11 @@ learning_effectiveness=NOT_ESTABLISHED
 ## D2C1 code reviewed and offline CI verified — 4 Nov 2026
 
 [App Actions #41818892284](https://github.com/lijust/EREI-3.2/actions/runs/41818892284) **SUCCESS** with **80 OFFLINE PASS / 0 FAIL** (21 D2C1 +20 D2B1 +21 F4C3C +18 D2A), source SHA `f93cabeb0eedb35995ea0d15020552d487e4f452`. Real owner-manual D2C1 harmless SCM_RIGHTS FD injection into an actual second restricted worker was **SKIPPED** on PR and is therefore not real evidence yet. D2B1 actual owner run #41817999943 remains scoped separate-UID/fixed broker EACCES PASS only. Broad privileged FD transfer, all IPC peers, full Docker endpoints, F5, L3 and AI acceptance remain unproven.
+
+## Verified actual D2C1 owner dispatch — 4 November 2026
+
+Owner-run [App Actions #41820521157](https://github.com/lijust/EREI-3.2/actions/runs/41820521157), source `9a59602e55cbefd0213f077e702ff3464236c014`, **both actual private Docker and offline CI SUCCESS**. Actual second source-fixed separate restricted worker of same D2B1 launcher/UID/GID saw kernel controller peer credentials and **received/detected/closed and did not adopt one harmless non-Docker socketpair FD sent via authenticated controller `SCM_RIGHTS`**. Original D2B1 fixed broker EACCES baseline passed in the same owned session and broker/private Docker cleanup passed. **80 offline PASS** (21+20+21+18), no model calls/writes, no actual privileged Docker capability transferred.
+
+This is **SCOPED_REAL_PASS** for one secondary worker IPC negative control only. The ordinary primary D2B1 worker still reads its fixed controller command via `recv`, not integrated `recvmsg`, and nothing here denies actual privileged SCM_RIGHTS across all peers or future arbitrary worker code. Keep all global worker security, alt-endpoint, F5, L3, Docker image CVE and AI acceptance gates FALSE, decision `BLOCK_AI_ACCEPTANCE`.
+
+**Next reusable design delta:** integrate and test ancillary rejection in the *primary* worker that also executes broker + fresh Docker EACCES probes, instead of treating a second worker's demo as an enforceable default. Explicit source and runtime evidence must refer to the same worker PID/process.
