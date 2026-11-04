@@ -48,3 +48,7 @@ learning_effectiveness=NOT_ESTABLISHED
 ## D2D1 offline source implementation checkpoint — 4 Nov 2026
 
 [App Actions #41869115855](https://github.com/lijust/EREI-3.2/actions/runs/41869115855) at reviewed source `37e1d3bd7f767426d318da18afdc247502d4a760`: **SUCCESS, 78 offline PASS/0 FAIL** (22 new D2D1 +22 existing F4C2 +18 D2A +16 D2C3A). Rootful owner-only real private Docker controller test **SKIPPED** on PR. Therefore this is a **source-reviewed authority design checkpoint**, not real `www-data` separate controller proof. No removal of legacy runner/J4S host Docker authority, no global broker exclusivity, no F5 late CREATE or L3 and no untrusted code acceptance. `BLOCK_AI_ACCEPTANCE`.
+
+## Final reviewed source CI evidence — 4 Nov 2026
+
+Latest App PR #276 source SHA `f49c35d45f1f4a2ad266074e64181c2a18663adc`, [Actions #41869369778](https://github.com/lijust/EREI-3.2/actions/runs/41869369778) **SUCCESS with 78 offline PASS**: 22 D2D1, 22 F4C2, 18 D2A, 16 D2C3A. Privileged real private Docker / separate OS controller job SKIPPED on PR. D2D1 is code-ready for explicit owner-reviewed manual scoped runtime test only; global broker/controller security, F5, L3, current image CVEs and AI acceptance remain blocked.
