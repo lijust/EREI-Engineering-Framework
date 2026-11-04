@@ -50,3 +50,11 @@ learning_effectiveness=NOT_ESTABLISHED
 ## Final source review/CI (4 November 2026)
 
 [App Actions #41826916946](https://github.com/lijust/EREI-3.2/actions/runs/41826916946) at App SHA `6f4227f6c8d6277e1e7115da6ba45b25eaf70be6` **SUCCESS**, 15 D2C3A + 19 D2C2 + 21 D2C1 + 20 D2B1 = **75 offline PASS / zero FAIL**. Actual privileged private Docker workflow job SKIPPED on PR. The source composition callback was corrected to the original exact seven arguments with one source-owned evidence list; negative wrong-arity tests were added. No live endpoint proof or broader security certification is implied by source CI. Explicit owner-reviewed manual run remains required to establish any D2C3A OS/endpoint sampled result. `BLOCK_AI_ACCEPTANCE` unchanged.
+
+## D2C3A real-owner failure and source-only repair (4 Nov 2026)
+
+Owner-dispatched [App run #41833622825](https://github.com/lijust/EREI-3.2/actions/runs/41833622825), initial SHA `c1a07c4cecc839a872e89e913f112cf21e8cf86a`: real Docker job **FAILED**, sanitized `PRIVATE_DOCKER_ALIAS_IDENTITY_UNVERIFIED`, exit 2; runner/host Docker preflight PASS, source-only job 75 PASS. **No real alternate-endpoint or OS negative evidence yet.**
+
+Source analysis identified a D2C3A composition/recursion bug: after `probe()` monkeypatched `d2c2._actual_same_worker_integrated` to its own hook, alias runner called the currently patched symbol a second time, re-entering alias creation and tripping the existing-path guard. This is source-based fault localization, not an independently collected process trace. Repair captures the real reviewed D2C2 launcher **before** patching and invokes the captured reference, with offline regression for non-recursive callback identity / fail-closed arity. Repaired App SHA `bdd8f890689bc0dd1222436ca3f7ad4fc2b6945b` passed [CI #41833974417](https://github.com/lijust/EREI-3.2/actions/runs/41833974417): **76 offline PASS (16+19+21+20), no FAIL**. Privileged Docker job SKIPPED on PR as required.
+
+Keep original FAILED run as evidence; owner-reviewed **new** manual dispatch on repaired exact branch needed before any D2C3A scoped runtime PASS. Never infer security of all Docker transports, privileged FD delivery, production worker isolation, F5, independent L3 or model code acceptance from source CI. `BLOCK_AI_ACCEPTANCE`.
