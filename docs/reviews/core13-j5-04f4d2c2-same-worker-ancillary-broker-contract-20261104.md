@@ -42,3 +42,7 @@ learning_effectiveness=NOT_ESTABLISHED
 ```
 
 **General-purpose reusable lesson:** a second worker with the same UID and launch command is still a different security subject. Require the test receipt to bind negative control, normal authorized operation and cleanup to one actual PID and one source hash without implying universal isolation.
+
+## D2C2 code and offline verification — 4 November 2026
+
+App PR [Actions #41821616892](https://github.com/lijust/EREI-3.2/actions/runs/41821616892) **SUCCESS** at source SHA `f9a87eca064a89ec7a8ecdb5c4b366ba9f9f1348`: **78 offline PASS/0 FAIL** (19 D2C2 +21 D2C1 +20 D2B1 +18 D2A). Actual root/private Docker new same-PID worker test was deliberately **SKIPPED** for PR. New D2C2 source generation, pinned parent source and controller+broker protocol invariants are source-tested; the integrated same-worker runtime claim remains **NOT YET VERIFIED** until explicit owner manual launch. AI authorization, full worker isolation, all privileged FD transfers, F5/L3 and image CVE clearance remain FALSE/BLOCKED.
