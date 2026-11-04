@@ -53,3 +53,7 @@ learning_effectiveness=NOT_ESTABLISHED
 ```
 
 **Reusable architecture principle:** model the partial CREATE response and pending cleanup obligations explicitly before claiming an epoch is quiescent, but never conflate test-harness booleans with independently measured durable/broker/OS facts.
+
+## D2D3A audited source-only tests — 4 Nov 2026
+
+[App Actions #41881110485](https://github.com/lijust/EREI-3.2/actions/runs/41881110485) on code SHA `7e44f377920720f929dbea202c2460ce6087fbea` **SUCCESS, 92 offline PASS / 0 FAIL**: 38 D2D3A source-fixed lifecycle model +14 D2D2 actual J4/J4S migration-denial +22 D2D1 fixed separate-controller source +18 D2A unconditional deny. Tests cover late CREATE result after accept closes, unknown/duplicate callback quarantine, stop/removal obligations and rotation denial, 4096 stdout/2048 stderr bounds and simulated logical deadline timeout. No live Docker/root/sockets/process or candidate code ran in D2D3A. D2D3A **OFFLINE SOURCE MODEL PASS ONLY**, not F5 real daemon/process quiescence, real J4S attach/stream/stop or L3. AI and stable gates remain FALSE; `BLOCK_AI_ACCEPTANCE`.
