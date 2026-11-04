@@ -46,3 +46,7 @@ learning_effectiveness=NOT_ESTABLISHED
 ## Source CI checkpoint — 4 November 2026
 
 [App Actions #41826673140](https://github.com/lijust/EREI-3.2/actions/runs/41826673140) **SUCCESS**: 12 D2C3A + 19 D2C2 + 21 D2C1 + 20 D2B1 = **72 offline PASS / zero FAIL**, exact source SHA `4ef65ffe32a589a1d06389c37e2c770de64eaf96`. Real root/private Docker owner-manual D2C3A workflow job was **SKIPPED** on PR, so same-worker alternate endpoint/NoNewPrivs checks are source-ready but not runtime-verified. Scoped D2C2 real #41823943354 remains valid separately; no worker isolation or full endpoint/FD lifetime/AI acceptance is promoted.
+
+## Final source review/CI (4 November 2026)
+
+[App Actions #41826916946](https://github.com/lijust/EREI-3.2/actions/runs/41826916946) at App SHA `6f4227f6c8d6277e1e7115da6ba45b25eaf70be6` **SUCCESS**, 15 D2C3A + 19 D2C2 + 21 D2C1 + 20 D2B1 = **75 offline PASS / zero FAIL**. Actual privileged private Docker workflow job SKIPPED on PR. The source composition callback was corrected to the original exact seven arguments with one source-owned evidence list; negative wrong-arity tests were added. No live endpoint proof or broader security certification is implied by source CI. Explicit owner-reviewed manual run remains required to establish any D2C3A OS/endpoint sampled result. `BLOCK_AI_ACCEPTANCE` unchanged.
