@@ -52,3 +52,7 @@ learning_effectiveness=NOT_ESTABLISHED
 ```
 
 **Generalizable lesson:** output streaming and timeout should be proved with real bounded OS child pipe reads and observed process cleanup rather than synthetic stop events; a successful trusted host process test is not a Docker sandbox, production controller boundary, F5 epoch or AI authorization certificate.
+
+## Verified final App PR-head regression — 4 November 2026
+
+[App Actions #41887290661](https://github.com/lijust/EREI-3.2/actions/runs/41887290661), exact App source SHA `1e8c334ee18c3f0ab4ceddffc2e15f40c3c64448`: **SUCCESS, 119 nonroot Linux PASS / 0 FAIL** (32 new D2D3B2A genuine source-fixed trusted host child PIPE/Unix IPC/monotonic deadline/kill/reap tests; 35 B1 kernel Unix IPC+fake model; 38 D2D3A in-memory lifecycle; 14 D2D2 migration-denial). Runtime child streaming and timeout **ARE REAL host process measurements**; Docker daemon, Docker container image/start/attach, controller-root-broker separation, durable F5 quiescence, independent L3 and image CVE clearance **are NOT tested**. The late CREATE example remains modeled/synthetic only. Existing J4/J4S remains direct host Docker. Gate `BLOCK_AI_ACCEPTANCE` unchanged.
