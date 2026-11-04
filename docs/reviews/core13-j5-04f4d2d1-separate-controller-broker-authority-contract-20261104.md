@@ -44,3 +44,7 @@ learning_effectiveness=NOT_ESTABLISHED
 ```
 
 **Reusable boundary principle:** broker-only security must apply to the *actual OS controller principal*, not simply to a source-defined job label. Kernel-backed credentials, before-exec NoNewPrivs, direct socket denial and typed broker acceptance must all refer to the same live controller process. These diagnostic tests still do not certify a future arbitrary-code system.
+
+## D2D1 offline source implementation checkpoint — 4 Nov 2026
+
+[App Actions #41869115855](https://github.com/lijust/EREI-3.2/actions/runs/41869115855) at reviewed source `37e1d3bd7f767426d318da18afdc247502d4a760`: **SUCCESS, 78 offline PASS/0 FAIL** (22 new D2D1 +22 existing F4C2 +18 D2A +16 D2C3A). Rootful owner-only real private Docker controller test **SKIPPED** on PR. Therefore this is a **source-reviewed authority design checkpoint**, not real `www-data` separate controller proof. No removal of legacy runner/J4S host Docker authority, no global broker exclusivity, no F5 late CREATE or L3 and no untrusted code acceptance. `BLOCK_AI_ACCEPTANCE`.
