@@ -50,3 +50,11 @@ learning_effectiveness=NOT_ESTABLISHED
 ```
 
 **Generalizable architecture lesson:** separate actual kernel transport observations from backend semantics. A real SO_PEERCRED-verified local packet with a fake lifecycle witness cannot be counted as a successful root-broker Docker operation, a distinct-OS authorization boundary or durable epoch fencing.
+
+## Verified D2D3B1 source/kernel IPC fixture CI and failure learning — 4 Nov 2026
+
+[App Actions #41885018536](https://github.com/lijust/EREI-3.2/actions/runs/41885018536), exact tested SHA `ef25eaee455e5f58aa2658c694659eaf0f979501`, **SUCCESS: 105 offline/unprivileged PASS (35 D2D3B1 +38 D2D3A +14 D2D2 +18 D2A), 0 FAIL**. Actual local Linux `SOCK_SEQPACKET` peer/SCM_RIGHTS denial messages were exchanged, the fake fixed backend completed all four model scenarios, and the test client/server shared one OS PID/UID. **NO root broker, Docker daemon/container, separate controller OS principal, privileged FD, real J4S streaming/STOP, durable F5 or L3 acceptance was exercised**.
+
+First CI runs #41884358783, #41884445260, #41884584381 and diagnostic #41884831002/#41884839221 failed because a strict Python helper required `value is True` but was supplied integer `listener.type & socket.SOCK_SEQPACKET` (5). Server refused before `accept()`; clients timed out. Repaired by comparing the socket flag mask to `socket.SOCK_SEQPACKET` explicitly, added behavioral real kernel socket regression, then verified above green CI. Preserve failed runs as evidence. **Portable design insight:** explicit bool normalization is mandatory when passing OS integer masks into strict boolean safety gates; source inspection alone is insufficient without an end-to-end socket accept/reply test.
+
+`D2D3B1_LOCAL_KERNEL_IPC_FAKE_BACKEND=OFFLINE_SCOPED_PASS`, not a real root Docker broker lifecycle. All F5/OS isolation/full Docker transport/AI/CVE gates FALSE, `decision=BLOCK_AI_ACCEPTANCE`, `learning_effectiveness=NOT_ESTABLISHED`. Next D2D3B2 must integrate source-reviewed *real trusted* private Docker lifecycle with controller OS separation and F5 durable in-flight CREATE before asking the owner to run any privileged manual experiment.
