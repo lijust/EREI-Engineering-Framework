@@ -42,3 +42,7 @@ learning_effectiveness=NOT_ESTABLISHED
 ```
 
 **Reusable design rule:** a checked set of local Unix aliases and loopback TCP ports cannot be generalized into an all-endpoint Docker denial. Every source-generated negative test must specify exact identity, address, expected errno, and cleanup.
+
+## Source CI checkpoint — 4 November 2026
+
+[App Actions #41826673140](https://github.com/lijust/EREI-3.2/actions/runs/41826673140) **SUCCESS**: 12 D2C3A + 19 D2C2 + 21 D2C1 + 20 D2B1 = **72 offline PASS / zero FAIL**, exact source SHA `4ef65ffe32a589a1d06389c37e2c770de64eaf96`. Real root/private Docker owner-manual D2C3A workflow job was **SKIPPED** on PR, so same-worker alternate endpoint/NoNewPrivs checks are source-ready but not runtime-verified. Scoped D2C2 real #41823943354 remains valid separately; no worker isolation or full endpoint/FD lifetime/AI acceptance is promoted.
