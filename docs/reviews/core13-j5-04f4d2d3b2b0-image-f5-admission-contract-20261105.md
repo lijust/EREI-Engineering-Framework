@@ -57,3 +57,7 @@ learning_effectiveness=NOT_ESTABLISHED
 ```
 
 **Reusable lesson:** an immutable image reference, zero-claimed vulnerability document, and in-process/SQLite lock are not sufficient for approved Docker workload execution. Pair **actual scanner provenance + independent image review** with protected IPC/OS controller principals and **durable measured daemon CREATE quiescence**.
+
+## Source-only D2D3B2B0 CI verification — 5 Nov 2026
+
+[App PR-head Actions #41971487203](https://github.com/lijust/EREI-3.2/actions/runs/41971487203), source SHA `13117f3dd2079c179adc2a0c403347d8efe6ad95`, **SUCCESS: 76 offline PASS / 0 FAIL** (30 new B2B0 image/scan-claim/F5 denial tests, 32 B2A actual trusted nonroot host child regression, 14 D2D2 old Docker lifecycle migration denial). Initial #41970909438 failed a static test misinterpreting `subprocess.Popen(` text within source-inspection literal as an executable subprocess; repaired with AST call verification, follow-up CI #41970966154 passed. This was a static test precision error, not a proven Docker bypass. No scanner was launched in the source-only tests and no Docker image was acquired/started. **Separate owner-manual remote Trivy JSON+CycloneDX workflow has NOT RUN**; current image findings remain unknown pending evidence. Runtime/F5/L3/AI gates all HOLD.
