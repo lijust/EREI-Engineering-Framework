@@ -31,3 +31,11 @@ AI_ACCEPTANCE=BLOCK_AI_ACCEPTANCE
 ```
 
 The old F5 API may remain callable on an empty local ledger, but must never permit rotation across unresolved rows. This is **not** proof that a live Docker daemon changed epoch or that all late creates have drained.
+
+## Observed Actions evidence — 2026-11-05
+
+- [F5B1A nonprivileged Linux Actions #42051673810](https://github.com/lijust/EREI-3.2/actions/runs/42051673810): **SUCCESS**.
+- Test steps completed successfully: **42 original F5 + 28 F5A + 17 F5B0 (including real SCM_RIGHTS) = 87 tests, 0 failed**.
+- The checked step also confirmed no Docker backend present and `BLOCK_AI_ACCEPTANCE`. This is **local regression scope**, not live Docker exclusivity, daemon quiescence or independent L3.
+- Ancillary pre-existing [F5B0 workflow #42051673719](https://github.com/lijust/EREI-3.2/actions/runs/42051673719) and [F5A workflow #42051673798](https://github.com/lijust/EREI-3.2/actions/runs/42051673798) also completed successfully on the same PR head.
+- DO NOT advance `F5B1B` acceptance without actual broker-only Docker lifecycle, independent receipt settlement, and a tested late-create drain barrier.
