@@ -32,3 +32,17 @@ untrusted_code_execution_authorized=false
 stable_ready=false
 decision=BLOCK_AI_ACCEPTANCE
 ```
+
+## Observed nonroot Actions result — 5 November 2026
+
+[App F5B1B Actions #42053786980](https://github.com/lijust/EREI-3.2/actions/runs/42053786980) completed **SUCCESS** at App commit `06dbd1007542330c2fcec602773987038c814b9c`: **10 F5B1B + 42 F5 + 28 F5A + 17 F5B0 = 97 PASS / 0 FAIL**. Actual Linux AF_UNIX bytes reached an **in-process Docker-protocol fake server**, with durable F5 SQLite WAL, exact request/inspect/DELETE checks and unknown-result hold. No real dockerd was used. The first workflow run #42053659111 failed on an incorrect `type(Path) is Path` check on Linux's `PosixPath`; fixed via `isinstance(Path)` in the subsequent commit, then re-ran successfully. This is a code/regression repair, **not** a broker security acceptance claim.
+
+```text
+F5B1B_NONROOT_FAKE_DAEMON_WAL=LOCAL_SCOPED_PASS
+F5B1B_REAL_ROOT_DOCKER=NOT_EXECUTED
+F5B1B_EXCLUSIVE_TRANSPORT=NOT_ESTABLISHED
+INDEPENDENT_TERMINAL_SETTLEMENT=NOT_IMPLEMENTED
+LATE_CREATE_QUIESCENCE=NOT_ESTABLISHED
+INDEPENDENT_L3=NOT_ESTABLISHED
+DECISION=BLOCK_AI_ACCEPTANCE
+```
