@@ -58,3 +58,7 @@ learning_effectiveness=NOT_ESTABLISHED
 ```
 
 **Reusable contract:** CREATE-intent *phase*, receipt of a CID claim, and verified resource cleanup are distinct states. All-generation unresolved counts and generation CAS must be checked **inside the same database write transaction**. Never certify external Docker quiescence from only local SQLite consistency, and never deploy a strict wrapper while leaving an alternative legacy rotate path active.
+
+## Final PR-head source and SQLite WAL verification
+
+[App PR-head #42041535218](https://github.com/lijust/EREI-3.2/actions/runs/42041535218), exact SHA `74dd27c9aca2b8cd0e242a831e1285c5f3ae260e`, **SUCCESS: 28 F5A +40 original F5 +14 D2D2 = 82 PASS, 0 FAIL**. Push [#42041280196](https://github.com/lijust/EREI-3.2/actions/runs/42041280196) on the same SHA also succeeded. These are local SQLite WAL/threads/real read-only second Python process and source-migration denials, **not** real Docker daemon creation or root privilege. The original `f5.rotate()` allowing unresolved rows remains active, requiring a future exclusive broker-side migration; local new-API success cannot certify F5 or L3. `BLOCK_AI_ACCEPTANCE`.
