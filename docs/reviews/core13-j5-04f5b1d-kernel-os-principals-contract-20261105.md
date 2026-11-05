@@ -25,3 +25,7 @@ INDEPENDENT_L3=NOT_ESTABLISHED
 STABLE_READY=false
 AI_ACCEPTANCE=BLOCK_AI_ACCEPTANCE
 ```
+
+## Verified local CI and manual-proof status — 5 November 2026
+
+[App GitHub Actions #42060987806](https://github.com/lijust/EREI-3.2/actions/runs/42060987806) completed **SUCCESS** with `12+15+10+42+28+17 = 124/124 nonroot PASS`. The manually gated `owner-manual-real-root-posix-probe` job was **SKIPPED**, as intended for ordinary push/PR events. Therefore the real root controller/worker POSIX proof is **NOT EXECUTED**, and no claim is made about actual broker isolation or Docker exclusivity. All acceptance booleans remain false.
