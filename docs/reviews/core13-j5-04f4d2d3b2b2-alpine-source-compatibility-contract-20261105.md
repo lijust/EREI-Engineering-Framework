@@ -41,3 +41,7 @@ learning_effectiveness=NOT_ESTABLISHED
 ```
 
 **Reusable cross-country architecture rule:** inspecting *exact fixed source imports* against a *verified exact SBOM* is a useful narrowing of the compatibility test matrix, but is not a substitute for actually running inside that OS/ABI, independently reviewing the image or proving Docker/F5 authority isolation. Separate what pip source scripts **do not reference** from what the full runtime **does not require**.
+
+## App push and PR verification with correctly scoped evidence — 5 Nov 2026
+
+[App push #42037284546](https://github.com/lijust/EREI-3.2/actions/runs/42037284546) current reviewed SHA `6764cd32dc3b7a4618117e00222f59bc0de47a31`: **SUCCESS 52 source-only tests PASS/0 FAIL** (26 B2B2 +26 B2B1) and a **distinct** source/owner-raw-artifact job SUCCESS. That job read actual retained owner #42027751135 Alpine artifact #13413629794, verified SHA256s of 4 raw JSON inputs and static fixed probe imports against 4 pinned Git blobs; output [held read-only audit artifact #13418918176](https://github.com/lijust/EREI-3.2/actions/runs/42037284546/artifacts/13418918176). [App PR run #42037541315](https://github.com/lijust/EREI-3.2/actions/runs/42037541315) also **SUCCESS with 52 offline PASS**, and appropriately **SKIPPED** owner-artifact pull job by the branch-push-only guard. Neither event starts an Alpine container or verifies glibc/musl runtime/ABI compatibility; no pip upgrade/removal or image security approval occurred. `BLOCK_AI_ACCEPTANCE` unchanged.
