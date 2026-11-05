@@ -37,3 +37,7 @@ RECORD:
 - learning_effectiveness=NOT_ESTABLISHED
 
 **Reusable engineering principle:** never compare two Docker Official Image floating tags as though their image bytes were immutable; record, verify and scan the architecture-specific digest. Retain per-package counts AND unique CVE IDs separately, and never treat a lower CVE count as independent authority to start a container.
+
+## Actual source-only baseline regression evidence — 5 November 2026
+
+App [push #41997585432](https://github.com/lijust/EREI-3.2/actions/runs/41997585432) and [PR #41997773639](https://github.com/lijust/EREI-3.2/actions/runs/41997773639), source SHA `25b0bdc66b5f04fbdf9eab6af546484094e09472`, both completed SUCCESS. **56 offline PASS/0 FAIL per run (26 new mocked registry manifest SHA/amd64/CVE+SBOM comparison +30 old B2B0 image/F5 always-HOLD).** These are code regression tests, **NOT** actual alternative image Trivy measurements. The real three-job candidate comparison reuses the already registered manual workflow filename on exact App D2D3B2B1 branch; owner must dispatch it separately and compare artifact hashes/CVE package matches and unique HIGH IDs. No newer variant is approved, no Docker container started, and F5/L3 remain false.
