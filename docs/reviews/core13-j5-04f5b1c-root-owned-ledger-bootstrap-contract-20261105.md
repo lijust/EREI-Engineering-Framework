@@ -27,3 +27,18 @@ LATE_CREATE_QUIESCENCE=NOT_ESTABLISHED
 INDEPENDENT_L3=NOT_ESTABLISHED
 AI_ACCEPTANCE=BLOCK_AI_ACCEPTANCE
 ```
+
+## Verified nonroot Actions — 5 November 2026
+
+[App GitHub Actions #42059186080](https://github.com/lijust/EREI-3.2/actions/runs/42059186080): **SUCCESS**. Logs explicitly confirm **15 F5B1C + 10 F5B1B + 42 F5 + 28 F5A + 17 F5B0 = 112 PASS, 0 FAIL**. All executed unprivileged Linux with real POSIX mode/symlink/hardlink checks and retained AF_UNIX fake-Docker server/WAL tests. The 15 new tests demonstrate correct rejection when not root and scoped local filesystem invariant behavior; **the real privileged `root_initialize`/`root_run_once` paths were never called successfully**.
+
+```text
+F5B1C_NONROOT_LAYOUT_AND_HOLD=LOCAL_SCOPED_PASS
+F5B1C_ROOT_INITIALIZATION=NOT_TESTED_AS_ROOT
+F5B1C_REAL_DOCKER=NOT_EXECUTED
+EXCLUSIVE_BROKER=NOT_ESTABLISHED
+INDEPENDENT_SETTLEMENT=NOT_IMPLEMENTED
+LATE_CREATE_QUIESCENCE=NOT_ESTABLISHED
+L3=NOT_ESTABLISHED
+AI_ACCEPTANCE=BLOCK_AI_ACCEPTANCE
+```
