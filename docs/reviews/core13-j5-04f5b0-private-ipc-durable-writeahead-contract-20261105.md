@@ -42,3 +42,7 @@ learning_effectiveness=NOT_ESTABLISHED
 ```
 
 **Reusable source-engineering lesson:** successful IPC kernel framing and real SQLite WAL persistence can be tested as a component without privileged Docker, but distinguishing **write-ahead prepared/unknown** from **actual external emission and verified cleanup** prevents false claims of generation quiescence. Tight socket filesystem permissions are useful, not a substitute for peer isolation and exclusive broker transport.
+
+## Verified Draft App PR-head, no runtime Docker authority
+
+App [PR-head Actions #42046813644](https://github.com/lijust/EREI-3.2/actions/runs/42046813644) at SHA `0535ad4a7d0ee7bf4d39c40a188a532af1d394a6` **SUCCESS: 84 tests PASS** (16 F5B0 nonprivileged kernel SEQPACKET+SQLite WAL, 28 F5A, 40 original F5), zero FAIL. Previous same-SHA push [#42046612921](https://github.com/lijust/EREI-3.2/actions/runs/42046612921) also passed 84 tests. This evidence does not include a Docker root broker, CREATE API send, different security principals, durable daemon quiescence, container cleanup, L3 or image clearance; those fields remain FALSE.
