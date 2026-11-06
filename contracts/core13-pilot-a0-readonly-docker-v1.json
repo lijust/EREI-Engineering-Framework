@@ -19,9 +19,11 @@
   "actors": {
     "controller": "runner",
     "worker": "nobody",
-    "verifier": "separate_nonroot_os_principal_verified_by_kernel",
+    "verifier": "daemon",
     "proxy": "root_owned_read_only",
-    "docker_daemon": "disposable_secondary_rootful_only"
+    "docker_daemon": "disposable_secondary_rootful_only",
+    "require_distinct_controller_worker_verifier_uids": true,
+    "verifier_must_be_nonroot": true
   },
   "transport": {
     "daemon_socket_basename": "test-daemon.sock",
