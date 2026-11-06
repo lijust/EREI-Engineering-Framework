@@ -31,3 +31,17 @@ AI_ACCEPTANCE=BLOCK_AI_ACCEPTANCE
 ## Verified automatic regression — 6 November 2026
 
 [GitHub Actions #42200690837](https://github.com/lijust/EREI-3.2/actions/runs/42200690837) **SUCCESS**. Decoded job logs show 18 F5B1F + 15 F5B1E + 12 F5B1D + 15 F5B1C + 10 F5B1B + 42 F5 + 28 F5A + 17 F5B0 = **157 PASS / 0 FAIL** in nonprivileged Linux. The separate owner-manual real fixed CREATE job was deliberately **SKIPPED** on this automatic run; no actual real Docker CREATE happened in F5B1F. Real Docker START and AI code execution remain forbidden. Owner dispatch and independent evidence are required before any broader scoped claim.
+
+## Observed 6 November 2026 owner-manual run
+
+[GitHub Actions #42202611269](https://github.com/lijust/EREI-3.2/actions/runs/42202611269): both nonroot regression (157/157 PASS) and manually dispatched root broker job completed SUCCESS. The decoded privileged job log includes F5B1F_REAL_ROOT_BROKER_FIXED_CREATE_DELETE_NO_START_LOCAL_SCOPED_PASS_BUT_AI_BLOCKED, after executing Python assertion checks for one fixed never-started Docker CREATE/inspect/DELETE through root broker, private Docker socket access denial for controller/worker, persisted unresolved RETURNED_CLAIM, blocked F5 rotation, daemon cleanup and unchanged host baseline.
+
+Scope is MANUAL_LOCAL_SCOPED_PASS, not an independent verifier or globally exclusive transport. The single successful fixed CREATE cannot establish terminal settlement after daemon/transport crashes, late async CREATE exclusion, multi-generation quiescence, legacy J4/J4S exclusivity, L3 or stable readiness.
+
+F5B1F_MANUAL_FIXED_CREATE=LOCAL_SCOPED_PASS
+DOCKER_START=NOT_EXECUTED
+INDEPENDENT_TERMINAL_SETTLEMENT=NOT_IMPLEMENTED
+LATE_CREATE_QUIESCENCE=NOT_ESTABLISHED
+GLOBAL_DOCKER_EXCLUSIVITY=NOT_ESTABLISHED
+INDEPENDENT_L3=NOT_ESTABLISHED
+AI_ACCEPTANCE=BLOCK_AI_ACCEPTANCE
