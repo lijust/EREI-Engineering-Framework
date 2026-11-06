@@ -1,0 +1,103 @@
+{
+  "contract_id": "CORE13_PILOT_A_READ_ONLY_DOCKER_V1",
+  "version": "1.0",
+  "phase": "A0_DESIGN_PROPOSED",
+  "governance": {
+    "master_issue": "https://github.com/lijust/EREI-3.2/issues/307",
+    "package_issue": "https://github.com/lijust/EREI-3.2/issues/308",
+    "legacy_issue": "https://github.com/lijust/EREI-3.2/issues/305",
+    "governance_owner_gate": "G3_AWAITING_AUTHENTICATED_SIGNOFF",
+    "package_status": "NOT_STARTED",
+    "gate_status": {
+      "A0": "NOT_STARTED",
+      "A1": "NOT_STARTED",
+      "A2": "NOT_STARTED",
+      "A3": "NOT_STARTED"
+    },
+    "max_root_cause_remediation_rounds": 2
+  },
+  "actors": {
+    "controller": "runner",
+    "worker": "nobody",
+    "verifier": "daemon",
+    "proxy": "root_owned_read_only",
+    "docker_daemon": "disposable_secondary_rootful_only",
+    "require_distinct_controller_worker_verifier_uids": true,
+    "verifier_must_be_nonroot": true
+  },
+  "transport": {
+    "daemon_socket_basename": "test-daemon.sock",
+    "host_socket_forbidden": "/var/run/docker.sock",
+    "daemon_socket_owner_uid": 0,
+    "daemon_socket_mode": "0600",
+    "proxy_socket_mode": "0660",
+    "proxy_must_use_so_peercred": true,
+    "require_private_daemon_pid_start_ticks_boot_id": true,
+    "require_independent_socket_path_and_inode": true,
+    "network_tcp_allowed": false,
+    "http_passthrough_allowed": false,
+    "allowed_exact_inventory": "GET /containers/json?all=1",
+    "allowed_exact_inspect_pattern": "GET /containers/{reviewed_cid}/json",
+    "other_methods_denied": [
+      "POST",
+      "PUT",
+      "PATCH",
+      "DELETE",
+      "HEAD",
+      "OPTIONS",
+      "CONNECT"
+    ],
+    "allow_health_or_metadata_routes": false,
+    "allow_query_reordering": false,
+    "request_max_bytes": 256,
+    "response_max_bytes": 65536
+  },
+  "fixed_scope": {
+    "name_prefix": "core13-j4-",
+    "cid_hex_length": 64,
+    "cid_source": "authenticated_secondary_inventory_or_existing_reviewed_wal_only",
+    "cid_input_from_controller": false,
+    "no_create_for_a": true,
+    "no_delete_for_a": true,
+    "no_container_start": true,
+    "no_model_candidate_execution": true,
+    "no_default_daemon_mutation": true,
+    "no_f5_settlement": true,
+    "no_generation_rotate": true
+  },
+  "evidence": {
+    "before_host_baseline_required": true,
+    "after_host_baseline_equal": true,
+    "before_secondary_inventory_empty": true,
+    "after_secondary_inventory_empty": true,
+    "root_owned_tmp_cleanup_zero_leftovers": true,
+    "negative_controller_socket_connect_denied": true,
+    "negative_invalid_peer_denied": true,
+    "negative_mutation_denied": true,
+    "negative_unknown_cid_denied": true,
+    "positive_real_secondary_daemon_get_required": true,
+    "owner_manual_only_for_root": true,
+    "source_commit_sha40_required": true,
+    "job_logs_required": true,
+    "typed_no_go_if_any_missing": true
+  },
+  "limits": {
+    "independent_terminal_settlement": "NOT_ESTABLISHED",
+    "late_create_quiescence": "NOT_ESTABLISHED",
+    "global_docker_exclusivity": "NOT_ESTABLISHED",
+    "independent_l3": "NOT_ESTABLISHED",
+    "ai_acceptance": "BLOCK_AI_ACCEPTANCE",
+    "stable_ready": false
+  },
+  "stopping": {
+    "A_closed_pass_requires": [
+      "A0",
+      "A1",
+      "A2",
+      "A3"
+    ],
+    "A_closed_no_go_or_blocked_is_valid_assessment_exit": true,
+    "no_new_f5b1_letter": true,
+    "owner_approved_change_control_for_third_remediation": true
+  }
+}

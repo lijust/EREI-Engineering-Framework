@@ -1,0 +1,201 @@
+{
+  "contract_id": "CORE13_PILOT_CLOSURE_V1",
+  "version": "1.0",
+  "frozen_at": "2026-11-07",
+  "lifecycle": "PROPOSED_AWAITING_OWNER_REVIEW",
+  "reference_issue": "https://github.com/lijust/EREI-3.2/issues/307",
+  "scope_freeze": {
+    "max_active_packages": 1,
+    "max_root_cause_remediation_rounds_per_package": 2,
+    "new_f5b1_letters_automatic": false,
+    "third_remediation_needs_owner_change_request": true,
+    "no_emergency_auto_scope_expansion": true
+  },
+  "authority": {
+    "owner_explicit_signoff_required": true,
+    "governance_owner_signoff": null,
+    "model_generated_code_execution_authorized": false,
+    "docker_container_start_authorized": false,
+    "generic_docker_create_authorized": false,
+    "automatic_code_patch_application_authorized": false,
+    "ai_acceptance": "BLOCK_AI_ACCEPTANCE",
+    "stable_ready": false,
+    "model_effectiveness": "NOT_ESTABLISHED",
+    "independent_terminal_settlement": "NOT_ESTABLISHED",
+    "late_create_quiescence": "NOT_ESTABLISHED",
+    "global_docker_exclusivity": "NOT_ESTABLISHED",
+    "independent_l3": "NOT_ESTABLISHED"
+  },
+  "closed_statuses": [
+    "CLOSED_PASS",
+    "CLOSED_NO_GO",
+    "CLOSED_BLOCKED"
+  ],
+  "gate_evidence_requirements": [
+    "source_commit_sha40",
+    "run_url",
+    "job_id",
+    "decoded_log_witness",
+    "positive_witness",
+    "negative_witness",
+    "boundary",
+    "cleanup_rollback",
+    "risks",
+    "owner_signoff"
+  ],
+  "governance": {
+    "status": "PROPOSED",
+    "gates": {
+      "G0": {
+        "status": "NOT_STARTED",
+        "evidence": null
+      },
+      "G1": {
+        "status": "NOT_STARTED",
+        "evidence": null
+      },
+      "G2": {
+        "status": "NOT_STARTED",
+        "evidence": null
+      },
+      "G3": {
+        "status": "NOT_STARTED",
+        "evidence": null
+      }
+    }
+  },
+  "packages": [
+    {
+      "id": "A",
+      "title": "REAL_DOCKER_READ_ONLY_VERIFIER",
+      "depends_on": [],
+      "issue": "https://github.com/lijust/EREI-3.2/issues/308",
+      "related_legacy_issue": "https://github.com/lijust/EREI-3.2/issues/305",
+      "status": "NOT_STARTED",
+      "remediation_rounds": 0,
+      "owner_signoff": null,
+      "gate_ids": [
+        "A0",
+        "A1",
+        "A2",
+        "A3"
+      ],
+      "gates": {
+        "A0": {
+          "status": "NOT_STARTED",
+          "evidence": null
+        },
+        "A1": {
+          "status": "NOT_STARTED",
+          "evidence": null
+        },
+        "A2": {
+          "status": "NOT_STARTED",
+          "evidence": null
+        },
+        "A3": {
+          "status": "NOT_STARTED",
+          "evidence": null
+        }
+      }
+    },
+    {
+      "id": "B",
+      "title": "PILOT_ENTRYPOINT_CONSOLIDATION",
+      "depends_on": [
+        "A"
+      ],
+      "issue": "https://github.com/lijust/EREI-3.2/issues/309",
+      "status": "NOT_STARTED",
+      "remediation_rounds": 0,
+      "owner_signoff": null,
+      "gate_ids": [
+        "B0",
+        "B1",
+        "B2",
+        "B3"
+      ],
+      "gates": {
+        "B0": {
+          "status": "NOT_STARTED",
+          "evidence": null
+        },
+        "B1": {
+          "status": "NOT_STARTED",
+          "evidence": null
+        },
+        "B2": {
+          "status": "NOT_STARTED",
+          "evidence": null
+        },
+        "B3": {
+          "status": "NOT_STARTED",
+          "evidence": null
+        }
+      }
+    },
+    {
+      "id": "C",
+      "title": "ADVISORY_ONLY_PILOT_GO_NO_GO",
+      "depends_on": [
+        "A",
+        "B"
+      ],
+      "issue": "https://github.com/lijust/EREI-3.2/issues/310",
+      "status": "NOT_STARTED",
+      "remediation_rounds": 0,
+      "owner_signoff": null,
+      "gate_ids": [
+        "C0",
+        "C1",
+        "C2",
+        "C3"
+      ],
+      "gates": {
+        "C0": {
+          "status": "NOT_STARTED",
+          "evidence": null
+        },
+        "C1": {
+          "status": "NOT_STARTED",
+          "evidence": null
+        },
+        "C2": {
+          "status": "NOT_STARTED",
+          "evidence": null
+        },
+        "C3": {
+          "status": "NOT_STARTED",
+          "evidence": null
+        }
+      }
+    }
+  ],
+  "pilot_decision": "UNDECIDED",
+  "deferred": {
+    "issue": "https://github.com/lijust/EREI-3.2/issues/311",
+    "status": "DEFERRED",
+    "can_auto_activate": false,
+    "obligations": [
+      "external_root_independent_terminal_receipt",
+      "durable_cross_crash_append_only_evidence",
+      "causal_late_create_barrier",
+      "host_wide_docker_exclusivity",
+      "j4_j4s_full_execution_migration",
+      "independent_l3",
+      "blinded_model_effectiveness_validation"
+    ]
+  },
+  "historical_scoped_evidence": [
+    {
+      "stage": "F5B1F",
+      "run_url": "https://github.com/lijust/EREI-3.2/actions/runs/42202611269",
+      "scope": "one_fixed_never_started_real_docker_create_inspect_delete_local"
+    },
+    {
+      "stage": "F5B1J",
+      "run_url": "https://github.com/lijust/EREI-3.2/actions/runs/42300277663",
+      "scope": "real_linux_distinct_uid_hmac_synthetic_proxy_no_real_docker"
+    }
+  ]
+}
