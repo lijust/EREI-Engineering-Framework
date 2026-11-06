@@ -1,0 +1,29 @@
+# Core13 F5B1F — owner-reviewed never-started real CREATE via exclusive *local* broker path (HOLD)
+
+**6 November 2026 | companion to App F5B1F, stacked on Framework F5B1E #166.**
+
+F5B1E [manual run #42198897241](https://github.com/lijust/EREI-3.2/actions/runs/42198897241) has local scoped PASS for root F5 WAL initialized against a real disposable dockerd with zero CREATE. This F5B1F contract is a narrow proposed next proof, NOT an independent acceptance.
+
+## Required observations
+
+- Privileged operation ONLY on owner `workflow_dispatch`, exact source-reviewed Git branch, nonroot regression completed, explicit `fixed_create_no_start` selection. Never privileged Docker on PR/push.
+- Genuine two distinct nonroot child principals must be unable to `AF_UNIX.connect()` directly to root-only private dockerd. Not just deny `os.open()` of the socket pathname. Controller must connect to `SOCK_SEQPACKET` broker with kernel PID/UID/GID verification and exact fixed packet, worker must lack broker credentials. Children close inherited nonstandard FDs before testing.
+- Actual root broker must initialize protected F5 SQLite, require immutable source-reviewed pinned image and exact fixed J4 config, durably record `EMITTED_UNKNOWN` before actual single Docker CREATE; never START a container or execute the sleeper. On success, verify exact stopped CID ownership and DELETE plus empty private inventory.
+- Persisted `RETURNED_CLAIM` remains unresolved even when local DELETE was observed; sealed generation must refuse legacy F5 rotation with `GENERATION_UNRESOLVED_INTENTS`. No unverified terminal row or fabricated daemon epoch.
+- Verify private dockerd stopped, disposed root removed, host default daemon baseline unchanged. Any partial/unknown send or cleanup fails closed.
+- Nonroot tests are source/negative regressions, not substitutes for actual root manual Docker result; image unpacking via root dockerd is a real elevated manual operation.
+
+## No premature promotion
+
+Even fully successful owner-manual F5B1F would show **one fixed known-source never-started container through one local broker**, not global exclusive Docker transport, proof against all late CREATE requests, crash replay/independent terminal settlement, J4/J4S migration, hostile model-code containment or L3. All remaining gates must remain false.
+
+```text
+F5B1F_REAL_BROKER_DOCKER_CREATE=NOT_EXECUTED
+DOCKER_CONTAINER_START=FORBIDDEN
+INDEPENDENT_TERMINAL_SETTLEMENT=NOT_IMPLEMENTED
+LATE_ASYNC_CREATE_QUIESCENCE=NOT_ESTABLISHED
+GLOBAL_DOCKER_EXCLUSIVITY=NOT_ESTABLISHED
+J4_J4S_MIGRATED=NOT_ESTABLISHED
+INDEPENDENT_L3=NOT_ESTABLISHED
+AI_ACCEPTANCE=BLOCK_AI_ACCEPTANCE
+```
