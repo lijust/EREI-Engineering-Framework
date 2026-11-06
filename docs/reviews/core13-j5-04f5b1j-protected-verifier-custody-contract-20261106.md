@@ -27,3 +27,20 @@ EXTERNAL_L3=NOT_ESTABLISHED
 stable_ready=false
 AI_ACCEPTANCE=BLOCK_AI_ACCEPTANCE
 ```
+
+## Verified nonprivileged CI — 6 November 2026
+
+[App F5B1J Actions #42293589700](https://github.com/lijust/EREI-3.2/actions/runs/42293589700) completed **SUCCESS**. Decoded logs show **24 F5B1J + 21 F5B1I + 18 F5B1H + 22 F5B1G + 18 F5B1F + 15 F5B1E + 12 F5B1D + 15 F5B1C + 10 F5B1B + 42 F5 + 28 F5A + 17 F5B0 = 242/242 PASS / 0 FAIL**.
+
+The first CI run [#42293513068](https://github.com/lijust/EREI-3.2/actions/runs/42293513068) failed exclusively in a **negative test race**: the kernel-denied SOCK_SEQPACKET peer closed before the test client could send, resulting in an expected `BrokenPipeError`. The test was corrected to accept either an early `EPIPE/ECONNRESET` or a completed send, while still requiring the server's kernel-peer rejection. The production module and its source Git blob were **not changed for this correction**. The second full run [#42293589700](https://github.com/lijust/EREI-3.2/actions/runs/42293589700) passed all 242 cases.
+
+The privileged owner-only job was **SKIPPED** during automatic PR/push CI. The real root offline distinct UID/GID and HMAC custody proof is therefore **NOT_EXECUTED**. No real Docker daemon, CREATE, DELETE, START, or AI/model invocation occurred. F5B1J is currently **NONROOT_SOURCE_AND_NEGATIVE_REGRESSIONS_PASS**, not a root-kernel-principal acceptance.
+
+F5B1J_NONROOT_REGRESSIONS=242_PASS
+F5B1J_OWNER_REAL_ROOT_OFFLINE=NOT_EXECUTED
+INDEPENDENT_TERMINAL_SETTLEMENT=NOT_IMPLEMENTED
+ROOT_INDEPENDENT_VERIFIER_CUSTODY=NOT_ESTABLISHED
+LATE_CREATE_QUIESCENCE=NOT_ESTABLISHED
+INDEPENDENT_L3=NOT_ESTABLISHED
+stable_ready=false
+AI_ACCEPTANCE=BLOCK_AI_ACCEPTANCE
