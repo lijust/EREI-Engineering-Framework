@@ -44,3 +44,21 @@ LATE_CREATE_QUIESCENCE=NOT_ESTABLISHED
 INDEPENDENT_L3=NOT_ESTABLISHED
 stable_ready=false
 AI_ACCEPTANCE=BLOCK_AI_ACCEPTANCE
+
+## Verified owner-manual root offline evidence — 6 November 2026
+
+[Actions run #42300277663](https://github.com/lijust/EREI-3.2/actions/runs/42300277663) completed **SUCCESS in both jobs**: the nonroot regression job `128175955763` confirms **242/242 PASS**, and the owner-manual privileged job `128176189346` completed **SUCCESS**. The manually dispatched owner job performed reviewed source Git blob/AST preflight and executed the isolated stdlib-only root test via `python3 -I -S`. The final decoded log contains `F5B1J_REAL_ROOT_PROTECTED_VERIFIER_OS_PRINCIPAL_OFFLINE_SCOPED_PASS_NOT_TERMINAL`.
+
+The root-job assertion set verifies the report's positive fields for **actual distinct nonroot controller/verifier UIDs**, kernel `SO_PEERCRED` on a verifier-only mock SOCK_SEQPACKET proxy, controller denial for key/proxy/root-only receipt, child dropped supplemental groups/capabilities and nonstandard inherited FDs, local HMAC nonce-bound synthetic-GET observation stored under root-owned disposable evidence and stale nonce refusal. Two synthetic GETs intentionally return an empty inventory followed by a fixed CID, and a fake mutation request is denied. All of this is **real Linux POSIX authorization over a SYNTHETIC offline proxy**, not real Docker observation.
+
+Critical scope: **F5B1J_OWNER_ROOT_OFFLINE_LOCAL_SCOPED_PASS**, not an independently attested terminal Docker receipt. Provisioning root can still read/forge the local verifier HMAC key; the receipt journal is temporary rather than independently append-only across crashes; `real_docker_api_calls=0`; no Docker daemon, CREATE/DELETE/START, user/model code or generation settlement occurred. `independently_attested_terminal_state=false`, `late_async_create_quiescence=false`, `global_docker_authority_exclusive=false`, `stable_ready=false`, and `AI_ACCEPTANCE=BLOCK_AI_ACCEPTANCE` remain enforced.
+
+F5B1J_NONROOT_TESTS=242_PASS
+F5B1J_OWNER_MANUAL_ROOT_OS_PRINCIPAL=LOCAL_SCOPED_PASS
+F5B1J_SYNTHETIC_VERIFIER_HMAC_CUSTODY=LOCAL_SCOPED_PASS
+F5B1J_REAL_DOCKER=NOT_EXECUTED
+INDEPENDENT_DOCKER_TERMINAL_SETTLEMENT=NOT_IMPLEMENTED
+EXTERNALLY_INDEPENDENT_KEY_CUSTODY=NOT_ESTABLISHED
+LATE_CREATE_QUIESCENCE=NOT_ESTABLISHED
+INDEPENDENT_L3=NOT_ESTABLISHED
+AI_ACCEPTANCE=BLOCK_AI_ACCEPTANCE
