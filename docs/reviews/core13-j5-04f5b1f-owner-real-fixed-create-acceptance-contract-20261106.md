@@ -27,3 +27,7 @@ J4_J4S_MIGRATED=NOT_ESTABLISHED
 INDEPENDENT_L3=NOT_ESTABLISHED
 AI_ACCEPTANCE=BLOCK_AI_ACCEPTANCE
 ```
+
+## Verified automatic regression — 6 November 2026
+
+[GitHub Actions #42200690837](https://github.com/lijust/EREI-3.2/actions/runs/42200690837) **SUCCESS**. Decoded job logs show 18 F5B1F + 15 F5B1E + 12 F5B1D + 15 F5B1C + 10 F5B1B + 42 F5 + 28 F5A + 17 F5B0 = **157 PASS / 0 FAIL** in nonprivileged Linux. The separate owner-manual real fixed CREATE job was deliberately **SKIPPED** on this automatic run; no actual real Docker CREATE happened in F5B1F. Real Docker START and AI code execution remain forbidden. Owner dispatch and independent evidence are required before any broader scoped claim.
