@@ -33,3 +33,24 @@ INDEPENDENT_L3=NOT_ESTABLISHED
 stable_ready=false
 AI_ACCEPTANCE=BLOCK_AI_ACCEPTANCE
 ```
+
+## Verified CI evidence — 6 November 2026
+
+[App Actions #42204308978](https://github.com/lijust/EREI-3.2/actions/runs/42204308978) completed SUCCESS. Its decoded regression log independently confirms 22 F5B1G + 18 F5B1F + 15 F5B1E + 12 F5B1D + 15 F5B1C + 10 F5B1B + 42 F5 + 28 F5A + 17 F5B0 = **179/179 PASS**, 0 failed.
+
+The 22 F5B1G test assertions include 10 offline deterministic fault cases against actual SQLite WAL and a real AF_UNIX fake Docker HTTP server. Specifically, `unsafe_raw_f5_retry_counterexample` **reproduced** the raw F5 second-callback opportunity after first transport failed. This result exposes an unclosed replay/duplicate CREATE path; it is NOT a safety proof or accepted retry. `late_create_after_empty_counterexample` also deliberately demonstrates that one empty fake inventory observation does not exclude a later accepted create.
+
+No sudo, no privileged Docker workflow, no image pull, no real Docker CREATE/START and no candidate/model execution occurred in this run. F5B1F's prior real Docker owner-manual success remains separately scoped to run #42202611269; no F5B1G real-Docker fault run has been performed.
+
+F5B1G_OFFLINE_REAL_SQLITE_FAULT_MATRIX=LOCAL_SCOPED_PASS
+F5B1G_REGRESSIONS=179_PASS
+RAW_F5_UNKNOWN_REEMISSION_RISK=COUNTEREXAMPLE_REPRODUCED
+ONE_EMPTY_INVENTORY_LATE_CREATE_COUNTEREXAMPLE=REPRODUCED
+RAW_F5_SEND_ONCE_GUARD=NOT_IMPLEMENTED
+REAL_DOCKER_FAILURE_INJECTION=NOT_EXECUTED
+INDEPENDENT_TERMINAL_SETTLEMENT=NOT_IMPLEMENTED
+LATE_ASYNC_CREATE_QUIESCENCE=NOT_ESTABLISHED
+GLOBAL_DOCKER_EXCLUSIVITY=NOT_ESTABLISHED
+INDEPENDENT_L3=NOT_ESTABLISHED
+STABLE_READY=false
+AI_ACCEPTANCE=BLOCK_AI_ACCEPTANCE
