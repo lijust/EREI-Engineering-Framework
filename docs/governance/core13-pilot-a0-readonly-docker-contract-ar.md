@@ -20,11 +20,13 @@
 | المكوّن | الصلاحيات الوحيدة في A | ما يُمنع |
 |---|---|---|
 | Controller — `runner` | طلب ملاحظة مراجعة ثابتة من واجهة Pilot مستقبلاً | فتح Docker socket أو قراءة مفتاح Verifier أو التحكم بـProxy أو تشغيل كود |
-| Worker — `nobody` أو UID بديل مخصص | لا يحتاج الوصول إلى Docker في A | كل Unix Docker Socket وكل مفاتيح الأدلة |
-| Verifier — هوية Nonroot **مختلفة** مثبتة kernel | إرسال GET محدود عبر Root-owned Proxy، قراءة مفتاح محمي محدود | مباشرة Docker Socket، إرسال CREATE/DELETE/START، إعادة تسمية مشروع أو إصدار تسوية |
+| Worker — `nobody` | لا يحتاج الوصول إلى Docker في A | كل Unix Docker Socket وكل مفاتيح الأدلة |
+| Verifier — `daemon` (UID/GID مختلفة فعليًا عن `runner` و`nobody` وفق kernel) | إرسال GET محدود عبر Root-owned Proxy، قراءة مفتاح محمي محدود | مباشرة Docker Socket، إرسال CREATE/DELETE/START، إعادة تسمية مشروع أو إصدار تسوية |
 | Root Proxy | الوصول الحصري **في fixture** إلى socket daemon ثانوي، قبول GET فقط بعد `SO_PEERCRED` | نقل HTTP عام، قبول method/path مرسل غير مراجَع، الوصول إلى host default |
 | Secondary dockerd | تشغيل معزول بمسار بيانات وتنفيذ وSocket مؤقتة تحت `/run` | Host Docker daemon، أي container CREATE داخل A، TCP listeners |
 | Evidence Store | إقرار محلي محدود بالقراءة، مربوط بالـBoot/PID/StartTicks/Nonce | التظاهر بأن HMAC المملوك Root إثبات مستقل عنه أو أنه append-only durable |
+
+**شروط الحسابات قبل أي اختبار Root:** وجود الحسابات الثلاثة على Runner، وكونها Nonroot، واختلاف UID وGID فعليًا. إذا لم يوجد حساب `daemon` أو تطابقت الهوية مع `runner`/`nobody` يُرفض A2 دون إنشاء حسابات على الجهاز أو اختيار بديل صامت. لا يجوز استخدام نفس حساب `nobody` كـWorker وVerifier لأن ذلك يضع مفتاح المراقب تحت قدرة العامل.
 
 التهديدات التي **يجب** اختبارها: UID/PID/GID مزوّر، socket قديم/مختلف، daemon PID reused، Boot ID غير مطابق، CID خارجي أو غير مراجع، query/path expansion، HTTP method تبديل، SCM_RIGHTS/FD inheritance، استدعاء host `/var/run/docker.sock`، التفاف عبر Controller/Worker، أخطاء مهلة/response truncation، اختفاء daemon منتصف GET، عدم إزالة ملفات fixture.
 
