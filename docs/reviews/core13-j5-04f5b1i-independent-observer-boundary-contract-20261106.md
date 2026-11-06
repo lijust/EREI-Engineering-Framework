@@ -41,3 +41,20 @@ INDEPENDENT_L3=NOT_ESTABLISHED
 stable_ready=false
 AI_ACCEPTANCE=BLOCK_AI_ACCEPTANCE
 ```
+
+## Verified execution — 6 November 2026
+
+[App Actions #42209572291](https://github.com/lijust/EREI-3.2/actions/runs/42209572291) completed **SUCCESS**. The decoded logs confirm **21 F5B1I + 18 F5B1H + 22 F5B1G + 18 F5B1F + 15 F5B1E + 12 F5B1D + 15 F5B1C + 10 F5B1B + 42 F5 + 28 F5A + 17 F5B0 = 218/218 PASS, zero failures**. The new 21 cases include actual separate-PID Linux child, read-only SQLite WAL, fake Unix GET-only two-snapshot observations, CID/label mismatch, initial empty inventory followed by late CREATE, peer PID mismatch, no terminal-settlement/AI path, and no real Docker authority.
+
+**Evidence scope:** `F5B1I_SAME_UID_OBSERVER_LOCAL_SCOPED_PASS`, NOT independent terminal attestation. The observer is a separate PID but shares the parent's UID/GID and still trusts a local fake Docker daemon. All success reports explicitly assert independent protected verifier, authenticated terminal settlement, real Docker, global exclusive transport, late-create quiescence, L3 and AI authorization FALSE.
+
+F5B1I_NONROOT_REGRESSIONS=218_PASS
+F5B1I_SEPARATE_PID_READONLY_WAL=LOCAL_SCOPED_PASS
+F5B1I_SAME_UID_NOT_INDEPENDENT=true
+INDEPENDENT_TERMINAL_SETTLEMENT=NOT_IMPLEMENTED
+PROTECTED_VERIFIER_PRINCIPAL=NOT_IMPLEMENTED
+LATE_ASYNC_CREATE_QUIESCENCE=NOT_ESTABLISHED
+GLOBAL_DOCKER_EXCLUSIVITY=NOT_ESTABLISHED
+INDEPENDENT_L3=NOT_ESTABLISHED
+STABLE_READY=false
+AI_ACCEPTANCE=BLOCK_AI_ACCEPTANCE
