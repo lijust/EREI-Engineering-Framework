@@ -26,3 +26,7 @@ INDEPENDENT_L3=NOT_ESTABLISHED
 stable_ready=false
 AI_ACCEPTANCE=BLOCK_AI_ACCEPTANCE
 ```
+
+## Observed owner-manual run — 6 November 2026
+
+[App Actions #42198897241](https://github.com/lijust/EREI-3.2/actions/runs/42198897241) completed SUCCESS for both nonroot (139 scoped regression PASS) and owner-manual jobs. The manual job verified actual secondary dockerd and root-owned F5 SQLite WAL initial generation, persisted OS-derived local epoch, controller/worker denial on DB and private socket, empty private inventory, shutdown of private endpoint and unchanged host Docker baseline. Log marker `F5B1E_REAL_ROOT_SECONDARY_DOCKERD_F5_SQLITE_INIT_ZERO_CREATE_LOCAL_PASS_BUT_AI_BLOCKED`. The evidence is local-scoped and contains no Docker CREATE/START. Broker exclusivity, independent durable terminal settlement, late-CREATE quiescence, J4/J4S migration, L3 and AI acceptance remain NOT_ESTABLISHED.
