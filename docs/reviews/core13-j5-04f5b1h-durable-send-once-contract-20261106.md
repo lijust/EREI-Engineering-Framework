@@ -27,3 +27,23 @@ INDEPENDENT_L3=NOT_ESTABLISHED
 stable_ready=false
 AI_ACCEPTANCE=BLOCK_AI_ACCEPTANCE
 ```
+
+## Verified GitHub Actions — 6 November 2026
+
+[F5B1H scoped Actions #42206075573](https://github.com/lijust/EREI-3.2/actions/runs/42206075573) completed SUCCESS; decoded job logs confirm 18 F5B1H + 22 updated F5B1G + 18 F5B1F + 15 F5B1E + 12 F5B1D + 15 F5B1C + 10 F5B1B + 42 original F5 + 28 F5A + 17 F5B0 = **197 PASS / 0 FAIL**.
+
+After re-pinning four inherited workflow SHA assertions (D, E, F and G) to the newly reviewed source blobs, **all 11 PR check workflow runs on commit 3cec005b0f64d200d9a35e0c8cb83b6b942736b1 completed SUCCESS**, including [F5B1H #42206263178](https://github.com/lijust/EREI-3.2/actions/runs/42206263178), [F5B1G #42206263190](https://github.com/lijust/EREI-3.2/actions/runs/42206263190), [F5B1F #42206263179](https://github.com/lijust/EREI-3.2/actions/runs/42206263179), and [F5B1E #42206263189](https://github.com/lijust/EREI-3.2/actions/runs/42206263189). The owner-root/real-Docker jobs in inherited E/F/D workflows were explicitly **SKIPPED**, so this stage did not run a real Docker CREATE.
+
+The formerly reproduced raw F5 second-callback counterexample is now **DENIED by the revised SQLite WAL implementation** after a committed durable per-intent dispatch claim. The test includes direct second-call refusal after response loss, process death during transport, concurrent callers, migration of historical UNKNOWN and PREPARED rows as non-dispatchable, and blocked seal/rotate. This is a **LOCAL_SEND_ONCE_SCOPED_PASS** for the reviewed F5 adapter; it is not an independent settlement certificate or host-wide Docker sandbox.
+
+F5B1H_LOCAL_SEND_ONCE=SCOPED_PASS
+F5B1H_NONROOT_REGRESSION=197_PASS
+F5B1H_INHERITED_CI=11_SUCCESS
+F5B1H_REAL_DOCKER_FAULT_INJECTION=NOT_EXECUTED
+LEGACY_UNKNOWN_REPLAY=FAIL_CLOSED
+GLOBAL_DOCKER_EXCLUSIVITY=NOT_ESTABLISHED
+INDEPENDENT_TERMINAL_SETTLEMENT=NOT_IMPLEMENTED
+LATE_CREATE_QUIESCENCE=NOT_ESTABLISHED
+INDEPENDENT_L3=NOT_ESTABLISHED
+STABLE_READY=false
+AI_ACCEPTANCE=BLOCK_AI_ACCEPTANCE
