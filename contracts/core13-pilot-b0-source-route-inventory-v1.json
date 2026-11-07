@@ -1,0 +1,230 @@
+{
+  "contract_id": "CORE13_PILOT_B0_ROUTE_INVENTORY_V1",
+  "version": "1.0",
+  "as_of": "2026-11-08",
+  "source_branch": "core13/pilot-a2-owner-manual-readonly-secondary-dockerd-20261107",
+  "package_a_owner_close": "https://github.com/lijust/EREI-3.2/issues/308#issuecomment-6713657840",
+  "package_a_status": "CLOSED_PASS_SCOPED_READONLY",
+  "package_b_status": "ACTIVE_B0_PRE_REVIEW",
+  "source_coverage": {
+    "method": "Github compare main...A2 branch yielded 300 per-file entries, therefore capped; targeted full fetch_file+Git blob SHA used for 14 high-priority paths",
+    "compare_files_count": 300,
+    "compare_truncation_risk": true,
+    "complete_repo_wide_call_graph_verified": false,
+    "pilot_reachability_verified": false,
+    "unreviewed_code_paths_policy": "DENY_UNTIL_EXPLICITLY_TRACED"
+  },
+  "routes": [
+    {
+      "id": "J4_DIRECT_HOST_DOCKER",
+      "path": "tools/core13_j4_known_worker_lifecycle.py",
+      "git_blob_sha": "0f655d855898bef0d02fdda36602236b76304252",
+      "category": "LEGACY_HOST_DOCKER_EXECUTOR",
+      "pilot_policy": "DENIED",
+      "source_witnesses": [
+        "docker create",
+        "docker start --attach",
+        "docker rm --force",
+        "docker container inspect"
+      ],
+      "limitation": "Source has subprocess.run-based Docker CLI and probes; never reachable from proposed B pilot."
+    },
+    {
+      "id": "J4S_DIRECT_HOST_START",
+      "path": "tools/core13_j4s_streaming_fixed_worker.py",
+      "git_blob_sha": "42e4c879fc7a0b82c963838eb862ade8d6ac8531",
+      "category": "LEGACY_HOST_DOCKER_STREAM_EXECUTOR",
+      "pilot_policy": "DENIED",
+      "source_witnesses": [
+        "subprocess.Popen docker start --attach",
+        "imports J4 create/cleanup path"
+      ],
+      "limitation": "Host streaming bounded for fixed trusted examples only; B cannot call it."
+    },
+    {
+      "id": "BROKER_MIGRATION_AUDIT",
+      "path": "tools/core13_j5_04f4d2d2_broker_only_lifecycle_migration_contract.py",
+      "git_blob_sha": "7db6499e83d953d31d5a7c635888d3d45cd8e875",
+      "category": "OFFLINE_LEGACY_BYPASS_WITNESS",
+      "pilot_policy": "READ_ONLY_REFERENCE",
+      "source_witnesses": [
+        "source-review confirms direct J4/J4S CLI still present",
+        "authorize() denies candidate operation"
+      ],
+      "limitation": "Can inform B0 denial, but source self-check is not runtime proof of isolation."
+    },
+    {
+      "id": "FIXED_HOST_STREAM_BROKER",
+      "path": "tools/core13_j5_04f4d2d3b2a_fixed_host_stream_broker.py",
+      "git_blob_sha": "f825d2cc6fa11f876d9c6a2196cac94fbc75e9e8",
+      "category": "FIXED_HOST_SUBPROCESS",
+      "pilot_policy": "DENIED",
+      "source_witnesses": [
+        "run_fixed_child uses subprocess.Popen",
+        "demo fixed scenario, candidate_execution forbidden"
+      ],
+      "limitation": "Do not call subprocess branch in advisory-only pilot."
+    },
+    {
+      "id": "OFFLINE_SEQPACKET_BROKER",
+      "path": "tools/core13_j5_04f4d2d3b1_fixed_broker_seqpacket_ipc.py",
+      "git_blob_sha": "00b719de5f41a37a8447da7fee845bb6e8d94e08",
+      "category": "OFFLINE_IPC_FIXTURE",
+      "pilot_policy": "NOT_PILOT_ENTRYPOINT",
+      "source_witnesses": [
+        "serve_once local AF_UNIX IPC",
+        "runtime_docker_mutations=0"
+      ],
+      "limitation": "Historical IPC evidence; cannot substitute for full independent settlement."
+    },
+    {
+      "id": "TYPED_FIXED_MODEL",
+      "path": "tools/core13_j5_04f4d2d3a_typed_fixed_lifecycle_model.py",
+      "git_blob_sha": "4b2fb854f4008dabb02cb9ea0fd77b859386735a",
+      "category": "OFFLINE_LIFECYCLE_MODEL",
+      "pilot_policy": "REFERENCE_ONLY",
+      "source_witnesses": [
+        "main offline_review",
+        "authorize() denies candidate execution"
+      ],
+      "limitation": "Typed model not Docker proof."
+    },
+    {
+      "id": "ROOT_DURABLE_BROKER",
+      "path": "tools/core13_j5_04f5b1b_root_broker_durable_create_hold.py",
+      "git_blob_sha": "ba1f81bc70c45ff31042f1355ee99bbc291a2aa4",
+      "category": "ROOT_MUTATING_DOCKER_HTTP",
+      "pilot_policy": "DENIED",
+      "source_witnesses": [
+        "fixed POST Docker create path",
+        "root-only source guard"
+      ],
+      "limitation": "Never B pilot transport."
+    },
+    {
+      "id": "OWNER_FIXED_CREATE",
+      "path": "tools/core13_j5_04f5b1f_real_broker_fixed_create_no_start_hold.py",
+      "git_blob_sha": "35fba0618049ec7b356ffa8497ac4e10aff56cc2",
+      "category": "OWNER_ONLY_FIXED_CREATE",
+      "pilot_policy": "DENIED",
+      "source_witnesses": [
+        "owner-only fixed CREATE, never START"
+      ],
+      "limitation": "Historical evidence only; cannot trigger owner manually from B."
+    },
+    {
+      "id": "OWNER_SCOPED_READONLY_DOCKER",
+      "path": "tools/core13_pilot_a2_owner_real_dockerd_getonly_hold.py",
+      "git_blob_sha": "3fe19020b46fcffb6b49ab9885cd3d3e00c74a39",
+      "category": "OWNER_MANUAL_ROOT_REAL_GET",
+      "pilot_policy": "DENIED",
+      "source_witnesses": [
+        "exact real private Docker GET",
+        "root-only manual gate",
+        "local HMAC"
+      ],
+      "limitation": "Package A closed as scoped audit; not a general entrypoint for model runtime."
+    },
+    {
+      "id": "READONLY_SOURCE_SELECTED",
+      "path": "tools/core13_selected_source_gate.py",
+      "git_blob_sha": "68ecc75c0173d16f2f5e07eae1be131ec5bb403e",
+      "category": "OFFLINE_GIT_SOURCE_INSPECTION",
+      "pilot_policy": "REFERENCE_ONLY",
+      "source_witnesses": [
+        "subprocess git commands only"
+      ],
+      "limitation": "Review command arguments first; B1 should not pipe candidate content into shell."
+    },
+    {
+      "id": "READONLY_CONSOLIDATION",
+      "path": "tools/core13_consolidation_gate.py",
+      "git_blob_sha": "2e5a3a21d0bc4e24d606cc7e5cd19ddf2a4b9465",
+      "category": "OFFLINE_SNAPSHOT_VALIDATOR",
+      "pilot_policy": "POTENTIAL_READONLY_REFERENCE",
+      "source_witnesses": [
+        "validate snapshot",
+        "project pin preflight"
+      ],
+      "limitation": "Not a model effectiveness oracle."
+    },
+    {
+      "id": "PILOT_GOVERNANCE_GATE",
+      "path": "tools/core13_pilot_closure_contract_gate.py",
+      "git_blob_sha": "b382f283fc32b3bb3b17a9c43ca36473804e3973",
+      "category": "OFFLINE_SCHEMA_VALIDATOR",
+      "pilot_policy": "ALLOWED_POLICY_DEPENDENCY",
+      "source_witnesses": [
+        "read-only JSON validation",
+        "stable_ready=false",
+        "AI_ACCEPTANCE=BLOCK_AI_ACCEPTANCE"
+      ],
+      "limitation": "It validates shape, not independent GitHub attestations."
+    },
+    {
+      "id": "OWNER_A2_WORKFLOW",
+      "path": ".github/workflows/core13-pilot-a2-owner-real-secondary-getonly-hold.yml",
+      "git_blob_sha": "30f9a03bf653ad097caf807af8483c06ecee138d",
+      "category": "PR_NONROOT_AND_OWNER_DISPATCH",
+      "pilot_policy": "DENIED",
+      "source_witnesses": [
+        "workflow_dispatch root owner gating",
+        "manual real Docker GET"
+      ],
+      "limitation": "Separate manually authorized A2 experiment; not a pilot B execution route."
+    },
+    {
+      "id": "MAINLINE_CONSOLIDATION_WORKFLOW",
+      "path": ".github/workflows/core13-mainline-consolidation-check.yml",
+      "git_blob_sha": "e2f157e9360f126b7e4f437624f326aa7012a7a8",
+      "category": "OFFLINE_CI_SOURCE_VALIDATOR",
+      "pilot_policy": "REFERENCE_ONLY",
+      "source_witnesses": [
+        "offline source contract CI",
+        "no Docker required"
+      ],
+      "limitation": "Past consolidation evidence, not live model benefit proof."
+    }
+  ],
+  "pilot_entrypoint": {
+    "status": "NOT_IMPLEMENTED_B1",
+    "target": "ONE_NEW_ADVISORY_ONLY_ENTRYPOINT_OR_EXPLICIT_REUSE_IF_PROVEN",
+    "allowed_operations": [
+      "read_source_bound_case",
+      "produce_advisory_report",
+      "deny_and_log_policy_violation"
+    ],
+    "forbidden_operations": [
+      "any Docker CLI/socket/API",
+      "container CREATE/START/DELETE",
+      "subprocess execution of candidate or model generated code",
+      "Patch application to repository",
+      "generic shell/host command invocation",
+      "root escalation",
+      "network-bound tool execution"
+    ],
+    "unknown_routes": "BLOCK",
+    "legacy_entrypoints_not_deleted": true,
+    "closed_package_a_root_entrypoint_not_reused": true
+  },
+  "b0_exit": {
+    "source_git_blob_pins_present": true,
+    "negative_legacy_risk_classified": true,
+    "unresolved_repo_wide_completeness": true,
+    "b0_formal_gate_pass": false,
+    "owner_signoff": null,
+    "requirements_for_pass": [
+      "source-bound review and source pin validation",
+      "explicit before/after B1 reachability graph",
+      "deny/unknown tests under B1",
+      "source CI job and human signoff"
+    ]
+  },
+  "authority": {
+    "AI_ACCEPTANCE": "BLOCK_AI_ACCEPTANCE",
+    "stable_ready": false,
+    "MODEL_EFFECTIVENESS": "NOT_ESTABLISHED",
+    "INDEPENDENT_TERMINAL_SETTLEMENT": "NOT_ESTABLISHED",
+    "ROOT_GLOBAL_DOCKER_EXCLUSIVITY": "NOT_ESTABLISHED"
+  }
+}
