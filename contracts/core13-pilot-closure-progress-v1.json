@@ -20,7 +20,7 @@
     "package_a": "ACTIVE_BLOCKED_AT_A2",
     "package_b": "NOT_STARTED",
     "package_c": "NOT_STARTED",
-    "remediation_round_a": 1,
+    "remediation_round_a": 2,
     "remediation_limit_a": 2
   },
   "gates": {
@@ -81,20 +81,29 @@
     "A2": {
       "state": "BLOCKED",
       "evidence_source_sha": "a39e48d61655355415318d0b61acdf7c06162e54",
-      "run": "https://github.com/lijust/EREI-3.2/actions/runs/42385635445",
-      "job_id": "128442362660",
+      "run": "https://github.com/lijust/EREI-3.2/actions/runs/42386762635",
+      "job_id": "128445731294",
       "positive": "Owner-manual root dispatch executed; nonroot 103/103 PASS",
-      "negative": "Privileged root job exited code 2; failure reason previously swallowed; real Docker GET NOT VERIFIED",
+      "negative": "Second owner-manual root run denied at PROXY_VERIFIER_GET with A2_FD_OR_OVERSIZE_PACKET_DENIED. Root proxy's recvmsg flags==0 was incorrect for Linux SO_SEQPACKET, which returns MSG_CMSG_CLOEXEC as an input marker even without ancillary FDs. Real dockerd GET not evidenced.",
       "owner": "6708853149",
       "repair": {
-        "round": 1,
+        "round": 2,
         "diagnostic_only_commit": "d9a037b5e681a0ca972c27b2f25ea51c3c5b87a1",
         "nonroot_ci": "https://github.com/lijust/EREI-3.2/actions/runs/42386189750",
-        "manual_retry": "PENDING_OWNER",
+        "manual_retry": "OWNER_REVIEW_REQUIRED_ON_FINAL_R2_CANDIDATE",
         "reviewed_diagnostic_source_sha": "f38ea0fb1cddd054c356ea2d3e9dff4b848023e5",
-        "nonroot_test_count_pass": 105,
+        "nonroot_test_count_pass": 108,
         "failure_root_cause": "NOT_ESTABLISHED_FIRST_RUN_SWALLOWED_REASON",
-        "root_manual_first_run": "https://github.com/lijust/EREI-3.2/actions/runs/42385635445"
+        "root_manual_first_run": "https://github.com/lijust/EREI-3.2/actions/runs/42385635445",
+        "second_manual_failure": "https://github.com/lijust/EREI-3.2/actions/runs/42386762635",
+        "second_manual_failure_stage": "PROXY_VERIFIER_GET",
+        "second_manual_failure_code": "A2_FD_OR_OVERSIZE_PACKET_DENIED",
+        "second_manual_cause": "recvmsg_flag_mask_rejected_legitimate_MSG_CMSG_CLOEXEC",
+        "second_manual_root_job_id": "128445731294",
+        "fix_source_blob": "3fe19020b46fcffb6b49ab9885cd3d3e00c74a39",
+        "fix_ci": "https://github.com/lijust/EREI-3.2/actions/runs/42387019699",
+        "fix_ci_job_id": "128446443573",
+        "final_disposition_if_owner_retry_fails": "CLOSED_NO_GO_OR_CLOSED_BLOCKED; NO THIRD_REMEDIATION"
       }
     },
     "A3": {
