@@ -88,9 +88,13 @@
       "owner": "6708853149",
       "repair": {
         "round": 1,
-        "diagnostic_only_commit": "4c3c5648ef54637c90ead9936685d55da8119638",
-        "nonroot_ci": "https://github.com/lijust/EREI-3.2/actions/runs/42385917347",
-        "manual_retry": "PENDING_OWNER"
+        "diagnostic_only_commit": "d9a037b5e681a0ca972c27b2f25ea51c3c5b87a1",
+        "nonroot_ci": "https://github.com/lijust/EREI-3.2/actions/runs/42386189750",
+        "manual_retry": "PENDING_OWNER",
+        "reviewed_diagnostic_source_sha": "f38ea0fb1cddd054c356ea2d3e9dff4b848023e5",
+        "nonroot_test_count_pass": 105,
+        "failure_root_cause": "NOT_ESTABLISHED_FIRST_RUN_SWALLOWED_REASON",
+        "root_manual_first_run": "https://github.com/lijust/EREI-3.2/actions/runs/42385635445"
       }
     },
     "A3": {
