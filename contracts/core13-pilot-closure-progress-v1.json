@@ -1,0 +1,191 @@
+{
+  "schema": "CORE13_PILOT_CLOSURE_PROGRESS_V1",
+  "version": "1.0",
+  "as_of": "2026-11-07",
+  "scope_contract_path": "contracts/core13-pilot-closure-v1.json",
+  "authority": "GitHub owner comment 6708853149, with reproducible source/job evidence",
+  "owner_review_url": "https://github.com/lijust/EREI-3.2/issues/307#issuecomment-6708853149",
+  "decision": "PILOT_UNDECIDED",
+  "security": {
+    "ai_acceptance": "BLOCK_AI_ACCEPTANCE",
+    "stable_ready": false,
+    "autonomous_code_execution": false,
+    "terminal_settlement": "NOT_ESTABLISHED"
+  },
+  "metrics": {
+    "fixed_gates": 16,
+    "passed": 8,
+    "blocked": 0,
+    "not_started": 8,
+    "package_a": "CLOSED_PASS_SCOPED_READ_ONLY",
+    "package_b": "NOT_STARTED",
+    "package_c": "NOT_STARTED",
+    "remediation_round_a": 2,
+    "remediation_limit_a": 2
+  },
+  "gates": {
+    "G0": {
+      "state": "GATE_PASS",
+      "evidence_source_sha": "4d59992429a2b274edc6f8883e3d95698d56f942",
+      "run": "https://github.com/lijust/EREI-3.2/actions/runs/42303466210",
+      "job_id": "128186840555",
+      "positive": "Fixed ABC policy mirrored cross repo, contract CI successful",
+      "negative": "Fourth package denied by contract tests",
+      "owner": "6708853149"
+    },
+    "G1": {
+      "state": "GATE_PASS",
+      "evidence_source_sha": "4d59992429a2b274edc6f8883e3d95698d56f942",
+      "run": "https://github.com/lijust/EREI-3.2/actions/runs/42303466210",
+      "job_id": "128186840555",
+      "positive": "Historical F5B1F #42202611269 and F5B1J #42300277663 scoped evidence distinctly cited",
+      "negative": "No combined end-to-end certification, Stable false",
+      "owner": "6708853149"
+    },
+    "G2": {
+      "state": "GATE_PASS",
+      "evidence_source_sha": "4d59992429a2b274edc6f8883e3d95698d56f942",
+      "run": "https://github.com/lijust/EREI-3.2/actions/runs/42303466210",
+      "job_id": "128186840555",
+      "positive": "Single active package, two-remediation limit, no new F5B1 letters policy frozen",
+      "negative": "Third remediation denied in contract tests",
+      "owner": "6708853149"
+    },
+    "G3": {
+      "state": "GATE_PASS",
+      "evidence_source_sha": "4d59992429a2b274edc6f8883e3d95698d56f942",
+      "run": "https://github.com/lijust/EREI-3.2/actions/runs/42303466210",
+      "job_id": "128186840555",
+      "positive": "Owner lijust explicitly approved G3 and reviewed A0/A1, authorized owner-only A2 GET",
+      "negative": "Owner-only dispatch gate enforced, no automatic privileged root job",
+      "owner": "6708853149"
+    },
+    "A0": {
+      "state": "GATE_PASS",
+      "evidence_source_sha": "4d59992429a2b274edc6f8883e3d95698d56f942",
+      "run": "https://github.com/lijust/EREI-3.2/actions/runs/42307806188",
+      "job_id": "128201481701",
+      "positive": "A0 fixed GET-only threat model, 30/30 offline tests and distinct runner/nobody/daemon preflight",
+      "negative": "POST/START/DELETE rejected in A0 policy tests",
+      "owner": "6708853149"
+    },
+    "A1": {
+      "state": "GATE_PASS",
+      "evidence_source_sha": "65c9f99f306f337da2d53db93c9dbdd57edb371e",
+      "run": "https://github.com/lijust/EREI-3.2/actions/runs/42310014843",
+      "job_id": "128208843134",
+      "positive": "29/29 actual nonroot Unix SOCK_SEQPACKET SO_PEERCRED and SCM_RIGHTS tests, 80/80 total",
+      "negative": "Mutation paths, FD injection, PID mismatch, timeout, socket permission denied",
+      "owner": "6708853149"
+    },
+    "A2": {
+      "state": "GATE_PASS",
+      "evidence_source_sha": "3fe19020b46fcffb6b49ab9885cd3d3e00c74a39",
+      "run": "https://github.com/lijust/EREI-3.2/actions/runs/42418179869",
+      "job_id": "128540730256",
+      "positive": "Owner-only real secondary Docker GET-only protected verifier job SUCCESS, marker CORE13_PILOT_A2_REAL_SECONDARY_GET_ONLY_OWNER_SCOPED_PASS_NOT_TERMINAL; 2 proxy real inventory GET, 1 denied POST before backend, initial/final inventory GET; host baseline equal and private root absent after return as asserted by workflow",
+      "negative": "Source-checked zero CREATE/START/DELETE, distinct controller/worker denied direct socket/key/receipt, 108/108 negative CI tests; two previous manual failures and fixes documented",
+      "owner": "6713657840",
+      "repair": {
+        "round": 2,
+        "diagnostic_only_commit": "d9a037b5e681a0ca972c27b2f25ea51c3c5b87a1",
+        "nonroot_ci": "https://github.com/lijust/EREI-3.2/actions/runs/42386189750",
+        "manual_retry": "COMPLETED_SUCCESS",
+        "reviewed_diagnostic_source_sha": "f38ea0fb1cddd054c356ea2d3e9dff4b848023e5",
+        "nonroot_test_count_pass": 108,
+        "failure_root_cause": "NOT_ESTABLISHED_FIRST_RUN_SWALLOWED_REASON",
+        "root_manual_first_run": "https://github.com/lijust/EREI-3.2/actions/runs/42385635445",
+        "second_manual_failure": "https://github.com/lijust/EREI-3.2/actions/runs/42386762635",
+        "second_manual_failure_stage": "PROXY_VERIFIER_GET",
+        "second_manual_failure_code": "A2_FD_OR_OVERSIZE_PACKET_DENIED",
+        "second_manual_cause": "recvmsg_flag_mask_rejected_legitimate_MSG_CMSG_CLOEXEC",
+        "second_manual_root_job_id": "128445731294",
+        "fix_source_blob": "3fe19020b46fcffb6b49ab9885cd3d3e00c74a39",
+        "fix_ci": "https://github.com/lijust/EREI-3.2/actions/runs/42387019699",
+        "fix_ci_job_id": "128446443573",
+        "final_disposition_if_owner_retry_fails": "NOT_APPLICABLE_FINAL_OWNER_RUN_PASSED",
+        "final_owner_run": "https://github.com/lijust/EREI-3.2/actions/runs/42418179869",
+        "final_owner_root_job_id": "128540730256",
+        "final_owner_root_conclusion": "success"
+      },
+      "post_run_owner_signoff": "https://github.com/lijust/EREI-3.2/issues/308#issuecomment-6713657840",
+      "no_new_engineering_required_for_scoped_a2": true,
+      "owner_manual_nonroot_job_id": "128540689948",
+      "decoded_log_marker": "CORE13_PILOT_A2_REAL_SECONDARY_GET_ONLY_OWNER_SCOPED_PASS_NOT_TERMINAL",
+      "owner_job_conclusion": "success",
+      "nonroot_test_count_pass": 108,
+      "evidence_packet": "docs/governance/core13-pilot-a2-success-a3-closure-review-20261107.md",
+      "scope_limitations": "Not root-independent custody, terminal settlement, late-create quiescence, global Docker exclusivity, L3 or AI effectiveness",
+      "cleanup": "Workflow owner job asserted /run/<generated scratch root> absent after root process; script tested host docker root and container-ID equality; independent host external audit not conducted"
+    },
+    "A3": {
+      "state": "GATE_PASS",
+      "evidence_source_sha": "3fe19020b46fcffb6b49ab9885cd3d3e00c74a39",
+      "run": "https://github.com/lijust/EREI-3.2/actions/runs/42418179869",
+      "job_id": "128540730256",
+      "positive": "Successful real secondary Docker GET-only owner-run and matching 108/108 nonroot; scoped audit packet mirrored in both repos",
+      "negative": "No generic Docker mutation authority, root-independent HMAC authority, autonomous code execution or Stable acceptance",
+      "packet": "docs/governance/core13-pilot-a2-success-a3-closure-review-20261107.md",
+      "post_run_owner_signoff": "https://github.com/lijust/EREI-3.2/issues/308#issuecomment-6713657840",
+      "decision": "AWAITING_OWNER_TO_CLOSE_PACKAGE_A_SCOPED_READONLY",
+      "owner": "6713657840"
+    },
+    "B0": {
+      "state": "NOT_STARTED"
+    },
+    "B1": {
+      "state": "NOT_STARTED"
+    },
+    "B2": {
+      "state": "NOT_STARTED"
+    },
+    "B3": {
+      "state": "NOT_STARTED"
+    },
+    "C0": {
+      "state": "NOT_STARTED"
+    },
+    "C1": {
+      "state": "NOT_STARTED"
+    },
+    "C2": {
+      "state": "NOT_STARTED"
+    },
+    "C3": {
+      "state": "NOT_STARTED"
+    }
+  },
+  "strict_boundaries": [
+    "Verified owner post-run approval comment #6713657840 signed scope-bound A2/A3 and CLOSED_PASS for Package A; this is not unrestricted Docker authority",
+    "A runtime success is source-bound root-owned local GET-only secondary dockerd, with host baseline and private cleanup checked in the workflow",
+    "Package A is CLOSED_PASS and its remediation budget was 2/2; do not reactivate without a separate change request",
+    "B may start at B0 source inventory only; no J4/J4S live execution, no root Docker, no code from model",
+    "Package C remains NOT_STARTED, and independent terminal settlement/late-create/global Docker isolation/model effectiveness remain NOT_ESTABLISHED",
+    "AI_ACCEPTANCE=BLOCK_AI_ACCEPTANCE, stable_ready=false"
+  ],
+  "package_closures": {
+    "A": {
+      "status": "CLOSED_PASS",
+      "scope": "A_SCOPED_REAL_SECONDARY_DOCKER_GET_ONLY",
+      "owner_signoff": "https://github.com/lijust/EREI-3.2/issues/308#issuecomment-6713657840",
+      "formal_gate_ids": [
+        "A0",
+        "A1",
+        "A2",
+        "A3"
+      ],
+      "run": "https://github.com/lijust/EREI-3.2/actions/runs/42418179869",
+      "root_job": "128540730256",
+      "nonroot_job": "128540689948",
+      "technical_evidence": "docs/governance/core13-pilot-a2-success-a3-closure-review-20261107.md",
+      "remediation_rounds_used": 2,
+      "no_authority_for": [
+        "docker_create",
+        "docker_start",
+        "model_generated_code_execution",
+        "terminal_settlement",
+        "stable"
+      ]
+    }
+  }
+}
