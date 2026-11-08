@@ -19,7 +19,7 @@
     "not_started": 3,
     "package_a": "CLOSED_PASS_SCOPED_READ_ONLY",
     "package_b": "CLOSED_PASS_SCOPED_ADVISORY_ONLY",
-    "package_c": "C0_V2_IMPLEMENTED_CI_JOB_START_BLOCKED_GITHUB_BILLING_OWNER_LOCAL_TEST_PENDING",
+    "package_c": "C0_V2_WINDOWS_EOL_SHA_ROOT_CAUSE_CONFIRMED_SCOPED_ATTRIBUTES_PATCH_LOCAL_RECHECK_PENDING",
     "remediation_round_a": 2,
     "remediation_limit_a": 2,
     "active_pre_review": 1
@@ -211,7 +211,7 @@
       "owner": "6719300660"
     },
     "C0": {
-      "state": "C0_V2_SOURCE_IMPLEMENTED_CI_BLOCKED_ACCOUNT_PAYMENT_OR_SPENDING_LIMIT",
+      "state": "C0_V2_SOURCE_EOL_PATCHED_WINDOWS_OWNER_LOCAL_RECHECK_PENDING",
       "owner_authorization": "https://github.com/lijust/EREI-3.2/issues/309#issuecomment-6719300660",
       "owner_prereg_signoff": null,
       "frozen_candidate": "contracts/core13-pilot-c0-prereg-three-probes-v2.json",
@@ -255,7 +255,26 @@
       "owner_review_status": "AWAITING_SOURCE_AND_CI_REVIEW",
       "v2_ci_failure_reason": "Owner-retrieved GitHub check-run annotations for job 128691305173: The job was not started because recent account payments have failed or your spending limit needs to be increased. Check Billing & plans. GitHub ubuntu-latest 26 migration notice separate informational warning.",
       "v2_ci_check_annotations_provenance": "https://github.com/lijust/EREI-3.2/actions/runs/42467819388",
-      "local_verification_status": "NOT_RUN"
+      "local_verification_status": "30_PASS_8_SHA_FAIL_PRIOR_TO_EOL_FIX_POST_FIX_RECHECK_PENDING",
+      "owner_local_previous_run": {
+        "total_tests": 38,
+        "failures": 8,
+        "passed": 30,
+        "exit_code": 1,
+        "gemini_simulated_transport_tests_passed": 16,
+        "root_cause": "All 5 distinct observed local Git blob hashes exactly equal CRLF-transformed signed LF file content; repeated hash assertions caused 8 failures.",
+        "verified_files": 5,
+        "evidence": "docs/governance/core13-pilot-c0-windows-crlf-git-blob-20261108.md"
+      },
+      "eol_remediation": {
+        "app_attributes_count": 28,
+        "framework_attributes_count": 7,
+        "method": "Scoped .gitattributes text eol=lf on exact source-pin-related paths, without altering the original pinned blobs.",
+        "status": "COMMITTED_NOT_YET_OWNER_RECHECKED",
+        "required_next_observation": "Fresh Windows clone of updated C0 branch should show i/lf w/lf and Ran 38 tests OK exit_code=0",
+        "no_global_git_config_mutation": true,
+        "ci_billing_block_unchanged": true
+      }
     },
     "C1": {
       "state": "NOT_STARTED"
@@ -268,12 +287,11 @@
     }
   },
   "strict_boundaries": [
-    "12/16 gates signed; C0 v2 source implemented, unsigned; C1/C2/C3 NOT_STARTED.",
-    "GitHub owner retrieved check-run annotations for job 128691305173: account payments failed or spending limit increase needed; jobs never started (runner_id=0, steps=[]), not Python test failures.",
-    "Ubuntu 26 ubuntu-latest migration annotation is informational and does not explain the billing block.",
-    "No repeated Actions rerun or source engineering change justified; local static offline 38-case suite may validate before restoring account billing.",
-    "No Gemini API calls, user secrets, Docker, root or candidate execution. Owner C0 v2 signoff and future cost consent separate.",
-    "AI_ACCEPTANCE=BLOCK_AI_ACCEPTANCE, stable_ready=false, model effectiveness NOT_ESTABLISHED."
+    "A/B fully owner-signed scoped, total 12/16 gates. C0 remains unsigned, C1/C2/C3 NOT_STARTED.",
+    "Owner Windows local run completed 38 tests, 8 failures entirely exact-source SHA comparisons; all five distinct observed hashes independently reproduced from CRLF checkout of GitHub LF sources.",
+    "Scoped App/Framework .gitattributes eol=lf committed without any pinned source change. Need fresh owner Windows clone and 38-test rerun; cannot claim current 38 PASS.",
+    "GitHub Actions pre-runner failure separately proven from account payments/spending limit annotation; no need to rerun Actions until billing fixed.",
+    "No live Gemini, no Docker/Root/model-generated code, no provider outage witness; AI_ACCEPTANCE=BLOCK_AI_ACCEPTANCE, stable_ready=false."
   ],
   "package_closures": {
     "A": {
