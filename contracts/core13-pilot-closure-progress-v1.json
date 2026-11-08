@@ -19,7 +19,7 @@
     "not_started": 3,
     "package_a": "CLOSED_PASS_SCOPED_READ_ONLY",
     "package_b": "CLOSED_PASS_SCOPED_ADVISORY_ONLY",
-    "package_c": "C0_V3_CONTROLLED_FAULT_PREREG_OWNER_AUTHORIZED_IMPLEMENTED_STATIC_48_TEST_RECHECK_PENDING",
+    "package_c": "C0_V3_OWNER_LOCAL_48_OF_48_PASS_FINAL_OWNER_SIGNOFF_PENDING",
     "remediation_round_a": 2,
     "remediation_limit_a": 2,
     "active_pre_review": 1
@@ -211,7 +211,7 @@
       "owner": "6719300660"
     },
     "C0": {
-      "state": "C0_V3_PREREG_AMENDMENT_SOURCE_WRITTEN_OWNER_FINAL_SIGNOFF_PENDING",
+      "state": "C0_V3_SOURCE_AND_OWNER_LOCAL_OFFLINE_VERIFIED_48_OF_48_OWNER_POST_TEST_SIGNOFF_PENDING",
       "owner_authorization": "https://github.com/lijust/EREI-3.2/issues/309#issuecomment-6719300660",
       "owner_prereg_signoff": null,
       "frozen_candidate": "contracts/core13-pilot-c0-prereg-three-probes-v2.json",
@@ -251,8 +251,8 @@
       "v2_ci_failure_stage": "BEFORE_RUNNER_PROVISIONING_NO_STEPS",
       "evidence_packet": "docs/governance/core13-pilot-c0-v2-implementation-evidence-20261108.md",
       "prereg_contract": "docs/governance/core13-pilot-c0-v2-minimal-gemini-provider-amendment-20261108-ar.md",
-      "c1_02_status": "DETERMINISTIC_SYNTHETIC_TRANSPORT_FAULT_PREREGISTERED_BUT_C1_NOT_RUN",
-      "owner_review_status": "V3_SOURCE_REVIEW_AND_OFFLINE_TEST_REQUIRED_BEFORE_FINAL_C0_CLOSURE",
+      "c1_02_status": "SYNTHETIC_FAULT_PREREGISTERED_TESTED_OFFLINE_AS_UNIT_CASE_C1_STILL_NOT_RUN",
+      "owner_review_status": "V3_EVIDENCE_READY_FOR_SEPARATE_FINAL_OWNER_POST_TEST_SIGNOFF",
       "v2_ci_failure_reason": "Owner-retrieved GitHub check-run annotations for job 128691305173: The job was not started because recent account payments have failed or your spending limit needs to be increased. Check Billing & plans. GitHub ubuntu-latest 26 migration notice separate informational warning.",
       "v2_ci_check_annotations_provenance": "https://github.com/lijust/EREI-3.2/actions/runs/42467819388",
       "local_verification_status": "OWNER_POST_EOL_FRESH_WINDOWS_CHECKOUT_38_OF_38_PASS_EXIT_0",
@@ -309,7 +309,31 @@
       "v3_source_test_git_blob": "4a9d9b4dc5dd5f2f94449e203153d55648ba725a",
       "previous_38_local_pass": "VERIFIED_BY_OWNER_BEFORE_V3",
       "v3_local_expected_tests_total": 48,
-      "v3_local_test_status": "NOT_RUN_PENDING_OWNER_RECHECK"
+      "v3_local_test_status": "OWNER_WINDOWS_48_OF_48_PASS_EXIT_0",
+      "v3_local_evidence": "docs/governance/core13-pilot-c0-v3-owner-local-48-pass-20261108.md",
+      "v3_local_evidence_git_blob": "2ce8860cde9aa9ea4f02e474289d181ae638eb4c",
+      "v3_owner_local_run": {
+        "source_commit": "b537a6b82d0d7dc973df4d4af167dad10e32d4ab",
+        "branch": "core13/pilot-c0-preregister-three-advisory-probes-20261108",
+        "suite": "python -m unittest discover -s tests/unit -p test_core13_pilot_c0_*.py -v",
+        "tests": 48,
+        "passed": 48,
+        "failures": 0,
+        "reported_seconds": 0.036,
+        "exit_code": 0,
+        "family_counts": {
+          "gemini_injected_transport": 16,
+          "v1_prereg_static": 12,
+          "v2_static": 10,
+          "v3_prereg_static": 10
+        },
+        "eol_status": "i/lf w/lf attr/text eol=lf for C0 v3 JSON",
+        "provenance": "Owner provided exact 86-line Windows PowerShell terminal log in conversation",
+        "real_gemini_calls": 0,
+        "real_provider_outage": false,
+        "c1_cases_executed": 0,
+        "scope": "local offline tests, not GitHub-hosted CI"
+      }
     },
     "C1": {
       "state": "NOT_STARTED"
@@ -322,14 +346,12 @@
     }
   },
   "strict_boundaries": [
-    "Package A/B CLOSED_PASS scoped. Formal 12/16 gates unchanged; C0 v3 only source prereg amendment under owner authorization #6724292060, not final C0 signoff.",
-    "V1 and V2 prereg retained byte-identical. V3 preserves exactly three C1 case identities, C1-01 and C1-03 unchanged, and C1-02 uses a fixed synthetic URLError injected in the EXISTING provider opener.",
-    "Synthetic transport failure MUST be labeled SYNTHETIC_INJECTED_TRANSPORT_NOT_REAL_GOOGLE_OUTAGE; no claim of actual Gemini downtime, provider health or model benefit.",
-    "All three future C1 probes scoped OFFLINE; real model calls, network, Docker, root, model-generated-code execution and API cost zero. Only C0 source/static tests now authorized.",
-    "Previously verified C0 v2 owner-local suite 38/38 PASS. New v3 suite total 48 NOT YET RUN; no assumption it passed.",
-    "GitHub-hosted CI remains blocked by billing/payment start restriction; local run requires scoped .gitattributes LF and source SHA.",
-    "C1/C2/C3 not started; next action C0 v3 owner-local 48 tests, independent review and formal owner signoff.",
-    "AI_ACCEPTANCE=BLOCK_AI_ACCEPTANCE, stable_ready=false, model effectiveness NOT_ESTABLISHED."
+    "12/16 fixed gates remain formal PASS; C0 v3 unit tests 48/48 passed on owner Windows checkout but final C0 signoff NOT recorded.",
+    "Owner local pulled to source commit b537a6b82d0d7dc973df4d4af167dad10e32d4ab, v3 JSON checked i/lf w/lf, 48/48 unittest PASS exit0.",
+    "All C0 case C1-02 transport-failure evidence is synthetic injected URLError, NOT a genuine Google service outage; old C0 unit test is not an independent C1 run.",
+    "GitHub-hosted Actions still blocked before runner on account billing/spending limit; do not infer hosted CI pass from local tests.",
+    "Future C1 remains EXACTLY three separate preregistered offline cases; no model API key, network, Docker/root/shell, patch or model-generated code execution.",
+    "C1/C2/C3 NOT_STARTED; AI_ACCEPTANCE=BLOCK_AI_ACCEPTANCE, stable_ready=false, model effectiveness NOT_ESTABLISHED."
   ],
   "package_closures": {
     "A": {
