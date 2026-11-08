@@ -1,7 +1,7 @@
 {
   "schema": "CORE13_PILOT_CLOSURE_PROGRESS_V1",
   "version": "1.0",
-  "as_of": "2026-11-07",
+  "as_of": "2026-11-08",
   "scope_contract_path": "contracts/core13-pilot-closure-v1.json",
   "authority": "GitHub owner comment 6708853149, with reproducible source/job evidence",
   "owner_review_url": "https://github.com/lijust/EREI-3.2/issues/307#issuecomment-6708853149",
@@ -14,11 +14,11 @@
   },
   "metrics": {
     "fixed_gates": 16,
-    "passed": 9,
+    "passed": 10,
     "blocked": 0,
-    "not_started": 6,
+    "not_started": 5,
     "package_a": "CLOSED_PASS_SCOPED_READ_ONLY",
-    "package_b": "B1_ADVISORY_CLI_CI_PASS_OWNER_SIGNOFF_PENDING",
+    "package_b": "ACTIVE_B2_SOURCE_CONSOLIDATION_AND_ROLLBACK",
     "package_c": "NOT_STARTED",
     "remediation_round_a": 2,
     "remediation_limit_a": 2,
@@ -149,10 +149,10 @@
       "owner": "6713825884"
     },
     "B1": {
-      "state": "SOURCE_AND_CI_VERIFIED_OWNER_SIGNOFF_PENDING",
+      "state": "GATE_PASS",
       "scope": "ONE_NON_EXECUTING_ADVISORY_ENTRYPOINT",
       "owner_authorization": "https://github.com/lijust/EREI-3.2/issues/309#issuecomment-6713825884",
-      "formal_owner_post_run_signoff": null,
+      "formal_owner_post_run_signoff": "https://github.com/lijust/EREI-3.2/issues/309#issuecomment-6717103234",
       "source_git_blob": "8be64b9a1a492e78b97903d95c44fcdea77099ce",
       "manifest_git_blob": "814e7194dc5ebd95557616a68117138ee880da3e",
       "evidence": "docs/governance/core13-pilot-b1-advisory-verified-ci-20261108.md",
@@ -161,10 +161,17 @@
       "job_id": "128548922605",
       "tests": "B0 15 PASS + B1 25 PASS = 40/40; actual CLI guardrails+inspect_route and malformed/execute deny",
       "negative": "No J4/J4S/F5 broker imports; unknown operations/routes/payload code rejected; 0 Docker, root, model, shell, network, patch writes",
-      "limitations": "Only the new single CLI import path; original J4/J4S entrypoints still exist outside the B1 Pilot. 14 pinned known route sources, not exhaustive repository call graph."
+      "limitations": "Only the new single CLI import path; original J4/J4S entrypoints still exist outside the B1 Pilot. 14 pinned known route sources, not exhaustive repository call graph.",
+      "owner": "6717103234"
     },
     "B2": {
-      "state": "NOT_STARTED"
+      "state": "IN_PROGRESS_SOURCE_ONLY",
+      "scope": "EXISTING_B1_LOCAL_REACHABILITY_RECONCILIATION_AND_ROLLBACK",
+      "owner_authorization": "https://github.com/lijust/EREI-3.2/issues/309#issuecomment-6717103234",
+      "formal_owner_signoff": null,
+      "model_execution": false,
+      "docker_access": false,
+      "source_edits_required": false
     },
     "B3": {
       "state": "NOT_STARTED"
@@ -183,12 +190,12 @@
     }
   },
   "strict_boundaries": [
-    "Package A CLOSED_PASS_SCOPED_READONLY, B0 GATE_PASS owner comment 6713825884, 9/16 formal gates",
-    "B1 one deterministic source-bound advisory-only CLI implemented; 40/40 offline nonroot tests PASS but owner post-run signoff pending",
-    "B1 has no imports from J4/J4S, Docker, F5 Root broker, subprocess, sockets, network, model or patch writers",
-    "B1 does not establish whole-repository external entrypoint isolation, model effectiveness, independent terminal settlement, Stable readiness",
-    "Do not start B2 or promote B1 until explicit owner post-run acceptance in Issue 309",
-    "AI_ACCEPTANCE=BLOCK_AI_ACCEPTANCE, stable_ready=false"
+    "Owner B1 post-run signoff #6717103234 verified, 10 of 16 formal gates (G0-G3 A0-A3 B0 B1) closed.",
+    "B2 only source-route reconciliation, local B1 import/call reachability evidence, regression reuse, rollback documentation; no new execution infrastructure.",
+    "Do not call J4/J4S/F5/A2 Docker or root, do not execute candidate/model-generated code or modify source semantics.",
+    "Do not mistake local advisory entrypoint static call graph for independent global repository or Python environment isolation.",
+    "Package B not formally closed until B2 and B3 owner review, C not started.",
+    "AI_ACCEPTANCE=BLOCK_AI_ACCEPTANCE, stable_ready=false, independent terminal settlement NOT_ESTABLISHED."
   ],
   "package_closures": {
     "A": {
