@@ -19,7 +19,7 @@
     "not_started": 3,
     "package_a": "CLOSED_PASS_SCOPED_READ_ONLY",
     "package_b": "CLOSED_PASS_SCOPED_ADVISORY_ONLY",
-    "package_c": "C0_V2_WINDOWS_EOL_SHA_ROOT_CAUSE_CONFIRMED_SCOPED_ATTRIBUTES_PATCH_LOCAL_RECHECK_PENDING",
+    "package_c": "C0_V2_OWNER_LOCAL_38_OF_38_OFFLINE_PASS_FORMAL_OWNER_SIGNOFF_PENDING",
     "remediation_round_a": 2,
     "remediation_limit_a": 2,
     "active_pre_review": 1
@@ -211,7 +211,7 @@
       "owner": "6719300660"
     },
     "C0": {
-      "state": "C0_V2_SOURCE_EOL_PATCHED_WINDOWS_OWNER_LOCAL_RECHECK_PENDING",
+      "state": "C0_V2_OWNER_LOCAL_TESTS_VERIFIED_38_OF_38_OWNER_FORMAL_SIGNOFF_PENDING",
       "owner_authorization": "https://github.com/lijust/EREI-3.2/issues/309#issuecomment-6719300660",
       "owner_prereg_signoff": null,
       "frozen_candidate": "contracts/core13-pilot-c0-prereg-three-probes-v2.json",
@@ -252,10 +252,10 @@
       "evidence_packet": "docs/governance/core13-pilot-c0-v2-implementation-evidence-20261108.md",
       "prereg_contract": "docs/governance/core13-pilot-c0-v2-minimal-gemini-provider-amendment-20261108-ar.md",
       "c1_02_status": "REAL_PROVIDER_FAULT_NOT_TESTED",
-      "owner_review_status": "AWAITING_SOURCE_AND_CI_REVIEW",
+      "owner_review_status": "C0_V2_SOURCE_AND_LOCAL_TESTS_READY_SIGNOFF_PENDING",
       "v2_ci_failure_reason": "Owner-retrieved GitHub check-run annotations for job 128691305173: The job was not started because recent account payments have failed or your spending limit needs to be increased. Check Billing & plans. GitHub ubuntu-latest 26 migration notice separate informational warning.",
       "v2_ci_check_annotations_provenance": "https://github.com/lijust/EREI-3.2/actions/runs/42467819388",
-      "local_verification_status": "38_TEST_METHODS_3_FAILED_METHODS_8_SHA_ASSERTION_FAILS_PRE_LF_FIX_RECHECK_PENDING",
+      "local_verification_status": "OWNER_POST_EOL_FRESH_WINDOWS_CHECKOUT_38_OF_38_PASS_EXIT_0",
       "owner_local_previous_run": {
         "total_tests": 38,
         "exit_code": 1,
@@ -276,10 +276,28 @@
         "app_attributes_count": 28,
         "framework_attributes_count": 7,
         "method": "Scoped .gitattributes text eol=lf on exact source-pin-related paths, without altering the original pinned blobs.",
-        "status": "COMMITTED_NOT_YET_OWNER_RECHECKED",
+        "status": "CONFIRMED_FIXED_BY_OWNER_FRESH_WINDOWS_CHECKOUT_AND_38_TEST_PASS",
         "required_next_observation": "Fresh Windows clone of updated C0 branch should show i/lf w/lf and Ran 38 tests OK exit_code=0",
         "no_global_git_config_mutation": true,
         "ci_billing_block_unchanged": true
+      },
+      "owner_local_post_eol_run": {
+        "method": "fresh clone Windows PowerShell; Python unittest discover -s tests/unit -p test_core13_pilot_c0_*.py -v",
+        "passed": 38,
+        "total": 38,
+        "exit_code": 0,
+        "seconds_reported": 0.022,
+        "test_groups": {
+          "gemini_offline_transport": 16,
+          "original_v1_prereg": 12,
+          "v2_amendment": 10
+        },
+        "sample_git_eol": "i/lf w/lf attr/text eol=lf for B1 source and C0 v1 manifest",
+        "evidence": "docs/governance/core13-pilot-c0-v2-owner-local-38-pass-20261108.md",
+        "provenance": "Owner supplied exact PowerShell transcript in active conversation, 2026-11-08",
+        "ai_provider_calls": 0,
+        "real_c1_executions": 0,
+        "scope": "local offline only; GitHub CI not run due to account billing hold"
       }
     },
     "C1": {
@@ -293,11 +311,12 @@
     }
   },
   "strict_boundaries": [
-    "A/B fully owner-signed scoped, total 12/16 gates. C0 remains unsigned, C1/C2/C3 NOT_STARTED.",
-    "Owner Windows local run completed 38 tests, 8 failures entirely exact-source SHA comparisons; all five distinct observed hashes independently reproduced from CRLF checkout of GitHub LF sources.",
-    "Scoped App/Framework .gitattributes eol=lf committed without any pinned source change. Need fresh owner Windows clone and 38-test rerun; cannot claim current 38 PASS.",
-    "GitHub Actions pre-runner failure separately proven from account payments/spending limit annotation; no need to rerun Actions until billing fixed.",
-    "No live Gemini, no Docker/Root/model-generated code, no provider outage witness; AI_ACCEPTANCE=BLOCK_AI_ACCEPTANCE, stable_ready=false."
+    "G/A/B owner signed 12/16 gates; C0 remains pending explicit post-test owner decision.",
+    "Owner fresh Windows checkout verified i/lf w/lf and full 38/38 offline C0 suite PASS exit 0 after scoped .gitattributes.",
+    "16 Gemini transport tests used injected offline fake transport. This is not evidence of actual Google outage, AI effectiveness or live C1.",
+    "GitHub-hosted CI remains blocked by account payment/spending-limit before runner; do not claim GitHub CI PASS.",
+    "C1-02 live genuine network outage oracle from C0 v2 may be impractical; any controlled fault-injection replacement requires separate owner-approved prereg BEFORE C1.",
+    "No live Gemini/network/API credentials, Docker/root/candidate code, C1/C2/C3 executed. AI_ACCEPTANCE=BLOCK_AI_ACCEPTANCE and stable_ready=false."
   ],
   "package_closures": {
     "A": {
