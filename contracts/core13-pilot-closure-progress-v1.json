@@ -16,12 +16,13 @@
     "fixed_gates": 16,
     "passed": 12,
     "blocked": 0,
-    "not_started": 4,
+    "not_started": 3,
     "package_a": "CLOSED_PASS_SCOPED_READ_ONLY",
     "package_b": "CLOSED_PASS_SCOPED_ADVISORY_ONLY",
-    "package_c": "C0_PREREGISTRATION_AUTHORIZED_NOT_YET_SIGNED",
+    "package_c": "C0_STATIC_PREREG_CI_PASS_PROVIDER_GAP_OWNER_REVIEW_PENDING",
     "remediation_round_a": 2,
-    "remediation_limit_a": 2
+    "remediation_limit_a": 2,
+    "active_pre_review": 1
   },
   "gates": {
     "G0": {
@@ -210,10 +211,26 @@
       "owner": "6719300660"
     },
     "C0": {
-      "state": "AUTHORIZED_PREREGISTRATION_NOT_FROZEN",
+      "state": "STATIC_PREREG_SOURCE_CI_VERIFIED_OWNER_SIGNOFF_PENDING",
       "owner_authorization": "https://github.com/lijust/EREI-3.2/issues/309#issuecomment-6719300660",
-      "frozen_contract": null,
-      "owner_prereg_signoff": null
+      "owner_prereg_signoff": null,
+      "frozen_candidate": "contracts/core13-pilot-c0-prereg-three-probes-v1.json",
+      "frozen_candidate_git_blob": "49b5c38fc3add5a015d89298ea1edeb439942130",
+      "static_tests_source_git_blob": "9ca51da642397b8fd8d88835941d6236eba7e195",
+      "ci": "https://github.com/lijust/EREI-3.2/actions/runs/42464007638",
+      "ci_job_id": "128679222204",
+      "status_note": "12/12 static C0 tests PASS; none of three C1 cases executed",
+      "scenario_ids": [
+        "C1-01-ALLOW-ADVISORY-REPORT",
+        "C1-02-PROVIDER-FAIL-CLOSED",
+        "C1-03-HOSTILE-CODE-DOCKER-REQUEST"
+      ],
+      "critical_provider_blocker": "B1 imports no model/provider/network client; cannot satisfy C1-02 real provider fault without signed and source-pinned prereg revision before C1",
+      "provider_calls": 0,
+      "model_calls": 0,
+      "network_calls": 0,
+      "real_c1_cases_executed": 0,
+      "recommended_owner_decision": "Review freeze with explicit C1 provider-blocker disclosure, do NOT claim C1 GO"
     },
     "C1": {
       "state": "NOT_STARTED"
@@ -226,11 +243,13 @@
     }
   },
   "strict_boundaries": [
-    "Owner B3 signed #6719300660; Package B is CLOSED_PASS_SCOPED_ADVISORY_ONLY. Formal gates G0-G3/A0-A3/B0-B3 = 12/16.",
-    "C0 only: freeze 3 C1 cases, source SHA, external provider/connection assumptions, inputs, reference oracle and decision thresholds BEFORE any C1 run.",
-    "B1 remains deterministic route inspection, not an AI provider or measure of model effectiveness; cannot pretend invalid JSON is a real provider outage.",
-    "No C1 execution yet, no model-generated code, Docker CREATE/START, root broker reuse, repository writes or Stage C promotion without C0 owner approval.",
-    "AI_ACCEPTANCE=BLOCK_AI_ACCEPTANCE, stable_ready=false; whole-repo isolation and model effectiveness NOT_ESTABLISHED."
+    "B3 owner signoff #6719300660 closed Package B scoped advisory, 12/16 formal gates passed.",
+    "C0 candidate: exactly 3 preregistered scenario inputs/oracles/source pins/budgets; 12 static CI checks PASS, owner C0 signoff pending.",
+    "C1 case2 requires a real callable provider/network failure boundary; deterministic B1 has none, so DO NOT substitute invalid JSON as a provider outage.",
+    "No C1 tests, provider/model/network calls or Docker/root/candidate code execution occurred in this C0 work.",
+    "C1 can only proceed after owner approves C0 AND an owner-approved prereg amendment establishes real provider boundary before viewing any C1 result, otherwise BLOCKED.",
+    "C3 model effectiveness requires separate blind evaluations and independent oracle; no model quality established from A/B security tests.",
+    "AI_ACCEPTANCE=BLOCK_AI_ACCEPTANCE, stable_ready=false, global Docker exclusivity and terminal settlement NOT_ESTABLISHED."
   ],
   "package_closures": {
     "A": {
