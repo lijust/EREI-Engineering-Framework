@@ -14,12 +14,12 @@
   },
   "metrics": {
     "fixed_gates": 16,
-    "passed": 12,
+    "passed": 13,
     "blocked": 0,
-    "not_started": 3,
+    "not_started": 2,
     "package_a": "CLOSED_PASS_SCOPED_READ_ONLY",
     "package_b": "CLOSED_PASS_SCOPED_ADVISORY_ONLY",
-    "package_c": "C0_V3_OWNER_LOCAL_48_OF_48_PASS_FINAL_OWNER_SIGNOFF_PENDING",
+    "package_c": "C0_V3_OWNER_SIGNED_C1_THREE_OFFLINE_CASES_AUTHORIZED_NO_CASE_EXECUTED",
     "remediation_round_a": 2,
     "remediation_limit_a": 2,
     "active_pre_review": 1
@@ -211,21 +211,21 @@
       "owner": "6719300660"
     },
     "C0": {
-      "state": "C0_V3_SOURCE_AND_OWNER_LOCAL_OFFLINE_VERIFIED_48_OF_48_OWNER_POST_TEST_SIGNOFF_PENDING",
+      "state": "GATE_PASS",
       "owner_authorization": "https://github.com/lijust/EREI-3.2/issues/309#issuecomment-6719300660",
-      "owner_prereg_signoff": null,
-      "frozen_candidate": "contracts/core13-pilot-c0-prereg-three-probes-v2.json",
-      "frozen_candidate_git_blob": "a0399b97583fb6a2f5b379ba32ac70711a5b0b16",
+      "owner_prereg_signoff": "https://github.com/lijust/EREI-3.2/issues/310#issuecomment-6725740425",
+      "frozen_candidate": "contracts/core13-pilot-c0-prereg-three-probes-v3.json",
+      "frozen_candidate_git_blob": "6f95214e6e7333fde41905209b891a9b877903e9",
       "static_tests_source_git_blob": "9ca51da642397b8fd8d88835941d6236eba7e195",
       "ci": "https://github.com/lijust/EREI-3.2/actions/runs/42464007638",
       "ci_job_id": "128679222204",
-      "status_note": "12/12 static C0 tests PASS; none of three C1 cases executed",
+      "status_note": "OWNER C0 V3 FORMALLY APPROVED after 48/48 offline local tests, scoped source-pinned C1-only authorization",
       "scenario_ids": [
         "C1-01-ALLOW-ADVISORY-REPORT",
         "C1-02-PROVIDER-FAIL-CLOSED",
         "C1-03-HOSTILE-CODE-DOCKER-REQUEST"
       ],
-      "critical_provider_blocker": "B1 imports no model/provider/network client; cannot satisfy C1-02 real provider fault without signed and source-pinned prereg revision before C1",
+      "critical_provider_blocker": "C1-02 is offline synthetic URLError via fixed opener; must not be represented as a genuine Google outage. No model effectiveness evidence.",
       "provider_calls": 0,
       "model_calls": 0,
       "network_calls": 0,
@@ -252,7 +252,7 @@
       "evidence_packet": "docs/governance/core13-pilot-c0-v2-implementation-evidence-20261108.md",
       "prereg_contract": "docs/governance/core13-pilot-c0-v2-minimal-gemini-provider-amendment-20261108-ar.md",
       "c1_02_status": "SYNTHETIC_FAULT_PREREGISTERED_TESTED_OFFLINE_AS_UNIT_CASE_C1_STILL_NOT_RUN",
-      "owner_review_status": "V3_EVIDENCE_READY_FOR_SEPARATE_FINAL_OWNER_POST_TEST_SIGNOFF",
+      "owner_review_status": "FINAL_C0_V3_OWNER_SIGNOFF_COMPLETE",
       "v2_ci_failure_reason": "Owner-retrieved GitHub check-run annotations for job 128691305173: The job was not started because recent account payments have failed or your spending limit needs to be increased. Check Billing & plans. GitHub ubuntu-latest 26 migration notice separate informational warning.",
       "v2_ci_check_annotations_provenance": "https://github.com/lijust/EREI-3.2/actions/runs/42467819388",
       "local_verification_status": "OWNER_POST_EOL_FRESH_WINDOWS_CHECKOUT_38_OF_38_PASS_EXIT_0",
@@ -300,7 +300,7 @@
         "scope": "local offline only; GitHub CI not run due to account billing hold"
       },
       "owner_v3_amendment_authorization": "https://github.com/lijust/EREI-3.2/issues/310#issuecomment-6724292060",
-      "owner_v3_final_signoff": null,
+      "owner_v3_final_signoff": "https://github.com/lijust/EREI-3.2/issues/310#issuecomment-6725740425",
       "current_candidate": "contracts/core13-pilot-c0-prereg-three-probes-v3.json",
       "current_candidate_git_blob": "6f95214e6e7333fde41905209b891a9b877903e9",
       "v3_review": "docs/governance/core13-pilot-c0-v3-controlled-fault-prereg-20261108-ar.md",
@@ -333,10 +333,25 @@
         "real_provider_outage": false,
         "c1_cases_executed": 0,
         "scope": "local offline tests, not GitHub-hosted CI"
-      }
+      },
+      "ci_scope": "Owner local 48/48 PASS. GitHub hosted C0 Actions still billing-blocked pre-runner; no hosted CI success."
     },
     "C1": {
-      "state": "NOT_STARTED"
+      "state": "OWNER_AUTHORIZED_EXACT_THREE_OFFLINE_CASES_EVIDENCE_NOT_YET_COLLECTED",
+      "owner_authorization": "https://github.com/lijust/EREI-3.2/issues/310#issuecomment-6725740425",
+      "prereg_contract": "contracts/core13-pilot-c0-prereg-three-probes-v3.json",
+      "prereg_sha": "6f95214e6e7333fde41905209b891a9b877903e9",
+      "allowlist": [
+        "C1-01-ALLOW-ADVISORY-REPORT",
+        "C1-02-PROVIDER-FAIL-CLOSED",
+        "C1-03-HOSTILE-CODE-DOCKER-REQUEST"
+      ],
+      "attempts": 0,
+      "case_results": {},
+      "owner_post_run_signoff": null,
+      "all_three_cases_scoped_execution_only": true,
+      "live_gemini_calls": 0,
+      "real_google_outage_claim": false
     },
     "C2": {
       "state": "NOT_STARTED"
@@ -346,12 +361,12 @@
     }
   },
   "strict_boundaries": [
-    "12/16 fixed gates remain formal PASS; C0 v3 unit tests 48/48 passed on owner Windows checkout but final C0 signoff NOT recorded.",
-    "Owner local pulled to source commit b537a6b82d0d7dc973df4d4af167dad10e32d4ab, v3 JSON checked i/lf w/lf, 48/48 unittest PASS exit0.",
-    "All C0 case C1-02 transport-failure evidence is synthetic injected URLError, NOT a genuine Google service outage; old C0 unit test is not an independent C1 run.",
-    "GitHub-hosted Actions still blocked before runner on account billing/spending limit; do not infer hosted CI pass from local tests.",
-    "Future C1 remains EXACTLY three separate preregistered offline cases; no model API key, network, Docker/root/shell, patch or model-generated code execution.",
-    "C1/C2/C3 NOT_STARTED; AI_ACCEPTANCE=BLOCK_AI_ACCEPTANCE, stable_ready=false, model effectiveness NOT_ESTABLISHED."
+    "Owner formally accepted C0 V3 with post-test signoff #6725740425 and 48/48 offline source tests, making 13/16 formal fixed gates passed.",
+    "C1 explicitly authorized EXACT THREE separately witnessed OFFLINE cases per V3; C1 is NOT yet passed and no independent C1 case evidence has been gathered.",
+    "C1-02 is ONE synthetic URLError via pinned dummy-key provider opener, NOT Google downtime, model quality, or live Gemini evidence.",
+    "No real model/API/network calls, no secret, Docker/root/candidate-generated code execution, repository patch writes or additional cases authorized.",
+    "GitHub Actions on private repo remains billing-blocked pre-runner; owner-local source-bound C1 witness may be collected without relabeling hosted CI as pass.",
+    "C2/C3 remain NOT_STARTED; model effectiveness and global security never established; AI_ACCEPTANCE=BLOCK_AI_ACCEPTANCE, stable_ready=false."
   ],
   "package_closures": {
     "A": {
