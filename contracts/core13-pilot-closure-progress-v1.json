@@ -255,16 +255,22 @@
       "owner_review_status": "AWAITING_SOURCE_AND_CI_REVIEW",
       "v2_ci_failure_reason": "Owner-retrieved GitHub check-run annotations for job 128691305173: The job was not started because recent account payments have failed or your spending limit needs to be increased. Check Billing & plans. GitHub ubuntu-latest 26 migration notice separate informational warning.",
       "v2_ci_check_annotations_provenance": "https://github.com/lijust/EREI-3.2/actions/runs/42467819388",
-      "local_verification_status": "30_PASS_8_SHA_FAIL_PRIOR_TO_EOL_FIX_POST_FIX_RECHECK_PENDING",
+      "local_verification_status": "38_TEST_METHODS_3_FAILED_METHODS_8_SHA_ASSERTION_FAILS_PRE_LF_FIX_RECHECK_PENDING",
       "owner_local_previous_run": {
         "total_tests": 38,
-        "failures": 8,
-        "passed": 30,
         "exit_code": 1,
         "gemini_simulated_transport_tests_passed": 16,
         "root_cause": "All 5 distinct observed local Git blob hashes exactly equal CRLF-transformed signed LF file content; repeated hash assertions caused 8 failures.",
         "verified_files": 5,
-        "evidence": "docs/governance/core13-pilot-c0-windows-crlf-git-blob-20261108.md"
+        "evidence": "docs/governance/core13-pilot-c0-windows-crlf-git-blob-20261108.md",
+        "failure_assertions": 8,
+        "failed_test_methods": 3,
+        "test_methods_without_failures": 35,
+        "distinct_failed_test_methods": [
+          "C0SourceOnlyPreregTests.test_02_all_pinned_source_blobs_match_exact_repo_content",
+          "C0V2FrozenSourceTests.test_01_old_prereg_is_not_rewritten",
+          "C0V2FrozenSourceTests.test_03_four_exact_pinned_source_blobs"
+        ]
       },
       "eol_remediation": {
         "app_attributes_count": 28,
