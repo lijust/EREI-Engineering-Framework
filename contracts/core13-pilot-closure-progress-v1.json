@@ -19,7 +19,7 @@
     "not_started": 3,
     "package_a": "CLOSED_PASS_SCOPED_READ_ONLY",
     "package_b": "CLOSED_PASS_SCOPED_ADVISORY_ONLY",
-    "package_c": "C0_V2_MINIMAL_PROVIDER_SOURCE_IMPLEMENTED_CI_FAILED_NO_LOGS_OWNER_REVIEW_HOLD",
+    "package_c": "C0_V2_IMPLEMENTED_CI_JOB_START_BLOCKED_GITHUB_BILLING_OWNER_LOCAL_TEST_PENDING",
     "remediation_round_a": 2,
     "remediation_limit_a": 2,
     "active_pre_review": 1
@@ -211,7 +211,7 @@
       "owner": "6719300660"
     },
     "C0": {
-      "state": "C0_V2_AMENDMENT_IMPLEMENTED_CI_FAILURE_CAUSE_UNVERIFIED",
+      "state": "C0_V2_SOURCE_IMPLEMENTED_CI_BLOCKED_ACCOUNT_PAYMENT_OR_SPENDING_LIMIT",
       "owner_authorization": "https://github.com/lijust/EREI-3.2/issues/309#issuecomment-6719300660",
       "owner_prereg_signoff": null,
       "frozen_candidate": "contracts/core13-pilot-c0-prereg-three-probes-v2.json",
@@ -247,12 +247,15 @@
         "https://github.com/lijust/EREI-3.2/actions/runs/42467442759",
         "https://github.com/lijust/EREI-3.2/actions/runs/42467547902"
       ],
-      "v2_ci_status": "FAILURE_LOGS_UNAVAILABLE_404_BLOBNOTFOUND",
-      "v2_ci_failure_stage": "NOT_ESTABLISHED_API_JOB_STEPS_EMPTY",
+      "v2_ci_status": "RUNNER_NOT_STARTED_GITHUB_ACCOUNT_PAYMENT_OR_SPENDING_LIMIT",
+      "v2_ci_failure_stage": "BEFORE_RUNNER_PROVISIONING_NO_STEPS",
       "evidence_packet": "docs/governance/core13-pilot-c0-v2-implementation-evidence-20261108.md",
       "prereg_contract": "docs/governance/core13-pilot-c0-v2-minimal-gemini-provider-amendment-20261108-ar.md",
       "c1_02_status": "REAL_PROVIDER_FAULT_NOT_TESTED",
-      "owner_review_status": "AWAITING_SOURCE_AND_CI_REVIEW"
+      "owner_review_status": "AWAITING_SOURCE_AND_CI_REVIEW",
+      "v2_ci_failure_reason": "Owner-retrieved GitHub check-run annotations for job 128691305173: The job was not started because recent account payments have failed or your spending limit needs to be increased. Check Billing & plans. GitHub ubuntu-latest 26 migration notice separate informational warning.",
+      "v2_ci_check_annotations_provenance": "https://github.com/lijust/EREI-3.2/actions/runs/42467819388",
+      "local_verification_status": "NOT_RUN"
     },
     "C1": {
       "state": "NOT_STARTED"
@@ -265,13 +268,12 @@
     }
   },
   "strict_boundaries": [
-    "Owner signed B3 Package B close #6719300660; 12/16 formally passed; C0 remains unsigned.",
-    "C0 v1 prereg immutable, new v2 source-pins minimal Gemini no-tools text-only boundary adapted from historical source. B1 unchanged.",
-    "New minimal Gemini code can make one provider generation HTTP POST per caller request, but it has NO CLI and has NOT been invoked live. No user API key touched.",
-    "Current GitHub C0-v2 CI job failures have no retrievable logs or step metadata; do not report 38 PASS, root cause not established.",
-    "C1-02 requires genuine provider/network fault witness; synthetic injected urllib error or HTTP 401 cannot count. C1/C2/C3 NOT_STARTED.",
-    "Any live provider model call may incur cost and needs separately signed owner opt-in, fixed source/tier/model/secret custody; no auto execution.",
-    "AI_ACCEPTANCE=BLOCK_AI_ACCEPTANCE, stable_ready=false, global Docker exclusivity and model effectiveness NOT_ESTABLISHED."
+    "12/16 gates signed; C0 v2 source implemented, unsigned; C1/C2/C3 NOT_STARTED.",
+    "GitHub owner retrieved check-run annotations for job 128691305173: account payments failed or spending limit increase needed; jobs never started (runner_id=0, steps=[]), not Python test failures.",
+    "Ubuntu 26 ubuntu-latest migration annotation is informational and does not explain the billing block.",
+    "No repeated Actions rerun or source engineering change justified; local static offline 38-case suite may validate before restoring account billing.",
+    "No Gemini API calls, user secrets, Docker, root or candidate execution. Owner C0 v2 signoff and future cost consent separate.",
+    "AI_ACCEPTANCE=BLOCK_AI_ACCEPTANCE, stable_ready=false, model effectiveness NOT_ESTABLISHED."
   ],
   "package_closures": {
     "A": {
