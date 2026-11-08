@@ -12,7 +12,7 @@
 
 مُشغّل أدلة C1 الوحيد في App:
 
-`tools/core13_pilot_c1_three_offline_cases.py` — Git blob: `f40b69cf867c1dc4cc682a5fe5bfd9a8e0ce85dd`.
+`tools/core13_pilot_c1_three_offline_cases.py` — Git blob: `6f2df382bb9df606c41c5089a074aec440fb6f21`.
 
 المُشغل **ليس مدخل Pilot جديدًا لتوليد/تنفيذ الأكواد**. دوره استدعاء المدخل الحتمي B1 الحالي والمحول Gemini **المعطل شبكيًا** مع سجل مستقل لكل حالة، ولا ينشئ ملفًا داخل مصدر المشروع. لا يسمح بإعادة استعمال اسم ملف الدليل ذاته، ويوقف التسلسل عند أول نتيجة غير ناجحة. يجب إيقاف التشغيل إذا اختلفت بصمة المصدر المجمد أو العقد أو اعتماد المالك. المُشغل لم يُنفّذ حتى الآن ضمن C1.
 
@@ -41,7 +41,7 @@ cd "$env:userprofile\desktop\erei-core13-c0-lf"
 git pull --ff-only
 if ($lastexitcode -ne 0) { throw "c1 source sync blocked" }
 
-if ((git hash-object tools/core13_pilot_c1_three_offline_cases.py).trim() -ne "f40b69cf867c1dc4cc682a5fe5bfd9a8e0ce85dd") { throw "c1 runner sha drift" }
+if ((git hash-object tools/core13_pilot_c1_three_offline_cases.py).trim() -ne "6f2df382bb9df606c41c5089a074aec440fb6f21") { throw "c1 runner sha drift" }
 if ((git hash-object contracts/core13-pilot-c0-prereg-three-probes-v3.json).trim() -ne "6f95214e6e7333fde41905209b891a9b877903e9") { throw "c0 v3 sha drift" }
 
 $head = (git rev-parse '@').trim()
