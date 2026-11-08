@@ -19,7 +19,7 @@
     "not_started": 2,
     "package_a": "CLOSED_PASS_SCOPED_READ_ONLY",
     "package_b": "CLOSED_PASS_SCOPED_ADVISORY_ONLY",
-    "package_c": "C0_V3_OWNER_SIGNED_C1_THREE_OFFLINE_CASES_AUTHORIZED_NO_CASE_EXECUTED",
+    "package_c": "C0_OWNER_PASS_C1_EXACT_THREE_OFFLINE_RUNNER_SOURCE_PREPARED_OWNER_CASE_LOGS_PENDING",
     "remediation_round_a": 2,
     "remediation_limit_a": 2,
     "active_pre_review": 1
@@ -337,7 +337,7 @@
       "ci_scope": "Owner local 48/48 PASS. GitHub hosted C0 Actions still billing-blocked pre-runner; no hosted CI success."
     },
     "C1": {
-      "state": "OWNER_AUTHORIZED_EXACT_THREE_OFFLINE_CASES_EVIDENCE_NOT_YET_COLLECTED",
+      "state": "C1_SOURCE_PINNED_OWNER_LOCAL_EXECUTION_READY_0_CASES_RUN",
       "owner_authorization": "https://github.com/lijust/EREI-3.2/issues/310#issuecomment-6725740425",
       "prereg_contract": "contracts/core13-pilot-c0-prereg-three-probes-v3.json",
       "prereg_sha": "6f95214e6e7333fde41905209b891a9b877903e9",
@@ -351,7 +351,27 @@
       "owner_post_run_signoff": null,
       "all_three_cases_scoped_execution_only": true,
       "live_gemini_calls": 0,
-      "real_google_outage_claim": false
+      "real_google_outage_claim": false,
+      "runner_source": "tools/core13_pilot_c1_three_offline_cases.py",
+      "runner_git_blob": "7e62829efaa45872b42d99ec3f4df25fdf19e4e7",
+      "execution_readme": "docs/governance/core13-pilot-c1-three-offline-owner-execution-20261108-ar.md",
+      "evidence_policy": {
+        "exact_cases": 3,
+        "one_attempt_each": true,
+        "outside_repository_only": true,
+        "expected_file_names": [
+          "C1-01-ALLOW-ADVISORY-REPORT.json",
+          "C1-02-PROVIDER-FAIL-CLOSED.json",
+          "C1-03-HOSTILE-CODE-DOCKER-REQUEST.json"
+        ],
+        "source_head_attested_from_owner_git": true,
+        "result_status": "NOT_RUN",
+        "local_owner_results_verified": 0,
+        "github_hosted_ci_billing_blocked": true,
+        "c1_02_synthetic_only": true,
+        "no_google_live_call": true,
+        "no_model_effectiveness_inference": true
+      }
     },
     "C2": {
       "state": "NOT_STARTED"
@@ -361,12 +381,13 @@
     }
   },
   "strict_boundaries": [
-    "Owner formally accepted C0 V3 with post-test signoff #6725740425 and 48/48 offline source tests, making 13/16 formal fixed gates passed.",
-    "C1 explicitly authorized EXACT THREE separately witnessed OFFLINE cases per V3; C1 is NOT yet passed and no independent C1 case evidence has been gathered.",
-    "C1-02 is ONE synthetic URLError via pinned dummy-key provider opener, NOT Google downtime, model quality, or live Gemini evidence.",
-    "No real model/API/network calls, no secret, Docker/root/candidate-generated code execution, repository patch writes or additional cases authorized.",
-    "GitHub Actions on private repo remains billing-blocked pre-runner; owner-local source-bound C1 witness may be collected without relabeling hosted CI as pass.",
-    "C2/C3 remain NOT_STARTED; model effectiveness and global security never established; AI_ACCEPTANCE=BLOCK_AI_ACCEPTANCE, stable_ready=false."
+    "C0 owner signoff #6725740425 VERIFIED; A/B/C0 formally 13/16. Exactly 3 C1 offline cases authorized, none executed yet.",
+    "C1 runner single source pin 7e62829efaa45872b42d99ec3f4df25fdf19e4e7; one case per invocation and one exclusive external evidence file; not an additional Pilot model or code executor.",
+    "C1 preflight requires exact C0 V3 source, B1, adapter, B0 manifest 14 source routes and owner signed C0 ledger before case execution.",
+    "C1-02 is synthetic injected URLError, absolutely no real Google outage or provider calls. Its witness must be separate new C1 run, not prior C0 unit test result.",
+    "No C1 success claimed until owner supplies independently observed three case logs, SHA256 and pass; no automatic repeat after a failure.",
+    "GitHub-hosted CI is blocked by account payments/spending limit before runner; owner-local offline evidence accepted only as explicitly scoped.",
+    "C2 and C3 NOT_STARTED; AI_ACCEPTANCE=BLOCK_AI_ACCEPTANCE, stable_ready=false; model effectiveness NOT_ESTABLISHED."
   ],
   "package_closures": {
     "A": {
