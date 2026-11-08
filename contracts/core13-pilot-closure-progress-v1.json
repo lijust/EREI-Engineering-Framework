@@ -14,15 +14,14 @@
   },
   "metrics": {
     "fixed_gates": 16,
-    "passed": 11,
+    "passed": 12,
     "blocked": 0,
     "not_started": 4,
     "package_a": "CLOSED_PASS_SCOPED_READ_ONLY",
-    "package_b": "B3_FINAL_REVIEW_PACKET_PENDING_OWNER_SIGNOFF",
-    "package_c": "NOT_STARTED",
+    "package_b": "CLOSED_PASS_SCOPED_ADVISORY_ONLY",
+    "package_c": "C0_PREREGISTRATION_AUTHORIZED_NOT_YET_SIGNED",
     "remediation_round_a": 2,
-    "remediation_limit_a": 2,
-    "active_pre_review": 1
+    "remediation_limit_a": 2
   },
   "gates": {
     "G0": {
@@ -186,10 +185,10 @@
       "owner": "6719235856"
     },
     "B3": {
-      "state": "EVIDENCE_REVIEW_PACKET_PREPARED_OWNER_SIGNOFF_PENDING",
+      "state": "GATE_PASS",
       "scope": "B_PILOT_ROUTE_CONSOLIDATED_NON_EXECUTING_ADVISORY_ONLY",
       "owner_authorization": "https://github.com/lijust/EREI-3.2/issues/309#issuecomment-6719235856",
-      "formal_owner_post_review_signoff": null,
+      "formal_owner_post_review_signoff": "https://github.com/lijust/EREI-3.2/issues/309#issuecomment-6719300660",
       "recommended_decision": "B_PILOT_ROUTE_CONSOLIDATED_SCOPED_PASS",
       "evidence": "docs/governance/core13-pilot-b3-final-review-20261108-ar.md",
       "pinned_advisory_entrypoint_git_blob": "8be64b9a1a492e78b97903d95c44fcdea77099ce",
@@ -207,10 +206,14 @@
         "network and patch writes"
       ],
       "approval_prerequisite": "Explicit owner review of full packet in issue 309 and accepted scope",
-      "package_b_closed": false
+      "package_b_closed": true,
+      "owner": "6719300660"
     },
     "C0": {
-      "state": "NOT_STARTED"
+      "state": "AUTHORIZED_PREREGISTRATION_NOT_FROZEN",
+      "owner_authorization": "https://github.com/lijust/EREI-3.2/issues/309#issuecomment-6719300660",
+      "frozen_contract": null,
+      "owner_prereg_signoff": null
     },
     "C1": {
       "state": "NOT_STARTED"
@@ -223,13 +226,11 @@
     }
   },
   "strict_boundaries": [
-    "B2 formal signoff by owner #6719235856 verified; 11 of 16 fixed gates formally closed: G0-G3, A0-A3, B0-B2.",
-    "B3 is review-only; no new runtime, Docker test, CI architecture changes, code-generation, or security phases.",
-    "B3 source and negative/regression evidence packet prepared but needs owner post-review; Package B NOT YET CLOSED_PASS.",
-    "A bounded B closure attests only the explicitly constructed advisory-only entrypoint and its 14 pinned review routes, not whole-repository entrypoint prohibition or model effectiveness.",
-    "Original J4/J4S/F5 binaries and historic workflows remain; cannot claim global Docker exclusivity.",
-    "C0 can begin only after owner formally closes Package B; C is NOT_STARTED.",
-    "AI_ACCEPTANCE=BLOCK_AI_ACCEPTANCE, stable_ready=false, independent terminal settlement NOT_ESTABLISHED."
+    "Owner B3 signed #6719300660; Package B is CLOSED_PASS_SCOPED_ADVISORY_ONLY. Formal gates G0-G3/A0-A3/B0-B3 = 12/16.",
+    "C0 only: freeze 3 C1 cases, source SHA, external provider/connection assumptions, inputs, reference oracle and decision thresholds BEFORE any C1 run.",
+    "B1 remains deterministic route inspection, not an AI provider or measure of model effectiveness; cannot pretend invalid JSON is a real provider outage.",
+    "No C1 execution yet, no model-generated code, Docker CREATE/START, root broker reuse, repository writes or Stage C promotion without C0 owner approval.",
+    "AI_ACCEPTANCE=BLOCK_AI_ACCEPTANCE, stable_ready=false; whole-repo isolation and model effectiveness NOT_ESTABLISHED."
   ],
   "package_closures": {
     "A": {
@@ -254,6 +255,23 @@
         "terminal_settlement",
         "stable"
       ]
+    },
+    "B": {
+      "status": "CLOSED_PASS_SCOPED_ADVISORY_ONLY",
+      "owner_signoff": "https://github.com/lijust/EREI-3.2/issues/309#issuecomment-6719300660",
+      "formal_gate_ids": [
+        "B0",
+        "B1",
+        "B2",
+        "B3"
+      ],
+      "approval_limitation": "Only one deterministic non-executing advisory CLI, not full AI evaluator or universal Docker isolation",
+      "source": "tools/core13_pilot_b1_advisory_only.py",
+      "source_git_blob": "8be64b9a1a492e78b97903d95c44fcdea77099ce",
+      "run": "https://github.com/lijust/EREI-3.2/actions/runs/42463022672",
+      "job_id": "128676204466",
+      "tests_passed": 41,
+      "independent_model_effectiveness": "NOT_ESTABLISHED"
     }
   }
 }
