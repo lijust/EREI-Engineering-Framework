@@ -1,7 +1,7 @@
 {
   "schema": "CORE13_PILOT_CLOSURE_PROGRESS_V1",
   "version": "1.0",
-  "as_of": "2026-11-07",
+  "as_of": "2026-11-08",
   "scope_contract_path": "contracts/core13-pilot-closure-v1.json",
   "authority": "GitHub owner comment 6708853149, with reproducible source/job evidence",
   "owner_review_url": "https://github.com/lijust/EREI-3.2/issues/307#issuecomment-6708853149",
@@ -14,12 +14,12 @@
   },
   "metrics": {
     "fixed_gates": 16,
-    "passed": 8,
+    "passed": 12,
     "blocked": 0,
-    "not_started": 8,
+    "not_started": 4,
     "package_a": "CLOSED_PASS_SCOPED_READ_ONLY",
-    "package_b": "NOT_STARTED",
-    "package_c": "NOT_STARTED",
+    "package_b": "CLOSED_PASS_SCOPED_ADVISORY_ONLY",
+    "package_c": "C0_PREREGISTRATION_AUTHORIZED_NOT_YET_SIGNED",
     "remediation_round_a": 2,
     "remediation_limit_a": 2
   },
@@ -131,19 +131,89 @@
       "owner": "6713657840"
     },
     "B0": {
-      "state": "NOT_STARTED"
+      "state": "GATE_PASS",
+      "evidence_source_sha": "2b858f584188ea881fd51caca2cdd6f6ce9fe286",
+      "run": "https://github.com/lijust/EREI-3.2/actions/runs/42420127831",
+      "job_id": "128546552781",
+      "positive": "14 full source files fetched and matching Git blob; 15/15 nonroot offline policy tests PASS. Exact legacy J4 J4S Docker CLI paths identified.",
+      "negative": "7 legacy/root execution route entries DENIED; static gate rejects unknown routes, unauthorized A2 reuse, fake completeness and AI/Stable promotion",
+      "source_manifest": "contracts/core13-pilot-b0-source-route-inventory-v1.json",
+      "review": "docs/governance/core13-pilot-b0-route-inventory-20261108-ar.md",
+      "evidence_packet": "docs/governance/core13-pilot-b0-source-inventory-verified-ci-20261108.md",
+      "owner_signoff": "https://github.com/lijust/EREI-3.2/issues/309#issuecomment-6713825884",
+      "limitations": "Github compare main...A2 file list capped at 300, source-bound 14 high priority paths only; B1 reachable call graph not yet proven.",
+      "B1_entrypoint": "NOT_IMPLEMENTED",
+      "model_execution": "FORBIDDEN",
+      "real_docker_invoked_in_b0": false,
+      "owner": "6713825884"
     },
     "B1": {
-      "state": "NOT_STARTED"
+      "state": "GATE_PASS",
+      "scope": "ONE_NON_EXECUTING_ADVISORY_ENTRYPOINT",
+      "owner_authorization": "https://github.com/lijust/EREI-3.2/issues/309#issuecomment-6713825884",
+      "formal_owner_post_run_signoff": "https://github.com/lijust/EREI-3.2/issues/309#issuecomment-6717103234",
+      "source_git_blob": "8be64b9a1a492e78b97903d95c44fcdea77099ce",
+      "manifest_git_blob": "814e7194dc5ebd95557616a68117138ee880da3e",
+      "evidence": "docs/governance/core13-pilot-b1-advisory-verified-ci-20261108.md",
+      "review": "docs/governance/core13-pilot-b1-single-advisory-entrypoint-20261108-ar.md",
+      "run": "https://github.com/lijust/EREI-3.2/actions/runs/42420906980",
+      "job_id": "128548922605",
+      "tests": "B0 15 PASS + B1 25 PASS = 40/40; actual CLI guardrails+inspect_route and malformed/execute deny",
+      "negative": "No J4/J4S/F5 broker imports; unknown operations/routes/payload code rejected; 0 Docker, root, model, shell, network, patch writes",
+      "limitations": "Only the new single CLI import path; original J4/J4S entrypoints still exist outside the B1 Pilot. 14 pinned known route sources, not exhaustive repository call graph.",
+      "owner": "6717103234"
     },
     "B2": {
-      "state": "NOT_STARTED"
+      "state": "GATE_PASS",
+      "scope": "EXISTING_B1_LOCAL_REACHABILITY_RECONCILIATION_AND_ROLLBACK",
+      "owner_authorization": "https://github.com/lijust/EREI-3.2/issues/309#issuecomment-6717103234",
+      "formal_owner_signoff": "https://github.com/lijust/EREI-3.2/issues/309#issuecomment-6719235856",
+      "read_only_advisory_source_blob": "8be64b9a1a492e78b97903d95c44fcdea77099ce",
+      "local_ast_regression_test_blob": "a7bdf79de71e3e21feb72bb41c46b685b3f71837",
+      "reviewed_route_manifest_blob": "814e7194dc5ebd95557616a68117138ee880da3e",
+      "run": "https://github.com/lijust/EREI-3.2/actions/runs/42462496198",
+      "job_id": "128674593035",
+      "results": "41/41 PASS: 15 B0 route/source tests, 26 B1 CLI/AST tests including one B2 local static call graph regression.",
+      "source_reconciliation": "docs/governance/core13-pilot-b2-source-reachability-rollback-20261108-ar.md",
+      "evidence": "docs/governance/core13-pilot-b2-source-rollback-verified-ci-20261108.md",
+      "rollback_scope": "Stop B1 CLI invocation; not deployed as a persistent service. Draft PRs not merged. If later merged, revert approved PR/commits, not force reset.",
+      "legacy_paths_modified": false,
+      "cli_source_modified": false,
+      "unauthorized_runtime_calls": 0,
+      "limitations": "Local B1 AST import/call graph only, not complete repo runtime isolation; 14 reviewed sources, compare capped at 300.",
+      "next_gate": "B3_ONLY_AFTER_B2_OWNER_POST_REVIEW_SIGNOFF",
+      "owner": "6719235856"
     },
     "B3": {
-      "state": "NOT_STARTED"
+      "state": "GATE_PASS",
+      "scope": "B_PILOT_ROUTE_CONSOLIDATED_NON_EXECUTING_ADVISORY_ONLY",
+      "owner_authorization": "https://github.com/lijust/EREI-3.2/issues/309#issuecomment-6719235856",
+      "formal_owner_post_review_signoff": "https://github.com/lijust/EREI-3.2/issues/309#issuecomment-6719300660",
+      "recommended_decision": "B_PILOT_ROUTE_CONSOLIDATED_SCOPED_PASS",
+      "evidence": "docs/governance/core13-pilot-b3-final-review-20261108-ar.md",
+      "pinned_advisory_entrypoint_git_blob": "8be64b9a1a492e78b97903d95c44fcdea77099ce",
+      "pinned_route_manifest_git_blob": "814e7194dc5ebd95557616a68117138ee880da3e",
+      "b0_run": "https://github.com/lijust/EREI-3.2/actions/runs/42420217755",
+      "b1_run": "https://github.com/lijust/EREI-3.2/actions/runs/42421025530",
+      "b2_run": "https://github.com/lijust/EREI-3.2/actions/runs/42462598131",
+      "b2_job_id": "128674904528",
+      "tests": "B0 15 PASS + B1 and B2 26 PASS = 41/41, nonroot.",
+      "limitations": "Static local B1 source callgraph only, 14 prioritized pinned source routes; independent J4/J4S workflows not globally disabled.",
+      "runtime_not_authorized": [
+        "Docker CREATE/START/DELETE",
+        "model-generated-code execution",
+        "root proxy reuse",
+        "network and patch writes"
+      ],
+      "approval_prerequisite": "Explicit owner review of full packet in issue 309 and accepted scope",
+      "package_b_closed": true,
+      "owner": "6719300660"
     },
     "C0": {
-      "state": "NOT_STARTED"
+      "state": "AUTHORIZED_PREREGISTRATION_NOT_FROZEN",
+      "owner_authorization": "https://github.com/lijust/EREI-3.2/issues/309#issuecomment-6719300660",
+      "frozen_contract": null,
+      "owner_prereg_signoff": null
     },
     "C1": {
       "state": "NOT_STARTED"
@@ -156,12 +226,11 @@
     }
   },
   "strict_boundaries": [
-    "Verified owner post-run approval comment #6713657840 signed scope-bound A2/A3 and CLOSED_PASS for Package A; this is not unrestricted Docker authority",
-    "A runtime success is source-bound root-owned local GET-only secondary dockerd, with host baseline and private cleanup checked in the workflow",
-    "Package A is CLOSED_PASS and its remediation budget was 2/2; do not reactivate without a separate change request",
-    "B may start at B0 source inventory only; no J4/J4S live execution, no root Docker, no code from model",
-    "Package C remains NOT_STARTED, and independent terminal settlement/late-create/global Docker isolation/model effectiveness remain NOT_ESTABLISHED",
-    "AI_ACCEPTANCE=BLOCK_AI_ACCEPTANCE, stable_ready=false"
+    "Owner B3 signed #6719300660; Package B is CLOSED_PASS_SCOPED_ADVISORY_ONLY. Formal gates G0-G3/A0-A3/B0-B3 = 12/16.",
+    "C0 only: freeze 3 C1 cases, source SHA, external provider/connection assumptions, inputs, reference oracle and decision thresholds BEFORE any C1 run.",
+    "B1 remains deterministic route inspection, not an AI provider or measure of model effectiveness; cannot pretend invalid JSON is a real provider outage.",
+    "No C1 execution yet, no model-generated code, Docker CREATE/START, root broker reuse, repository writes or Stage C promotion without C0 owner approval.",
+    "AI_ACCEPTANCE=BLOCK_AI_ACCEPTANCE, stable_ready=false; whole-repo isolation and model effectiveness NOT_ESTABLISHED."
   ],
   "package_closures": {
     "A": {
@@ -186,6 +255,23 @@
         "terminal_settlement",
         "stable"
       ]
+    },
+    "B": {
+      "status": "CLOSED_PASS_SCOPED_ADVISORY_ONLY",
+      "owner_signoff": "https://github.com/lijust/EREI-3.2/issues/309#issuecomment-6719300660",
+      "formal_gate_ids": [
+        "B0",
+        "B1",
+        "B2",
+        "B3"
+      ],
+      "approval_limitation": "Only one deterministic non-executing advisory CLI, not full AI evaluator or universal Docker isolation",
+      "source": "tools/core13_pilot_b1_advisory_only.py",
+      "source_git_blob": "8be64b9a1a492e78b97903d95c44fcdea77099ce",
+      "run": "https://github.com/lijust/EREI-3.2/actions/runs/42463022672",
+      "job_id": "128676204466",
+      "tests_passed": 41,
+      "independent_model_effectiveness": "NOT_ESTABLISHED"
     }
   }
 }
