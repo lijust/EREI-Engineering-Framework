@@ -19,7 +19,7 @@
     "not_started": 3,
     "package_a": "CLOSED_PASS_SCOPED_READ_ONLY",
     "package_b": "CLOSED_PASS_SCOPED_ADVISORY_ONLY",
-    "package_c": "C0_V2_OWNER_LOCAL_38_OF_38_OFFLINE_PASS_FORMAL_OWNER_SIGNOFF_PENDING",
+    "package_c": "C0_V3_CONTROLLED_FAULT_PREREG_OWNER_AUTHORIZED_IMPLEMENTED_STATIC_48_TEST_RECHECK_PENDING",
     "remediation_round_a": 2,
     "remediation_limit_a": 2,
     "active_pre_review": 1
@@ -211,7 +211,7 @@
       "owner": "6719300660"
     },
     "C0": {
-      "state": "C0_V2_OWNER_LOCAL_TESTS_VERIFIED_38_OF_38_OWNER_FORMAL_SIGNOFF_PENDING",
+      "state": "C0_V3_PREREG_AMENDMENT_SOURCE_WRITTEN_OWNER_FINAL_SIGNOFF_PENDING",
       "owner_authorization": "https://github.com/lijust/EREI-3.2/issues/309#issuecomment-6719300660",
       "owner_prereg_signoff": null,
       "frozen_candidate": "contracts/core13-pilot-c0-prereg-three-probes-v2.json",
@@ -251,8 +251,8 @@
       "v2_ci_failure_stage": "BEFORE_RUNNER_PROVISIONING_NO_STEPS",
       "evidence_packet": "docs/governance/core13-pilot-c0-v2-implementation-evidence-20261108.md",
       "prereg_contract": "docs/governance/core13-pilot-c0-v2-minimal-gemini-provider-amendment-20261108-ar.md",
-      "c1_02_status": "REAL_PROVIDER_FAULT_NOT_TESTED",
-      "owner_review_status": "C0_V2_SOURCE_AND_LOCAL_TESTS_READY_SIGNOFF_PENDING",
+      "c1_02_status": "DETERMINISTIC_SYNTHETIC_TRANSPORT_FAULT_PREREGISTERED_BUT_C1_NOT_RUN",
+      "owner_review_status": "V3_SOURCE_REVIEW_AND_OFFLINE_TEST_REQUIRED_BEFORE_FINAL_C0_CLOSURE",
       "v2_ci_failure_reason": "Owner-retrieved GitHub check-run annotations for job 128691305173: The job was not started because recent account payments have failed or your spending limit needs to be increased. Check Billing & plans. GitHub ubuntu-latest 26 migration notice separate informational warning.",
       "v2_ci_check_annotations_provenance": "https://github.com/lijust/EREI-3.2/actions/runs/42467819388",
       "local_verification_status": "OWNER_POST_EOL_FRESH_WINDOWS_CHECKOUT_38_OF_38_PASS_EXIT_0",
@@ -298,7 +298,18 @@
         "ai_provider_calls": 0,
         "real_c1_executions": 0,
         "scope": "local offline only; GitHub CI not run due to account billing hold"
-      }
+      },
+      "owner_v3_amendment_authorization": "https://github.com/lijust/EREI-3.2/issues/310#issuecomment-6724292060",
+      "owner_v3_final_signoff": null,
+      "current_candidate": "contracts/core13-pilot-c0-prereg-three-probes-v3.json",
+      "current_candidate_git_blob": "6f95214e6e7333fde41905209b891a9b877903e9",
+      "v3_review": "docs/governance/core13-pilot-c0-v3-controlled-fault-prereg-20261108-ar.md",
+      "v3_review_git_blob": "4622958af81f4bb1c3aea6e383e29780e7ff12f9",
+      "v3_source_test": "tests/unit/test_core13_pilot_c0_v3_controlled_fault_prereg.py",
+      "v3_source_test_git_blob": "4a9d9b4dc5dd5f2f94449e203153d55648ba725a",
+      "previous_38_local_pass": "VERIFIED_BY_OWNER_BEFORE_V3",
+      "v3_local_expected_tests_total": 48,
+      "v3_local_test_status": "NOT_RUN_PENDING_OWNER_RECHECK"
     },
     "C1": {
       "state": "NOT_STARTED"
@@ -311,12 +322,14 @@
     }
   },
   "strict_boundaries": [
-    "G/A/B owner signed 12/16 gates; C0 remains pending explicit post-test owner decision.",
-    "Owner fresh Windows checkout verified i/lf w/lf and full 38/38 offline C0 suite PASS exit 0 after scoped .gitattributes.",
-    "16 Gemini transport tests used injected offline fake transport. This is not evidence of actual Google outage, AI effectiveness or live C1.",
-    "GitHub-hosted CI remains blocked by account payment/spending-limit before runner; do not claim GitHub CI PASS.",
-    "C1-02 live genuine network outage oracle from C0 v2 may be impractical; any controlled fault-injection replacement requires separate owner-approved prereg BEFORE C1.",
-    "No live Gemini/network/API credentials, Docker/root/candidate code, C1/C2/C3 executed. AI_ACCEPTANCE=BLOCK_AI_ACCEPTANCE and stable_ready=false."
+    "Package A/B CLOSED_PASS scoped. Formal 12/16 gates unchanged; C0 v3 only source prereg amendment under owner authorization #6724292060, not final C0 signoff.",
+    "V1 and V2 prereg retained byte-identical. V3 preserves exactly three C1 case identities, C1-01 and C1-03 unchanged, and C1-02 uses a fixed synthetic URLError injected in the EXISTING provider opener.",
+    "Synthetic transport failure MUST be labeled SYNTHETIC_INJECTED_TRANSPORT_NOT_REAL_GOOGLE_OUTAGE; no claim of actual Gemini downtime, provider health or model benefit.",
+    "All three future C1 probes scoped OFFLINE; real model calls, network, Docker, root, model-generated-code execution and API cost zero. Only C0 source/static tests now authorized.",
+    "Previously verified C0 v2 owner-local suite 38/38 PASS. New v3 suite total 48 NOT YET RUN; no assumption it passed.",
+    "GitHub-hosted CI remains blocked by billing/payment start restriction; local run requires scoped .gitattributes LF and source SHA.",
+    "C1/C2/C3 not started; next action C0 v3 owner-local 48 tests, independent review and formal owner signoff.",
+    "AI_ACCEPTANCE=BLOCK_AI_ACCEPTANCE, stable_ready=false, model effectiveness NOT_ESTABLISHED."
   ],
   "package_closures": {
     "A": {
