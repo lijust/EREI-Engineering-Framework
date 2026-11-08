@@ -16,9 +16,9 @@
     "fixed_gates": 16,
     "passed": 10,
     "blocked": 0,
-    "not_started": 5,
+    "not_started": 4,
     "package_a": "CLOSED_PASS_SCOPED_READ_ONLY",
-    "package_b": "ACTIVE_B2_SOURCE_CONSOLIDATION_AND_ROLLBACK",
+    "package_b": "B2_SOURCE_AND_REGRESSION_CI_PASS_OWNER_SIGNOFF_PENDING",
     "package_c": "NOT_STARTED",
     "remediation_round_a": 2,
     "remediation_limit_a": 2,
@@ -165,13 +165,24 @@
       "owner": "6717103234"
     },
     "B2": {
-      "state": "IN_PROGRESS_SOURCE_ONLY",
+      "state": "SOURCE_AND_CI_VERIFIED_OWNER_SIGNOFF_PENDING",
       "scope": "EXISTING_B1_LOCAL_REACHABILITY_RECONCILIATION_AND_ROLLBACK",
       "owner_authorization": "https://github.com/lijust/EREI-3.2/issues/309#issuecomment-6717103234",
       "formal_owner_signoff": null,
-      "model_execution": false,
-      "docker_access": false,
-      "source_edits_required": false
+      "read_only_advisory_source_blob": "8be64b9a1a492e78b97903d95c44fcdea77099ce",
+      "local_ast_regression_test_blob": "a7bdf79de71e3e21feb72bb41c46b685b3f71837",
+      "reviewed_route_manifest_blob": "814e7194dc5ebd95557616a68117138ee880da3e",
+      "run": "https://github.com/lijust/EREI-3.2/actions/runs/42462496198",
+      "job_id": "128674593035",
+      "results": "41/41 PASS: 15 B0 route/source tests, 26 B1 CLI/AST tests including one B2 local static call graph regression.",
+      "source_reconciliation": "docs/governance/core13-pilot-b2-source-reachability-rollback-20261108-ar.md",
+      "evidence": "docs/governance/core13-pilot-b2-source-rollback-verified-ci-20261108.md",
+      "rollback_scope": "Stop B1 CLI invocation; not deployed as a persistent service. Draft PRs not merged. If later merged, revert approved PR/commits, not force reset.",
+      "legacy_paths_modified": false,
+      "cli_source_modified": false,
+      "unauthorized_runtime_calls": 0,
+      "limitations": "Local B1 AST import/call graph only, not complete repo runtime isolation; 14 reviewed sources, compare capped at 300.",
+      "next_gate": "B3_ONLY_AFTER_B2_OWNER_POST_REVIEW_SIGNOFF"
     },
     "B3": {
       "state": "NOT_STARTED"
@@ -190,11 +201,11 @@
     }
   },
   "strict_boundaries": [
-    "Owner B1 post-run signoff #6717103234 verified, 10 of 16 formal gates (G0-G3 A0-A3 B0 B1) closed.",
-    "B2 only source-route reconciliation, local B1 import/call reachability evidence, regression reuse, rollback documentation; no new execution infrastructure.",
-    "Do not call J4/J4S/F5/A2 Docker or root, do not execute candidate/model-generated code or modify source semantics.",
-    "Do not mistake local advisory entrypoint static call graph for independent global repository or Python environment isolation.",
-    "Package B not formally closed until B2 and B3 owner review, C not started.",
+    "Owner B1 post-run approval #6717103234 signed, 10/16 closed before B2; B2 CI 41/41 PASS but no B2 owner closure yet.",
+    "B2 only B1 local AST/reachability, 14-route reconciliation, preserved historical evidence and documented rollback; B1 executable source unchanged.",
+    "No J4/J4S/F5/A2 Docker or root executions, no model-generated code or patch writes; no new execution components.",
+    "Do not claim whole-repo isolation or model effectiveness from source AST; GitHub Compare capped 300.",
+    "B3 and Package C remain NOT_STARTED until explicit B2 owner post-run signoff.",
     "AI_ACCEPTANCE=BLOCK_AI_ACCEPTANCE, stable_ready=false, independent terminal settlement NOT_ESTABLISHED."
   ],
   "package_closures": {
