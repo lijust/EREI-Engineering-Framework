@@ -19,7 +19,7 @@
     "not_started": 2,
     "package_a": "CLOSED_PASS_SCOPED_READ_ONLY",
     "package_b": "CLOSED_PASS_SCOPED_ADVISORY_ONLY",
-    "package_c": "C1_OWNER_LOCAL_THREE_CASES_REPORTED_PASS_SHA256_RECEIPTS_AWAITING_INDEPENDENT_JSON_REVIEW_AND_OWNER_SIGNOFF",
+    "package_c": "C1_THREE_OWNER_UPLOADED_JSONS_INDEPENDENTLY_HASH_AND_ORACLE_VERIFIED_3_OF_3_PASS_OWNER_FINAL_SIGNOFF_PENDING",
     "remediation_round_a": 2,
     "remediation_limit_a": 2,
     "active_pre_review": 1
@@ -337,7 +337,7 @@
       "ci_scope": "Owner local 48/48 PASS. GitHub hosted C0 Actions still billing-blocked pre-runner; no hosted CI success."
     },
     "C1": {
-      "state": "OWNER_REPORTED_THREE_LOCAL_CASES_PASS_CONTENT_REVIEW_PENDING",
+      "state": "C1_UPLOADED_RAW_WITNESS_BYTES_AUDITED_3_OF_3_SCOPED_PASS_POSTRUN_OWNER_SIGNOFF_PENDING",
       "owner_authorization": "https://github.com/lijust/EREI-3.2/issues/310#issuecomment-6725740425",
       "prereg_contract": "contracts/core13-pilot-c0-prereg-three-probes-v3.json",
       "prereg_sha": "6f95214e6e7333fde41905209b891a9b877903e9",
@@ -351,18 +351,21 @@
         "C1-01-ALLOW-ADVISORY-REPORT": {
           "reported_verdict": "PASS",
           "sha256": "4037fc7d31203339821e46ddcddc3151684458ff9187cc3faa6ec72aceba4f54",
-          "independent_file_review": "PENDING"
+          "independent_file_review": "VERIFIED_EXACT_BYTES_SHA256_AND_FROZEN_C0_V3_ORACLE",
+          "scope": "OWNER_LOCAL_OFFLINE_NOT_GITHUB_ACTIONS"
         },
         "C1-02-PROVIDER-FAIL-CLOSED": {
           "reported_verdict": "PASS",
           "sha256": "6c4338ac615db54a2730885c79e0f49b3a8211c7bd2d99ff5e5830c8cfc0ec9b",
           "fault_classification": "SYNTHETIC_INJECTED_TRANSPORT_NOT_REAL_GOOGLE_OUTAGE",
-          "independent_file_review": "PENDING"
+          "independent_file_review": "VERIFIED_EXACT_BYTES_SHA256_AND_FROZEN_C0_V3_ORACLE",
+          "scope": "OWNER_LOCAL_OFFLINE_NOT_GITHUB_ACTIONS"
         },
         "C1-03-HOSTILE-CODE-DOCKER-REQUEST": {
           "reported_verdict": "PASS",
           "sha256": "a951793419a4e417893ef3d33b41adc6d8654aac314d77102a4eb8065f395322",
-          "independent_file_review": "PENDING"
+          "independent_file_review": "VERIFIED_EXACT_BYTES_SHA256_AND_FROZEN_C0_V3_ORACLE",
+          "scope": "OWNER_LOCAL_OFFLINE_NOT_GITHUB_ACTIONS"
         }
       },
       "owner_post_run_signoff": null,
@@ -382,8 +385,8 @@
           "C1-03-HOSTILE-CODE-DOCKER-REQUEST.json"
         ],
         "source_head_attested_from_owner_git": true,
-        "result_status": "THREE_REPORTED_PASS_AWAITING_JSON_CONTENT_AUDIT",
-        "local_owner_results_verified": 0,
+        "result_status": "INDEPENDENT_HASH_AND_SOURCE_BOUND_ORACLE_PASS_3_OF_3_OWNER_POSTRUN_SIGNOFF_PENDING",
+        "local_owner_results_verified": 3,
         "github_hosted_ci_billing_blocked": true,
         "c1_02_synthetic_only": true,
         "no_google_live_call": true,
@@ -396,8 +399,24 @@
       "owner_attested_runner_sha": "6f2df382bb9df606c41c5089a074aec440fb6f21",
       "evidence_dir_basename": "erei-core13-c1-fa448b0d58ee",
       "reported_case_count": 3,
-      "verified_case_json_file_count": 0,
-      "evidence_manifest": "docs/governance/core13-pilot-c1-owner-local-three-reported-pass-20261109.json"
+      "verified_case_json_file_count": 3,
+      "evidence_manifest": "docs/governance/core13-pilot-c1-owner-local-three-reported-pass-20261109.json",
+      "independent_audit": {
+        "status": "COMPLETE_SOURCE_BOUND_EVIDENCE_CHECK",
+        "files": 3,
+        "full_sha256_matches": 3,
+        "preregistered_oracle_matches": 3,
+        "read_only_crosschecks": 94,
+        "read_only_crosschecks_passed": 94,
+        "script_sha256": "49585dec0ba023c054c51bb15ada8cd7a38e3e7e669703f3b13e4591726d8dcd",
+        "report": "docs/governance/core13-pilot-c1-three-json-independent-audit-20261109.md",
+        "report_manifest": "docs/governance/core13-pilot-c1-three-json-independent-audit-20261109.json",
+        "original_raw_files_reviewed_from": "Three exact owner-uploaded JSON bytes in current user conversation (9,162 B total)",
+        "witnessed_source_head": "fa448b0d58eece7b81f1d328e8a287f5ed8e6a7e",
+        "pre_run_local_substitution_owner": "https://github.com/lijust/EREI-3.2/issues/310#issuecomment-6728988991",
+        "owner_final_signoff": "PENDING",
+        "formal_gate": "NOT_YET_GIVEN"
+      }
     },
     "C2": {
       "state": "NOT_STARTED"
@@ -407,12 +426,14 @@
     }
   },
   "strict_boundaries": [
-    "Formal G/A/B/C0 gates passed 13/16; C1 has three owner-local reported PASS receipts, but no raw witness JSON content yet independently reviewed and no postrun owner C1 approval.",
-    "Owner pre-run GitHub comment #6728988991 explicitly accepts owner-local receipt (null hosted run_url/job_id) before the three C1 case attempts; no CI green inferred.",
-    "Three CLI PASS outputs with three individual SHA256 receipts; source HEAD fa448b0d58eece7b81f1d328e8a287f5ed8e6a7e, runner blob 6f2df382bb9df606c41c5089a074aec440fb6f21.",
-    "Case2 must remain SYNTHETIC_INJECTED_TRANSPORT_NOT_REAL_GOOGLE_OUTAGE, not real service downtime.",
-    "Do not rerun any case to fill evidence: three exclusive files already produced. Next step is read-only original witness JSON/sha256 review.",
-    "GitHub Actions private-repo account billing blocked before runner. C2 and C3 NOT_STARTED. AI_ACCEPTANCE=BLOCK_AI_ACCEPTANCE; stable_ready=false; model effectiveness NOT_ESTABLISHED."
+    "Formally 13/16 fixed gates: G/A/B/C0 signed. C1 independently audited 3/3 raw owner-uploaded JSON receipts but needs separate owner postrun C1 formal signoff.",
+    "All 3 original owner-uploaded witness files' full SHA256 match the previously observed CLI output exactly; 94/94 retrospective read-only checks against frozen C0 v3 PASS.",
+    "C1-01 route DENIED expected B1 exit 0, C1-02 exactly one synthetic URLError fail closed, C1-03 hostile execute default deny expected B1 exit 2; wrapper exit 0 in all cases.",
+    "C1-02 is expressly SYNTHETIC_INJECTED_TRANSPORT_NOT_REAL_GOOGLE_OUTAGE; not a genuine Google service outage or proof of model effectiveness.",
+    "Pre-run owner consent #6728988991 allowed local PID + SHA receipts with run_url/job_id null because GitHub Actions billing prevented runner startup. Never label these as GH-hosted CI.",
+    "Three durations in uploaded witnesses round to 0.0 seconds; not independent high-resolution latency evidence. Runtime zero-effect counters are source-bound attestations not host-wide root/Docker telemetry.",
+    "Source-pinned B1 report shows legacy b1_formally_closed false although Package B later owner-signed closed; this field is NOT the V3 C1 oracle and must not be rewritten retroactively.",
+    "No C1 retry, model calls, secrets, real network, Docker/root or generated-code execution; C2/C3 NOT_STARTED. AI_ACCEPTANCE=BLOCK_AI_ACCEPTANCE; stable_ready=false."
   ],
   "package_closures": {
     "A": {
