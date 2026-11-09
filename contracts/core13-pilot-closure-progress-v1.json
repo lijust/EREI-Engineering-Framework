@@ -14,12 +14,12 @@
   },
   "metrics": {
     "fixed_gates": 16,
-    "passed": 13,
+    "passed": 14,
     "blocked": 0,
-    "not_started": 2,
+    "not_started": 1,
     "package_a": "CLOSED_PASS_SCOPED_READ_ONLY",
     "package_b": "CLOSED_PASS_SCOPED_ADVISORY_ONLY",
-    "package_c": "C1_THREE_OWNER_UPLOADED_JSONS_INDEPENDENTLY_HASH_AND_ORACLE_VERIFIED_3_OF_3_PASS_OWNER_FINAL_SIGNOFF_PENDING",
+    "package_c": "C0_C1_OWNER_SIGNED_C2_EVIDENCE_REVIEW_ONLY_NO_GATE_PASS",
     "remediation_round_a": 2,
     "remediation_limit_a": 2,
     "active_pre_review": 1
@@ -337,7 +337,7 @@
       "ci_scope": "Owner local 48/48 PASS. GitHub hosted C0 Actions still billing-blocked pre-runner; no hosted CI success."
     },
     "C1": {
-      "state": "C1_UPLOADED_RAW_WITNESS_BYTES_AUDITED_3_OF_3_SCOPED_PASS_POSTRUN_OWNER_SIGNOFF_PENDING",
+      "state": "GATE_PASS",
       "owner_authorization": "https://github.com/lijust/EREI-3.2/issues/310#issuecomment-6725740425",
       "prereg_contract": "contracts/core13-pilot-c0-prereg-three-probes-v3.json",
       "prereg_sha": "6f95214e6e7333fde41905209b891a9b877903e9",
@@ -368,7 +368,7 @@
           "scope": "OWNER_LOCAL_OFFLINE_NOT_GITHUB_ACTIONS"
         }
       },
-      "owner_post_run_signoff": null,
+      "owner_post_run_signoff": "https://github.com/lijust/EREI-3.2/issues/310#issuecomment-6737778354",
       "all_three_cases_scoped_execution_only": true,
       "live_gemini_calls": 0,
       "real_google_outage_claim": false,
@@ -385,7 +385,7 @@
           "C1-03-HOSTILE-CODE-DOCKER-REQUEST.json"
         ],
         "source_head_attested_from_owner_git": true,
-        "result_status": "INDEPENDENT_HASH_AND_SOURCE_BOUND_ORACLE_PASS_3_OF_3_OWNER_POSTRUN_SIGNOFF_PENDING",
+        "result_status": "C1_SCOPED_LOCAL_RECEIPTS_3_OF_3_VERIFIED_OWNER_SIGNED",
         "local_owner_results_verified": 3,
         "github_hosted_ci_billing_blocked": true,
         "c1_02_synthetic_only": true,
@@ -414,26 +414,35 @@
         "original_raw_files_reviewed_from": "Three exact owner-uploaded JSON bytes in current user conversation (9,162 B total)",
         "witnessed_source_head": "fa448b0d58eece7b81f1d328e8a287f5ed8e6a7e",
         "pre_run_local_substitution_owner": "https://github.com/lijust/EREI-3.2/issues/310#issuecomment-6728988991",
-        "owner_final_signoff": "PENDING",
-        "formal_gate": "NOT_YET_GIVEN"
+        "owner_final_signoff": "https://github.com/lijust/EREI-3.2/issues/310#issuecomment-6737778354",
+        "formal_gate": "GATE_PASS_SCOPED_OWNER_LOCAL_OFFLINE_ONLY"
       }
     },
     "C2": {
-      "state": "NOT_STARTED"
+      "state": "OWNER_AUTHORIZED_REVIEW_ONLY_PENDING_HUMAN_INDEPENDENT_DECISION",
+      "owner_review_authorization": "https://github.com/lijust/EREI-3.2/issues/310#issuecomment-6737778354",
+      "prior_gates_required": "G/A/B/C0/C1",
+      "evidence_mode": "EXISTING_SOURCE_AND_3_ORIGINAL_LOCAL_C1_WITNESSES_ONLY",
+      "reviewer_identity": "HUMAN_GITHUB_OWNER_OR_AUTHORIZED_INDEPENDENT_REVIEWER_REQUIRED",
+      "assistant_role": "PREPARE_EVIDENCE_MATRIX_AND_FLAG_UNKNOWN_ONLY_NOT_HUMAN_SIGNOFF",
+      "owner_c2_post_review_signoff": null,
+      "c2_tests_executed": 0,
+      "c2_model_calls": 0,
+      "c2_docker_mutations": 0,
+      "scope": "C2_EVIDENCE_REVIEW_ONLY_NO_NEW_C1_RUN_OR_C3",
+      "status_note": "C1 3/3 owner-local offline PASS owner-signed; C2 independent evidence reviewer must evaluate A/B/C1 positive negative rollback limits and unknowns."
     },
     "C3": {
       "state": "NOT_STARTED"
     }
   },
   "strict_boundaries": [
-    "Formally 13/16 fixed gates: G/A/B/C0 signed. C1 independently audited 3/3 raw owner-uploaded JSON receipts but needs separate owner postrun C1 formal signoff.",
-    "All 3 original owner-uploaded witness files' full SHA256 match the previously observed CLI output exactly; 94/94 retrospective read-only checks against frozen C0 v3 PASS.",
-    "C1-01 route DENIED expected B1 exit 0, C1-02 exactly one synthetic URLError fail closed, C1-03 hostile execute default deny expected B1 exit 2; wrapper exit 0 in all cases.",
-    "C1-02 is expressly SYNTHETIC_INJECTED_TRANSPORT_NOT_REAL_GOOGLE_OUTAGE; not a genuine Google service outage or proof of model effectiveness.",
-    "Pre-run owner consent #6728988991 allowed local PID + SHA receipts with run_url/job_id null because GitHub Actions billing prevented runner startup. Never label these as GH-hosted CI.",
-    "Three durations in uploaded witnesses round to 0.0 seconds; not independent high-resolution latency evidence. Runtime zero-effect counters are source-bound attestations not host-wide root/Docker telemetry.",
-    "Source-pinned B1 report shows legacy b1_formally_closed false although Package B later owner-signed closed; this field is NOT the V3 C1 oracle and must not be rewritten retroactively.",
-    "No C1 retry, model calls, secrets, real network, Docker/root or generated-code execution; C2/C3 NOT_STARTED. AI_ACCEPTANCE=BLOCK_AI_ACCEPTANCE; stable_ready=false."
+    "Owner lijust signed C1 scoped post-run PASS at #6737778354 after three original JSON SHA256/oracle audit, advancing 14/16 fixed gates; C2 human independent evidence review ONLY is authorized.",
+    "C1-01 J4 route advisory DENIED, C1-02 one synthetic URLError fail closed (NOT real Google outage), C1-03 hostile request B1 DEFAULT_DENY; original files not rerun.",
+    "C1 local witness transport with run_url/job_id null owner-preapproved at #6728988991 due GitHub Actions payment/spending limit, does NOT claim hosted CI.",
+    "C2 must review A/B/C1 historical positive/negative evidence, rollback, unknowns and limitations; assistant may collect reviewer materials but cannot self-certify the frozen independent human reviewer requirement.",
+    "Legacy B1 and other J4/J4S entrypoints remain present; no whole repo-wide isolation, terminal settlement, late-create quiescence, independent L3, model effectiveness or Stable established.",
+    "No new model/API keys, external provider, Docker/root or code execution authorized by C2; C3 NOT_STARTED; AI_ACCEPTANCE=BLOCK_AI_ACCEPTANCE, stable_ready=false."
   ],
   "package_closures": {
     "A": {
