@@ -5,7 +5,7 @@
   "scope_contract_path": "contracts/core13-pilot-closure-v1.json",
   "authority": "GitHub owner comment 6708853149, with reproducible source/job evidence",
   "owner_review_url": "https://github.com/lijust/EREI-3.2/issues/307#issuecomment-6708853149",
-  "decision": "PILOT_UNDECIDED",
+  "decision": "PILOT_ADVISORY_ONLY_GO",
   "security": {
     "ai_acceptance": "BLOCK_AI_ACCEPTANCE",
     "stable_ready": false,
@@ -14,15 +14,15 @@
   },
   "metrics": {
     "fixed_gates": 16,
-    "passed": 15,
+    "passed": 16,
     "blocked": 0,
     "not_started": 0,
     "package_a": "CLOSED_PASS_SCOPED_READ_ONLY",
     "package_b": "CLOSED_PASS_SCOPED_ADVISORY_ONLY",
-    "package_c": "C2_OWNER_SIGNED_15_OF_16_C3_FINAL_SCOPED_REVIEW_READY_OWNER_DECISION_PENDING",
+    "package_c": "CLOSED_PASS_OWNER_SIGNED_OFFLINE_SOURCE_BOUND_ADVISORY_ONLY",
     "remediation_round_a": 2,
     "remediation_limit_a": 2,
-    "active_pre_review": 1
+    "active_pre_review": 0
   },
   "gates": {
     "G0": {
@@ -463,7 +463,7 @@
       "owner_authorized_next": "C3_FINAL_SCOPED_GO_NO_GO_EVIDENCE_REVIEW_ONLY"
     },
     "C3": {
-      "state": "C3_FINAL_SCOPED_GO_NO_GO_REVIEW_READY_OWNER_SIGNOFF_PENDING",
+      "state": "GATE_PASS",
       "owner_authorization": "https://github.com/lijust/EREI-3.2/issues/310#issuecomment-6738106706",
       "frozen_scope_contract": "contracts/core13-pilot-closure-v1.json",
       "frozen_c0_v3_prereg": "contracts/core13-pilot-c0-prereg-three-probes-v3.json",
@@ -483,20 +483,28 @@
       "generated_code_execution_authorized": false,
       "stable_ready": false,
       "ai_acceptance": "BLOCK_AI_ACCEPTANCE",
-      "c3_owner_final_signoff": null,
-      "final_owner_decision": null,
-      "c3_gate_pass": false,
-      "scope_note": "Documented evidence-only pilot closure option; does not authorize live Gemini, broader code/Docker paths, deployment, autonomous execution, or Stable."
+      "c3_owner_final_signoff": "https://github.com/lijust/EREI-3.2/issues/310#issuecomment-6738737883",
+      "final_owner_decision": "PILOT_ADVISORY_ONLY_GO",
+      "c3_gate_pass": true,
+      "scope_note": "Retrospective GO for the completed offline evidence demo only; no live Gemini, broad repository/Docker/Root access, deployment, autonomous execution, or Stable.",
+      "final_go_scope": "ONLY_THE_COMPLETED_OWNER_LOCAL_OFFLINE_SOURCE_BOUND_DETERMINISTIC_ADVISORY_EVIDENCE_DEMONSTRATION",
+      "owner_decision_provenance": "GitHub user lijust #6738737883; verified separate human owner C3 decision",
+      "actual_live_provider_calls_authorized": false,
+      "production_deployment_authorized": false,
+      "deferred_capabilities_activated": false,
+      "scoped_final_closure_report": "docs/governance/core13-pilot-final-scoped-closure-20261109.md",
+      "scoped_final_closure_report_git_blob": "9139ce5ea3d0591d8a746bcc28392ed266bb7114"
     }
   },
   "strict_boundaries": [
-    "15/16 formally signed G0-G3/A0-A3/B0-B3/C0/C1/C2; C2 is owner-reviewed under its accepted limited scope; C3 final GO/NO-GO remains unsigned.",
-    "C2 signed by GitHub owner lijust at issue 310 comment 6738106706 after the existing evidence matrix, negative safety/rollback/cleanup and unknowns review; no new test or runtime evidence created.",
-    "C3 may recommend PILOT_ADVISORY_ONLY_GO for source-bound owner-local offline evidence closure only, but no final pilot decision exists before a distinct owner signoff.",
-    "A2 root-held HMAC not independent of Root, no independent terminal settlement, host-wide Docker exclusivity or complete repository callgraph; legacy J4/J4S entrypoints remain.",
-    "B1/C1 PRs remain Draft/open and not deployed; rollback is stop invoking the offline CLI, not an executed destructive git revert.",
-    "C1 local witnesses have null hosted job/run URLs by pre-run consent because billing blocked Actions; synthetic C1-02 is not a genuine provider outage.",
-    "No live Gemini/model calls, independent AI model effectiveness, externally observed host-wide effects, or evidence of Stable/L3; AI_ACCEPTANCE=BLOCK_AI_ACCEPTANCE; stable_ready=false."
+    "All 16/16 fixed G/A/B/C0-C3 gates signed by GitHub owner for the specified source-bound offline advisory-only evidence pilot; final owner C3 comment 6738737883 explicitly selects PILOT_ADVISORY_ONLY_GO.",
+    "Final PILOT_ADVISORY_ONLY_GO is retrospective acceptance of completed, deterministic owner-local offline evidence only; NOT activation, deployment, or live Gemini/model integration.",
+    "C1-02 was exactly one injected synthetic URLError, not a genuine Google outage; C1 receipts were owner-local with preauthorized null GitHub run_url/job_id and 94/94 independent checks cover their contents, not whole-host runtime.",
+    "A2 Root-held HMAC is not independent of Root; independent terminal settlement, host-wide Docker exclusivity, late-create quiescence and full repository callgraph isolation are NOT ESTABLISHED; legacy J4/J4S can exist elsewhere.",
+    "B1/C1 Draft PRs remain unmerged; no deployment or destructive rollback, only stop invoking offline bounded CLI and preserve evidence.",
+    "No validated blind model-effectiveness evaluation or live model predictions; MODEL_EFFECTIVENESS=NOT_ESTABLISHED and AI_ACCEPTANCE=BLOCK_AI_ACCEPTANCE; stable_ready=false.",
+    "Deferred Issue #311 capabilities remain DEFERRED, with no automatic authorization for Root/Docker CREATE/START, code execution, provider calls, or production rollout.",
+    "The frozen contracts C0 V1/V2/V3 and pilot-closure-v1 remain immutable; final status changes only in the mirrored progress ledger and new final evidence record."
   ],
   "package_closures": {
     "A": {
@@ -538,6 +546,51 @@
       "job_id": "128676204466",
       "tests_passed": 41,
       "independent_model_effectiveness": "NOT_ESTABLISHED"
+    },
+    "C": {
+      "status": "CLOSED_PASS_SCOPED_OWNER_LOCAL_OFFLINE_ADVISORY_ONLY",
+      "formal_gate_ids": [
+        "C0",
+        "C1",
+        "C2",
+        "C3"
+      ],
+      "final_owner_decision": "PILOT_ADVISORY_ONLY_GO",
+      "final_owner_signoff": "https://github.com/lijust/EREI-3.2/issues/310#issuecomment-6738737883",
+      "final_closure_evidence": "docs/governance/core13-pilot-final-scoped-closure-20261109.md",
+      "final_closure_evidence_git_blob": "9139ce5ea3d0591d8a746bcc28392ed266bb7114",
+      "prereg_v3_git_blob": "6f95214e6e7333fde41905209b891a9b877903e9",
+      "c1_scoped_oracle_passed": 3,
+      "c1_independent_receipt_content_checks_passed": 94,
+      "c1_evidence_owner_local_not_github_hosted": true,
+      "c1_02_provider_failure": "SYNTHETIC_INJECTED_TRANSPORT_NOT_REAL_GOOGLE_OUTAGE",
+      "model_effectiveness": "NOT_ESTABLISHED",
+      "live_model_calls_authorized": false,
+      "docker_root_or_generated_code_execution_authorized": false,
+      "pr_merge_or_deploy_authorized": false,
+      "deferred_issue_311_state": "DEFERRED",
+      "stable_ready": false,
+      "ai_acceptance": "BLOCK_AI_ACCEPTANCE"
     }
+  },
+  "final_closure": {
+    "status": "PILOT_CLOSED_SCOPED_OFFLINE_EVIDENCE_ONLY",
+    "date": "2026-11-09",
+    "owner": "lijust",
+    "owner_final_signoff": "https://github.com/lijust/EREI-3.2/issues/310#issuecomment-6738737883",
+    "decision": "PILOT_ADVISORY_ONLY_GO",
+    "passed_fixed_gates": 16,
+    "total_fixed_gates": 16,
+    "report": "docs/governance/core13-pilot-final-scoped-closure-20261109.md",
+    "report_git_blob": "9139ce5ea3d0591d8a746bcc28392ed266bb7114",
+    "deployment_authorized": false,
+    "live_model_calls_authorized": false,
+    "model_generated_code_execution_authorized": false,
+    "docker_create_start_authorized": false,
+    "root_operations_authorized": false,
+    "automatic_patches_authorized": false,
+    "deferred_work_activated": false,
+    "source_pinned_only": true,
+    "human_approval_boundary": "separate fresh authorization required for any broader use"
   }
 }
