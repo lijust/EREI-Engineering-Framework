@@ -19,7 +19,7 @@
     "not_started": 1,
     "package_a": "CLOSED_PASS_SCOPED_READ_ONLY",
     "package_b": "CLOSED_PASS_SCOPED_ADVISORY_ONLY",
-    "package_c": "C0_C1_OWNER_SIGNED_C2_EVIDENCE_REVIEW_ONLY_NO_GATE_PASS",
+    "package_c": "C1_SIGNED_C2_EXISTING_EVIDENCE_CROSSCHECK_PACKET_READY_HUMAN_REVIEW_PENDING",
     "remediation_round_a": 2,
     "remediation_limit_a": 2,
     "active_pre_review": 1
@@ -419,7 +419,7 @@
       }
     },
     "C2": {
-      "state": "OWNER_AUTHORIZED_REVIEW_ONLY_PENDING_HUMAN_INDEPENDENT_DECISION",
+      "state": "C2_REVIEW_PACKET_READY_HUMAN_INDEPENDENT_REVIEW_NOT_YET_SIGNED",
       "owner_review_authorization": "https://github.com/lijust/EREI-3.2/issues/310#issuecomment-6737778354",
       "prior_gates_required": "G/A/B/C0/C1",
       "evidence_mode": "EXISTING_SOURCE_AND_3_ORIGINAL_LOCAL_C1_WITNESSES_ONLY",
@@ -430,19 +430,49 @@
       "c2_model_calls": 0,
       "c2_docker_mutations": 0,
       "scope": "C2_EVIDENCE_REVIEW_ONLY_NO_NEW_C1_RUN_OR_C3",
-      "status_note": "C1 3/3 owner-local offline PASS owner-signed; C2 independent evidence reviewer must evaluate A/B/C1 positive negative rollback limits and unknowns."
+      "status_note": "C1 3/3 owner-local offline PASS owner-signed; C2 independent evidence reviewer must evaluate A/B/C1 positive negative rollback limits and unknowns.",
+      "review_packet": "docs/governance/core13-pilot-c2-independent-evidence-review-20261109.md",
+      "review_packet_git_blob": "8ca896400819ae6f7a19045032e9d620828ebedf",
+      "existing_evidence_review": {
+        "owner_approval_c1": "https://github.com/lijust/EREI-3.2/issues/310#issuecomment-6737778354",
+        "owner_prior_a": "https://github.com/lijust/EREI-3.2/issues/308#issuecomment-6713657840",
+        "owner_prior_b": "https://github.com/lijust/EREI-3.2/issues/309#issuecomment-6719300660",
+        "verified_prior_action_runs": [
+          42418179869,
+          42420217755,
+          42421025530,
+          42462598131,
+          42463022672
+        ],
+        "reported_successful_prior_jobs_count": 6,
+        "c1_original_uploaded_jsons_checked": 3,
+        "c1_source_bound_local_audit_pass": 94,
+        "c1_evidence_is_local_not_github_runner": true,
+        "c1_02_fault_is_synthetic": true,
+        "reviewer_packet_prepared": true,
+        "independent_human_reviewer_evaluation": null,
+        "independent_human_reviewer_comments": null,
+        "safety_negative_review_prepared": true,
+        "rollback_review_prepared": true,
+        "unknowns_disclosed": true,
+        "ai_self_attestation_not_authoritative": true,
+        "owner_c2_post_review_signoff": null
+      },
+      "c2_run_status": "SOURCE_AND_EXISTING_EVIDENCE_READ_ONLY_NO_NEW_PILOT_EXECUTION",
+      "c2_gate_pass": false
     },
     "C3": {
       "state": "NOT_STARTED"
     }
   },
   "strict_boundaries": [
-    "Owner lijust signed C1 scoped post-run PASS at #6737778354 after three original JSON SHA256/oracle audit, advancing 14/16 fixed gates; C2 human independent evidence review ONLY is authorized.",
-    "C1-01 J4 route advisory DENIED, C1-02 one synthetic URLError fail closed (NOT real Google outage), C1-03 hostile request B1 DEFAULT_DENY; original files not rerun.",
-    "C1 local witness transport with run_url/job_id null owner-preapproved at #6728988991 due GitHub Actions payment/spending limit, does NOT claim hosted CI.",
-    "C2 must review A/B/C1 historical positive/negative evidence, rollback, unknowns and limitations; assistant may collect reviewer materials but cannot self-certify the frozen independent human reviewer requirement.",
-    "Legacy B1 and other J4/J4S entrypoints remain present; no whole repo-wide isolation, terminal settlement, late-create quiescence, independent L3, model effectiveness or Stable established.",
-    "No new model/API keys, external provider, Docker/root or code execution authorized by C2; C3 NOT_STARTED; AI_ACCEPTANCE=BLOCK_AI_ACCEPTANCE, stable_ready=false."
+    "14/16 formally signed G0-G3/A0-A3/B0-B3/C0/C1; C2 authorized existing-evidence review only, NOT independently human-signed.",
+    "C2 evidence cross-check packet includes owner signoffs, successful historic bounded A/B GitHub jobs, original local 3/3 C1 SHA256 and 94/94 offline audit, source limitations and rollback/cleanup.",
+    "An AI-prepared evidence packet is NOT the required human independent C2 reviewer comment; owner/authorized human must review and explicitly sign C2 for any GATE_PASS.",
+    "A2 root-held HMAC not independent of Root, no independent terminal settlement, host-wide Docker exclusivity or complete repo callgraph; legacy J4/J4S entrypoints remain.",
+    "B1/C1 PRs are Draft/open and not deployed; rollback by stopping invocation is documented, no destructive git revert executed.",
+    "C1 local witness has null hosted job and run URLs by pre-run consent, because billing blocked Actions; synthetic C1-02 is not genuine provider outage.",
+    "No model/Google live calls, candidate-code execution or proof of AI utility; C3 NOT_STARTED; MODEL_EFFECTIVENESS=NOT_ESTABLISHED; AI_ACCEPTANCE=BLOCK_AI_ACCEPTANCE; stable_ready=false."
   ],
   "package_closures": {
     "A": {
