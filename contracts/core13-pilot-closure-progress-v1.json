@@ -1,7 +1,7 @@
 {
   "schema": "CORE13_PILOT_CLOSURE_PROGRESS_V1",
   "version": "1.0",
-  "as_of": "2026-11-08",
+  "as_of": "2026-11-09",
   "scope_contract_path": "contracts/core13-pilot-closure-v1.json",
   "authority": "GitHub owner comment 6708853149, with reproducible source/job evidence",
   "owner_review_url": "https://github.com/lijust/EREI-3.2/issues/307#issuecomment-6708853149",
@@ -14,12 +14,12 @@
   },
   "metrics": {
     "fixed_gates": 16,
-    "passed": 14,
+    "passed": 15,
     "blocked": 0,
-    "not_started": 1,
+    "not_started": 0,
     "package_a": "CLOSED_PASS_SCOPED_READ_ONLY",
     "package_b": "CLOSED_PASS_SCOPED_ADVISORY_ONLY",
-    "package_c": "C1_SIGNED_C2_EXISTING_EVIDENCE_CROSSCHECK_PACKET_READY_HUMAN_REVIEW_PENDING",
+    "package_c": "C2_OWNER_SIGNED_15_OF_16_C3_FINAL_SCOPED_REVIEW_READY_OWNER_DECISION_PENDING",
     "remediation_round_a": 2,
     "remediation_limit_a": 2,
     "active_pre_review": 1
@@ -419,18 +419,18 @@
       }
     },
     "C2": {
-      "state": "C2_REVIEW_PACKET_READY_HUMAN_INDEPENDENT_REVIEW_NOT_YET_SIGNED",
+      "state": "GATE_PASS",
       "owner_review_authorization": "https://github.com/lijust/EREI-3.2/issues/310#issuecomment-6737778354",
       "prior_gates_required": "G/A/B/C0/C1",
       "evidence_mode": "EXISTING_SOURCE_AND_3_ORIGINAL_LOCAL_C1_WITNESSES_ONLY",
       "reviewer_identity": "HUMAN_GITHUB_OWNER_OR_AUTHORIZED_INDEPENDENT_REVIEWER_REQUIRED",
       "assistant_role": "PREPARE_EVIDENCE_MATRIX_AND_FLAG_UNKNOWN_ONLY_NOT_HUMAN_SIGNOFF",
-      "owner_c2_post_review_signoff": null,
+      "owner_c2_post_review_signoff": "https://github.com/lijust/EREI-3.2/issues/310#issuecomment-6738106706",
       "c2_tests_executed": 0,
       "c2_model_calls": 0,
       "c2_docker_mutations": 0,
       "scope": "C2_EVIDENCE_REVIEW_ONLY_NO_NEW_C1_RUN_OR_C3",
-      "status_note": "C1 3/3 owner-local offline PASS owner-signed; C2 independent evidence reviewer must evaluate A/B/C1 positive negative rollback limits and unknowns.",
+      "status_note": "GitHub owner lijust explicitly accepted C2 after reviewing A/B/C1 evidence matrix, negative safety evidence, rollback/cleanup and material unknowns; evidence-only scope, no new runtime exercise.",
       "review_packet": "docs/governance/core13-pilot-c2-independent-evidence-review-20261109.md",
       "review_packet_git_blob": "8ca896400819ae6f7a19045032e9d620828ebedf",
       "existing_evidence_review": {
@@ -450,29 +450,53 @@
         "c1_evidence_is_local_not_github_runner": true,
         "c1_02_fault_is_synthetic": true,
         "reviewer_packet_prepared": true,
-        "independent_human_reviewer_evaluation": null,
-        "independent_human_reviewer_comments": null,
+        "independent_human_reviewer_evaluation": "GITHUB_OWNER_SCOPED_POST_REVIEW_ACCEPTED",
+        "independent_human_reviewer_comments": "https://github.com/lijust/EREI-3.2/issues/310#issuecomment-6738106706",
         "safety_negative_review_prepared": true,
         "rollback_review_prepared": true,
         "unknowns_disclosed": true,
         "ai_self_attestation_not_authoritative": true,
-        "owner_c2_post_review_signoff": null
+        "owner_c2_post_review_signoff": "https://github.com/lijust/EREI-3.2/issues/310#issuecomment-6738106706"
       },
       "c2_run_status": "SOURCE_AND_EXISTING_EVIDENCE_READ_ONLY_NO_NEW_PILOT_EXECUTION",
-      "c2_gate_pass": false
+      "c2_gate_pass": true,
+      "owner_authorized_next": "C3_FINAL_SCOPED_GO_NO_GO_EVIDENCE_REVIEW_ONLY"
     },
     "C3": {
-      "state": "NOT_STARTED"
+      "state": "C3_FINAL_SCOPED_GO_NO_GO_REVIEW_READY_OWNER_SIGNOFF_PENDING",
+      "owner_authorization": "https://github.com/lijust/EREI-3.2/issues/310#issuecomment-6738106706",
+      "frozen_scope_contract": "contracts/core13-pilot-closure-v1.json",
+      "frozen_c0_v3_prereg": "contracts/core13-pilot-c0-prereg-three-probes-v3.json",
+      "scoped_existing_evidence_packet": "docs/governance/core13-pilot-c3-final-scoped-go-no-go-review-20261109.md",
+      "scoped_existing_evidence_packet_git_blob": "13674e007ee769123bbe90cd1e305664af3ab138",
+      "recommended_candidate_decision": "PILOT_ADVISORY_ONLY_GO_SCOPED_OFFLINE_EVIDENCE_ONLY",
+      "accepted_final_values": [
+        "PILOT_ADVISORY_ONLY_GO",
+        "PILOT_NO_GO",
+        "PILOT_BLOCKED"
+      ],
+      "c3_effectiveness_separation_documented": true,
+      "independent_model_effectiveness": "NOT_ESTABLISHED",
+      "model_predictions_independently_validated": 0,
+      "model_calls_authorized": false,
+      "docker_or_root_execution_authorized": false,
+      "generated_code_execution_authorized": false,
+      "stable_ready": false,
+      "ai_acceptance": "BLOCK_AI_ACCEPTANCE",
+      "c3_owner_final_signoff": null,
+      "final_owner_decision": null,
+      "c3_gate_pass": false,
+      "scope_note": "Documented evidence-only pilot closure option; does not authorize live Gemini, broader code/Docker paths, deployment, autonomous execution, or Stable."
     }
   },
   "strict_boundaries": [
-    "14/16 formally signed G0-G3/A0-A3/B0-B3/C0/C1; C2 authorized existing-evidence review only, NOT independently human-signed.",
-    "C2 evidence cross-check packet includes owner signoffs, successful historic bounded A/B GitHub jobs, original local 3/3 C1 SHA256 and 94/94 offline audit, source limitations and rollback/cleanup.",
-    "An AI-prepared evidence packet is NOT the required human independent C2 reviewer comment; owner/authorized human must review and explicitly sign C2 for any GATE_PASS.",
-    "A2 root-held HMAC not independent of Root, no independent terminal settlement, host-wide Docker exclusivity or complete repo callgraph; legacy J4/J4S entrypoints remain.",
-    "B1/C1 PRs are Draft/open and not deployed; rollback by stopping invocation is documented, no destructive git revert executed.",
-    "C1 local witness has null hosted job and run URLs by pre-run consent, because billing blocked Actions; synthetic C1-02 is not genuine provider outage.",
-    "No model/Google live calls, candidate-code execution or proof of AI utility; C3 NOT_STARTED; MODEL_EFFECTIVENESS=NOT_ESTABLISHED; AI_ACCEPTANCE=BLOCK_AI_ACCEPTANCE; stable_ready=false."
+    "15/16 formally signed G0-G3/A0-A3/B0-B3/C0/C1/C2; C2 is owner-reviewed under its accepted limited scope; C3 final GO/NO-GO remains unsigned.",
+    "C2 signed by GitHub owner lijust at issue 310 comment 6738106706 after the existing evidence matrix, negative safety/rollback/cleanup and unknowns review; no new test or runtime evidence created.",
+    "C3 may recommend PILOT_ADVISORY_ONLY_GO for source-bound owner-local offline evidence closure only, but no final pilot decision exists before a distinct owner signoff.",
+    "A2 root-held HMAC not independent of Root, no independent terminal settlement, host-wide Docker exclusivity or complete repository callgraph; legacy J4/J4S entrypoints remain.",
+    "B1/C1 PRs remain Draft/open and not deployed; rollback is stop invoking the offline CLI, not an executed destructive git revert.",
+    "C1 local witnesses have null hosted job/run URLs by pre-run consent because billing blocked Actions; synthetic C1-02 is not a genuine provider outage.",
+    "No live Gemini/model calls, independent AI model effectiveness, externally observed host-wide effects, or evidence of Stable/L3; AI_ACCEPTANCE=BLOCK_AI_ACCEPTANCE; stable_ready=false."
   ],
   "package_closures": {
     "A": {
