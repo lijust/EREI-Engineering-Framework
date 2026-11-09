@@ -1,0 +1,11 @@
+# Core13: ensure cross-platform checkout preserves LF for exact Git-pinned contracts.
+# Narrow scope; no global text encoding policy change.
+/contracts/core13-pilot-b0-source-route-inventory-v1.json text eol=lf
+/contracts/core13-pilot-c0-prereg-three-probes-v1.json text eol=lf
+/contracts/core13-pilot-c0-prereg-three-probes-v2.json text eol=lf
+/contracts/core13-pilot-closure-progress-v1.json text eol=lf
+/contracts/core13-pilot-closure-v1.json text eol=lf
+/docs/governance/core13-pilot-c0-preregister-and-provider-gap-20261108.md text eol=lf
+/docs/governance/core13-pilot-c0-v2-minimal-gemini-provider-amendment-20261108-ar.md text eol=lf
+/contracts/core13-pilot-c0-prereg-three-probes-v3.json text eol=lf
+/docs/governance/core13-pilot-c0-v3-controlled-fault-prereg-20261108-ar.md text eol=lf

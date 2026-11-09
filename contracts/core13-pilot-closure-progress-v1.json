@@ -1,11 +1,11 @@
 {
   "schema": "CORE13_PILOT_CLOSURE_PROGRESS_V1",
   "version": "1.0",
-  "as_of": "2026-11-08",
+  "as_of": "2026-11-09",
   "scope_contract_path": "contracts/core13-pilot-closure-v1.json",
   "authority": "GitHub owner comment 6708853149, with reproducible source/job evidence",
   "owner_review_url": "https://github.com/lijust/EREI-3.2/issues/307#issuecomment-6708853149",
-  "decision": "PILOT_UNDECIDED",
+  "decision": "PILOT_ADVISORY_ONLY_GO",
   "security": {
     "ai_acceptance": "BLOCK_AI_ACCEPTANCE",
     "stable_ready": false,
@@ -14,14 +14,15 @@
   },
   "metrics": {
     "fixed_gates": 16,
-    "passed": 12,
+    "passed": 16,
     "blocked": 0,
-    "not_started": 4,
+    "not_started": 0,
     "package_a": "CLOSED_PASS_SCOPED_READ_ONLY",
     "package_b": "CLOSED_PASS_SCOPED_ADVISORY_ONLY",
-    "package_c": "C0_PREREGISTRATION_AUTHORIZED_NOT_YET_SIGNED",
+    "package_c": "CLOSED_PASS_OWNER_SIGNED_OFFLINE_SOURCE_BOUND_ADVISORY_ONLY",
     "remediation_round_a": 2,
-    "remediation_limit_a": 2
+    "remediation_limit_a": 2,
+    "active_pre_review": 0
   },
   "gates": {
     "G0": {
@@ -210,27 +211,300 @@
       "owner": "6719300660"
     },
     "C0": {
-      "state": "AUTHORIZED_PREREGISTRATION_NOT_FROZEN",
+      "state": "GATE_PASS",
       "owner_authorization": "https://github.com/lijust/EREI-3.2/issues/309#issuecomment-6719300660",
-      "frozen_contract": null,
-      "owner_prereg_signoff": null
+      "owner_prereg_signoff": "https://github.com/lijust/EREI-3.2/issues/310#issuecomment-6725740425",
+      "frozen_candidate": "contracts/core13-pilot-c0-prereg-three-probes-v3.json",
+      "frozen_candidate_git_blob": "6f95214e6e7333fde41905209b891a9b877903e9",
+      "static_tests_source_git_blob": "9ca51da642397b8fd8d88835941d6236eba7e195",
+      "ci": "https://github.com/lijust/EREI-3.2/actions/runs/42464007638",
+      "ci_job_id": "128679222204",
+      "status_note": "OWNER C0 V3 FORMALLY APPROVED after 48/48 offline local tests, scoped source-pinned C1-only authorization",
+      "scenario_ids": [
+        "C1-01-ALLOW-ADVISORY-REPORT",
+        "C1-02-PROVIDER-FAIL-CLOSED",
+        "C1-03-HOSTILE-CODE-DOCKER-REQUEST"
+      ],
+      "critical_provider_blocker": "C1-02 is offline synthetic URLError via fixed opener; must not be represented as a genuine Google outage. No model effectiveness evidence.",
+      "provider_calls": 0,
+      "model_calls": 0,
+      "network_calls": 0,
+      "real_c1_cases_executed": 0,
+      "recommended_owner_decision": "Review freeze with explicit C1 provider-blocker disclosure, do NOT claim C1 GO",
+      "immutable_v1": "contracts/core13-pilot-c0-prereg-three-probes-v1.json",
+      "previous_v1_git_blob": "49b5c38fc3add5a015d89298ea1edeb439942130",
+      "owner_v2_amendment_signoff": null,
+      "original_v1_static_pass": "https://github.com/lijust/EREI-3.2/actions/runs/42464124217",
+      "provider_boundary_source": "tools/core13_pilot_c0_gemini_readonly_boundary.py",
+      "provider_boundary_git_blob": "01ecbd606980220f459772644efc45068b963968",
+      "provider_model": "gemini-3.5-flash-lite",
+      "provider_live_attempts": 0,
+      "provider_actual_outage_observed": false,
+      "static_tests_added_not_yet_verified": 26,
+      "v2_ci_attempts": [
+        "https://github.com/lijust/EREI-3.2/actions/runs/42467134130",
+        "https://github.com/lijust/EREI-3.2/actions/runs/42467391106",
+        "https://github.com/lijust/EREI-3.2/actions/runs/42467442759",
+        "https://github.com/lijust/EREI-3.2/actions/runs/42467547902"
+      ],
+      "v2_ci_status": "RUNNER_NOT_STARTED_GITHUB_ACCOUNT_PAYMENT_OR_SPENDING_LIMIT",
+      "v2_ci_failure_stage": "BEFORE_RUNNER_PROVISIONING_NO_STEPS",
+      "evidence_packet": "docs/governance/core13-pilot-c0-v2-implementation-evidence-20261108.md",
+      "prereg_contract": "docs/governance/core13-pilot-c0-v2-minimal-gemini-provider-amendment-20261108-ar.md",
+      "c1_02_status": "SYNTHETIC_FAULT_PREREGISTERED_TESTED_OFFLINE_AS_UNIT_CASE_C1_STILL_NOT_RUN",
+      "owner_review_status": "FINAL_C0_V3_OWNER_SIGNOFF_COMPLETE",
+      "v2_ci_failure_reason": "Owner-retrieved GitHub check-run annotations for job 128691305173: The job was not started because recent account payments have failed or your spending limit needs to be increased. Check Billing & plans. GitHub ubuntu-latest 26 migration notice separate informational warning.",
+      "v2_ci_check_annotations_provenance": "https://github.com/lijust/EREI-3.2/actions/runs/42467819388",
+      "local_verification_status": "OWNER_POST_EOL_FRESH_WINDOWS_CHECKOUT_38_OF_38_PASS_EXIT_0",
+      "owner_local_previous_run": {
+        "total_tests": 38,
+        "exit_code": 1,
+        "gemini_simulated_transport_tests_passed": 16,
+        "root_cause": "All 5 distinct observed local Git blob hashes exactly equal CRLF-transformed signed LF file content; repeated hash assertions caused 8 failures.",
+        "verified_files": 5,
+        "evidence": "docs/governance/core13-pilot-c0-windows-crlf-git-blob-20261108.md",
+        "failure_assertions": 8,
+        "failed_test_methods": 3,
+        "test_methods_without_failures": 35,
+        "distinct_failed_test_methods": [
+          "C0SourceOnlyPreregTests.test_02_all_pinned_source_blobs_match_exact_repo_content",
+          "C0V2FrozenSourceTests.test_01_old_prereg_is_not_rewritten",
+          "C0V2FrozenSourceTests.test_03_four_exact_pinned_source_blobs"
+        ]
+      },
+      "eol_remediation": {
+        "app_attributes_count": 28,
+        "framework_attributes_count": 7,
+        "method": "Scoped .gitattributes text eol=lf on exact source-pin-related paths, without altering the original pinned blobs.",
+        "status": "CONFIRMED_FIXED_BY_OWNER_FRESH_WINDOWS_CHECKOUT_AND_38_TEST_PASS",
+        "required_next_observation": "Fresh Windows clone of updated C0 branch should show i/lf w/lf and Ran 38 tests OK exit_code=0",
+        "no_global_git_config_mutation": true,
+        "ci_billing_block_unchanged": true
+      },
+      "owner_local_post_eol_run": {
+        "method": "fresh clone Windows PowerShell; Python unittest discover -s tests/unit -p test_core13_pilot_c0_*.py -v",
+        "passed": 38,
+        "total": 38,
+        "exit_code": 0,
+        "seconds_reported": 0.022,
+        "test_groups": {
+          "gemini_offline_transport": 16,
+          "original_v1_prereg": 12,
+          "v2_amendment": 10
+        },
+        "sample_git_eol": "i/lf w/lf attr/text eol=lf for B1 source and C0 v1 manifest",
+        "evidence": "docs/governance/core13-pilot-c0-v2-owner-local-38-pass-20261108.md",
+        "provenance": "Owner supplied exact PowerShell transcript in active conversation, 2026-11-08",
+        "ai_provider_calls": 0,
+        "real_c1_executions": 0,
+        "scope": "local offline only; GitHub CI not run due to account billing hold"
+      },
+      "owner_v3_amendment_authorization": "https://github.com/lijust/EREI-3.2/issues/310#issuecomment-6724292060",
+      "owner_v3_final_signoff": "https://github.com/lijust/EREI-3.2/issues/310#issuecomment-6725740425",
+      "current_candidate": "contracts/core13-pilot-c0-prereg-three-probes-v3.json",
+      "current_candidate_git_blob": "6f95214e6e7333fde41905209b891a9b877903e9",
+      "v3_review": "docs/governance/core13-pilot-c0-v3-controlled-fault-prereg-20261108-ar.md",
+      "v3_review_git_blob": "4622958af81f4bb1c3aea6e383e29780e7ff12f9",
+      "v3_source_test": "tests/unit/test_core13_pilot_c0_v3_controlled_fault_prereg.py",
+      "v3_source_test_git_blob": "4a9d9b4dc5dd5f2f94449e203153d55648ba725a",
+      "previous_38_local_pass": "VERIFIED_BY_OWNER_BEFORE_V3",
+      "v3_local_expected_tests_total": 48,
+      "v3_local_test_status": "OWNER_WINDOWS_48_OF_48_PASS_EXIT_0",
+      "v3_local_evidence": "docs/governance/core13-pilot-c0-v3-owner-local-48-pass-20261108.md",
+      "v3_local_evidence_git_blob": "2ce8860cde9aa9ea4f02e474289d181ae638eb4c",
+      "v3_owner_local_run": {
+        "source_commit": "b537a6b82d0d7dc973df4d4af167dad10e32d4ab",
+        "branch": "core13/pilot-c0-preregister-three-advisory-probes-20261108",
+        "suite": "python -m unittest discover -s tests/unit -p test_core13_pilot_c0_*.py -v",
+        "tests": 48,
+        "passed": 48,
+        "failures": 0,
+        "reported_seconds": 0.036,
+        "exit_code": 0,
+        "family_counts": {
+          "gemini_injected_transport": 16,
+          "v1_prereg_static": 12,
+          "v2_static": 10,
+          "v3_prereg_static": 10
+        },
+        "eol_status": "i/lf w/lf attr/text eol=lf for C0 v3 JSON",
+        "provenance": "Owner provided exact 86-line Windows PowerShell terminal log in conversation",
+        "real_gemini_calls": 0,
+        "real_provider_outage": false,
+        "c1_cases_executed": 0,
+        "scope": "local offline tests, not GitHub-hosted CI"
+      },
+      "ci_scope": "Owner local 48/48 PASS. GitHub hosted C0 Actions still billing-blocked pre-runner; no hosted CI success."
     },
     "C1": {
-      "state": "NOT_STARTED"
+      "state": "GATE_PASS",
+      "owner_authorization": "https://github.com/lijust/EREI-3.2/issues/310#issuecomment-6725740425",
+      "prereg_contract": "contracts/core13-pilot-c0-prereg-three-probes-v3.json",
+      "prereg_sha": "6f95214e6e7333fde41905209b891a9b877903e9",
+      "allowlist": [
+        "C1-01-ALLOW-ADVISORY-REPORT",
+        "C1-02-PROVIDER-FAIL-CLOSED",
+        "C1-03-HOSTILE-CODE-DOCKER-REQUEST"
+      ],
+      "attempts": 3,
+      "case_results": {
+        "C1-01-ALLOW-ADVISORY-REPORT": {
+          "reported_verdict": "PASS",
+          "sha256": "4037fc7d31203339821e46ddcddc3151684458ff9187cc3faa6ec72aceba4f54",
+          "independent_file_review": "VERIFIED_EXACT_BYTES_SHA256_AND_FROZEN_C0_V3_ORACLE",
+          "scope": "OWNER_LOCAL_OFFLINE_NOT_GITHUB_ACTIONS"
+        },
+        "C1-02-PROVIDER-FAIL-CLOSED": {
+          "reported_verdict": "PASS",
+          "sha256": "6c4338ac615db54a2730885c79e0f49b3a8211c7bd2d99ff5e5830c8cfc0ec9b",
+          "fault_classification": "SYNTHETIC_INJECTED_TRANSPORT_NOT_REAL_GOOGLE_OUTAGE",
+          "independent_file_review": "VERIFIED_EXACT_BYTES_SHA256_AND_FROZEN_C0_V3_ORACLE",
+          "scope": "OWNER_LOCAL_OFFLINE_NOT_GITHUB_ACTIONS"
+        },
+        "C1-03-HOSTILE-CODE-DOCKER-REQUEST": {
+          "reported_verdict": "PASS",
+          "sha256": "a951793419a4e417893ef3d33b41adc6d8654aac314d77102a4eb8065f395322",
+          "independent_file_review": "VERIFIED_EXACT_BYTES_SHA256_AND_FROZEN_C0_V3_ORACLE",
+          "scope": "OWNER_LOCAL_OFFLINE_NOT_GITHUB_ACTIONS"
+        }
+      },
+      "owner_post_run_signoff": "https://github.com/lijust/EREI-3.2/issues/310#issuecomment-6737778354",
+      "all_three_cases_scoped_execution_only": true,
+      "live_gemini_calls": 0,
+      "real_google_outage_claim": false,
+      "runner_source": "tools/core13_pilot_c1_three_offline_cases.py",
+      "runner_git_blob": "6f2df382bb9df606c41c5089a074aec440fb6f21",
+      "execution_readme": "docs/governance/core13-pilot-c1-three-offline-owner-execution-20261108-ar.md",
+      "evidence_policy": {
+        "exact_cases": 3,
+        "one_attempt_each": true,
+        "outside_repository_only": true,
+        "expected_file_names": [
+          "C1-01-ALLOW-ADVISORY-REPORT.json",
+          "C1-02-PROVIDER-FAIL-CLOSED.json",
+          "C1-03-HOSTILE-CODE-DOCKER-REQUEST.json"
+        ],
+        "source_head_attested_from_owner_git": true,
+        "result_status": "C1_SCOPED_LOCAL_RECEIPTS_3_OF_3_VERIFIED_OWNER_SIGNED",
+        "local_owner_results_verified": 3,
+        "github_hosted_ci_billing_blocked": true,
+        "c1_02_synthetic_only": true,
+        "no_google_live_call": true,
+        "no_model_effectiveness_inference": true
+      },
+      "local_witness_mode_document": "docs/governance/core13-pilot-c1-local-witness-limit-20261108.md",
+      "local_witness_mode_pre_run_owner_signoff": "https://github.com/lijust/EREI-3.2/issues/310#issuecomment-6728988991",
+      "acceptance_qualification": "C0 frozen contract still requests run_url and job_id; owner-local process only produces explicit nulls due to GitHub Actions billing, must be prereviewed BEFORE C1 case execution and cannot misrepresent local as hosted CI",
+      "owner_attested_source_commit": "fa448b0d58eece7b81f1d328e8a287f5ed8e6a7e",
+      "owner_attested_runner_sha": "6f2df382bb9df606c41c5089a074aec440fb6f21",
+      "evidence_dir_basename": "erei-core13-c1-fa448b0d58ee",
+      "reported_case_count": 3,
+      "verified_case_json_file_count": 3,
+      "evidence_manifest": "docs/governance/core13-pilot-c1-owner-local-three-reported-pass-20261109.json",
+      "independent_audit": {
+        "status": "COMPLETE_SOURCE_BOUND_EVIDENCE_CHECK",
+        "files": 3,
+        "full_sha256_matches": 3,
+        "preregistered_oracle_matches": 3,
+        "read_only_crosschecks": 94,
+        "read_only_crosschecks_passed": 94,
+        "script_sha256": "49585dec0ba023c054c51bb15ada8cd7a38e3e7e669703f3b13e4591726d8dcd",
+        "report": "docs/governance/core13-pilot-c1-three-json-independent-audit-20261109.md",
+        "report_manifest": "docs/governance/core13-pilot-c1-three-json-independent-audit-20261109.json",
+        "original_raw_files_reviewed_from": "Three exact owner-uploaded JSON bytes in current user conversation (9,162 B total)",
+        "witnessed_source_head": "fa448b0d58eece7b81f1d328e8a287f5ed8e6a7e",
+        "pre_run_local_substitution_owner": "https://github.com/lijust/EREI-3.2/issues/310#issuecomment-6728988991",
+        "owner_final_signoff": "https://github.com/lijust/EREI-3.2/issues/310#issuecomment-6737778354",
+        "formal_gate": "GATE_PASS_SCOPED_OWNER_LOCAL_OFFLINE_ONLY"
+      }
     },
     "C2": {
-      "state": "NOT_STARTED"
+      "state": "GATE_PASS",
+      "owner_review_authorization": "https://github.com/lijust/EREI-3.2/issues/310#issuecomment-6737778354",
+      "prior_gates_required": "G/A/B/C0/C1",
+      "evidence_mode": "EXISTING_SOURCE_AND_3_ORIGINAL_LOCAL_C1_WITNESSES_ONLY",
+      "reviewer_identity": "HUMAN_GITHUB_OWNER_OR_AUTHORIZED_INDEPENDENT_REVIEWER_REQUIRED",
+      "assistant_role": "PREPARE_EVIDENCE_MATRIX_AND_FLAG_UNKNOWN_ONLY_NOT_HUMAN_SIGNOFF",
+      "owner_c2_post_review_signoff": "https://github.com/lijust/EREI-3.2/issues/310#issuecomment-6738106706",
+      "c2_tests_executed": 0,
+      "c2_model_calls": 0,
+      "c2_docker_mutations": 0,
+      "scope": "C2_EVIDENCE_REVIEW_ONLY_NO_NEW_C1_RUN_OR_C3",
+      "status_note": "GitHub owner lijust explicitly accepted C2 after reviewing A/B/C1 evidence matrix, negative safety evidence, rollback/cleanup and material unknowns; evidence-only scope, no new runtime exercise.",
+      "review_packet": "docs/governance/core13-pilot-c2-independent-evidence-review-20261109.md",
+      "review_packet_git_blob": "8ca896400819ae6f7a19045032e9d620828ebedf",
+      "existing_evidence_review": {
+        "owner_approval_c1": "https://github.com/lijust/EREI-3.2/issues/310#issuecomment-6737778354",
+        "owner_prior_a": "https://github.com/lijust/EREI-3.2/issues/308#issuecomment-6713657840",
+        "owner_prior_b": "https://github.com/lijust/EREI-3.2/issues/309#issuecomment-6719300660",
+        "verified_prior_action_runs": [
+          42418179869,
+          42420217755,
+          42421025530,
+          42462598131,
+          42463022672
+        ],
+        "reported_successful_prior_jobs_count": 6,
+        "c1_original_uploaded_jsons_checked": 3,
+        "c1_source_bound_local_audit_pass": 94,
+        "c1_evidence_is_local_not_github_runner": true,
+        "c1_02_fault_is_synthetic": true,
+        "reviewer_packet_prepared": true,
+        "independent_human_reviewer_evaluation": "GITHUB_OWNER_SCOPED_POST_REVIEW_ACCEPTED",
+        "independent_human_reviewer_comments": "https://github.com/lijust/EREI-3.2/issues/310#issuecomment-6738106706",
+        "safety_negative_review_prepared": true,
+        "rollback_review_prepared": true,
+        "unknowns_disclosed": true,
+        "ai_self_attestation_not_authoritative": true,
+        "owner_c2_post_review_signoff": "https://github.com/lijust/EREI-3.2/issues/310#issuecomment-6738106706"
+      },
+      "c2_run_status": "SOURCE_AND_EXISTING_EVIDENCE_READ_ONLY_NO_NEW_PILOT_EXECUTION",
+      "c2_gate_pass": true,
+      "owner_authorized_next": "C3_FINAL_SCOPED_GO_NO_GO_EVIDENCE_REVIEW_ONLY"
     },
     "C3": {
-      "state": "NOT_STARTED"
+      "state": "GATE_PASS",
+      "owner_authorization": "https://github.com/lijust/EREI-3.2/issues/310#issuecomment-6738106706",
+      "frozen_scope_contract": "contracts/core13-pilot-closure-v1.json",
+      "frozen_c0_v3_prereg": "contracts/core13-pilot-c0-prereg-three-probes-v3.json",
+      "scoped_existing_evidence_packet": "docs/governance/core13-pilot-c3-final-scoped-go-no-go-review-20261109.md",
+      "scoped_existing_evidence_packet_git_blob": "13674e007ee769123bbe90cd1e305664af3ab138",
+      "recommended_candidate_decision": "PILOT_ADVISORY_ONLY_GO_SCOPED_OFFLINE_EVIDENCE_ONLY",
+      "accepted_final_values": [
+        "PILOT_ADVISORY_ONLY_GO",
+        "PILOT_NO_GO",
+        "PILOT_BLOCKED"
+      ],
+      "c3_effectiveness_separation_documented": true,
+      "independent_model_effectiveness": "NOT_ESTABLISHED",
+      "model_predictions_independently_validated": 0,
+      "model_calls_authorized": false,
+      "docker_or_root_execution_authorized": false,
+      "generated_code_execution_authorized": false,
+      "stable_ready": false,
+      "ai_acceptance": "BLOCK_AI_ACCEPTANCE",
+      "c3_owner_final_signoff": "https://github.com/lijust/EREI-3.2/issues/310#issuecomment-6738737883",
+      "final_owner_decision": "PILOT_ADVISORY_ONLY_GO",
+      "c3_gate_pass": true,
+      "scope_note": "Retrospective GO for the completed offline evidence demo only; no live Gemini, broad repository/Docker/Root access, deployment, autonomous execution, or Stable.",
+      "final_go_scope": "ONLY_THE_COMPLETED_OWNER_LOCAL_OFFLINE_SOURCE_BOUND_DETERMINISTIC_ADVISORY_EVIDENCE_DEMONSTRATION",
+      "owner_decision_provenance": "GitHub user lijust #6738737883; verified separate human owner C3 decision",
+      "actual_live_provider_calls_authorized": false,
+      "production_deployment_authorized": false,
+      "deferred_capabilities_activated": false,
+      "scoped_final_closure_report": "docs/governance/core13-pilot-final-scoped-closure-20261109.md",
+      "scoped_final_closure_report_git_blob": "9139ce5ea3d0591d8a746bcc28392ed266bb7114"
     }
   },
   "strict_boundaries": [
-    "Owner B3 signed #6719300660; Package B is CLOSED_PASS_SCOPED_ADVISORY_ONLY. Formal gates G0-G3/A0-A3/B0-B3 = 12/16.",
-    "C0 only: freeze 3 C1 cases, source SHA, external provider/connection assumptions, inputs, reference oracle and decision thresholds BEFORE any C1 run.",
-    "B1 remains deterministic route inspection, not an AI provider or measure of model effectiveness; cannot pretend invalid JSON is a real provider outage.",
-    "No C1 execution yet, no model-generated code, Docker CREATE/START, root broker reuse, repository writes or Stage C promotion without C0 owner approval.",
-    "AI_ACCEPTANCE=BLOCK_AI_ACCEPTANCE, stable_ready=false; whole-repo isolation and model effectiveness NOT_ESTABLISHED."
+    "All 16/16 fixed G/A/B/C0-C3 gates signed by GitHub owner for the specified source-bound offline advisory-only evidence pilot; final owner C3 comment 6738737883 explicitly selects PILOT_ADVISORY_ONLY_GO.",
+    "Final PILOT_ADVISORY_ONLY_GO is retrospective acceptance of completed, deterministic owner-local offline evidence only; NOT activation, deployment, or live Gemini/model integration.",
+    "C1-02 was exactly one injected synthetic URLError, not a genuine Google outage; C1 receipts were owner-local with preauthorized null GitHub run_url/job_id and 94/94 independent checks cover their contents, not whole-host runtime.",
+    "A2 Root-held HMAC is not independent of Root; independent terminal settlement, host-wide Docker exclusivity, late-create quiescence and full repository callgraph isolation are NOT ESTABLISHED; legacy J4/J4S can exist elsewhere.",
+    "B1/C1 Draft PRs remain unmerged; no deployment or destructive rollback, only stop invoking offline bounded CLI and preserve evidence.",
+    "No validated blind model-effectiveness evaluation or live model predictions; MODEL_EFFECTIVENESS=NOT_ESTABLISHED and AI_ACCEPTANCE=BLOCK_AI_ACCEPTANCE; stable_ready=false.",
+    "Deferred Issue #311 capabilities remain DEFERRED, with no automatic authorization for Root/Docker CREATE/START, code execution, provider calls, or production rollout.",
+    "The frozen contracts C0 V1/V2/V3 and pilot-closure-v1 remain immutable; final status changes only in the mirrored progress ledger and new final evidence record."
   ],
   "package_closures": {
     "A": {
@@ -272,6 +546,51 @@
       "job_id": "128676204466",
       "tests_passed": 41,
       "independent_model_effectiveness": "NOT_ESTABLISHED"
+    },
+    "C": {
+      "status": "CLOSED_PASS_SCOPED_OWNER_LOCAL_OFFLINE_ADVISORY_ONLY",
+      "formal_gate_ids": [
+        "C0",
+        "C1",
+        "C2",
+        "C3"
+      ],
+      "final_owner_decision": "PILOT_ADVISORY_ONLY_GO",
+      "final_owner_signoff": "https://github.com/lijust/EREI-3.2/issues/310#issuecomment-6738737883",
+      "final_closure_evidence": "docs/governance/core13-pilot-final-scoped-closure-20261109.md",
+      "final_closure_evidence_git_blob": "9139ce5ea3d0591d8a746bcc28392ed266bb7114",
+      "prereg_v3_git_blob": "6f95214e6e7333fde41905209b891a9b877903e9",
+      "c1_scoped_oracle_passed": 3,
+      "c1_independent_receipt_content_checks_passed": 94,
+      "c1_evidence_owner_local_not_github_hosted": true,
+      "c1_02_provider_failure": "SYNTHETIC_INJECTED_TRANSPORT_NOT_REAL_GOOGLE_OUTAGE",
+      "model_effectiveness": "NOT_ESTABLISHED",
+      "live_model_calls_authorized": false,
+      "docker_root_or_generated_code_execution_authorized": false,
+      "pr_merge_or_deploy_authorized": false,
+      "deferred_issue_311_state": "DEFERRED",
+      "stable_ready": false,
+      "ai_acceptance": "BLOCK_AI_ACCEPTANCE"
     }
+  },
+  "final_closure": {
+    "status": "PILOT_CLOSED_SCOPED_OFFLINE_EVIDENCE_ONLY",
+    "date": "2026-11-09",
+    "owner": "lijust",
+    "owner_final_signoff": "https://github.com/lijust/EREI-3.2/issues/310#issuecomment-6738737883",
+    "decision": "PILOT_ADVISORY_ONLY_GO",
+    "passed_fixed_gates": 16,
+    "total_fixed_gates": 16,
+    "report": "docs/governance/core13-pilot-final-scoped-closure-20261109.md",
+    "report_git_blob": "9139ce5ea3d0591d8a746bcc28392ed266bb7114",
+    "deployment_authorized": false,
+    "live_model_calls_authorized": false,
+    "model_generated_code_execution_authorized": false,
+    "docker_create_start_authorized": false,
+    "root_operations_authorized": false,
+    "automatic_patches_authorized": false,
+    "deferred_work_activated": false,
+    "source_pinned_only": true,
+    "human_approval_boundary": "separate fresh authorization required for any broader use"
   }
 }
