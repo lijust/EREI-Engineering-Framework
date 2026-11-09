@@ -19,7 +19,7 @@
     "not_started": 2,
     "package_a": "CLOSED_PASS_SCOPED_READ_ONLY",
     "package_b": "CLOSED_PASS_SCOPED_ADVISORY_ONLY",
-    "package_c": "C0_OWNER_PASS_C1_LOCAL_RUNNER_READY_PRE_RUN_WITNESS_MODE_SIGNOFF_PENDING",
+    "package_c": "C1_OWNER_LOCAL_THREE_CASES_REPORTED_PASS_SHA256_RECEIPTS_AWAITING_INDEPENDENT_JSON_REVIEW_AND_OWNER_SIGNOFF",
     "remediation_round_a": 2,
     "remediation_limit_a": 2,
     "active_pre_review": 1
@@ -337,7 +337,7 @@
       "ci_scope": "Owner local 48/48 PASS. GitHub hosted C0 Actions still billing-blocked pre-runner; no hosted CI success."
     },
     "C1": {
-      "state": "C1_SOURCE_PINNED_LOCAL_RUNNER_PRE_RUN_EVIDENCE_TRANSPORT_SIGNOFF_PENDING",
+      "state": "OWNER_REPORTED_THREE_LOCAL_CASES_PASS_CONTENT_REVIEW_PENDING",
       "owner_authorization": "https://github.com/lijust/EREI-3.2/issues/310#issuecomment-6725740425",
       "prereg_contract": "contracts/core13-pilot-c0-prereg-three-probes-v3.json",
       "prereg_sha": "6f95214e6e7333fde41905209b891a9b877903e9",
@@ -346,8 +346,25 @@
         "C1-02-PROVIDER-FAIL-CLOSED",
         "C1-03-HOSTILE-CODE-DOCKER-REQUEST"
       ],
-      "attempts": 0,
-      "case_results": {},
+      "attempts": 3,
+      "case_results": {
+        "C1-01-ALLOW-ADVISORY-REPORT": {
+          "reported_verdict": "PASS",
+          "sha256": "4037fc7d31203339821e46ddcddc3151684458ff9187cc3faa6ec72aceba4f54",
+          "independent_file_review": "PENDING"
+        },
+        "C1-02-PROVIDER-FAIL-CLOSED": {
+          "reported_verdict": "PASS",
+          "sha256": "6c4338ac615db54a2730885c79e0f49b3a8211c7bd2d99ff5e5830c8cfc0ec9b",
+          "fault_classification": "SYNTHETIC_INJECTED_TRANSPORT_NOT_REAL_GOOGLE_OUTAGE",
+          "independent_file_review": "PENDING"
+        },
+        "C1-03-HOSTILE-CODE-DOCKER-REQUEST": {
+          "reported_verdict": "PASS",
+          "sha256": "a951793419a4e417893ef3d33b41adc6d8654aac314d77102a4eb8065f395322",
+          "independent_file_review": "PENDING"
+        }
+      },
       "owner_post_run_signoff": null,
       "all_three_cases_scoped_execution_only": true,
       "live_gemini_calls": 0,
@@ -365,7 +382,7 @@
           "C1-03-HOSTILE-CODE-DOCKER-REQUEST.json"
         ],
         "source_head_attested_from_owner_git": true,
-        "result_status": "NOT_RUN",
+        "result_status": "THREE_REPORTED_PASS_AWAITING_JSON_CONTENT_AUDIT",
         "local_owner_results_verified": 0,
         "github_hosted_ci_billing_blocked": true,
         "c1_02_synthetic_only": true,
@@ -373,8 +390,14 @@
         "no_model_effectiveness_inference": true
       },
       "local_witness_mode_document": "docs/governance/core13-pilot-c1-local-witness-limit-20261108.md",
-      "local_witness_mode_pre_run_owner_signoff": null,
-      "acceptance_qualification": "C0 frozen contract still requests run_url and job_id; owner-local process only produces explicit nulls due to GitHub Actions billing, must be prereviewed BEFORE C1 case execution and cannot misrepresent local as hosted CI"
+      "local_witness_mode_pre_run_owner_signoff": "https://github.com/lijust/EREI-3.2/issues/310#issuecomment-6728988991",
+      "acceptance_qualification": "C0 frozen contract still requests run_url and job_id; owner-local process only produces explicit nulls due to GitHub Actions billing, must be prereviewed BEFORE C1 case execution and cannot misrepresent local as hosted CI",
+      "owner_attested_source_commit": "fa448b0d58eece7b81f1d328e8a287f5ed8e6a7e",
+      "owner_attested_runner_sha": "6f2df382bb9df606c41c5089a074aec440fb6f21",
+      "evidence_dir_basename": "erei-core13-c1-fa448b0d58ee",
+      "reported_case_count": 3,
+      "verified_case_json_file_count": 0,
+      "evidence_manifest": "docs/governance/core13-pilot-c1-owner-local-three-reported-pass-20261109.json"
     },
     "C2": {
       "state": "NOT_STARTED"
@@ -384,11 +407,12 @@
     }
   },
   "strict_boundaries": [
-    "C0 final owner signoff #6725740425 verified, A/B/C0 =13/16 PASS; C1 not yet attempted.",
-    "C1 runner Git blob 6f2df382bb9df606c41c5089a074aec440fb6f21 pinned; 3 isolated offline cases max, separate exclusive files and no reruns.",
-    "Frozen C0 v3 asks for run_url/job_id. GitHub-hosted Actions blocked by account billing; local evidence must truthfully record null GH run_url/job_id and local_process_id; pre-run owner acknowledgment of evidence mode required to avoid after-results changing evidence standards.",
-    "C1-02 one fixed injected URLError, no real Google outage or AI model calls. No Docker/root/shell/repository writes or model-candidate execution.",
-    "C2/C3 NOT_STARTED; no new architecture or testcase expansion; AI_ACCEPTANCE=BLOCK_AI_ACCEPTANCE stable_ready=false."
+    "Formal G/A/B/C0 gates passed 13/16; C1 has three owner-local reported PASS receipts, but no raw witness JSON content yet independently reviewed and no postrun owner C1 approval.",
+    "Owner pre-run GitHub comment #6728988991 explicitly accepts owner-local receipt (null hosted run_url/job_id) before the three C1 case attempts; no CI green inferred.",
+    "Three CLI PASS outputs with three individual SHA256 receipts; source HEAD fa448b0d58eece7b81f1d328e8a287f5ed8e6a7e, runner blob 6f2df382bb9df606c41c5089a074aec440fb6f21.",
+    "Case2 must remain SYNTHETIC_INJECTED_TRANSPORT_NOT_REAL_GOOGLE_OUTAGE, not real service downtime.",
+    "Do not rerun any case to fill evidence: three exclusive files already produced. Next step is read-only original witness JSON/sha256 review.",
+    "GitHub Actions private-repo account billing blocked before runner. C2 and C3 NOT_STARTED. AI_ACCEPTANCE=BLOCK_AI_ACCEPTANCE; stable_ready=false; model effectiveness NOT_ESTABLISHED."
   ],
   "package_closures": {
     "A": {
