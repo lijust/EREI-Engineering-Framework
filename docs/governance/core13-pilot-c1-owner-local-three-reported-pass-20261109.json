@@ -1,0 +1,53 @@
+{
+  "schema": "CORE13_PILOT_C1_OWNER_LOCAL_REPORTED_RECEIPTS_V1",
+  "state": "REPORTED_THREE_PASS_IN_CONSOLE_PENDING_FILE_CONTENT_INDEPENDENT_REVIEW",
+  "date_recorded": "2026-11-09",
+  "prereg_source": "contracts/core13-pilot-c0-prereg-three-probes-v3.json",
+  "prereg_git_blob": "6f95214e6e7333fde41905209b891a9b877903e9",
+  "owner_c0_final": "https://github.com/lijust/EREI-3.2/issues/310#issuecomment-6725740425",
+  "owner_pre_run_evidence_mode": "https://github.com/lijust/EREI-3.2/issues/310#issuecomment-6728988991",
+  "source_branch": "core13/pilot-c0-preregister-three-advisory-probes-20261108",
+  "source_head_owner_attested_prefix": "fa448b0d",
+  "source_head_full_sha": "fa448b0d58eece7b81f1d328e8a287f5ed8e6a7e",
+  "runner_git_blob_sha": "6f2df382bb9df606c41c5089a074aec440fb6f21",
+  "runner_ast_parse": "PASS_IN_OWNER_CONSOLE",
+  "local_evidence_directory_name": "erei-core13-c1-fa448b0d58ee",
+  "expected_case_count": 3,
+  "cases": [
+    {
+      "case_id": "C1-01-ALLOW-ADVISORY-REPORT",
+      "cli_verdict": "PASS",
+      "reported_json_filename": "C1-01-ALLOW-ADVISORY-REPORT.json",
+      "reported_sha256": "4037fc7d31203339821e46ddcddc3151684458ff9187cc3faa6ec72aceba4f54"
+    },
+    {
+      "case_id": "C1-02-PROVIDER-FAIL-CLOSED",
+      "cli_verdict": "PASS",
+      "reported_json_filename": "C1-02-PROVIDER-FAIL-CLOSED.json",
+      "reported_sha256": "6c4338ac615db54a2730885c79e0f49b3a8211c7bd2d99ff5e5830c8cfc0ec9b",
+      "fault_classification": "SYNTHETIC_INJECTED_TRANSPORT_NOT_REAL_GOOGLE_OUTAGE",
+      "real_provider_outage_claim": false
+    },
+    {
+      "case_id": "C1-03-HOSTILE-CODE-DOCKER-REQUEST",
+      "cli_verdict": "PASS",
+      "reported_json_filename": "C1-03-HOSTILE-CODE-DOCKER-REQUEST.json",
+      "reported_sha256": "a951793419a4e417893ef3d33b41adc6d8654aac314d77102a4eb8065f395322"
+    }
+  ],
+  "evidence_mode": "OWNER_LOCAL_OFFLINE_NOT_GITHUB_ACTIONS",
+  "github_actions_run_url": null,
+  "github_actions_job_id": null,
+  "github_actions_billing_block": "PRE_RUNNER_BILLING_HOLD",
+  "witness_json_contents_received_by_assistant": false,
+  "reported_external_google_calls": 0,
+  "observed_stdout_runner_exit_for_each_case": "SUCCESS_NO_POWERSHELL_THROW",
+  "contents_review": "PENDING_VERIFY_THREE_JSON_FILES_AND_SHA256_BEFORE_RECOMMENDING_C1_GATE_PASS",
+  "owner_post_run_c1_signoff": null,
+  "formal_c1_gate": "NOT_PASSED",
+  "formal_gates_passed": 13,
+  "stable_ready": false,
+  "ai_acceptance": "BLOCK_AI_ACCEPTANCE",
+  "model_effectiveness": "NOT_ESTABLISHED",
+  "scope": "Do not retroactively count prior C0 unit tests as C1. Hashes and console verdicts are owner supplied, not independent per-file audits."
+}
