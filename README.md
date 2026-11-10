@@ -1,11 +1,17 @@
 # EREI Engineering Framework
 
-**Status:** Task Learning & Learning Review V1 Stable  
-**Date:** 2026-09-02
+**Existing released baseline:** Task Learning & Learning Review V1 Stable (2026-09-02)  
+**Current product scope decision:** Evidence-first; **no autonomous learning** (2026-11-10, [ADR-0006](adr/ADR-0006-EVIDENCE-FIRST-NO-AUTONOMOUS-LEARNING.md)). This policy does not repin existing projects or change the Stable baseline.
 
 EREI Engineering Framework is a reusable, cross-project engineering operating system for AI-assisted software development.
 
 It is intentionally **not** a project-specific codebase, **not** a flat prompt/skill library, **not** a mandatory agent runtime, and **not** a repository of provider-specific runtime clients.
+
+## Product objective — evidence-first engineering
+
+Build an AI-assisted engineering system that diagnoses actual defects, proposes bounded repairs, executes only with explicit permission, independently verifies the results, and **records experiments, errors, outcomes and decisions for future human-directed development/release plans**.
+
+**Not an objective or roadmap dependency:** autonomous/self-training agents, automatic behavioral or prompt updates from history, self-modifying workflows, online learning or automatic knowledge promotion. Existing **Task Learning** is a historical name for structured **experience recording and review signals only**. Future version improvements require a human decision, separate validation and ordinary release governance. See [ADR-0006](adr/ADR-0006-EVIDENCE-FIRST-NO-AUTONOMOUS-LEARNING.md) and the [experiment record template](research/EXPERIMENT_RECORD_TEMPLATE.md).
 
 The framework separates:
 
@@ -15,8 +21,8 @@ The framework separates:
 4. **Workflows / Orchestration**
 5. **Project Context / Standards**
 6. **Durable Artifacts / Evidence**
-7. **Task Learning / Review Triggers**
-8. **Feedback / Knowledge Promotion**
+7. **Task experience recording / deterministic review signals (legacy Task Learning naming)**
+8. **Evidence-backed feedback / human-approved future versions**
 9. **Optional Integration Contracts**
 
 ## Current state
@@ -46,7 +52,8 @@ Accepted architecture decisions:
 - `ADR-0002-PROJECT-INTEGRATION-CONTRACT.md`
 - `ADR-0003-RUNTIME-ADAPTER-CONTRACT.md`
 - `ADR-0004-CONCRETE-RUNTIME-IMPLEMENTATIONS-OUT-OF-SCOPE.md`
-- `ADR-0005-TASK-LEARNING-AND-REVIEW-TRIGGERS.md`
+- `ADR-0005-TASK-LEARNING-AND-REVIEW-TRIGGERS.md` (original evidence-capture contract)
+- `ADR-0006-EVIDENCE-FIRST-NO-AUTONOMOUS-LEARNING.md` (current product scope; no self-learning)
 
 ## Engineering roles
 
@@ -301,15 +308,12 @@ Key approved principles include:
 - Heavy operation < 5 s
 - Prefer P95 behavior over best-case latency.
 
-## Next architecture / validation targets
+## Next validation priorities — no autonomous learning roadmap
 
-1. Upgrade a real project at an appropriate checkpoint and exercise Task Learning V1 across real feature/bug/review work.
-2. Calibrate review thresholds from actual task mix rather than changing them from intuition.
-3. Complete at least one real Learning Review → Framework Feedback → Knowledge Promotion → Framework Upgrade feedback loop.
-4. Add cross-project feedback/learning deduplication and classification only when real multi-project volume justifies it.
-5. Build Framework effectiveness/health metrics from real epoch evidence.
-6. Validate the Framework on additional brownfield projects.
-7. Add specialist skills only when evidence shows a distinct reusable procedure is needed.
-8. Revisit concrete runtime integration only when a real project requirement demonstrates the need.
+1. **Demonstrate practical value** on fresh, source-backed bug diagnosis and repair proposals with preregistered acceptance and independent human/replay evidence. The E1 retrospective six-case trial is exploratory and did not establish model effectiveness.
+2. **Reuse existing isolation and verification**, only as needed for a demonstrably useful and explicitly authorized repair workflow. Do not expand privileged execution complexity as a substitute for model quality.
+3. **Record experiments and operational outcomes** using existing Task Learning/feedback ledgers plus the lightweight [experiment record](research/EXPERIMENT_RECORD_TEMPLATE.md). Preserve negative results and uncertainty.
+4. **Maintain a human-owned future-release backlog:** convert validated findings into specific possible changes, prioritize by impact and evidence, implement only after separate authorization.
+5. **Retain compatibility:** existing learning-named files, review triggers, pinned Framework refs and old evidence remain unchanged. No automated memory injection, training, self-modification or self-promotion is planned.
 
-`BASELINE.json` is the machine-readable checkpoint for the current framework state.
+`BASELINE.json` is the machine-readable checkpoint for the existing Stable Framework version. This new scope statement is not a Stable promotion, permission grant, project upgrade or new runner acceptance.
